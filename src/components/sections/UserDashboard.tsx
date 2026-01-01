@@ -16,8 +16,8 @@ export function UserDashboard() {
 
     const tabs = [
         { id: 'overview', icon: Terminal, label: '~/dashboard' },
-        { id: 'pass', icon: QrCode, label: './access_key.pem' },
-        { id: 'dimensions', icon: HardDrive, label: '/mnt/events' },
+        { id: 'pass', icon: QrCode, label: './id_card.pem' },
+        { id: 'dimensions', icon: HardDrive, label: '/events' },
     ]
 
     return (
@@ -31,7 +31,7 @@ export function UserDashboard() {
                     <div className="w-full xl:w-72 flex flex-col gap-4">
                         <div className="bg-black/40 backdrop-blur-md border border-emerald-500/20 rounded-sm overflow-hidden">
                             <div className="bg-emerald-500/10 px-4 py-2 border-b border-emerald-500/20">
-                                <span className="text-[10px] font-mono text-emerald-400/60 uppercase tracking-widest font-black">STATION_EXPLORER</span>
+                                <span className="text-[10px] font-mono text-emerald-400/60 uppercase tracking-widest font-black">STUDENT_PROFILE</span>
                             </div>
 
                             <div className="p-4 space-y-6">
@@ -45,8 +45,8 @@ export function UserDashboard() {
                                         />
                                     </div>
                                     <div className="flex flex-col">
-                                        <span className="text-xs font-bold text-white font-mono uppercase tracking-tighter">CADET_LOG_8891</span>
-                                        <span className="text-[9px] text-emerald-400 font-mono animate-pulse">●_NODE_ACTIVE</span>
+                                        <span className="text-xs font-bold text-white font-mono uppercase tracking-tighter">STUDENT_ID_8891</span>
+                                        <span className="text-[9px] text-emerald-400 font-mono animate-pulse">●_ONLINE</span>
                                     </div>
                                 </div>
 
@@ -75,7 +75,7 @@ export function UserDashboard() {
                                     className="w-full px-3 py-2.5 rounded-sm flex items-center gap-3 text-[10px] font-mono text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all uppercase tracking-widest"
                                 >
                                     <LogOut className="w-3.5 h-3.5" />
-                                    TERMINATE_SESSION()
+                                    LOGOUT()
                                 </button>
                             </div>
                         </div>
@@ -98,11 +98,11 @@ export function UserDashboard() {
                                 </div>
                                 <div className="h-4 w-[1px] bg-emerald-500/20 mx-2" />
                                 <span className="text-[10px] font-mono text-emerald-400/60 uppercase tracking-widest font-black">
-                                    {activeTab === 'overview' ? 'DASHBOARD_CORE.EXE' : activeTab === 'pass' ? 'ENCRYPTED_KEY.PEM' : 'SYSTEM_LOGS.JSON'}
+                                    {activeTab === 'overview' ? 'DASHBOARD.EXE' : activeTab === 'pass' ? 'DIGITAL_ID.PEM' : 'ACTIVITY_LOG.JSON'}
                                 </span>
                             </div>
                             <div className="px-2 py-0.5 bg-emerald-500/20 border border-emerald-500/30 rounded-full">
-                                <span className="text-[8px] font-mono text-emerald-400 uppercase tracking-widest font-black">SECURE_LINK</span>
+                                <span className="text-[8px] font-mono text-emerald-400 uppercase tracking-widest font-black">SECURE</span>
                             </div>
                         </div>
 
@@ -112,9 +112,9 @@ export function UserDashboard() {
                                 <div className="space-y-12">
                                     <div className="relative">
                                         <div className="absolute -left-10 top-0 bottom-0 w-1 bg-emerald-500/40" />
-                                        <span className="text-emerald-500/40 mb-2 block text-[10px] uppercase tracking-widest font-black">//_OPERATIONAL_OVERVIEW</span>
+                                        <span className="text-emerald-500/40 mb-2 block text-[10px] uppercase tracking-widest font-black">//_OVERVIEW</span>
                                         <h2 className="text-5xl font-black text-white italic tracking-tighter uppercase">
-                                            COMMAND <span className="text-emerald-500">CENTER_</span>
+                                            STUDENT <span className="text-emerald-500">DASHBOARD_</span>
                                         </h2>
                                     </div>
 
@@ -122,10 +122,10 @@ export function UserDashboard() {
                                         {/* Stat Card 1 */}
                                         <div className="bg-emerald-500/5 border border-emerald-500/10 p-8 relative group hover:bg-emerald-500/10 transition-all">
                                             <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-emerald-500/40" />
-                                            <div className="text-[10px] text-emerald-400/40 uppercase tracking-[0.3em] mb-4 font-black">TOTAL_MISSIONS_SYNCED</div>
+                                            <div className="text-[10px] text-emerald-400/40 uppercase tracking-[0.3em] mb-4 font-black">EVENTS_REGISTERED</div>
                                             <div className="text-5xl font-black text-white italic tracking-tighter flex items-end gap-2 group-hover:text-emerald-400 transition-colors">
                                                 {cart.length.toString().padStart(2, '0')}
-                                                <span className="text-[10px] text-emerald-500 font-mono mb-2 uppercase tracking-widest"> [LIVE]</span>
+                                                <span className="text-[10px] text-emerald-500 font-mono mb-2 uppercase tracking-widest"> [ACTIVE]</span>
                                             </div>
                                             <div className="mt-6 h-[2px] w-full bg-white/5 overflow-hidden">
                                                 <motion.div
@@ -140,7 +140,7 @@ export function UserDashboard() {
                                         {/* Stat Card 2 */}
                                         <div className="bg-emerald-500/5 border border-emerald-500/10 p-8 relative group hover:bg-emerald-500/10 transition-all">
                                             <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-emerald-500/40" />
-                                            <div className="text-[10px] text-emerald-400/40 uppercase tracking-[0.3em] mb-4 font-black">STATION_XP_LEVEL</div>
+                                            <div className="text-[10px] text-emerald-400/40 uppercase tracking-[0.3em] mb-4 font-black">FEST_POINTS</div>
                                             <div className="text-5xl font-black text-white italic tracking-tighter flex items-end gap-2 group-hover:text-emerald-400 transition-colors">
                                                 1,250
                                                 <span className="text-[10px] text-emerald-500 font-mono mb-2 uppercase tracking-widest"> PTS</span>
@@ -154,9 +154,9 @@ export function UserDashboard() {
                                     </div>
 
                                     <div className="bg-black/60 border border-emerald-500/10 p-6 font-mono text-[11px] text-emerald-400/60 leading-relaxed italic">
-                                        <p><span className="text-emerald-500">await</span> <span className="text-white">sync_protocols</span>(<span className="text-emerald-400/80">"VARNOTHSAVA_2K26"</span>);</p>
-                                        <p className="mt-2"><span className="text-emerald-500">if</span> (system_ready) <span className="text-white">execute_launch</span>();</p>
-                                        <p className="mt-3 text-white/20 uppercase tracking-[0.2em] not-italic">// ALL_SYSTEMS_NOMINAL // STABLE_CONNECTION_ESTABLISHED</p>
+                                        <p><span className="text-emerald-500">await</span> <span className="text-white">load_data</span>(<span className="text-emerald-400/80">"VARNOTHSAVA_2K26"</span>);</p>
+                                        <p className="mt-2"><span className="text-emerald-500">if</span> (system_ready) <span className="text-white">start_fest</span>();</p>
+                                        <p className="mt-3 text-white/20 uppercase tracking-[0.2em] not-italic">// SYSTEM_READY // CONNECTION_ESTABLISHED</p>
                                     </div>
                                 </div>
                             )}
@@ -167,26 +167,26 @@ export function UserDashboard() {
                                         <div className="absolute top-0 inset-x-0 h-[2px] bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.8)]" />
 
                                         <div className="w-full flex justify-between items-start mb-10 text-[8px] font-mono text-emerald-400/40 uppercase tracking-[0.3em] font-black">
-                                            <span>STATION_ID_VERIFIED</span>
-                                            <span>ENCRYPTED.AES</span>
+                                            <span>STUDENT_VERIFIED</span>
+                                            <span>OFFICIAL_ID</span>
                                         </div>
 
                                         <div className="p-6 bg-white rounded-sm shadow-[0_0_50px_rgba(255,255,255,0.1)] mb-8 grayscale hover:grayscale-0 transition-all duration-700 cursor-none">
                                             <QrCode className="w-36 h-36 text-black" />
                                         </div>
 
-                                        <h3 className="text-3xl font-black text-white italic tracking-tighter uppercase mb-2">CADET ACCESS</h3>
+                                        <h3 className="text-3xl font-black text-white italic tracking-tighter uppercase mb-2">STUDENT PASS</h3>
                                         <div className="font-mono text-[10px] bg-emerald-500 text-black px-4 py-1.5 font-black uppercase tracking-widest mb-8">
-                                            NODE_ID: 8891-XK-09
+                                            REG_ID: 8891-XK-09
                                         </div>
 
                                         <div className="w-full pt-8 border-t border-white/5 flex flex-col gap-3">
                                             <div className="flex justify-between text-[10px] font-mono text-emerald-400/40 font-black uppercase tracking-widest">
-                                                <span>AUTH_STATUS</span>
-                                                <span className="text-emerald-400">NOMINAL</span>
+                                                <span>STATUS</span>
+                                                <span className="text-emerald-400">ACTIVE</span>
                                             </div>
                                             <div className="flex justify-between text-[10px] font-mono text-emerald-400/40 font-black uppercase tracking-widest">
-                                                <span>CERT_EXPIRY</span>
+                                                <span>VALID_TILL</span>
                                                 <span className="text-white">NOV_2026</span>
                                             </div>
                                         </div>
@@ -194,19 +194,19 @@ export function UserDashboard() {
 
                                     <div className="flex-1 space-y-8">
                                         <div className="font-mono text-[10px] leading-relaxed">
-                                            <span className="text-emerald-500 font-black uppercase tracking-[0.5em]">-----BEGIN_STATION_KEY-----</span>
+                                            <span className="text-emerald-500 font-black uppercase tracking-[0.5em]">-----BEGIN_ID_DATA-----</span>
                                             <p className="text-white/20 my-4 break-all leading-relaxed italic">
                                                 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAw...
                                                 7n9Xp2m9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v...
                                                 5z5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5x5...
-                                                8891_STATION_ACCESS_PROTOCOL_INITIATED_X...
+                                                8891_STUDENT_ACCESS_GRANTED_X...
                                             </p>
-                                            <span className="text-emerald-500 font-black uppercase tracking-[0.5em]">-----END_STATION_KEY-----</span>
+                                            <span className="text-emerald-500 font-black uppercase tracking-[0.5em]">-----END_ID_DATA-----</span>
                                         </div>
 
                                         <div className="bg-emerald-500/5 border border-emerald-500/20 p-6 rounded-sm text-[11px] text-emerald-400 font-mono flex items-start gap-4 italic leading-relaxed">
                                             <ShieldCheck className="w-5 h-5 shrink-0 text-emerald-500" />
-                                            <p>THIS DIGITAL SIGNATURE GRANTS PHYSICAL ACCESS TO ALL STATION SECTORS. UNAUTHORIZED SHARING WILL TRIGGER SESSION TERMINATION.</p>
+                                            <p>THIS DIGITAL SIGNATURE GRANTS PHYSICAL ACCESS TO ALL FEST EVENTS. UNAUTHORIZED SHARING WILL TRIGGER SESSION TERMINATION.</p>
                                         </div>
                                     </div>
                                 </div>

@@ -21,10 +21,10 @@ export function Leaderboard() {
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 mb-20 border-l-2 border-emerald-500 pl-8">
                     <div className="space-y-4">
                         <div className="flex items-center gap-3 text-emerald-400 font-mono text-[9px] uppercase tracking-[0.5em] font-black">
-                            REAL_TIME_ECO_STREAMS
+                            LIVE_STUDENT_RANKINGS
                         </div>
                         <h2 className="text-4xl md:text-5xl font-black text-white italic tracking-tighter uppercase leading-none">
-                            VALHALLA<br /><span className="text-emerald-500/30 not-italic">BOARD_</span>
+                            FEST<br /><span className="text-emerald-500/30 not-italic">LEADERBOARD_</span>
                         </h2>
                     </div>
                 </div>
@@ -33,9 +33,9 @@ export function Leaderboard() {
                 <div className="glass-card overflow-hidden">
                     <div className="bg-white/5 border-b border-white/10 grid grid-cols-5 p-10 text-[9px] font-black text-white/40 uppercase tracking-widest">
                         <div className="col-span-1">RANK</div>
-                        <div className="col-span-2 md:col-span-1 text-emerald-400">EXPLORER</div>
-                        <div className="hidden md:block">DESIGNATION</div>
-                        <div className="text-center">MISSIONS</div>
+                        <div className="col-span-2 md:col-span-1 text-emerald-400">PARTICIPANT</div>
+                        <div className="hidden md:block">CATEGORY</div>
+                        <div className="text-center">EVENTS</div>
                         <div className="text-right">TOTAL_SCORE</div>
                     </div>
 
@@ -60,7 +60,7 @@ export function Leaderboard() {
                                         {entry.name}
                                     </div>
                                     <div className="text-[10px] font-mono text-white/20 uppercase tracking-widest">
-                                        REF_{entry.origin}
+                                        ID_{entry.origin}
                                     </div>
                                 </div>
 
@@ -86,12 +86,12 @@ export function Leaderboard() {
                                 <Zap className="w-7 h-7 text-emerald-500" />
                             </div>
                             <div className="space-y-1">
-                                <div className="text-white font-black text-lg uppercase italic tracking-tighter">ECO_NETWORK_SECURE</div>
-                                <div className="text-white/20 text-[9px] font-mono uppercase tracking-widest">SYNC_NODE: 0x82...BA45</div>
+                                <div className="text-white font-black text-lg uppercase italic tracking-tighter">LEADERBOARD_LIVE</div>
+                                <div className="text-white/20 text-[9px] font-mono uppercase tracking-widest">LAST_UPDATED: 0x82...BA45</div>
                             </div>
                         </div>
                         <button className="btn-outline px-12">
-                            SYNC_MY_PERFORMANCE
+                            CHECK_MY_RANK
                         </button>
                     </div>
                 </div>

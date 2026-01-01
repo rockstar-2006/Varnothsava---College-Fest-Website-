@@ -93,9 +93,9 @@ export function LoadingScreen() {
                         {/* Corner HUD Metrics */}
                         <div className="absolute top-12 left-16 flex flex-col gap-2">
                             <div className="flex items-center gap-2 text-emerald-400 font-black text-[8px] tracking-widest uppercase mb-1">
-                                <Terminal className="w-3 h-3" /> CORE_STATUS
+                                <Terminal className="w-3 h-3" /> SYSTEM_STATUS
                             </div>
-                            <div className="text-white/20 text-[7px] font-mono tracking-widest uppercase">SYNERGY: STABLE</div>
+                            <div className="text-white/20 text-[7px] font-mono tracking-widest uppercase">STATUS: ONLINE</div>
                             <div className="text-white/20 text-[7px] font-mono tracking-widest uppercase">UPTIME: 00:00:24</div>
                         </div>
 
@@ -104,7 +104,7 @@ export function LoadingScreen() {
                                 COORDINATES <Target className="w-3 h-3" />
                             </div>
                             <div className="text-white/20 text-[7px] font-mono tracking-widest uppercase">13.33° N / 74.74° E</div>
-                            <div className="text-white/20 text-[7px] font-mono tracking-widest uppercase">SECTOR_V_26</div>
+                            <div className="text-white/20 text-[7px] font-mono tracking-widest uppercase">VARNOTHSAVA_26</div>
                         </div>
 
                         {/* CENTER CONTENT */}
@@ -121,8 +121,8 @@ export function LoadingScreen() {
                                         <div className="space-y-8 bg-emerald-500/5 p-12 lg:p-16 rounded-[2rem] border border-emerald-500/10 backdrop-blur-3xl">
                                             <div className="flex justify-between items-end">
                                                 <div className="flex flex-col items-start gap-1">
-                                                    <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">SYSTEM_INITIALIZATION</span>
-                                                    <span className="text-white/20 text-[8px] font-mono uppercase tracking-widest">ENCRYPTING_BIO_STREAMS...</span>
+                                                    <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">LOADING_FEST_DATA</span>
+                                                    <span className="text-white/20 text-[8px] font-mono uppercase tracking-widest">VERIFYING_CREDENTIALS...</span>
                                                 </div>
                                                 <span className="text-5xl font-black text-white italic tracking-tighter">{progress}%</span>
                                             </div>
@@ -162,15 +162,15 @@ export function LoadingScreen() {
                                             <div className="w-24 h-24 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto mb-10 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
                                                 <Rocket className="w-12 h-12 text-emerald-500 animate-bounce" />
                                             </div>
-                                            <h2 className="text-4xl md:text-6xl font-black text-white italic tracking-tighter uppercase mb-4">CORES_READY</h2>
-                                            <p className="text-emerald-400/40 text-[10px] uppercase tracking-[0.3em] font-black mb-12">ALL SYSTEMS GREEN. READY FOR MISSION INITIATION.</p>
+                                            <h2 className="text-4xl md:text-6xl font-black text-white italic tracking-tighter uppercase mb-4">WELCOME</h2>
+                                            <p className="text-emerald-400/40 text-[10px] uppercase tracking-[0.3em] font-black mb-12">WELCOME TO VARNOTHSAVA. PRESS ENTER TO START.</p>
 
                                             <button
                                                 onClick={startMission}
                                                 className="w-full py-6 bg-white text-black font-black uppercase text-xs tracking-[0.4em] hover:bg-emerald-500 hover:text-white transition-all shadow-[0_0_50px_rgba(255,255,255,0.1)]"
                                                 style={{ clipPath: 'polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px)' }}
                                             >
-                                                INITIATE_MISSION
+                                                ENTER_FEST
                                             </button>
                                         </div>
                                     </motion.div>
@@ -192,7 +192,7 @@ export function LoadingScreen() {
                                         >
                                             {countdown}
                                         </motion.div>
-                                        <div className="mt-8 text-emerald-400 font-black text-[10px] tracking-[1.5em] uppercase opacity-40">IGNITION_SEQUENCE</div>
+                                        <div className="mt-8 text-emerald-400 font-black text-[10px] tracking-[1.5em] uppercase opacity-40">STARTING_SOON</div>
                                     </motion.div>
                                 )}
 
@@ -208,7 +208,7 @@ export function LoadingScreen() {
                                             <div className="w-16 h-[2px] bg-emerald-500 animate-pulse" />
                                             <h2 className="text-4xl md:text-6xl font-black text-white tracking-widest uppercase italic">WELCOME_TO_SMVITM</h2>
                                             <div className="flex items-center gap-4 text-emerald-400/40 font-mono text-[10px] tracking-[0.5em] uppercase">
-                                                PLANETARY_CONNECTION_ESTABLISHED
+                                                CONNECTED_TO_SERVER
                                             </div>
                                             <div className="w-16 h-[2px] bg-emerald-500 animate-pulse" />
                                         </div>
@@ -221,11 +221,11 @@ export function LoadingScreen() {
                         <div className="absolute bottom-12 inset-x-0 flex items-center justify-center gap-20">
                             <div className="flex items-center gap-3">
                                 <Activity className="w-4 h-4 text-emerald-500/40" />
-                                <span className="text-[8px] font-black text-white/20 tracking-widest uppercase">PLANETARY_SYNC_STABLE</span>
+                                <span className="text-[8px] font-black text-white/20 tracking-widest uppercase">CONNECTION_STABLE</span>
                             </div>
                             <div className="w-12 h-0.5 bg-emerald-500/20" />
                             <div className="flex items-center gap-3">
-                                <span className="text-[8px] font-black text-white/20 tracking-widest uppercase">ENCRYPTION_RSA_STABLE</span>
+                                <span className="text-[8px] font-black text-white/20 tracking-widest uppercase">SECURE_CONNECTION</span>
                                 <Shield className="w-4 h-4 text-emerald-500/40" />
                             </div>
                         </div>
@@ -234,7 +234,7 @@ export function LoadingScreen() {
                     {/* Outer Camera Recording Indicator */}
                     <div className="rec-indicator opacity-80 z-[12000]">
                         <div className="rec-dot" />
-                        <span className="text-white">MISSION_STREAM // LIVE_FEED</span>
+                        <span className="text-white">VARNOTHSAVA // LIVE</span>
                     </div>
 
                     <div className="cam-hud z-[12000]">

@@ -43,7 +43,7 @@ export function CosmicGallery() {
                 <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12 mb-20 border-l-2 border-emerald-500 pl-8">
                     <div className="space-y-4">
                         <div className="flex items-center gap-3 text-emerald-400 font-mono text-[9px] uppercase tracking-[0.4em] font-black">
-                            FEST_GALLERY_SYNC
+                            FEST_HIGHLIGHTS_2025
                         </div>
                         <h2 className="text-4xl md:text-5xl font-black text-white italic tracking-tighter uppercase leading-none">
                             MEMORIES<br /><span className="text-white/10 not-italic">.2K26_RAW</span>
@@ -89,9 +89,9 @@ export function CosmicGallery() {
 
                 <div className="mt-24 flex flex-col items-center space-y-8">
                     <button className="btn-primary px-20 py-4 shadow-[0_0_30px_rgba(16,185,129,0.2)]">
-                        VIEW_FULL_FEST_ARCHIVE
+                        VIEW_FULL_ALBUM
                     </button>
-                    <div className="text-[10px] font-mono text-white/10 uppercase tracking-[1em]">Memory_Node_Active</div>
+                    <div className="text-[10px] font-mono text-white/10 uppercase tracking-[1em]">OFFICIAL_FEST_ARCHIVE</div>
                 </div>
             </div>
         </section>

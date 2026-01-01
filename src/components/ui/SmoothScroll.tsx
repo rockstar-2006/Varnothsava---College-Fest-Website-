@@ -19,9 +19,10 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
       root
       options={{
         lerp: 0.1,
-        duration: 1.2,
+        duration: 1.5,
         smoothWheel: true,
-        touchMultiplier: 1.5,
+        syncTouch: true,
+        touchMultiplier: 2,
         infinite: false,
       }}
     >

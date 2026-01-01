@@ -372,11 +372,17 @@ export default function ProEventBackground({ theme = 'emerald' }: ProEventBackgr
         )
     }
 
-    // Final "Cyber-Heritage" Live Hologram Rendering
-    if (theme === 'amber') {
-        return (
-            <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 bg-black">
-                {/* 1. BASE LAYER: REPEATING TECH TEXTURE (Prevents "Empty" feeling on long scroll) */}
+    // Final Render: Dual-Layer System for Smooth Transitions
+    return (
+        <>
+            {/* --- AMBER LAYER (CULTURAL) --- */}
+            <motion.div
+                className="fixed inset-0 overflow-hidden pointer-events-none z-0 bg-black"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: theme === 'amber' ? 1 : 0 }}
+                transition={{ duration: 1.5, ease: "easeInOut" }}
+            >
+                {/* 1. BASE LAYER: REPEATING TECH TEXTURE */}
                 <div className="absolute inset-0 opacity-[0.03]"
                     style={{
                         backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 30 L31 31 M0 0 L1 1 M60 60 L59 59' stroke='%23f59e0b' stroke-width='1' fill='none'/%3E%3C/svg%3E")`,
@@ -384,7 +390,7 @@ export default function ProEventBackground({ theme = 'emerald' }: ProEventBackgr
                     }}
                 />
 
-                {/* 2. LOCALIZED SOUL EMBERS - Particles specifically for the hologram atmosphere */}
+                {/* 2. LOCALIZED SOUL EMBERS */}
                 <div className="absolute inset-0 z-0 opacity-30">
                     <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
                         <ambientLight intensity={0.5} />
@@ -392,132 +398,130 @@ export default function ProEventBackground({ theme = 'emerald' }: ProEventBackgr
                     </Canvas>
                 </div>
 
-                <AnimatePresence mode="wait">
+                <div className="absolute inset-0 z-10 flex items-end justify-center">
+                    {/* 3. LAYER: THE LIVE ANIMATED IMAGE */}
                     <motion.div
-                        key="background-live-hologram"
-                        className="absolute inset-0 z-10 flex items-end justify-center"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 1.5 }}
+                        className="relative w-full max-w-[94vw] h-[85vh] flex items-center justify-center mix-blend-screen mx-auto"
+                        style={{
+                            maskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%)'
+                        }}
+                        animate={{
+                            scale: [1, 1.05, 1],
+                            opacity: [0.9, 1, 0.9],
+                            filter: [
+                                'saturate(1.4) brightness(1.2)',
+                                'saturate(1.8) brightness(1.4)',
+                                'saturate(1.4) brightness(1.2)'
+                            ]
+                        }}
+                        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
                     >
-                        {/* 3. LAYER: THE LIVE ANIMATED IMAGE (PREMIUM ETHEREAL HUD) */}
-                        <motion.div
-                            className="relative w-full max-w-[94vw] h-[85vh] flex items-center justify-center mix-blend-screen mx-auto"
+                        {/* EXPLOSIVE GLOW CORE - Added to force the "glowing effect" */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-amber-500/30 blur-[120px] rounded-full mix-blend-plus-lighter" />
+
+                        {/* Base Image */}
+                        <div
+                            className="absolute inset-0 bg-no-repeat bg-center rounded-full"
                             style={{
-                                maskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 45%, rgba(0,0,0,0) 100%)'
+                                backgroundImage: 'url("/cultural_hero.png")',
+                                backgroundSize: 'cover',
+                                maskImage: 'radial-gradient(ellipse at center, black 45%, transparent 100%)',
+                                filter: 'brightness(1.5) contrast(1.2) drop-shadow(0 0 50px rgba(245, 158, 11, 0.6))'
                             }}
-                            animate={{
-                                scale: [1, 1.03, 1],
-                                opacity: [0.8, 0.95, 0.8],
-                                filter: [
-                                    'saturate(1.4) brightness(1.1)',
-                                    'saturate(1.8) brightness(1.3)',
-                                    'saturate(1.4) brightness(1.1)'
-                                ]
-                            }}
-                            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-                        >
-                            {/* Base Image with Advanced Holographic Effects - CLEAN RENDER */}
-                            <div
-                                className="absolute inset-0 bg-no-repeat bg-center rounded-full"
-                                style={{
-                                    backgroundImage: 'url("/cultural_hero.png")',
-                                    backgroundSize: 'cover',
-                                    maskImage: 'radial-gradient(ellipse at center, black 40%, transparent 95%)',
-                                    filter: 'brightness(1.2) contrast(1.1) drop-shadow(0 0 40px rgba(245, 158, 11, 0.4))'
-                                }}
-                            />
+                        />
 
-                            {/* ATMOSPHERIC LIGHT RAYS (Aurora Beams) */}
-                            <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-30">
-                                {[...Array(3)].map((_, i) => (
-                                    <motion.div
-                                        key={`aurora-${i}`}
-                                        className="absolute top-0 w-32 h-full bg-gradient-to-b from-transparent via-amber-400/20 to-transparent"
-                                        animate={{
-                                            left: ['-20%', '120%'],
-                                            opacity: [0, 0.6, 0]
-                                        }}
-                                        transition={{
-                                            duration: 12 + i * 4,
-                                            repeat: Infinity,
-                                            ease: "linear",
-                                            delay: i * 5
-                                        }}
-                                        style={{ transform: 'skewX(-25deg)' }}
-                                    />
-                                ))}
-                            </div>
-
-                            {/* SHARP SCANNING LASER BEAM (High Velocity) */}
-                            <motion.div
-                                className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-400/25 to-transparent w-[30%] h-full skew-x-12"
-                                animate={{ left: ['-40%', '140%'] }}
-                                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                            />
-
-                            {/* AMBIENT SIGNAL SHIMMER (Atmospheric Pulse) */}
-                            <motion.div
-                                className="absolute inset-0 bg-amber-400/5 blur-3xl"
-                                animate={{ opacity: [0, 0.4, 0] }}
-                                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                            />
-
-                            {/* VERTICAL SCAN-GRID (Refined) */}
-                            <div className="absolute inset-0 opacity-10 pointer-events-none"
-                                style={{
-                                    backgroundImage: 'repeating-linear-gradient(rgba(0,0,0,0) 0px, rgba(0,0,0,0) 1px, rgba(251, 191, 36, 0.1) 1px, rgba(251, 191, 36, 0.1) 2px)',
-                                    backgroundSize: '100% 4px'
-                                }}
-                            />
-
-                            {/* FLOATING DATA EMBERS */}
-                            {[...Array(8)].map((_, i) => (
+                        {/* ATMOSPHERIC LIGHT RAYS */}
+                        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-30">
+                            {[...Array(3)].map((_, i) => (
                                 <motion.div
-                                    key={`ember-${i}`}
-                                    className="absolute w-1.5 h-1.5 bg-amber-400/40 blur-[1px] rounded-full"
+                                    key={`aurora-${i}`}
+                                    className="absolute top-0 w-32 h-full bg-gradient-to-b from-transparent via-amber-400/20 to-transparent"
                                     animate={{
-                                        x: [Math.random() * 400 - 200, Math.random() * 400 - 200],
-                                        y: [Math.random() * 300 - 150, Math.random() * 300 - 150],
-                                        opacity: [0, 0.8, 0],
-                                        scale: [0, 1.4, 0]
+                                        left: ['-20%', '120%'],
+                                        opacity: [0, 0.6, 0]
                                     }}
                                     transition={{
-                                        duration: Math.random() * 6 + 6,
+                                        duration: 12 + i * 4,
                                         repeat: Infinity,
-                                        delay: i * 0.8
+                                        ease: "linear",
+                                        delay: i * 5
                                     }}
+                                    style={{ transform: 'skewX(-25deg)' }}
                                 />
                             ))}
-                        </motion.div>
+                        </div>
 
-                        {/* 4. LAYER: DEPTH & ANGLE (Ensures no "Empty" gaps during scroll) */}
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_35%,rgba(0,0,0,0.85)_100%)]" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black opacity-40" />
-                        <div className="absolute bottom-0 left-0 w-full h-[30%] bg-gradient-to-t from-amber-950/20 via-transparent to-transparent" />
+                        {/* SHARP SCANNING LASER BEAM */}
+                        <motion.div
+                            className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-400/25 to-transparent w-[30%] h-full skew-x-12"
+                            animate={{ left: ['-40%', '140%'] }}
+                            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                        />
+
+                        {/* AMBIENT SIGNAL SHIMMER */}
+                        <motion.div
+                            className="absolute inset-0 bg-amber-400/5 blur-3xl"
+                            animate={{ opacity: [0, 0.4, 0] }}
+                            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                        />
+
+                        {/* VERTICAL SCAN-GRID */}
+                        <div className="absolute inset-0 opacity-10 pointer-events-none"
+                            style={{
+                                backgroundImage: 'repeating-linear-gradient(rgba(0,0,0,0) 0px, rgba(0,0,0,0) 1px, rgba(251, 191, 36, 0.1) 1px, rgba(251, 191, 36, 0.1) 2px)',
+                                backgroundSize: '100% 4px'
+                            }}
+                        />
+
+                        {/* FLOATING DATA EMBERS */}
+                        {[...Array(8)].map((_, i) => (
+                            <motion.div
+                                key={`ember-${i}`}
+                                className="absolute w-1.5 h-1.5 bg-amber-400/40 blur-[1px] rounded-full"
+                                animate={{
+                                    x: [Math.random() * 400 - 200, Math.random() * 400 - 200],
+                                    y: [Math.random() * 300 - 150, Math.random() * 300 - 150],
+                                    opacity: [0, 0.8, 0],
+                                    scale: [0, 1.4, 0]
+                                }}
+                                transition={{
+                                    duration: Math.random() * 6 + 6,
+                                    repeat: Infinity,
+                                    delay: i * 0.8
+                                }}
+                            />
+                        ))}
                     </motion.div>
-                </AnimatePresence>
-            </div>
-        )
-    }
 
-    // High-Performance Grid Engine Return for Technical/Gaming
-    return (
-        <div className="fixed inset-0 z-0 pointer-events-none bg-[#020403]">
-            {/* 1. Deep Space Base - With emerald undercurrents */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(16,185,129,0.05),transparent_70%)]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_70%,rgba(6,78,59,0.1),transparent_70%)]" />
+                    {/* 4. LAYER: DEPTH & ANGLE */}
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_35%,rgba(0,0,0,0.85)_100%)]" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black opacity-40" />
+                    <div className="absolute bottom-0 left-0 w-full h-[30%] bg-gradient-to-t from-amber-950/20 via-transparent to-transparent" />
+                </div>
+            </motion.div>
 
-            {/* 2. The Animated Beam Grid - High Intensity Engine */}
-            <div className="absolute inset-0 opacity-100 mix-blend-screen">
-                <GridBeams />
-            </div>
+            {/* --- EMERALD/GAMING LAYER (DEFAULT) --- */}
+            <motion.div
+                className="fixed inset-0 z-0 pointer-events-none bg-[#020403]"
+                initial={{ opacity: 1 }}
+                animate={{ opacity: theme === 'amber' ? 0 : 1 }}
+                transition={{ duration: 1.5, ease: "easeInOut" }}
+            >
+                {/* 1. Deep Space Base */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(16,185,129,0.05),transparent_70%)]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_70%,rgba(6,78,59,0.1),transparent_70%)]" />
 
-            {/* 3. Global Vignette for Focus */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_50%,rgba(2,4,3,0.7)_100%)] pointer-events-none" />
+                {/* 2. The Animated Beam Grid */}
+                <div className="absolute inset-0 opacity-100 mix-blend-screen">
+                    <GridBeams />
+                </div>
 
-            {/* 4. Subtle Noise Texture for Analog Depth */}
-            <div className="absolute inset-0 opacity-[0.04] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay" />
-        </div>
+                {/* 3. Global Vignette */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_50%,rgba(2,4,3,0.7)_100%)] pointer-events-none" />
+
+                {/* 4. Subtle Noise Texture */}
+                <div className="absolute inset-0 opacity-[0.04] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay" />
+            </motion.div>
+        </>
     )
 }
