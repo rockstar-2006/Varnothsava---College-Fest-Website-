@@ -1,172 +1,210 @@
 @import "tailwindcss";
 
+/* --- THEME SETUP (Tailwind v4) --- */
 @theme {
-    --font-sans: var(--font-geist-sans);
-    --font-mono: var(--font-geist-mono);
+    --color-brand-emerald: #10b981;
+    --color-brand-amber: #f59e0b;
 }
 
-:root {
-    /* Professional Tactical Green Palette */
-    --space-green: #10b981;
-    --space-emerald: #059669;
-    --bg-dark: #020402;
-    --grid-line: rgba(16, 185, 129, 0.25);
+/* --- GLOBAL RESETS --- */
+body {
+    background-color: #050805;
+    color: #ffffff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-@layer base {
-    body {
-        @apply bg-[#020402] text-white selection:bg-emerald-500/30 overflow-x-hidden;
-        cursor: none;
-        background: #020402;
-        background-attachment: fixed;
-        font-family: 'Outfit', sans-serif;
-    }
-
-    * {
-        cursor: none !important;
-    }
-
-    @media (max-width: 1024px) {
-
-        body,
-        * {
-            cursor: auto !important;
-        }
-    }
+/* --- CUSTOM HUD ELEMENTS (Restoring missing styles) --- */
+.cam-hud {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 40;
+    padding: 1.5rem;
 }
 
-@layer utilities {
-
-    /* High-Fidelity Geometric Glass Card */
-    .glass-card {
-        @apply bg-white/[0.02] backdrop-blur-xl border border-white/10 rounded-[2.5rem] transition-all duration-500;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-    }
-
-    .glass-card:hover {
-        @apply bg-white/[0.05] border-emerald-500/30;
-        transform: translateY(-8px);
-    }
-
-    /* Professional Designer Background Utilities */
-
-    /* 1. Base Grid (Increased Visibility) */
-    .designer-base-grid {
-        position: absolute;
-        inset: 0;
-        background-image:
-            linear-gradient(var(--grid-line) 1px, transparent 1px),
-            linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-        background-size: 40px 40px;
-        mask-image: radial-gradient(circle at center, black 40%, transparent 90%);
-    }
-
-    /* 2. Periodic Pattern Bands (Increased Visibility & Rhythmic Space) */
-    .designer-bands {
-        position: absolute;
-        inset: 0;
-        background-image:
-            repeating-linear-gradient(to bottom,
-                transparent,
-                transparent 400px,
-                rgba(16, 185, 129, 0.08) 400px,
-                rgba(16, 185, 129, 0.08) 600px);
-        z-index: 1;
-    }
-
-    /* 3. Moving Scanning Beam (Higher Contrast) */
-    .scanning-beam {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 20vh;
-        background: linear-gradient(to bottom,
-                transparent,
-                rgba(16, 185, 129, 0.1),
-                rgba(255, 255, 255, 0.05),
-                rgba(16, 185, 129, 0.1),
-                transparent);
-        animation: scan-move 10s linear infinite;
-        z-index: 2;
-        opacity: 0.6;
-    }
-
-    /* Button and HUD styles */
-    .cam-hud {
-        position: fixed;
-        inset: 40px;
-        pointer-events: none;
-        z-index: 9999;
-    }
-
-    .cam-bracket {
-        @apply absolute w-10 h-10 border-white/10;
-    }
-
-    .bracket-tl {
-        @apply top-0 left-0 border-t-2 border-l-2;
-    }
-
-    .bracket-tr {
-        @apply top-0 right-0 border-t-2 border-r-2;
-    }
-
-    .bracket-bl {
-        @apply bottom-0 left-0 border-b-2 border-l-2;
-    }
-
-    .bracket-br {
-        @apply bottom-0 right-0 border-b-2 border-r-2;
-    }
-
-    .rec-indicator {
-        @apply fixed top-10 left-12 flex items-center gap-3 font-mono text-[9px] font-black tracking-[0.3em] text-white/40 z-[10000];
-    }
-
-    .rec-dot {
-        @apply w-2 h-2 bg-red-600 rounded-full animate-pulse;
-    }
-
-    .btn-primary {
-        @apply px-10 py-4 bg-emerald-600/90 text-white font-black uppercase tracking-widest text-[11px] rounded transition-all;
-    }
+.cam-bracket {
+    position: absolute;
+    width: 2rem;
+    height: 2rem;
+    border-color: rgba(16, 185, 129, 0.3);
+    /* emerald-500/30 */
+    border-style: solid;
+    border-width: 2px;
+    transition: all 0.5s ease;
 }
 
-@keyframes scan-move {
-    0% {
-        transform: translateY(-100%);
-    }
+.bracket-tl {
+    top: 1.5rem;
+    left: 1.5rem;
+    border-right: none;
+    border-bottom: none;
+}
 
+.bracket-tr {
+    top: 1.5rem;
+    right: 1.5rem;
+    border-left: none;
+    border-bottom: none;
+}
+
+.bracket-bl {
+    bottom: 1.5rem;
+    left: 1.5rem;
+    border-right: none;
+    border-top: none;
+}
+
+.bracket-br {
+    bottom: 1.5rem;
+    right: 1.5rem;
+    border-left: none;
+    border-top: none;
+}
+
+.rec-indicator {
+    position: fixed;
+    top: 2.5rem;
+    left: 4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    z-index: 40;
+    font-family: monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.6);
+    pointer-events: none;
+}
+
+.rec-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    background-color: #ef4444;
+    /* red-500 */
+    border-radius: 9999px;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+
+    0%,
     100% {
-        transform: translateY(1000%);
-    }
-}
-
-@keyframes nebula-float {
-    0% {
-        transform: translate(0, 0);
-        opacity: 0.4;
+        opacity: 1;
     }
 
     50% {
-        transform: translate(50px, 30px);
-        opacity: 0.7;
-    }
-
-    100% {
-        transform: translate(0, 0);
-        opacity: 0.4;
+        opacity: 0.5;
     }
 }
 
-.designer-nebula {
-    pointer-events: none;
+/* --- SCROLLBAR CUSTOMIZATION --- */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #020402;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #10b981;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #059669;
+}
+
+/* --- UTILITIES & ANIMATIONS --- */
+.text-stroke {
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.1);
+}
+
+.text-stroke-sm {
+    -webkit-text-stroke: 0.5px rgba(255, 255, 255, 0.2);
+}
+
+.animate-radar-sweep {
+    animation: radar-sweep 4s linear infinite;
+    will-change: transform;
+}
+
+@keyframes radar-sweep {
+    0% {
+        transform: translateY(-100%) rotate(0deg);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 0.5;
+    }
+
+    90% {
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: translateY(100%) rotate(0deg);
+        opacity: 0;
+    }
+}
+
+.animate-tech-pulse {
+    animation: tech-pulse 4s ease-in-out infinite;
+    will-change: opacity;
+}
+
+@keyframes tech-pulse {
+
+    0%,
+    100% {
+        opacity: 0.2;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.6;
+        transform: scale(1.05);
+    }
+}
+
+.scanning-shine {
     position: absolute;
-    width: 1200px;
-    height: 1200px;
-    background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
-    filter: blur(140px);
-    border-radius: 50%;
-    animation: nebula-float 20s ease-in-out infinite;
+    inset: 0;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.05) 45%,
+            rgba(255, 255, 255, 0.15) 50%,
+            rgba(255, 255, 255, 0.05) 55%,
+            transparent 100%);
+    transform: translateX(-100%) skewX(-15deg);
+    animation: scan 3s infinite;
+    will-change: transform;
+}
+
+@keyframes scan {
+    0% {
+        transform: translateX(-100%) skewX(-15deg);
+    }
+
+    100% {
+        transform: translateX(200%) skewX(-15deg);
+    }
+}
+
+/* GPU Acceleration for Framer Motion */
+.will-change-gpu {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+
+/* Smooth Image Loading */
+img {
+    transition: opacity 0.5s ease-in-out;
 }

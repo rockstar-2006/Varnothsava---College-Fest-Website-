@@ -10,8 +10,8 @@ import { CustomCursor } from "@/components/layout/CustomCursor";
 const outfit = Outfit({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    title: "Varnothsava 2K26 | National Level Techno-Cultural Fest",
-    description: "Experience the ultimate fusion of technology and culture at Varnothsava 2K26. Join the mission of innovation.",
+    title: "Varnothsava 2026 | National Level Techno-Cultural Fest",
+    description: "Experience the ultimate fusion of technology and culture at Varnothsava 2026. Join the celebration of innovation and art.",
 };
 
 export default function RootLayout({
@@ -26,7 +26,7 @@ export default function RootLayout({
                     <LoadingScreen />
                     <CustomCursor />
 
-                    {/* Global Camera Recording HUD */}
+                    {/* Global Framework HUD */}
                     <div className="cam-hud">
                         <div className="cam-bracket bracket-tl" />
                         <div className="cam-bracket bracket-tr" />
@@ -36,7 +36,7 @@ export default function RootLayout({
 
                     <div className="rec-indicator">
                         <div className="rec-dot" />
-                        <span>FEST_SYNC // LIVE_FEED</span>
+                        <span>Varnothsava // Live Now</span>
                     </div>
 
                     <SmoothScroll>

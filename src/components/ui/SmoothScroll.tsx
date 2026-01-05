@@ -18,12 +18,15 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
     <ReactLenis
       root
       options={{
-        lerp: 0.1,
-        duration: 1.5,
+        lerp: 0.05, // Lower lerp for more buttery, smooth "catch-up"
+        duration: 1.5, // Slightly longer duration for elegant smoothing
         smoothWheel: true,
-        syncTouch: true,
-        touchMultiplier: 2,
+        syncTouch: true, // Enable syncTouch for that premium, synchronized feel on phones
+        touchMultiplier: 2.0, // Increase sensitivity slightly for effortless gliding
+        wheelMultiplier: 1.0,
         infinite: false,
+        orientation: 'vertical',
+        gestureOrientation: 'vertical',
       }}
     >
       {children}

@@ -1,99 +1,82 @@
-'use client'
+'use client';
 
-import { motion } from 'framer-motion'
-import { Maximize2, Shield, Camera } from 'lucide-react'
-import { CosmicBackground } from '@/components/ui/CosmicBackground'
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Camera, ShieldCheck } from 'lucide-react';
+import DomeGallery from '@/components/ui/DomeGallery';
+import { ArchiveBackground } from '@/components/ui/ArchiveBackground';
 
+// High-quality, reliable cultural/festival image links
 const memories = [
-    {
-        id: 1,
-        title: 'TECHNO_INNOVATION',
-        category: 'HACKATHON_FINALS',
-        img: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200',
-        meta: 'ST_JOSEPH_COLLEGE | 2K25'
-    },
-    {
-        id: 2,
-        title: 'STAGE_PROFILES',
-        category: 'CULTURAL_SHOWCASE',
-        img: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1200',
-        meta: 'MAIN_AUDITORIUM | LIVE'
-    },
-    {
-        id: 3,
-        title: 'CAMPUS_SYNERGY',
-        category: 'FEST_CHRONICLES',
-        img: 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=1200',
-        meta: 'QUADRANGLE_ZONE_04'
-    },
-    {
-        id: 4,
-        title: 'VALHALLA_FINALS',
-        category: 'ESPORTS_ARENA',
-        img: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1200',
-        meta: 'GAMING_HUB_V1.0'
-    }
-]
+    { src: 'https://images.unsplash.com/photo-1514525253361-bee873800932?w=1200', alt: 'Dance Performance' },
+    { src: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1200', alt: 'Musical Concert' },
+    { src: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1200', alt: 'Event Crowd' },
+    { src: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200', alt: 'Stage Light' },
+    { src: 'https://images.unsplash.com/photo-1459749411177-042180ce6742?w=1200', alt: 'Traditional Arts' },
+    { src: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=1200', alt: 'Night Celebration' },
+    { src: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=1200', alt: 'DJ Night' },
+    { src: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=1200', alt: 'Cultural Vibes' },
+    { src: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=1200', alt: 'Traditional Performance' },
+    { src: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=1200', alt: 'Festival Lighting' },
+    { src: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=1200', alt: 'Music Festival' },
+    { src: 'https://images.unsplash.com/photo-1563841930606-67e2b6c307bb?w=1200', alt: 'Cultural Dance' },
+    { src: 'https://images.unsplash.com/photo-1504173010664-32509aeebb62?w=1200', alt: 'Live Expression' },
+    { src: 'https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?w=1200', alt: 'Jazz Night' },
+];
 
 export function CosmicGallery() {
     return (
-        <section className="relative py-24 px-6 bg-[#050805] overflow-hidden">
-            <CosmicBackground />
-            <div className="container mx-auto relative z-10">
-                <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12 mb-20 border-l-2 border-emerald-500 pl-8">
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-3 text-emerald-400 font-mono text-[9px] uppercase tracking-[0.4em] font-black">
-                            FEST_HIGHLIGHTS_2025
-                        </div>
-                        <h2 className="text-4xl md:text-5xl font-black text-white italic tracking-tighter uppercase leading-none">
-                            MEMORIES<br /><span className="text-white/10 not-italic">.2K26_RAW</span>
-                        </h2>
+        <section className="fixed inset-0 w-full h-full bg-[#020402] overflow-hidden flex flex-col">
+            <ArchiveBackground />
+
+            <div className="relative pt-32 pb-0 px-12 z-20 pointer-events-none flex flex-col items-center text-center gap-4">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex items-center gap-4 text-emerald-400/60 font-black text-[10px] uppercase tracking-[0.6em] border border-emerald-500/20 px-6 py-2 rounded-full backdrop-blur-3xl"
+                >
+                    <Camera className="w-3 h-3" />
+                    Archive Directory // Auth: 0x92f
+                </motion.div>
+
+                <div className="space-y-4">
+                    <h2 className="text-5xl md:text-6xl lg:text-7xl font-black text-white italic tracking-tighter uppercase leading-[0.8] drop-shadow-2xl">
+                        EVENT <span className="text-emerald-500/40 not-italic">GALLERY</span>
+                    </h2>
+                    <div className="flex items-center justify-center gap-6 opacity-20">
+                        <div className="h-[2px] w-20 bg-emerald-500" />
+                        <span className="text-[11px] font-black uppercase tracking-[0.8em] text-emerald-400">Memories Encrypted</span>
+                        <div className="h-[2px] w-20 bg-emerald-500" />
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    {memories.map((item, i) => (
-                        <motion.div
-                            key={item.id}
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            whileInView={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: i * 0.1, duration: 0.8 }}
-                            className="group relative h-[450px] glass-card overflow-hidden p-0 border-white/10"
-                        >
-                            <img
-                                src={item.img}
-                                alt={item.title}
-                                className="w-full h-full object-cover transition-all duration-1000 group-hover:scale-110 grayscale-[50%] group-hover:grayscale-0"
-                            />
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400/40 max-w-xl leading-relaxed">
+                    Scroll or drag to sweep the holographic archives.<br />
+                    System synchronized with Emerald Vault security protocols.
+                </p>
+            </div>
 
-                            <div className="absolute inset-0 bg-gradient-to-t from-[#050805] via-transparent to-transparent opacity-80 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-12">
-                                <div className="space-y-6">
-                                    <div className="flex justify-between items-end">
-                                        <div className="space-y-2">
-                                            <div className="text-[10px] font-mono text-emerald-400 font-black tracking-[0.3em] uppercase">{item.category}</div>
-                                            <h3 className="text-4xl font-black text-white uppercase italic tracking-tighter">{item.title}</h3>
-                                        </div>
-                                        <div className="p-4 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 text-white/40 group-hover:text-emerald-500 transition-all">
-                                            <Maximize2 className="w-6 h-6" />
-                                        </div>
-                                    </div>
-                                    <div className="flex justify-between items-center border-t border-white/5 pt-6">
-                                        <div className="text-[10px] font-mono text-white/30 uppercase tracking-widest">{item.meta}</div>
-                                        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                                    </div>
-                                </div>
-                            </div>
-                        </motion.div>
-                    ))}
+            <div className="flex-1 relative z-10 w-full">
+                <DomeGallery
+                    images={memories}
+                    grayscale={false}
+                    overlayBlurColor="transparent"
+                    imageBorderRadius="12px"
+                    openedImageBorderRadius="12px"
+                    fit={2.2}
+                />
+            </div>
+
+            <div className="relative pb-10 px-12 z-20 pointer-events-none flex items-center justify-between opacity-30">
+                <div className="flex items-center gap-4">
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400">System: Functional</span>
                 </div>
-
-                <div className="mt-24 flex flex-col items-center space-y-8">
-                    <button className="btn-primary px-20 py-4 shadow-[0_0_30px_rgba(16,185,129,0.2)]">
-                        VIEW_FULL_ALBUM
-                    </button>
-                    <div className="text-[10px] font-mono text-white/10 uppercase tracking-[1em]">OFFICIAL_FEST_ARCHIVE</div>
+                <div className="flex items-center gap-3">
+                    <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                    <span className="text-[8px] font-black uppercase tracking-[0.4em] text-emerald-400">Security.Verified</span>
                 </div>
             </div>
         </section>
-    )
+    );
 }

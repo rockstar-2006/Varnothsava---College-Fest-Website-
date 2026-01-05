@@ -1,12 +1,30 @@
-import { Mission } from '@/components/ui/MissionCard'
+export interface Event {
+    id: string
+    title: string
+    type: 'Technical' | 'Cultural' | 'Gaming'
+    category?: string
+    description: string
+    rules: string[]
+    regulations?: string[]
+    evaluation?: string[]
+    prizePool: string
+    coordinators: string[]
+    coordinatorsContact?: string[]
+    fee: number
+    visual: string
+    date: string
+    tags: string[]
+    videoUrl?: string
+    brochureUrl?: string
+}
 
-export const missions: Mission[] = [
-    // --- TECHNICAL MISSIONS (V_TECH) ---
+export const missions: Event[] = [
+    // --- TECHNICAL EVENTS ---
     {
         id: 't-algo',
-        title: 'ALGORITHM_ROULETTE',
+        title: 'Algorithm Roulette',
         type: 'Technical',
-        description: 'Team-based machine learning challenge. A random algorithm is assigned via the roulette interface, requiring instant adaptation and model deployment.',
+        description: 'A thrilling team-based machine learning challenge where teams are assigned random algorithms and must build working models on the spot.',
         rules: ['Team of 2', '2-hour implementation window', 'No pre-trained models allowed', 'Spin for algorithm at start'],
         regulations: [
             'Participants must bring their own laptops with necessary environments installed.',
@@ -24,283 +42,283 @@ export const missions: Mission[] = [
         coordinators: ['Ananya Bhat', 'Yathika P Amin'],
         coordinatorsContact: ['+91 9876543210', '+91 8765432109'],
         fee: 200,
-        visual: '/brain/5ee9f092-bf3b-476d-abd8-f1a3fc9c22f7/algorithm_roulette_mission_1767081820438.png',
+        visual: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=1200&q=80',
         date: '11 MAR',
-        specs: ['ML', 'SCIKIT', 'PYTHON'],
+        tags: ['ML', 'Coding', 'Python'],
         videoUrl: 'https://cdn.pixabay.com/video/2019/10/05/27538-364402636_tiny.mp4',
         brochureUrl: '/brochures/algorithm_roulette.pdf'
     },
     {
         id: 't-hunt',
-        title: 'HACK_HUNT',
+        title: 'Hack Hunt',
         type: 'Technical',
-        description: 'Flag-finding coding competition. Breach encrypted nodes and solve multi-layered algorithmic puzzles in a race against the clock.',
-        rules: ['Individual participation', '90 min snippet phase', '2 hr deep-dive phase', 'No external internet allowed'],
+        description: 'The ultimate coding treasure hunt. Solve multi-layered algorithmic puzzles and find hidden solutions in a race against time.',
+        rules: ['Individual participation', '90 min preliminary round', '2 hr final round', 'No external internet allowed'],
         regulations: [
             'Late entries will not be entertained.',
             'System provided environment must be used.',
             'Any form of malpractice will lead to immediate disqualification.'
         ],
         evaluation: [
-            'Number of flags captured',
-            'Time taken for each breach',
+            'Number of challenges solved',
+            'Time taken for each solution',
             'Algorithmic efficiency'
         ],
         prizePool: '₹15,000+',
         coordinators: ['Ramachandra Udupa', 'Anurag R Rao'],
         coordinatorsContact: ['+91 7654321098', '+91 6543210987'],
         fee: 200,
-        visual: '/brain/5ee9f092-bf3b-476d-abd8-f1a3fc9c22f7/hackhunt_mission_1767081838512.png',
+        visual: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&q=80',
         date: '12 MAR',
-        specs: ['CYBER', 'LOGIC', 'NODE'],
+        tags: ['Cyber', 'Logic', 'Coding'],
         videoUrl: 'https://cdn.pixabay.com/video/2023/11/04/187747-880905973_tiny.mp4'
     },
     {
         id: 't-prompt',
-        title: 'PROMPT_TO_PRODUCT',
+        title: 'Prompt to Product',
         type: 'Technical',
-        description: 'AI-powered product engineering. Leverage LLM architecture to transform a prompt into a functional, deployed technical product.',
-        rules: ['Individual/Team of 2', 'Must document prompt chain', 'Live deployment required', 'Judged on innovation'],
+        description: 'AI-powered product engineering. Use modern AI tools to transform a simple prompt into a fully functional technical product.',
+        rules: ['Individual/Team of 2', 'Must document AI prompts used', 'Live product demo required', 'Judged on innovation'],
         prizePool: '₹12,000+',
         coordinators: ['Bhushan Poojary', 'Suraj Bhagwat'],
         fee: 200,
         visual: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&q=80',
         date: '21 MAR',
-        specs: ['AI', 'LLM', 'GEN_TECH']
+        tags: ['AI', 'Product', 'Gen-AI']
     },
     {
         id: 't-line',
-        title: 'FASTEST_LINE_FOLLOWER',
+        title: 'Fastest Line Follower',
         type: 'Technical',
-        description: 'Autonomous robotics racing. Design a high-speed bot capable of navigating complex circuit paths with zero human intervention.',
+        description: 'Autonomous robotics racing. Design a high-speed robot capable of navigating complex circuit paths with speed and precision.',
         rules: ['Autonomous bots only', '3-minute run limit', 'Points for speed and path accuracy', 'Max dimensions: 20x20cm'],
         prizePool: '₹10,000',
         coordinators: ['Kaushik A', 'Raveesha Padmashali'],
         fee: 200,
         visual: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=1200&q=80',
         date: '20 MAR',
-        specs: ['BOT', 'PATH', 'SENSOR']
+        tags: ['Robotics', 'Hardware', 'Sensors']
     },
     {
         id: 't-soccer',
-        title: 'ROBO_SOCCER',
+        title: 'Robo Soccer',
         type: 'Technical',
-        description: 'Hydraulic and electric kinetic combat. A tactical robot soccer tournament where technical precision meets high-speed sports.',
+        description: 'A tactical robot soccer tournament where technical precision meets high-speed sports in an exciting knockout format.',
         rules: ['Team of 2-3', 'Knockout format', '5-minute match duration', 'Tactical timeouts allowed'],
         prizePool: '₹12,000',
         coordinators: ['Pavan R Gond', 'Vishwas Bhat'],
         fee: 200,
         visual: 'https://images.unsplash.com/photo-1561557944-6e7860d1a7eb?w=1200&q=80',
         date: '21 MAR',
-        specs: ['METAL', 'STRIKE', 'FORCE']
+        tags: ['Robotics', 'Sports', 'Mechanics']
     },
     {
         id: 't-wright',
-        title: 'WRIGHT_BROTHERS',
+        title: 'Wright Brothers',
         type: 'Technical',
-        description: 'Aeronautical design challenge. Construct and launch a non-powered glider that maximizes air-time and stability.',
+        description: 'Aeronautical design challenge. Construct and launch a non-powered glider to see who can achieve the longest flight time.',
         rules: ['Build at venue (3 hrs)', 'Hand-launched only', 'Max weight: 500g', 'No chemical propulsion'],
         prizePool: '₹8,000',
         coordinators: ['Pavan R Gond', 'Vishwas Bhat'],
         fee: 200,
-        visual: 'https://images.unsplash.com/photo-1544625345-d368097b3986?w=1200&q=80',
+        visual: 'https://images.unsplash.com/photo-1517976487492-5750f3195933?w=1200&q=80',
         date: '21 MAR',
-        specs: ['AERO', 'GLIDE', 'FLIGHT']
+        tags: ['Aero', 'Design', 'Physics']
     },
     {
         id: 't-electro',
-        title: 'ELECTRO_DETECTIVES',
+        title: 'Electro Detectives',
         type: 'Technical',
-        description: 'Hardware debugging and circuit forensics. Identify and fix points of failure in complex electronic ecosystems.',
-        rules: ['Solo entry', 'No external textbooks', 'Standard lab equipment provided', 'Time-attack format'],
+        description: 'Hardware debugging and circuit analysis. Identify and fix errors in complex electronic circuits to save the day.',
+        rules: ['Solo entry', 'No external books', 'Standard lab equipment provided', 'Time-attack format'],
         prizePool: '₹6,000',
         coordinators: ['Prerana Shetty', 'Nishmitha'],
         fee: 200,
         visual: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&q=80',
         date: '20 MAR',
-        specs: ['VOLT', 'DEBUG', 'CIRCUIT']
+        tags: ['Electronics', 'Circuit', 'Logic']
     },
     {
         id: 't-route',
-        title: 'ROUTE_RUSH',
+        title: 'Route Rush',
         type: 'Technical',
-        description: 'Intelligent maze navigation. Program your micro-unit to map and solve a kinetic maze in record time.',
+        description: 'Intelligent maze navigation. Program your micro-bot to map and solve a complex maze in record time.',
         rules: ['Autonomous code only', 'Max size: 15x15cm', '3 attempts per team', 'Maze revealed at start'],
         prizePool: '₹10,000',
         coordinators: ['Athula A Bhat', 'G Rahul Rao'],
         fee: 200,
         visual: 'https://images.unsplash.com/photo-1502139214982-d0ad755818d8?w=1200&q=80',
         date: '21 MAR',
-        specs: ['MAZE', 'AUTO', 'LOGIC']
+        tags: ['Robotics', 'Maze', 'Coding']
     },
     {
         id: 't-pitch',
-        title: 'PITCHATHON',
+        title: 'Pitch-a-thon',
         type: 'Technical',
-        description: 'Next-gen startup and innovation pitching. Present your planetary solution to a panel of expert architects.',
-        rules: ['5-7 minute pitch', '3 minute Q&A', 'Problem statement predated', 'Pitch deck mandatory'],
+        description: 'Present your innovative startup ideas to a panel of experts and win exciting prizes to kickstart your journey.',
+        rules: ['5-7 minute pitch', '3 minute Q&A', 'Problem statement needed', 'Pitch deck mandatory'],
         prizePool: '₹25,000+',
         coordinators: ['Pai Avani', 'Bhushan Poojary'],
         fee: 200,
         visual: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&q=80',
         date: '12 MAR',
-        specs: ['IDEA', 'VC', 'SCALE']
+        tags: ['Startup', 'Business', 'Idea']
     },
 
-    // --- GAMING SECTOR (V_GAME) ---
+    // --- GAMING EVENTS ---
     {
         id: 'g-val',
-        title: 'VALORANT: CLASH_OF_RADIANTS',
+        title: 'Valorant Clash',
         type: 'Gaming',
-        description: '5v5 Valorant Tactical Tournament. High-stakes competition on our dedicated ultra-low latency servers.',
+        description: 'Join the 5v5 Valorant Tactical Tournament. High-stakes competition on dedicated ultra-low latency servers.',
         rules: ['Team of 5', 'Standard competitive rules', 'Double elimination', 'Bring own peripherals'],
         prizePool: '₹40,000',
         coordinators: ['U Pradyumna', 'Sathwik S Bhat'],
         fee: 500,
         visual: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1200&q=80',
         date: 'MAR 24-25',
-        specs: ['5v5', 'VALORANT', 'FPS']
+        tags: ['5v5', 'FPS', 'Valorant']
     },
     {
         id: 'g-bgmi',
-        title: 'BGMI_BATTLEGROUNDS',
+        title: 'BGMI Battlegrounds',
         type: 'Gaming',
-        description: 'Squad-based Battle Royale. Drop into the Erangel sector and engage in high-intensity tactical combat to be the last squad standing.',
+        description: 'Battle Royale combat. Drop into Erangel and see if your squad has what it takes to be the last one standing.',
         rules: ['Squad of 4', 'Mobile platform only', 'Competitive settings', 'No emulators/triggers'],
         prizePool: '₹30,000',
         coordinators: ['U Pradyumna', 'Sathwik S Bhat'],
         fee: 400,
         visual: 'https://images.unsplash.com/photo-1542751110-97427bbecf20?w=1200&q=80',
         date: 'MAR 24-25',
-        specs: ['SQUAD', 'BATTLE', 'BGMI']
+        tags: ['Squad', 'Mobile', 'BGMI']
     },
 
-    // --- CULTURAL MISSIONS (V_CULT) ---
+    // --- CULTURAL EVENTS ---
     {
         id: 'cm-marathon',
-        title: 'MUSICAL_MARATHON',
+        title: 'Musical Marathon',
         type: 'Cultural',
         category: 'Hobby Club',
-        description: 'Elite competitive singing championship. Showcasing vocal range across classical and contemporary sectors.',
+        description: 'A competitive singing championship showcasing vocal talent across classical and modern music styles.',
         rules: ['Max 3 per group', 'No auto-tune allowed', '5 min time limit', 'Live instruments permitted'],
         prizePool: '₹15,000',
         coordinators: ['Chitkala', 'Akash'],
         fee: 150,
         visual: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=1200&q=80',
         date: '21 MAR',
-        specs: ['VOICE', 'LIVE', 'PITCH']
+        tags: ['Singing', 'Music', 'Live']
     },
     {
         id: 'cd-groove',
-        title: 'GROOVE_GALA',
+        title: 'Groove Gala',
         type: 'Cultural',
         category: 'Hobby Club',
-        description: 'High-energy solo dance battle. Fusing modern street-style with traditional rhythmic patterns.',
+        description: 'High-energy solo dance battle fusing modern street-style with traditional dance forms.',
         rules: ['Solo participation', 'Original choreography', 'Props allowed', '3 min performance'],
         prizePool: '₹10,000',
         coordinators: ['Rachana', 'Ananya'],
         fee: 150,
         visual: 'https://images.unsplash.com/photo-1503095396549-807759245b35?w=1200&q=80',
         date: '22 MAR',
-        specs: ['MOVE', 'BEAT', 'FUSE'],
+        tags: ['Dance', 'Solo', 'Grooxe'],
         videoUrl: 'https://cdn.pixabay.com/video/2021/08/04/83949-584736183_tiny.mp4'
     },
     {
         id: 'cd-mime',
-        title: 'NEON_MIME',
+        title: 'Neon Mime',
         type: 'Cultural',
         category: 'Hobby Club',
-        description: 'The art of silent storytelling. Express complex planetary themes without a single spoken syllable.',
+        description: 'The art of silent storytelling. Express detailed themes and stories without using a single word.',
         rules: ['Group performance (4-8)', 'No background vocals', 'White face-paint mandatory', '10 min maximum'],
         prizePool: '₹12,000',
         coordinators: ['Surabhi', 'Viraj'],
         fee: 150,
         visual: 'https://images.unsplash.com/photo-1503095396549-807759245b35?w=1200&q=80',
         date: '21 MAR',
-        specs: ['SILENT', 'EMOTE', 'ACT']
+        tags: ['Drama', 'Silent', 'Acting']
     },
     {
         id: 'cf-3d',
-        title: '3D_DRAW_TECH',
+        title: '3D Art Challenge',
         type: 'Cultural',
         category: 'Hobby Club',
-        description: 'Perspective based 3D drawing competition. Constructing optical illusions on a flat surface.',
+        description: 'Perspective-based drawing competition where students create amazing optical illusions on paper.',
         rules: ['Solo entry', 'Canvas provided', 'Dry media only', '3 hour duration'],
         prizePool: '₹5,000',
         coordinators: ['Fine Arts Unit'],
         fee: 150,
         visual: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=1200&q=80',
         date: '20 MAR',
-        specs: ['DEPTH', 'ILLUSION', 'ART']
+        tags: ['Sketching', '3D Art', 'Creative']
     },
     {
         id: 'cm-pixel',
-        title: 'PIXEL_PERFECT',
+        title: 'Pixel Perfect',
         type: 'Cultural',
         category: 'Promotional',
-        description: 'On-spot photography mission. Capture the festival through a technological and environmental lens.',
-        rules: ['On-spot registration', 'Edit within camera apps only', 'Max 3 submissions', 'Theme-based'],
+        description: 'On-spot photography competition. Capture the best moments of the festival through your lens.',
+        rules: ['On-spot registration', 'Edit within phone only', 'Max 3 submissions', 'Theme-based'],
         prizePool: '₹8,000',
         coordinators: ['Media Club'],
         fee: 150,
         visual: 'https://images.unsplash.com/photo-1452784444945-3f422708fe5e?w=1200&q=80',
-        date: 'FEST_DURATION',
-        specs: ['LENS', 'FRAME', 'SNAP']
+        date: 'Festival Duration',
+        tags: ['Photo', 'Camera', 'Capture']
     },
     {
         id: 'cm-reels',
-        title: 'REEL_FLOW',
+        title: 'Reel Flow',
         type: 'Cultural',
         category: 'Promotional',
-        description: 'Short-form cinematic storytelling. Create high-engagement social media reels capturing the energy floor.',
-        rules: ['Duration: 15-60s', 'Original music/audio', 'Must include fest branding', 'Judged on reach & edit'],
+        description: 'Short-form video storytelling. Create engaging Reels that capture the vibrant energy of Varnothsava.',
+        rules: ['Duration: 15-60s', 'Original music/audio', 'Must include fest branding', 'Judged on creativity'],
         prizePool: '₹5,000',
         coordinators: ['Media Club'],
         fee: 150,
         visual: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=1200&q=80',
-        date: 'FEST_DURATION',
-        specs: ['EDIT', 'SYNC', 'SOCIAL']
+        date: 'Festival Duration',
+        tags: ['Video', 'Reels', 'Social']
     },
     {
         id: 'cg-anime',
-        title: 'ANIME_PROTOCOL_QUIZ',
+        title: 'Anime Quiz',
         type: 'Cultural',
         category: 'General',
-        description: 'Deep-dive trivia on otaku culture and animation systems. Compete to be the ultimate sector expert.',
+        description: 'Test your knowledge on anime and pop culture in this fun and interactive trivia session.',
         rules: ['Team of 2', '3 rounds of trivia', 'Visual & Audio rounds', 'No mobile usage'],
         prizePool: '₹3,000',
         coordinators: ['Advaith'],
         fee: 100,
         visual: 'https://images.unsplash.com/photo-1578632292335-df3abbb0d586?w=1200&q=80',
         date: '22 MAR',
-        specs: ['OTAKU', 'QUIZ', 'LORE']
+        tags: ['Anime', 'Quiz', 'Trivia']
     },
     {
         id: 'cg-ink',
-        title: 'INK & IMAGINATION',
+        title: 'Ink & Imagination',
         type: 'Cultural',
         category: 'General',
-        description: 'Creative writing and poetry slam. Express the intersection of nature and technology through verse.',
+        description: 'Creative writing and poetry slam. Express your thoughts and stories through beautiful words and verses.',
         rules: ['Solo entry', 'Theme given on spot', 'Multi-language support', 'Original pieces only'],
         prizePool: 'TBA',
         coordinators: ['Advaith'],
         fee: 100,
         visual: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=1200&q=80',
         date: '21 MAR',
-        specs: ['WRITE', 'SOUL', 'INK']
+        tags: ['Writing', 'Poetry', 'Words']
     },
     {
         id: 'cg-mehandi',
-        title: 'BIOMETRIC_MEHANDI',
+        title: 'Traditional Mehandi',
         type: 'Cultural',
         category: 'General',
-        description: 'Traditional patterns meets crystalline tech aesthetics. Redefining Mehandi for the future.',
+        description: 'Express your artistic talent through traditional and modern Mehandi designs.',
         rules: ['Solo participation', 'Traditional & Modern mix', '2 hour limit', 'Judged on detail'],
         prizePool: '₹2,500',
         coordinators: ['Cultural Unit'],
         fee: 100,
         visual: 'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=1200&q=80',
         date: '20 MAR',
-        specs: ['TRAD', 'TECH', 'SKIN']
+        tags: ['Art', 'Design', 'Henna']
     }
 ]

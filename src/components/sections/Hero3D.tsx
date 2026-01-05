@@ -2,13 +2,13 @@
 
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Sphere, Float, Environment, MeshTransmissionMaterial, Torus, Stars } from '@react-three/drei'
-import { useRef, Suspense } from 'react'
+import { useRef, Suspense, useState, useEffect } from 'react'
 import * as THREE from 'three'
 import { motion } from 'framer-motion'
 import { ChevronDown, Users, Activity, Globe } from 'lucide-react'
 import Link from 'next/link'
 
-function SpaceScene() {
+function SpaceScene({ isMobile }: { isMobile: boolean }) {
     const group = useRef<THREE.Group>(null!)
 
     useFrame((state) => {
@@ -20,22 +20,32 @@ function SpaceScene() {
         <group ref={group} position={[0, 0, 0]}>
             {/* The Planet - Emerald Core */}
             <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
-                <Sphere args={[4.2, 64, 64]}>
-                    <MeshTransmissionMaterial
-                        color="#10b981"
-                        thickness={1}
-                        roughness={0.1}
-                        transmission={0.9}
-                        ior={1.2}
-                        chromaticAberration={0.04}
-                        backside
-                    />
+                <Sphere args={[4.2, isMobile ? 32 : 64, isMobile ? 32 : 64]}>
+                    {isMobile ? (
+                        <meshStandardMaterial
+                            color="#10b981"
+                            roughness={0.2}
+                            metalness={0.8}
+                            emissive="#10b981"
+                            emissiveIntensity={0.2}
+                        />
+                    ) : (
+                        <MeshTransmissionMaterial
+                            color="#10b981"
+                            thickness={1}
+                            roughness={0.1}
+                            transmission={0.9}
+                            ior={1.2}
+                            chromaticAberration={0.04}
+                            backside
+                        />
+                    )}
                 </Sphere>
             </Float>
 
             {/* Subtle Green Rings */}
             <Float speed={1.5}>
-                <Torus args={[5.4, 0.015, 16, 120]} rotation={[Math.PI / 2, 0, 0]}>
+                <Torus args={[5.4, 0.015, 16, isMobile ? 60 : 120]} rotation={[Math.PI / 2, 0, 0]}>
                     <meshStandardMaterial color="#10b981" emissive="#10b981" emissiveIntensity={0.8} transparent opacity={0.4} />
                 </Torus>
             </Float>
@@ -44,6 +54,15 @@ function SpaceScene() {
 }
 
 export function Hero3D() {
+    const [isMobile, setIsMobile] = useState(false)
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768)
+        checkMobile()
+        window.addEventListener('resize', checkMobile)
+        return () => window.removeEventListener('resize', checkMobile)
+    }, [])
+
     return (
         <div className="relative min-h-screen w-full bg-[#050805] overflow-hidden pt-20">
             {/* Professional 3D Sector - Lowered Alignment and Depth */}
@@ -51,15 +70,18 @@ export function Hero3D() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 0.9 }}
                 transition={{ duration: 2, delay: 0.5 }}
-                className="absolute right-[-5%] top-24 w-full lg:w-3/5 h-[calc(100%-96px)] z-0 pointer-events-none"
+                className="absolute right-[-5%] lg:right-[-5%] top-[15%] md:top-24 w-full lg:w-3/5 h-[60%] md:h-[calc(100%-96px)] z-0 pointer-events-none"
             >
-                <Canvas camera={{ position: [0, 0, 14.5], fov: 40 }}>
+                <Canvas
+                    camera={{ position: [0, 0, 14.5], fov: 40 }}
+                    gl={{ antialias: !isMobile, powerPreference: 'high-performance' }}
+                >
                     <Suspense fallback={null}>
                         <ambientLight intensity={1} />
                         <pointLight position={[10, 10, 10]} intensity={3} color="#10b981" />
                         <Environment preset="night" />
-                        <Stars radius={100} depth={50} count={3000} factor={4} saturation={0} fade speed={1} />
-                        <SpaceScene />
+                        <Stars radius={100} depth={50} count={isMobile ? 150 : 3000} factor={4} saturation={0} fade speed={1} />
+                        <SpaceScene isMobile={isMobile} />
                     </Suspense>
                     <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.5} />
                 </Canvas>

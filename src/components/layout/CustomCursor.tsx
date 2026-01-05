@@ -7,6 +7,7 @@ export function CustomCursor() {
     const [isHovering, setIsHovering] = useState(false)
     const [isVisible, setIsVisible] = useState(false)
     const [cursorType, setCursorType] = useState('default')
+    const [isMobile, setIsMobile] = useState(false) // Added: State to track mobile status
 
     const cursorX = useMotionValue(-100)
     const cursorY = useMotionValue(-100)
@@ -15,7 +16,26 @@ export function CustomCursor() {
     const springX = useSpring(cursorX, springConfig)
     const springY = useSpring(cursorY, springConfig)
 
+    // Added: Effect to check for mobile/touch devices on mount
     useEffect(() => {
+        const checkMobile = () => {
+            // Check for screen width and touch capability
+            setIsMobile(window.innerWidth < 768 || 'ontouchstart' in window);
+        };
+
+        checkMobile(); // Run once on mount
+
+        // Optional: Add a resize listener if you want to dynamically enable/disable
+        // window.addEventListener('resize', checkMobile);
+        // return () => window.removeEventListener('resize', checkMobile);
+    }, []); // Empty dependency array ensures this runs once on mount
+
+    useEffect(() => {
+        // Added: If it's a mobile device, do not set up event listeners
+        if (isMobile) {
+            return;
+        }
+
         const moveCursor = (e: MouseEvent) => {
             cursorX.set(e.clientX)
             cursorY.set(e.clientY)
@@ -50,6 +70,8 @@ export function CustomCursor() {
         }
     }, [cursorX, cursorY, isVisible])
 
+    if (isMobile) return null
+
     return (
         <div className="fixed inset-0 pointer-events-none z-[99999] overflow-hidden">
             <AnimatePresence>
@@ -63,6 +85,7 @@ export function CustomCursor() {
                                 y: cursorY,
                                 translateX: '-50%',
                                 translateY: '-50%',
+                                willChange: 'transform'
                             }}
                         />
 
@@ -114,6 +137,7 @@ export function CustomCursor() {
                             style={{
                                 x: springX,
                                 y: springY,
+                                willChange: 'transform'
                             }}
                             animate={{
                                 opacity: isHovering ? 0.8 : 0.2,

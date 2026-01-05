@@ -2,13 +2,21 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
-import { Rocket, Shield, Activity, ChevronRight, Zap, Target, Terminal, ArrowRight } from 'lucide-react'
+import { Rocket, Shield, Activity, ChevronRight, Zap, Target, Terminal, ArrowRight, Star } from 'lucide-react'
 
 export function LoadingScreen() {
     const [step, setStep] = useState<'SYNCING' | 'READY' | 'COUNTDOWN' | 'MESSAGE' | 'LAUNCH'>('SYNCING')
     const [progress, setProgress] = useState(0)
     const [countdown, setCountdown] = useState(3)
     const [visible, setVisible] = useState(true)
+    const [isMobile, setIsMobile] = useState(false)
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768)
+        checkMobile()
+        window.addEventListener('resize', checkMobile)
+        return () => window.removeEventListener('resize', checkMobile)
+    }, [])
 
     useEffect(() => {
         if (step === 'SYNCING') {
@@ -47,7 +55,7 @@ export function LoadingScreen() {
         }
     }, [step])
 
-    const startMission = () => {
+    const startExperience = () => {
         setStep('COUNTDOWN')
     }
 
@@ -75,14 +83,14 @@ export function LoadingScreen() {
                         <div className="absolute top-[-10%] left-[-10%] w-[120%] h-[120%] bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.1)_0%,transparent_60%)] animate-pulse" />
                     </div>
 
-                    {/* THE SPACESHIP COCKPIT FRAME */}
+                    {/* HUD FRAME */}
                     <motion.div
                         initial={{ scale: 0.9, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         className="relative w-full max-w-5xl h-[70vh] flex items-center justify-center"
                     >
                         <div
-                            className="absolute inset-0 bg-gradient-to-br from-emerald-500/40 via-white/30 to-emerald-500/40 backdrop-blur-3xl shadow-[0_0_50px_rgba(16,185,129,0.2)]"
+                            className={`absolute inset-0 bg-gradient-to-br from-emerald-500/40 via-white/30 to-emerald-500/40 ${isMobile ? '' : 'backdrop-blur-3xl'} shadow-[0_0_50px_rgba(16,185,129,0.2)]`}
                             style={{ clipPath: cockpitClip }}
                         />
                         <div
@@ -93,18 +101,18 @@ export function LoadingScreen() {
                         {/* Corner HUD Metrics */}
                         <div className="absolute top-12 left-16 flex flex-col gap-2">
                             <div className="flex items-center gap-2 text-emerald-400 font-black text-[8px] tracking-widest uppercase mb-1">
-                                <Terminal className="w-3 h-3" /> SYSTEM_STATUS
+                                <Terminal className="w-3 h-3" /> System Status
                             </div>
-                            <div className="text-white/20 text-[7px] font-mono tracking-widest uppercase">STATUS: ONLINE</div>
-                            <div className="text-white/20 text-[7px] font-mono tracking-widest uppercase">UPTIME: 00:00:24</div>
+                            <div className="text-white/20 text-[7px] font-mono tracking-widest uppercase">Portal: Online</div>
+                            <div className="text-white/20 text-[7px] font-mono tracking-widest uppercase">Version: 2.2.6</div>
                         </div>
 
                         <div className="absolute top-12 right-16 text-right flex flex-col gap-2">
                             <div className="flex items-center justify-end gap-2 text-emerald-400 font-black text-[8px] tracking-widest uppercase mb-1">
-                                COORDINATES <Target className="w-3 h-3" />
+                                National Festival <Star className="w-3 h-3" />
                             </div>
-                            <div className="text-white/20 text-[7px] font-mono tracking-widest uppercase">13.33° N / 74.74° E</div>
-                            <div className="text-white/20 text-[7px] font-mono tracking-widest uppercase">VARNOTHSAVA_26</div>
+                            <div className="text-white/20 text-[7px] font-mono tracking-widest uppercase">Udupi, Karnataka</div>
+                            <div className="text-white/20 text-[7px] font-mono tracking-widest uppercase">SMVITM Campus</div>
                         </div>
 
                         {/* CENTER CONTENT */}
@@ -118,11 +126,11 @@ export function LoadingScreen() {
                                         exit={{ opacity: 0, scale: 0.9 }}
                                         className="space-y-12"
                                     >
-                                        <div className="space-y-8 bg-emerald-500/5 p-12 lg:p-16 rounded-[2rem] border border-emerald-500/10 backdrop-blur-3xl">
+                                        <div className={`space-y-8 bg-emerald-500/5 p-12 lg:p-16 rounded-[2rem] border border-emerald-500/10 ${isMobile ? '' : 'backdrop-blur-3xl'}`}>
                                             <div className="flex justify-between items-end">
                                                 <div className="flex flex-col items-start gap-1">
-                                                    <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">LOADING_FEST_DATA</span>
-                                                    <span className="text-white/20 text-[8px] font-mono uppercase tracking-widest">VERIFYING_CREDENTIALS...</span>
+                                                    <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">Preparing Festival Portal</span>
+                                                    <span className="text-white/20 text-[8px] font-mono uppercase tracking-widest">Waking up student records...</span>
                                                 </div>
                                                 <span className="text-5xl font-black text-white italic tracking-tighter">{progress}%</span>
                                             </div>
@@ -138,14 +146,14 @@ export function LoadingScreen() {
                                             <div className="flex justify-center gap-12 pt-4 opacity-40">
                                                 <Terminal className="w-4 h-4 text-emerald-400" />
                                                 <div className="w-12 h-[1px] bg-emerald-500/20 my-auto" />
-                                                <Shield className="w-4 h-4 text-emerald-400" />
+                                                <Zap className="w-4 h-4 text-emerald-400" />
                                                 <div className="w-12 h-[1px] bg-emerald-500/20 my-auto" />
-                                                <Rocket className="w-4 h-4 text-emerald-400" />
+                                                <Star className="w-4 h-4 text-emerald-400" />
                                             </div>
                                         </div>
 
                                         <h1 className="text-5xl md:text-7xl font-black text-white italic tracking-[0.05em] uppercase leading-none opacity-40">
-                                            VARNOTHSAVA<br /><span className="text-white/10 not-italic">2K26_</span>
+                                            VARNOTHSAVA<br /><span className="text-white/10 not-italic">2026</span>
                                         </h1>
                                     </motion.div>
                                 )}
@@ -158,19 +166,19 @@ export function LoadingScreen() {
                                         exit={{ opacity: 0, y: -20 }}
                                         className="space-y-12"
                                     >
-                                        <div className="p-16 border border-emerald-500/20 bg-emerald-500/[0.03] backdrop-blur-xl rounded-[3rem]">
+                                        <div className={`p-16 border border-emerald-500/20 bg-emerald-500/[0.03] ${isMobile ? '' : 'backdrop-blur-xl'} rounded-[3rem]`}>
                                             <div className="w-24 h-24 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto mb-10 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
-                                                <Rocket className="w-12 h-12 text-emerald-500 animate-bounce" />
+                                                <Zap className="w-12 h-12 text-emerald-500 animate-pulse" />
                                             </div>
                                             <h2 className="text-4xl md:text-6xl font-black text-white italic tracking-tighter uppercase mb-4">WELCOME</h2>
-                                            <p className="text-emerald-400/40 text-[10px] uppercase tracking-[0.3em] font-black mb-12">WELCOME TO VARNOTHSAVA. PRESS ENTER TO START.</p>
+                                            <p className="text-emerald-400/40 text-[10px] uppercase tracking-[0.3em] font-black mb-12">Portal Ready. Let the celebration begin.</p>
 
                                             <button
-                                                onClick={startMission}
+                                                onClick={startExperience}
                                                 className="w-full py-6 bg-white text-black font-black uppercase text-xs tracking-[0.4em] hover:bg-emerald-500 hover:text-white transition-all shadow-[0_0_50px_rgba(255,255,255,0.1)]"
                                                 style={{ clipPath: 'polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px)' }}
                                             >
-                                                ENTER_FEST
+                                                Explore Festival
                                             </button>
                                         </div>
                                     </motion.div>
@@ -192,7 +200,7 @@ export function LoadingScreen() {
                                         >
                                             {countdown}
                                         </motion.div>
-                                        <div className="mt-8 text-emerald-400 font-black text-[10px] tracking-[1.5em] uppercase opacity-40">STARTING_SOON</div>
+                                        <div className="mt-8 text-emerald-400 font-black text-[10px] tracking-[1.5em] uppercase opacity-40">Get Ready</div>
                                     </motion.div>
                                 )}
 
@@ -206,9 +214,9 @@ export function LoadingScreen() {
                                     >
                                         <div className="flex flex-col items-center gap-6">
                                             <div className="w-16 h-[2px] bg-emerald-500 animate-pulse" />
-                                            <h2 className="text-4xl md:text-6xl font-black text-white tracking-widest uppercase italic">WELCOME_TO_SMVITM</h2>
+                                            <h2 className="text-4xl md:text-6xl font-black text-white tracking-widest uppercase italic text-center">WELCOME TO SMVITM</h2>
                                             <div className="flex items-center gap-4 text-emerald-400/40 font-mono text-[10px] tracking-[0.5em] uppercase">
-                                                CONNECTED_TO_SERVER
+                                                Connected to Campus Server
                                             </div>
                                             <div className="w-16 h-[2px] bg-emerald-500 animate-pulse" />
                                         </div>
@@ -221,11 +229,11 @@ export function LoadingScreen() {
                         <div className="absolute bottom-12 inset-x-0 flex items-center justify-center gap-20">
                             <div className="flex items-center gap-3">
                                 <Activity className="w-4 h-4 text-emerald-500/40" />
-                                <span className="text-[8px] font-black text-white/20 tracking-widest uppercase">CONNECTION_STABLE</span>
+                                <span className="text-[8px] font-black text-white/20 tracking-widest uppercase">Portal Experience Active</span>
                             </div>
                             <div className="w-12 h-0.5 bg-emerald-500/20" />
                             <div className="flex items-center gap-3">
-                                <span className="text-[8px] font-black text-white/20 tracking-widest uppercase">SECURE_CONNECTION</span>
+                                <span className="text-[8px] font-black text-white/20 tracking-widest uppercase">Verified Institution</span>
                                 <Shield className="w-4 h-4 text-emerald-500/40" />
                             </div>
                         </div>
@@ -234,7 +242,7 @@ export function LoadingScreen() {
                     {/* Outer Camera Recording Indicator */}
                     <div className="rec-indicator opacity-80 z-[12000]">
                         <div className="rec-dot" />
-                        <span className="text-white">VARNOTHSAVA // LIVE</span>
+                        <span className="text-white">Varnothsava // Live Now</span>
                     </div>
 
                     <div className="cam-hud z-[12000]">

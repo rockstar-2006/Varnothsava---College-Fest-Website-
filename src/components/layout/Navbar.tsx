@@ -11,6 +11,13 @@ export function Navbar() {
     const pathname = usePathname()
     const { isLoggedIn, cart } = useApp()
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+    const [isMobile, setIsMobile] = useState(false)
+
+    useState(() => {
+        if (typeof window !== 'undefined') {
+            setIsMobile(window.innerWidth < 768)
+        }
+    })
 
     const navLinks = [
         { name: 'DASHBOARD', href: '/', icon: LayoutGrid },
@@ -23,7 +30,10 @@ export function Navbar() {
         <motion.nav
             initial={{ y: -100 }}
             animate={{ y: 0 }}
-            className="fixed top-0 inset-x-0 z-[500] bg-[#050805]/80 backdrop-blur-md border-b border-emerald-500/10"
+            className={`fixed top-0 inset-x-0 z-[500] transition-all duration-500 ${pathname === '/gallery'
+                ? 'bg-transparent border-transparent'
+                : `bg-[#050805]/80 ${isMobile ? '' : 'backdrop-blur-md'} border-b border-emerald-500/10`
+                }`}
         >
             <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                 {/* Logo - Green Theme */}
@@ -119,6 +129,34 @@ export function Navbar() {
                                     {link.name}
                                 </Link>
                             ))}
+
+                            {/* Mobile-only Action Buttons */}
+                            <div className="h-[1px] bg-white/5 my-2 mx-4" />
+
+                            <Link
+                                href="/checkout"
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="px-4 py-3 text-[10px] font-black text-white/40 hover:text-emerald-400 hover:bg-white/5 rounded-sm flex items-center justify-between transition-all tracking-widest"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <ShoppingCart className="w-4 h-4" />
+                                    CART
+                                </div>
+                                {cart.length > 0 && (
+                                    <span className="bg-emerald-500 text-black px-1.5 py-0.5 rounded-full text-[8px] font-black">
+                                        {cart.length}
+                                    </span>
+                                )}
+                            </Link>
+
+                            <Link
+                                href={isLoggedIn ? "/dashboard" : "/login"}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="px-4 py-3 text-[10px] font-black text-white/40 hover:text-emerald-400 hover:bg-white/5 rounded-sm flex items-center gap-4 transition-all tracking-widest"
+                            >
+                                <User className="w-4 h-4" />
+                                {isLoggedIn ? 'SYNCED' : 'AUTHORIZE'}
+                            </Link>
                         </div>
                     </motion.div>
                 )}
