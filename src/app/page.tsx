@@ -1,346 +1,379 @@
 'use client'
 
 import React, { useRef, useEffect, useState } from 'react'
-import { motion, useScroll, useTransform, useSpring, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/context/AppContext'
 import {
-    Sparkles, Trophy, Target, Users, Award,
-    CheckCircle2, Cpu, Palette, Gamepad2,
-    Music
+    Sparkles, ArrowRight,
+    Plus, Coffee, Gamepad2,
+    Rocket, Palette, Globe,
+    ShieldCheck, Zap, Users,
+    Trophy, MapPin, Clock,
+    ChevronDown, ExternalLink,
+    Play, Calendar, Command
 } from 'lucide-react'
 import Lenis from 'lenis'
+import dynamic from 'next/dynamic'
 
-// --- High-End Cinematic Frame Sequence Component ---
+// Dynamically import 3D model
+const AncientForestModel = dynamic(() => import('@/components/sections/Fest3DModel'), { ssr: false })
 
-const CinematicSequence = ({ progress, xOffset, scaleRatio }: { progress: any, xOffset: any, scaleRatio: any }) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null)
-    const images = useRef<HTMLImageElement[]>([])
-    const frameCount = 40
-    const [loaded, setLoaded] = useState(false)
-    const [loadProgress, setLoadProgress] = useState(0)
+// --- Premium UI Components ---
 
-    useEffect(() => {
-        let loadedCount = 0
-        const loadImages = () => {
-            for (let i = 1; i <= frameCount; i++) {
-                const img = new Image()
-                img.src = `/sequence/ezgif-frame-${String(i).padStart(3, '0')}.jpg`
-                img.onload = () => {
-                    loadedCount++
-                    setLoadProgress(Math.floor((loadedCount / frameCount) * 100))
-                    if (loadedCount === frameCount) {
-                        setLoaded(true)
-                    }
-                }
-                images.current[i - 1] = img
-            }
-        }
-        loadImages()
-    }, [])
-
-    useEffect(() => {
-        if (!loaded || !canvasRef.current) return
-
-        const canvas = canvasRef.current
-        const ctx = canvas.getContext('2d')
-        if (!ctx) return
-
-        const render = (val: number) => {
-            const index = Math.min(
-                frameCount - 1,
-                Math.floor(val * (frameCount - 1))
-            )
-            const img = images.current[index]
-            if (img && ctx) {
-                const canvasAspect = canvas.width / canvas.height
-                const imgAspect = img.width / img.height
-
-                let drawWidth, drawHeight, offsetX, offsetY
-
-                if (canvasAspect > imgAspect) {
-                    drawHeight = canvas.height
-                    drawWidth = drawHeight * imgAspect
-                } else {
-                    drawWidth = canvas.width
-                    drawHeight = drawWidth / imgAspect
-                }
-
-                offsetX = (canvas.width - drawWidth) / 2
-                offsetY = (canvas.height - drawHeight) / 2
-
-                ctx.clearRect(0, 0, canvas.width, canvas.height)
-                ctx.drawImage(img, 0, 0, img.width, img.height, offsetX, offsetY, drawWidth, drawHeight)
-            }
-        }
-
-        render(progress.get())
-        const unsubscribe = progress.on('change', render)
-        return () => unsubscribe()
-    }, [loaded, progress])
-
-    return (
-        <div className="w-full h-full flex items-center justify-center overflow-hidden">
-            <motion.div
-                style={{ x: xOffset, scale: scaleRatio }}
-                className="gpu-accel relative w-full h-full max-w-7xl max-h-[80dvh] flex items-center justify-center"
-            >
-                <canvas
-                    ref={canvasRef}
-                    width={1920}
-                    height={1080}
-                    className="w-full h-full object-contain pointer-events-none drop-shadow-[0_0_80px_rgba(16,185,129,0.15)] aspect-video"
-                />
-                <div className="absolute inset-0 bg-emerald-500/5 blur-[150px] rounded-full -z-10 animate-pulse" />
-            </motion.div>
-
-            <AnimatePresence>
-                {!loaded && (
-                    <motion.div
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] bg-[#050505] flex flex-col items-center justify-center p-6"
-                    >
-                        <div className="w-full max-w-xs h-1 bg-white/10 rounded-full overflow-hidden mb-4">
-                            <motion.div
-                                className="h-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,1)]"
-                                initial={{ width: 0 }}
-                                animate={{ width: `${loadProgress}%` }}
-                            />
-                        </div>
-                        <span className="text-[10px] uppercase tracking-[0.6em] text-emerald-500 font-bold text-center">Preparing the fest experience... {loadProgress}%</span>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
-    )
-}
-
-// --- Reusable Components ---
-
-const SectionTag = ({ children }: { children: React.ReactNode }) => (
-    <div className="inline-flex items-center gap-2 px-6 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full mb-6 gpu-accel">
-        <Sparkles className="w-4 h-4 text-emerald-400" />
-        <span className="text-emerald-400 font-bold text-[10px] uppercase tracking-[0.4em]">{children}</span>
-    </div>
-)
-
-const Heading = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
-    <h2 className={`text-h2 font-black tracking-tighter text-white leading-[0.9] uppercase ${className} gpu-accel`}>
+const SectionBadge = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+    <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true }}
+        className={`inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-emerald-500/5 border border-emerald-500/10 text-emerald-400 text-[11px] font-bold tracking-[0.2em] uppercase ${className}`}
+    >
+        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.8)]" />
         {children}
-    </h2>
+    </motion.div>
 )
 
-// --- Main Cinematic Page ---
+const SplitPrimaryButton = ({ children, onClick }: { children: React.ReactNode, onClick?: () => void }) => (
+    <motion.button
+        onClick={onClick}
+        whileHover={{ scale: 1.02, y: -4 }}
+        whileTap={{ scale: 0.98 }}
+        className="relative group px-10 py-5 bg-emerald-500 text-black font-extrabold text-[15px] rounded-2xl shadow-2xl shadow-emerald-500/20 transition-all flex items-center gap-3 overflow-hidden"
+    >
+        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+        <span className="relative z-10 flex items-center gap-3 uppercase tracking-tight font-black">
+            {children} <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
+        </span>
+    </motion.button>
+)
+
+const SplitSecondaryButton = ({ children, onClick }: { children: React.ReactNode, onClick?: () => void }) => (
+    <motion.button
+        onClick={onClick}
+        whileHover={{ scale: 1.02, backgroundColor: 'rgba(255,255,255,0.05)' }}
+        whileTap={{ scale: 0.98 }}
+        className="px-10 py-5 border border-white/10 text-white font-extrabold text-[15px] rounded-2xl transition-all flex items-center gap-3 backdrop-blur-xl uppercase tracking-tight font-black"
+    >
+        {children}
+    </motion.button>
+)
+
+// --- Page Component ---
 
 export default function LandingPage() {
     const router = useRouter()
     const { isLoggedIn } = useApp()
     const containerRef = useRef<HTMLDivElement>(null)
+    const [activeDay, setActiveDay] = useState(0)
 
-    const { scrollYProgress } = useScroll({
-        target: containerRef,
-        offset: ["start start", "end end"]
-    })
+    useEffect(() => {
+        const lenis = new Lenis({ duration: 1.2, smoothWheel: true })
+        function raf(time: number) { lenis.raf(time); requestAnimationFrame(raf) }
+        requestAnimationFrame(raf)
+        return () => lenis.destroy()
+    }, [])
 
-    const springProgress = useSpring(scrollYProgress, {
-        stiffness: 40,
-        damping: 30,
-        restDelta: 0.0001
-    })
-
-    // Choreography Transforms for Artifact
-    // Responsive offset: reduce horizontal shift on mobile
-    const xRange = typeof window !== 'undefined' && window.innerWidth < 768 ? ['0%', '10%', '-10%', '10%', '-10%', '0%', '0%'] : ['0%', '25%', '-25%', '25%', '-25%', '0%', '0%'];
-
-    const xOffset = useTransform(
-        scrollYProgress,
-        [0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9],
-        xRange
-    )
-
-    const scaleRatio = useTransform(
-        scrollYProgress,
-        [0, 0.2, 0.4, 0.6, 0.8, 1],
-        [0.85, 0.7, 0.7, 0.75, 0.8, 1.4]
-    )
-
-    // Visibility Transforms
-    const heroOp = useTransform(scrollYProgress, [0, 0.1], [1, 0])
-    const aboutOp = useTransform(scrollYProgress, [0.1, 0.15, 0.25], [0, 1, 0])
-    const statsOp = useTransform(scrollYProgress, [0.25, 0.3, 0.45], [0, 1, 0])
-    const benefitsOp = useTransform(scrollYProgress, [0.45, 0.5, 0.6], [0, 1, 0])
-    const categoriesOp = useTransform(scrollYProgress, [0.6, 0.65, 0.8], [0, 1, 0])
-    const timelineOp = useTransform(scrollYProgress, [0.8, 0.85, 0.95], [0, 1, 0])
-    const ctaOp = useTransform(scrollYProgress, [0.95, 1], [0, 1])
-
-    const globalY = useTransform(scrollYProgress, [0, 1], [0, -100])
+    const schedule = [
+        { day: 'Day 01', date: 'March 11', title: 'The Convergence', theme: 'Cultural Foundations', events: ['Vocal Solo', 'Street Play', 'Sacred Rituals', 'Workshop: AI in Art'], img: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800' },
+        { day: 'Day 02', title: 'The Forge', date: 'March 12', theme: 'Technological Zenith', events: ['Hack-a-thon', 'Robot Wars', 'Shark Tank', 'UI/UX Battle'], img: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800' },
+        { day: 'Day 03', title: 'State of Art', date: 'March 13', theme: 'Artistic Ethereal', events: ['Battle of Bands', 'Fashion Show', 'Short Film', 'Art Gallery'], img: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800' },
+        { day: 'Day 04', title: 'Final Zenith', date: 'March 14', theme: 'The Grand Legacy', events: ['Valedictory', 'Mega Concert', 'Fusion Dance', 'Awards'], img: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800' }
+    ]
 
     return (
-        <div ref={containerRef} className="root-container bg-[#050505] min-h-[700vh] text-white selection:bg-emerald-500/30 font-sans antialiased overflow-x-hidden">
+        <div ref={containerRef} className="relative bg-[#050505] text-[#f5f5f5] font-sans antialiased selection:bg-emerald-500/30 overflow-x-hidden">
 
-            {/* FIXED CINEMATIC ELEMENT WRAPPER */}
-            <div className="fixed inset-0 z-0 h-[100dvh] w-full pointer-events-none flex items-center justify-center overflow-hidden">
-                <CinematicSequence progress={springProgress} xOffset={xOffset} scaleRatio={scaleRatio} />
+            {/* CONTINUOUS AMBIENT LAYER (LIVELY) */}
+            <div className="fixed inset-0 -z-10 pointer-events-none">
+                <div className="ambient-glow top-[-10%] left-[20%] w-[800px] h-[800px] bg-emerald-500/[0.08]" />
+                <div className="ambient-glow bottom-[20%] right-[-10%] w-[600px] h-[600px] bg-emerald-500/[0.06] [animation-delay:-5s]" />
+                <div className="ambient-glow top-[40%] left-[60%] w-[400px] h-[400px] bg-emerald-500/[0.04] [animation-delay:-10s]" />
             </div>
 
-            {/* SCROLLABLE INTERFACE LAYERS */}
-            <div className="relative z-10 w-full">
+            {/* NOISE OVERLAY FOR PREMIUM TEXTURE */}
+            <div className="fixed inset-0 z-50 pointer-events-none opacity-[0.04] mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
 
-                {/* 1. HERO SECTION */}
-                <section className="h-[100dvh] flex flex-col items-center justify-center text-center px-6">
-                    <motion.div style={{ opacity: heroOp, y: globalY }} className="space-y-6 gpu-accel">
-                        <SectionTag>The Celebration Returns</SectionTag>
-                        <h1 className="text-hero font-bold tracking-tighter leading-[0.8] uppercase flex flex-col items-center">
-                            <span>VANOTH</span>
-                            <span className="text-emerald-500 italic">SAVA</span>
-                        </h1>
-                        <p className="text-[12px] uppercase tracking-[1em] text-emerald-500/50 pt-4">NMAMIT / 2026</p>
-                    </motion.div>
-                </section>
+            {/* 1. HERO SECTION - ULTRA WIDE SPLIT */}
+            <section className="relative min-h-screen flex items-center justify-center px-6 md:px-16 pt-32 overflow-hidden">
+                <div className="max-w-[1800px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
 
-                {/* 2. ABOUT SECTION */}
-                <section data-theme="light" className="h-[100dvh] flex items-center px-6 md:px-[10%] bg-white text-black relative">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.05),transparent)] pointer-events-none" />
-                    <motion.div style={{ opacity: aboutOp, y: globalY }} className="max-w-2xl space-y-8 relative z-10 gpu-accel">
-                        <div className="inline-flex items-center gap-2 px-6 py-2 bg-black/5 border border-black/10 rounded-full mb-6 text-black">
-                            <Sparkles className="w-4 h-4 text-emerald-600" />
-                            <span className="text-emerald-600 font-bold text-[10px] uppercase tracking-[0.4em]">The Legacy</span>
+                    {/* LEFT SIDE: TITLES (META STYLE) */}
+                    <div className="relative z-10 space-y-12">
+                        <SectionBadge>SMVITM Campus • March 11-14</SectionBadge>
+
+                        <div className="space-y-4">
+                            <motion.h1
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ duration: 0.8 }}
+                                className="text-4xl sm:text-6xl lg:text-7xl font-[1000] tracking-[-0.04em] leading-tight text-white uppercase"
+                            >
+                                VARNOTHSAVA <span className="text-emerald-500">2K26</span>
+                            </motion.h1>
+                            <motion.p
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 }}
+                                className="text-base sm:text-lg lg:text-xl text-[#888] font-bold max-w-xl leading-relaxed uppercase tracking-tight"
+                            >
+                                Ancestral <span className="text-white">heritage</span> meets future-ready <span className="text-white">innovation</span>. A legacy being written today.
+                            </motion.p>
                         </div>
-                        <h2 className="text-h2 font-bold tracking-tighter text-black leading-[0.9] uppercase">
-                            CELEBRATING <br /><span className="text-emerald-600 italic">CREATIVITY</span>
-                        </h2>
-                        <p className="text-lg md:text-xl text-slate-600 font-light leading-relaxed">
-                            Since 2006, Varnothsava has been the crucible for the brightest minds in the nation. It is where blueprints become
-                            reality and stage fear becomes applause.
-                        </p>
-                    </motion.div>
-                </section>
 
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="flex flex-col sm:flex-row items-center gap-6"
+                        >
+                            <SplitPrimaryButton onClick={() => router.push('/events')}>
+                                Explore Quests
+                            </SplitPrimaryButton>
+                            <SplitSecondaryButton onClick={() => router.push(isLoggedIn ? '/profile' : '/login')}>
+                                Portal Access
+                            </SplitSecondaryButton>
+                        </motion.div>
 
-                {/* 3. STATS SECTION */}
-                <section className="h-[100dvh] flex items-center justify-center md:justify-end px-6 md:px-[10%]">
-                    <motion.div style={{ opacity: statsOp, y: globalY }} className="max-w-2xl space-y-12 text-center md:text-right gpu-accel">
-                        <SectionTag>What to Expect</SectionTag>
-                        <Heading>THE <span className="text-emerald-500 font-bold italic">FEST</span> BY THE NUMBERS</Heading>
-                        <div className="grid grid-cols-2 gap-6 md:gap-10">
+                        {/* Metric Row */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 md:gap-16 pt-16 border-t border-white/5">
                             {[
-                                { label: 'Prize Pool', value: '₹5L+' },
-                                { label: 'Events', value: '50+' },
-                                { label: 'Students', value: '10K+' },
-                                { label: 'Colleges', value: '100+' }
+                                { label: 'TRIBE', value: '10K+' },
+                                { label: 'TREASURE', value: '₹5L+' },
+                                { label: 'QUESTS', value: '50+' },
+                                { label: 'LIFETIME', value: '04D' }
                             ].map((stat, i) => (
-                                <div key={i} className="space-y-1">
-                                    <div className="text-4xl md:text-5xl font-bold text-white">{stat.value}</div>
-                                    <div className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">{stat.label}</div>
-                                </div>
+                                <motion.div
+                                    key={i}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 0.4 + (i * 0.1) }}
+                                    className="space-y-2"
+                                >
+                                    <div className="text-2xl sm:text-3xl lg:text-4xl font-[900] text-white tracking-tighter">{stat.value}</div>
+                                    <div className="text-[10px] font-black text-emerald-500/60 uppercase tracking-[0.2em]">{stat.label}</div>
+                                </motion.div>
                             ))}
                         </div>
-                    </motion.div>
-                </section>
-
-                {/* 4. EXPERIENCE/BENEFITS */}
-                <section className="h-[100dvh] flex items-center px-6 md:px-[10%]">
-                    <motion.div style={{ opacity: benefitsOp, y: globalY }} className="max-w-2xl space-y-10 gpu-accel">
-                        <SectionTag>Your Experience</SectionTag>
-                        <Heading>BEYOND THE <br /><span className="text-emerald-500 italic">CLASSROOM</span></Heading>
-                        <div className="space-y-6">
-                            {[
-                                { title: 'Hands-on Workshops', desc: 'Direct mentorship from industry giants in AI and Robotics.' },
-                                { title: 'Cultural Extravaganza', desc: 'Nights filled with music, dance, and celebrity shows.' },
-                                { title: 'Global Networking', desc: 'Meet peers and mentors from top universities.' }
-                            ].map((benefit, i) => (
-                                <div key={i} className="flex gap-4">
-                                    <CheckCircle2 className="w-6 h-6 text-emerald-500 flex-shrink-0" />
-                                    <div>
-                                        <h4 className="text-lg md:text-xl font-bold text-white uppercase italic">{benefit.title}</h4>
-                                        <p className="text-sm md:text-base text-slate-400">{benefit.desc}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </motion.div>
-                </section>
-
-                {/* 5. CATEGORIES SECTION */}
-                <section className="h-[100dvh] flex items-center justify-center md:justify-end px-6 md:px-[10%]">
-                    <motion.div style={{ opacity: categoriesOp, y: globalY }} className="max-w-3xl space-y-12 text-center md:text-right gpu-accel">
-                        <SectionTag>The Events</SectionTag>
-                        <Heading>CHOOSE YOUR <br /><span className="text-emerald-500 italic">INTEREST</span></Heading>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
-                            {[
-                                { icon: Cpu, name: 'Technical', events: '25+ Events' },
-                                { icon: Palette, name: 'Cultural', events: '20+ Events' },
-                                { icon: Gamepad2, name: 'Gaming', events: '15+ Events' },
-                                { icon: Music, name: 'Perform', events: '10+ Events' }
-                            ].map((cat, i) => (
-                                <div key={i} className="p-6 md:p-8 bg-white/[0.02] border border-white/10 rounded-2xl text-center md:text-right hover:border-emerald-500/20 transition-colors">
-                                    <cat.icon className="w-8 h-8 text-emerald-500 mb-4 mx-auto md:ml-auto md:mr-0" />
-                                    <h4 className="text-xl md:text-2xl font-bold text-white italic">{cat.name}</h4>
-                                    <p className="text-[10px] text-slate-400 uppercase tracking-widest">{cat.events}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </motion.div>
-                </section>
-
-                {/* 6. TIMELINE SECTION */}
-                <section className="h-[100dvh] flex flex-col items-center justify-center text-center px-6">
-                    <motion.div style={{ opacity: timelineOp, y: globalY }} className="space-y-12 gpu-accel">
-                        <SectionTag>The Schedule</SectionTag>
-                        <Heading>THE <span className="text-emerald-500">CHAPTERS</span></Heading>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 max-w-5xl">
-                            {['INCIPIT', 'ASCENDO', 'ZENITH'].map((day, i) => (
-                                <div key={i} className="p-8 md:p-10 bg-white/[0.02] border border-white/10 rounded-3xl backdrop-blur-md text-center">
-                                    <div className="text-3xl md:text-4xl font-bold text-emerald-500 mb-2 italic">0{i + 1}</div>
-                                    <div className="text-lg md:text-xl font-bold text-white mb-2 uppercase tracking-widest italic">DAY 0{i + 1}</div>
-                                    <p className="text-[10px] text-slate-400 uppercase tracking-widest">Main Fest Events</p>
-                                </div>
-                            ))}
-                        </div>
-                    </motion.div>
-                </section>
-
-                {/* 7. FINAL CTA */}
-                <section className="h-[100dvh] flex flex-col items-center justify-center text-center px-6">
-                    <motion.div style={{ opacity: ctaOp }} className="space-y-12 pointer-events-auto gpu-accel">
-                        <h3 className="text-display font-bold tracking-tighter leading-none text-white/90 uppercase">
-                            START YOUR <br />
-                            <span className="text-emerald-500 italic">JOURNEY.</span>
-                        </h3>
-                        <div className="flex flex-col md:flex-row gap-4 md:gap-8 justify-center items-center">
-                            <motion.button
-                                onClick={() => router.push(isLoggedIn ? '/profile' : '/login')}
-                                whileHover={{ scale: 1.05, backgroundColor: '#10b981', color: '#000', boxShadow: '0 0 50px rgba(16,185,129,0.5)' }}
-                                whileTap={{ scale: 0.95 }}
-                                className="w-full md:w-auto px-10 md:px-16 py-6 md:py-8 bg-transparent border-2 border-emerald-500 text-emerald-500 font-bold text-xl md:text-2xl tracking-[0.2em] uppercase rounded-none transition-all hover-effect"
-                            >
-                                {isLoggedIn ? 'Go to Dashboard' : 'Join the Fest'}
-                            </motion.button>
-                            <motion.button
-                                onClick={() => router.push('/events')}
-                                whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.05)' }}
-                                whileTap={{ scale: 0.95 }}
-                                className="w-full md:w-auto px-10 md:px-16 py-6 md:py-8 bg-transparent border-2 border-white/20 text-white font-bold text-xl md:text-2xl tracking-[0.2em] uppercase rounded-none hover-effect"
-                            >
-                                View All Events
-                            </motion.button>
-                        </div>
-                    </motion.div>
-                </section>
-
-                {/* FOOTER */}
-                <footer className="py-24 border-t border-white/5 bg-[#050505] text-center">
-                    <div className="max-w-7xl mx-auto px-6 space-y-10">
-                        <div className="text-5xl font-black text-white italic tracking-tighter uppercase">VARNOTHSAVA<span className="text-emerald-500 underline decoration-emerald-500/20 underline-offset-8">2026.</span></div>
-                        <nav className="flex justify-center gap-12 text-[10px] font-black uppercase tracking-[0.5em] text-slate-600">
-                            <span className="hover:text-emerald-400 cursor-pointer">Instagram</span>
-                            <span className="hover:text-emerald-400 cursor-pointer">Discord</span>
-                            <span className="hover:text-emerald-400 cursor-pointer">Terminal</span>
-                        </nav>
-                        <p className="text-[10px] text-slate-800 uppercase tracking-[0.8em] pt-12">© 2K26 NMAMIT VISIONARIES / SYNCED</p>
                     </div>
-                </footer>
-            </div>
-        </div>
+
+                    {/* RIGHT SIDE: CONTINUOUS 3D MODEL */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 1.5, ease: "easeOut" }}
+                        className="relative h-[400px] sm:h-[600px] lg:h-[1000px] w-full select-none cursor-grab active:cursor-grabbing order-first lg:order-none"
+                    >
+                        <AncientForestModel />
+
+                        <motion.div
+                            animate={{ y: [0, -15, 0] }}
+                            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                            className="absolute bottom-10 right-10 flex items-center gap-4 px-8 py-4 rounded-full bg-emerald-500/5 border border-emerald-500/10 backdrop-blur-2xl"
+                        >
+                            <Command className="w-5 h-5 text-emerald-500" />
+                            <span className="text-[12px] font-black uppercase tracking-widest text-emerald-400">Interact with Relic</span>
+                        </motion.div>
+                    </motion.div>
+                </div>
+
+                {/* Vertical Scroll Ref */}
+                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-6 opacity-20">
+                    <motion.div
+                        animate={{ height: [40, 80, 40] }}
+                        transition={{ duration: 3, repeat: Infinity }}
+                        className="w-[1px] bg-emerald-500"
+                    />
+                    <span className="text-[10px] uppercase font-black tracking-[0.6em] rotate-180 [writing-mode:vertical-lr]">Discover Morphs</span>
+                </div>
+            </section>
+
+            {/* 2. THE CHRONICLES - CONTINUOUS ANIMATED FLEX */}
+            <section className="py-48 px-6 bg-transparent relative overflow-hidden">
+                <div className="max-w-[1800px] mx-auto space-y-32">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-16">
+                        <div className="space-y-6">
+                            <SectionBadge>Temporal Path</SectionBadge>
+                            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-[1000] text-white tracking-tighter leading-none">
+                                THE <span className="text-emerald-500">CYCLE</span>
+                            </h2>
+                        </div>
+                        <p className="max-w-md text-[#777] font-bold text-xl leading-relaxed uppercase tracking-tighter">
+                            A non-linear journey through technology and art, carefully mapped across four cycles of existence.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                        {/* Day Selector Area */}
+                        <div className="lg:col-span-4 flex flex-col gap-6">
+                            {schedule.map((day, i) => (
+                                <motion.button
+                                    key={i}
+                                    onClick={() => setActiveDay(i)}
+                                    whileHover={{ x: 10 }}
+                                    className={`relative p-8 md:p-10 text-left rounded-[1.5rem] md:rounded-[2rem] border transition-all duration-700 flex flex-col justify-between group overflow-hidden ${activeDay === i ? 'bg-emerald-500 border-emerald-500 scale-[1.02] md:scale-[1.05] shadow-[0_20px_40px_-10px_rgba(16,185,129,0.3)]' : 'bg-[#0a0a0a] border-white/5 hover:border-emerald-500/40'}`}
+                                >
+                                    <div className="flex items-center justify-between relative z-10">
+                                        <span className={`text-[12px] font-black uppercase tracking-[0.4em] ${activeDay === i ? 'text-black' : 'text-emerald-500'}`}>{day.day}</span>
+                                        <Zap className={`w-6 h-6 ${activeDay === i ? 'text-black' : 'text-[#222]'}`} />
+                                    </div>
+                                    <div className="relative z-10 space-y-2 pt-8 md:pt-12">
+                                        <h3 className={`text-2xl md:text-4xl font-[950] uppercase tracking-tighter leading-none ${activeDay === i ? 'text-black' : 'text-white'}`}>{day.title}</h3>
+                                        <p className={`text-[11px] md:text-[13px] font-black uppercase tracking-[0.2em] ${activeDay === i ? 'text-black/50' : 'text-[#444]'}`}>{day.date}</p>
+                                    </div>
+                                </motion.button>
+                            ))}
+                        </div>
+
+                        {/* Detail Display Area */}
+                        <motion.div
+                            layout
+                            className="lg:col-span-8 relative rounded-[3.5rem] overflow-hidden bg-[#0a0a0a] border border-white/5 p-16 md:p-24 flex flex-col justify-between"
+                        >
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={activeDay}
+                                    initial={{ opacity: 0, scale: 1.2 }}
+                                    animate={{ opacity: 0.15, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.9 }}
+                                    transition={{ duration: 1.5 }}
+                                    className="absolute inset-0 pointer-events-none"
+                                >
+                                    <img src={schedule[activeDay].img} className="w-full h-full object-cover" alt="" />
+                                </motion.div>
+                            </AnimatePresence>
+
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/90 to-transparent" />
+
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={activeDay}
+                                    initial={{ opacity: 0, x: 50 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -50 }}
+                                    transition={{ duration: 0.8, ease: "circOut" }}
+                                    className="relative z-10 flex flex-col justify-between h-full space-y-24"
+                                >
+                                    <div className="space-y-4 md:space-y-6">
+                                        <h4 className="text-emerald-500 font-black text-[10px] md:text-sm uppercase tracking-[0.8em]">{schedule[activeDay].theme}</h4>
+                                        <h2 className="text-3xl sm:text-4xl lg:text-6xl font-[1000] text-white tracking-tight uppercase leading-none">{schedule[activeDay].title}</h2>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 md:gap-x-20 gap-y-6 md:gap-y-12">
+                                        {schedule[activeDay].events.map((event, j) => (
+                                            <motion.div
+                                                key={j}
+                                                whileHover={{ x: 10, color: '#10b981' }}
+                                                className="group/item flex items-center justify-between border-b border-white/5 pb-4 md:pb-6 cursor-default"
+                                            >
+                                                <div className="flex items-center gap-4 md:gap-6">
+                                                    <div className="w-2 h-2 rounded-full bg-emerald-500/30 group-hover/item:bg-emerald-500 group-hover/item:scale-150 transition-all duration-500" />
+                                                    <span className="text-lg md:text-2xl font-[900] text-[#eee] uppercase tracking-tighter">{event}</span>
+                                                </div>
+                                                <Command className="w-5 h-5 text-[#222] group-hover/item:text-emerald-500 group-hover/item:rotate-12 transition-all" />
+                                            </motion.div>
+                                        ))}
+                                    </div>
+
+                                    <div className="flex flex-col sm:flex-row items-center gap-6 md:gap-10">
+                                        <SplitPrimaryButton onClick={() => router.push('/events')}>Register For Quest</SplitPrimaryButton>
+                                        <p className="text-[#555] font-black text-[10px] md:text-[12px] uppercase tracking-[0.3em] max-w-[200px] text-center sm:text-left">Node synchronization active</p>
+                                    </div>
+                                </motion.div>
+                            </AnimatePresence>
+                        </motion.div>
+                    </div>
+                </div>
+            </section>
+
+            {/* 3. BEYOND LIMITS (EXPERIENCES) - LIVELY CARDS */}
+            <section className="py-48 px-6">
+                <div className="max-w-[1800px] mx-auto space-y-24">
+                    <div className="text-center space-y-8">
+                        <SectionBadge>Sensory Overload</SectionBadge>
+                        <h2 className="text-4xl sm:text-5xl lg:text-6xl font-[1000] text-white uppercase tracking-tighter leading-none">REALM <span className="text-emerald-500">SHIFT.</span></h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                        {[
+                            { title: "Arena 2K", icon: Gamepad2, img: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800", span: "md:col-span-2", h: "h-[700px]", delay: 0 },
+                            { title: "The Hub", icon: Coffee, img: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=800", span: "md:col-span-1", h: "h-[700px]", delay: 0.1 },
+                            { title: "Inno Forge", icon: Rocket, img: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=800", span: "md:col-span-1", h: "h-[600px]", delay: 0.2 },
+                            { title: "Zenith Stage", icon: Globe, img: "https://images.unsplash.com/photo-1514525253361-bee8718a74a2?q=80&w=800", span: "md:col-span-2", h: "h-[600px]", delay: 0.3 }
+                        ].map((item, i) => (
+                            <motion.div
+                                key={i}
+                                initial={{ opacity: 0, y: 50 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 1, delay: item.delay }}
+                                className={`group relative rounded-[3.5rem] overflow-hidden border border-white/5 ${item.span} ${item.h}`}
+                            >
+                                <img src={item.img} className="absolute inset-0 w-full h-full object-cover transition-all duration-[2s] group-hover:scale-110" alt={item.title} />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+
+                                <div className="absolute bottom-8 left-8 md:bottom-16 md:left-16 flex flex-col items-start gap-4 md:gap-6">
+                                    <motion.div
+                                        animate={{ rotate: [0, 10, 0] }}
+                                        transition={{ duration: 4, repeat: Infinity }}
+                                        className="w-12 h-12 md:w-16 md:h-16 rounded-[1rem] md:rounded-[1.5rem] bg-emerald-500/20 backdrop-blur-3xl flex items-center justify-center border border-emerald-500/20 shadow-2xl shadow-emerald-500/20"
+                                    >
+                                        <item.icon className="w-6 h-6 md:w-8 md:h-8 text-emerald-500" />
+                                    </motion.div>
+                                    <h3 className="text-4xl md:text-6xl font-[1000] text-white tracking-[-0.05em] uppercase">{item.title}</h3>
+                                    <div className="h-[3px] w-0 group-hover:w-full bg-emerald-500 transition-all duration-1000 ease-in-out" />
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* 4. FINAL CTA - KINETIC IMPACT */}
+            <section className="py-72 px-6 relative overflow-hidden bg-transparent">
+                <div className="relative z-10 max-w-[1800px] mx-auto flex flex-col items-center text-center space-y-20">
+                    <motion.h2
+                        animate={{ scale: [1, 1.02, 1] }}
+                        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                        className="text-4xl sm:text-6xl lg:text-8xl font-[1000] tracking-tighter leading-tight text-white uppercase"
+                    >
+                        BE THE <br /><span className="text-emerald-500 drop-shadow-[0_0_80px_rgba(16,185,129,0.3)]">STATIC.</span>
+                    </motion.h2>
+                    <p className="text-lg sm:text-2xl text-[#666] font-[900] max-w-3xl mx-auto uppercase tracking-tight leading-relaxed">
+                        Disconnect from the ordinary. Sync into the Varnothsava network.
+                    </p>
+                    <div className="flex flex-col sm:flex-row items-center gap-12 pt-12">
+                        <SplitPrimaryButton onClick={() => router.push('/login')}>Initiate Link</SplitPrimaryButton>
+                        <SplitSecondaryButton onClick={() => router.push('/events')}>Read Prophecy</SplitSecondaryButton>
+                    </div>
+                </div>
+            </section>
+
+            {/* PROFESSIONAL FOOTER */}
+            <footer className="py-20 md:py-32 px-6 md:px-16 border-t border-white/5 bg-[#050505] relative z-20">
+                <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row justify-between items-start gap-24">
+                    <div className="space-y-8">
+                        <div className="text-5xl font-[1000] tracking-[-0.08em] uppercase">
+                            VARNOTH<span className="text-emerald-500">SAVA.</span>
+                        </div>
+                        <p className="text-[13px] text-[#444] font-black uppercase tracking-[0.6em] leading-loose max-w-sm">
+                            SMVITM CAMPUS • 2006<br />
+                            THE CORE HAS BEEN RESTORED
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col gap-12">
+                        <div className="text-[12px] font-black text-emerald-500/40 uppercase tracking-[0.4em]">Strategic Nodes</div>
+                        <div className="flex gap-16 opacity-30 group">
+                            <img src="/nmamit-logo.png" className="h-16 w-auto invert grayscale group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700" alt="SMVITM" />
+                            <img src="/nitte-logo.png" className="h-16 w-auto invert grayscale group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700" alt="Nitte" />
+                        </div>
+                    </div>
+
+                    <div className="text-[14px] text-[#222] font-black uppercase tracking-[0.2em] max-w-[300px] leading-relaxed">
+                        Engineered for pioneers. <br />
+                        Developed by the Hive Mind.
+                    </div>
+                </div>
+            </footer >
+        </div >
     )
 }

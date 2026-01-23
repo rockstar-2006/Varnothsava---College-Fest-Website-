@@ -104,9 +104,9 @@ export function Leaderboard() {
                                 </motion.div>
                             ))
                         ) : (
-                            <div className="p-20 text-center">
-                                <p className="text-white/60 font-bold uppercase tracking-[0.4em] text-sm">Preparing the scoreboard...</p>
-                                <p className="text-emerald-500/80 font-bold uppercase tracking-[0.2em] text-xs mt-3">Waiting for the first winners to be announced!</p>
+                            <div className="p-10 md:p-20 text-center">
+                                <p className="text-white/60 font-bold uppercase tracking-[0.2em] md:tracking-[0.4em] text-xs md:text-sm">Preparing the scoreboard...</p>
+                                <p className="text-emerald-500/80 font-bold uppercase tracking-[0.1em] md:tracking-[0.2em] text-[10px] md:text-xs mt-3 px-4">Waiting for the first winners to be announced!</p>
                             </div>
                         )}
                     </div>

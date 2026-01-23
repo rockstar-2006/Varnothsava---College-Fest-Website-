@@ -353,7 +353,7 @@ export function EventGrid({ missions }: EventGridProps) {
                         </h2>
                     </motion.div>
 
-                    <div className="header-reveal relative w-full lg:max-w-xl group/search order-2 xl:order-2">
+                    <div className={`header-reveal relative w-full lg:max-w-xl group/search order-2 xl:order-2 will-change-transform will-change-opacity translate-z-0`} style={{ contain: 'content' }}>
                         <svg className="absolute inset-0 w-full h-full pointer-events-none z-10" preserveAspectRatio="none" viewBox="0 0 400 50">
                             <path d="M 12 0 L 400 0 L 400 38 L 388 50 L 0 50 L 0 12 Z" fill="none" stroke="currentColor" strokeWidth="2.5" className={`text-white/60 ${gTheme.searchBorder}`} />
                         </svg>
@@ -364,9 +364,9 @@ export function EventGrid({ missions }: EventGridProps) {
                     </div>
 
                     <div className="header-reveal relative p-1 group/filter order-3 xl:order-3 w-full lg:w-auto mt-4 xl:mt-0">
-                        <div className="flex flex-wrap items-center justify-center gap-1 bg-white/[0.05] p-1.5 backdrop-blur-2xl border border-white/5" style={{ clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)' }}>
+                        <div className="flex flex-nowrap md:flex-wrap items-center justify-start md:justify-center gap-1 bg-white/[0.05] p-1.5 backdrop-blur-2xl border border-white/5 overflow-x-auto custom-scrollbar-hide" style={{ clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)' }}>
                             {['All', 'Technical', 'Cultural', 'Gaming'].map((t) => (
-                                <button key={t} onClick={() => { setFilter(t as any); setSubFilter('All'); }} className={`px-4 md:px-6 py-3 md:py-2.5 text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] transition-all relative min-h-[48px] md:min-h-0 ${filter === t ? 'text-black z-10' : 'text-white/70 hover:text-white'}`}>
+                                <button key={t} onClick={() => { setFilter(t as any); setSubFilter('All'); }} className={`px-4 md:px-6 py-3 md:py-2.5 text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] transition-all relative min-h-[48px] md:min-h-0 flex-shrink-0 ${filter === t ? 'text-black z-10' : 'text-white/70 hover:text-white'}`}>
                                     {filter === t && <motion.div layoutId="activeFilter" className="absolute inset-0 shadow-[0_0_40px_rgba(255,255,255,0.6)]" style={{ backgroundColor: t === "Cultural" ? "#f59e0b" : "#ffffff", clipPath: 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)' }} transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />}
                                     <span className="relative z-20">{t}</span>
                                 </button>
@@ -377,9 +377,9 @@ export function EventGrid({ missions }: EventGridProps) {
 
                 <AnimatePresence>
                     {filter === 'Cultural' && (
-                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex flex-wrap justify-center mb-8 gap-4">
+                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex flex-nowrap md:flex-wrap justify-start md:justify-center mb-8 gap-4 overflow-x-auto custom-scrollbar-hide pb-2">
                             {['All', 'Hobby Club', 'General', 'Promotional'].map((sf) => (
-                                <button key={sf} onClick={() => setSubFilter(sf as any)} className={`px-8 py-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative ${subFilter === sf ? 'text-black' : 'text-white hover:text-white'}`} style={{ clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 8px)', background: subFilter === sf ? '#fbbf24' : 'rgba(255,255,255,0.02)', backdropFilter: 'blur(10px)' }}>
+                                <button key={sf} onClick={() => setSubFilter(sf as any)} className={`px-8 py-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative flex-shrink-0 ${subFilter === sf ? 'text-black' : 'text-white hover:text-white'}`} style={{ clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 8px)', background: subFilter === sf ? '#fbbf24' : 'rgba(255,255,255,0.02)', backdropFilter: 'blur(10px)' }}>
                                     {sf === 'Hobby Club' ? 'Club Events' : sf === 'General' ? 'General Events' : sf === 'Promotional' ? 'Media & Promo' : 'All Events'}
                                     {subFilter === sf && <motion.div layoutId="subGlow" className="absolute inset-0 shadow-[0_0_30px_rgba(245,158,11,0.8)] blur-xl opacity-60 -z-10" style={{ backgroundColor: '#fbbf24' }} />}
                                 </button>
@@ -403,7 +403,7 @@ export function EventGrid({ missions }: EventGridProps) {
                                     </motion.div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 lg:gap-10 px-4 md:px-8">
                                         {groupedEvents.technical.map((event, idx) => (
-                                            <MissionCard key={event.id} event={event} idx={idx} theme={getEventTheme(event.type)} complexClip={complexClip} isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)} isLoggedIn={isLoggedIn} onRegister={handleRegisterClick} className="will-change-gpu" />
+                                            <MissionCard key={event.id} event={event} idx={idx} theme={getEventTheme(event.type)} complexClip={complexClip} isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)} isLoggedIn={isLoggedIn} onRegister={handleRegisterClick} className="will-change-gpu" priority={idx < 4} />
                                         ))}
                                     </div>
                                 </div>

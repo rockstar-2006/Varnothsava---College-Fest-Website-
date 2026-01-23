@@ -1,3 +1,4 @@
+import React, { Suspense } from "react";
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
@@ -24,10 +25,19 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <body className={`${outfit.className} bg-[#050805] text-white antialiased`}>
+            <head>
+                <link rel="preconnect" href="https://fonts.googleapis.com" />
+                <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+                <link rel="preconnect" href="https://images.unsplash.com" />
+                <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
+                <meta name="theme-color" content="#050805" />
+            </head>
+            <body className={`${outfit.className} bg-[#050805] text-white antialiased selection:bg-emerald-500/30`}>
                 <AppProvider>
-                    <LoadingScreen />
-                    <PageTransitionBar />
+                    <Suspense fallback={null}>
+                        <LoadingScreen />
+                        <PageTransitionBar />
+                    </Suspense>
                     <CustomCursor />
 
 

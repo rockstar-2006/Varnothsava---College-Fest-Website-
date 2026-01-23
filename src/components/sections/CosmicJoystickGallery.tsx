@@ -427,12 +427,12 @@ export function CosmicJoystickGallery() {
                     </h2>
                 </div>
                 <div className="text-right">
-                    <span className="text-[10px] font-mono tracking-[0.3em] text-emerald-500/60 uppercase mb-1 md:mb-4 block">
+                    <span className="text-[8px] md:text-[10px] font-mono tracking-[0.2em] md:tracking-[0.3em] text-emerald-500/60 uppercase mb-1 md:mb-4 block">
                         PHOTO_ID: {currentIndex + 1}
                     </span>
-                    <div className="text-white font-black text-2xl md:text-6xl tracking-tighter flex items-baseline gap-1 md:gap-2">
+                    <div className="text-white font-black text-xl md:text-6xl tracking-tighter flex items-baseline justify-end gap-1 md:gap-2">
                         {String(currentIndex + 1).padStart(2, '0')}
-                        <span className="text-white/10 text-lg md:text-2xl font-light">/ {PRODUCTS.length}</span>
+                        <span className="text-white/10 text-xs md:text-2xl font-light">/ {PRODUCTS.length}</span>
                     </div>
                 </div>
             </div>
@@ -520,7 +520,7 @@ export function CosmicJoystickGallery() {
                 {/* Label */}
                 <div
                     ref={menuLabelRef}
-                    className="text-[10px] md:text-[12px] font-mono tracking-[0.8em] md:tracking-[1.5em] text-emerald-400 font-bold uppercase drop-shadow-[0_0_15px_rgba(16,185,129,0.8)] mb-2"
+                    className="text-[8px] md:text-[12px] font-mono tracking-[0.6em] md:tracking-[1.5em] text-emerald-400 font-bold uppercase drop-shadow-[0_0_15px_rgba(16,185,129,0.8)] mb-2 text-center w-full px-2"
                 >
                     SWIPE TO BROWSE
                 </div>

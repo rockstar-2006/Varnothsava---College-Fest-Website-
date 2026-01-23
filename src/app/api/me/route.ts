@@ -28,8 +28,10 @@ export async function GET(request: NextRequest) {
         const token = authHeader.split(' ')[1];
         const verified = await verifyAuthToken(token);
         if (!verified) {
+            console.error("API /me: Token verification returned null");
             return NextResponse.json({ message: "Unauthorized." }, { status: 401 });
         }
+        console.log("API /me: Verified user UID:", verified.uid);
 
         if (!usersCollection) {
             return NextResponse.json({ message: "System error: Database not initialized. Check server logs for service-account.json errors." }, { status: 500 });

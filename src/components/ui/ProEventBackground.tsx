@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import Image from 'next/image'
 
 interface ProEventBackgroundProps {
     theme?: 'emerald' | 'amber' | 'cyan' | 'indigo' | 'gaming'
@@ -15,9 +16,10 @@ const GamingPulse = React.memo(({ scrollProgress = 0 }: { scrollProgress?: numbe
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
             {/* Base Lively Gaming Image Layer (Parallax) */}
             <div className="absolute inset-0 z-0">
-                <img
+                <Image
                     src="/gaming-bg.png"
                     alt=""
+                    fill
                     className="absolute inset-0 w-full h-full object-cover blur-[2px] opacity-40 scale-110"
                 />
                 <motion.img

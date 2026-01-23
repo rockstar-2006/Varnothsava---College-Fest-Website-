@@ -11,6 +11,7 @@ export function PageTransition({ children }: { children: ReactNode }) {
         <AnimatePresence mode="wait">
             <motion.div
                 key={pathname}
+                className="gpu-accel"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}

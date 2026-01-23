@@ -54,6 +54,7 @@ interface EventCardProps {
     isLoggedIn?: boolean
     onRegister: (event: Event) => void
     className?: string
+    priority?: boolean
 }
 
 import EventCard from '../gaming/EventCard'
@@ -66,7 +67,8 @@ export const MissionCard = memo(({
     isRegistered,
     isLoggedIn = false,
     onRegister,
-    className = ""
+    className = "",
+    priority = false
 }: EventCardProps) => {
     const router = useRouter()
 
@@ -117,9 +119,9 @@ export const MissionCard = memo(({
                 perspective={2000}
                 transitionSpeed={2000}
                 tiltEnable={!isMobile}
-                className={`w-full group ${event.type === 'Cultural' ? (isMobile ? 'h-[460px]' : 'h-[500px]') : (isMobile ? 'h-[400px]' : 'h-[440px]')} gpu-accel`}
+                className={`w-full group ${event.type === 'Cultural' ? (isMobile ? 'h-[460px]' : 'h-[500px]') : (isMobile ? 'h-[400px]' : 'h-[440px]')} gpu-accel transition-transform active:scale-[0.98]`}
             >
-                <div className="w-full h-full relative" onClick={() => router.push(`/events/${event.id}`)}>
+                <div className="w-full h-full relative cursor-pointer" onClick={() => router.push(`/events/${event.id}`)}>
                     {/* GLOW BACKDROP - Reduced blur on mobile for performance */}
                     <div
                         className={`absolute inset-[-20px] transition-all duration-500 opacity-30 group-hover:opacity-100 ${isMobile ? 'blur-[15px]' : 'blur-[40px]'}`}
@@ -333,6 +335,7 @@ export const MissionCard = memo(({
                                 alt={event.title}
                                 fill
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                                priority={priority}
                                 className="object-cover opacity-100 group-hover:scale-110 transition-all duration-[1200ms]"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent " />

@@ -250,8 +250,8 @@ function LoadingContent() {
                                 rotate: [0, p.rotate]
                             }}
                             transition={{ duration: p.dur, repeat: Infinity, ease: "linear" }}
-                            className="absolute w-1 h-1 rounded-full blur-[0.5px]"
-                            style={{ backgroundColor: themeConfig.color, willChange: 'transform, opacity' }}
+                            className="absolute w-1 h-1 rounded-full blur-[0.5px] no-jank"
+                            style={{ backgroundColor: themeConfig.color }}
                         />
                     ))}
                 </div>

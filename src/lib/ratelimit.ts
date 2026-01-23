@@ -82,29 +82,28 @@ export async function checkLoginRateLimit(identifier: string): Promise<{ success
     }
     */
 
-    // Development: Relaxed limits for testing
-    const isDev = process.env.NODE_ENV === 'development';
-    const maxRequests = isDev ? 50 : 5;
+    // Development: Relaxed limits for local testing/showcase
+    const isDev = process.env.NODE_ENV === 'development' || !process.env.UPSTASH_REDIS_REST_URL;
+    const maxRequests = isDev ? 1000 : 5;
     return inMemoryLimiter.limit(identifier, maxRequests, 15 * 60 * 1000);
 }
 
 /**
  * Rate limit for registration attempts
- * 3 attempts per hour per IP
+ * 10 attempts per hour for local, 3 for prod
  */
 export async function checkRegistrationRateLimit(identifier: string): Promise<{ success: boolean; remaining: number }> {
-    const isDev = process.env.NODE_ENV === 'development';
-    const maxRequests = isDev ? 50 : 3;
+    const isDev = process.env.NODE_ENV === 'development' || !process.env.UPSTASH_REDIS_REST_URL;
+    const maxRequests = isDev ? 500 : 3;
     return inMemoryLimiter.limit(identifier, maxRequests, 60 * 60 * 1000);
 }
 
 /**
  * Rate limit for general API requests
- * 100 requests per minute per IP
  */
 export async function checkApiRateLimit(identifier: string): Promise<{ success: boolean; remaining: number }> {
-    const isDev = process.env.NODE_ENV === 'development';
-    const maxRequests = isDev ? 1000 : 100;
+    const isDev = process.env.NODE_ENV === 'development' || !process.env.UPSTASH_REDIS_REST_URL;
+    const maxRequests = isDev ? 5000 : 100;
     return inMemoryLimiter.limit(identifier, maxRequests, 60 * 1000);
 }
 

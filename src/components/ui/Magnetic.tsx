@@ -8,7 +8,7 @@ export function Magnetic({ children, strength = 0.5 }: { children: React.ReactNo
     const x = useMotionValue(0)
     const y = useMotionValue(0)
 
-    const springConfig = { damping: 15, stiffness: 150 }
+    const springConfig = { damping: 20, stiffness: 200, mass: 0.8 }
     const springX = useSpring(x, springConfig)
     const springY = useSpring(y, springConfig)
 

@@ -39,7 +39,7 @@ const getTailwindTheme = (theme: string) => {
 // Geometric Tech Card Component
 // Geometric Tech Card Component
 const TechStatCard = ({ icon: Icon, label, value, theme }: any) => (
-    <div className="relative group min-h-[140px]">
+    <div className="relative group min-h-[100px] md:min-h-[140px]">
         {/* Background Glow - Visible on hover */}
         <div
             className={`absolute inset-0 bg-${theme}-500/20 blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-500`}
@@ -47,29 +47,26 @@ const TechStatCard = ({ icon: Icon, label, value, theme }: any) => (
 
         {/* Border Container */}
         <div
-            className={`relative w-full h-full p-[2px] bg-gradient-to-b from-${theme}-500 via-${theme}-500/20 to-${theme}-500 overflow-hidden`}
-            style={{ clipPath: 'polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px)' }}
+            className={`relative w-full h-full p-[1px] md:p-[2px] bg-gradient-to-b from-${theme}-500 via-${theme}-500/20 to-${theme}-500 overflow-hidden`}
+            style={{ clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)' }}
         >
             {/* Corner Accents */}
-            <div className={`absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-${theme}-500`} />
-            <div className={`absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-${theme}-500`} />
-            <div className={`absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-${theme}-500`} />
-            <div className={`absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-${theme}-500`} />
-
-            {/* Spinning Light Effect (Hover) */}
-            <div className={`absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent w-[200%] h-[200%] -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 animate-spin`} style={{ animationDuration: '3s' }} />
+            <div className={`absolute top-0 left-0 w-4 h-4 md:w-8 md:h-8 border-t-2 border-l-2 border-${theme}-500`} />
+            <div className={`absolute top-0 right-0 w-4 h-4 md:w-8 md:h-8 border-t-2 border-r-2 border-${theme}-500`} />
+            <div className={`absolute bottom-0 left-0 w-4 h-4 md:w-8 md:h-8 border-b-2 border-l-2 border-${theme}-500`} />
+            <div className={`absolute bottom-0 right-0 w-4 h-4 md:w-8 md:h-8 border-b-2 border-r-2 border-${theme}-500`} />
 
             {/* Inner Content */}
             <div
-                className="relative bg-black/80 backdrop-blur-2xl p-6 h-full flex flex-col items-center justify-center gap-3 text-center"
-                style={{ clipPath: 'polygon(29px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 29px), calc(100% - 29px) 100%, 14px 100%, 0 calc(100% - 14px), 0 29px)' }}
+                className="relative bg-black/80 backdrop-blur-2xl p-3 md:p-6 h-full flex flex-col items-center justify-center gap-1 md:gap-3 text-center"
+                style={{ clipPath: 'polygon(15px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 15px), calc(100% - 15px) 100%, 8px 100%, 0 calc(100% - 8px), 0 15px)' }}
             >
-                <div className={`p-3 bg-${theme}-500/20 border-2 border-${theme}-500/40 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(0,0,0,0.3)]`} style={{ clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)' }}>
-                    <Icon size={20} className={`text-${theme}-500 drop-shadow-[0_0_8px_rgba(0,0,0,0.8)]`} />
+                <div className={`p-2 md:p-3 bg-${theme}-500/20 border-2 border-${theme}-500/40 group-hover:scale-110 transition-transform`} style={{ clipPath: 'polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)' }}>
+                    <Icon size={16} className={`text-${theme}-500`} />
                 </div>
                 <div>
-                    <p className={`text-[9px] font-black uppercase tracking-[0.2em] text-${theme}-500/70 mb-1`}>{label}</p>
-                    <p className="text-xl font-black italic uppercase tracking-tighter text-white drop-shadow-md">{value}</p>
+                    <p className={`text-[7px] md:text-[9px] font-black uppercase tracking-[0.1em] md:tracking-[0.2em] text-${theme}-500/70 mb-0.5 md:mb-1`}>{label}</p>
+                    <p className="text-xs sm:text-base md:text-xl font-black italic uppercase tracking-tighter text-white truncate max-w-full">{value}</p>
                 </div>
             </div>
         </div>
@@ -230,7 +227,7 @@ export default function EventDetailsPage() {
 
                                     <div className="absolute bottom-0 left-0 w-full p-8">
                                         <motion.h1
-                                            className={`text-3xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-4 ${twTheme === 'amber' ? 'text-amber-500' : (twTheme === 'red' ? 'text-red-500' : 'text-emerald-500')}`}
+                                            className={`text-2xl sm:text-3xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-4 ${twTheme === 'amber' ? 'text-amber-500' : (twTheme === 'red' ? 'text-red-500' : 'text-emerald-500')}`}
                                             style={{ textShadow: `0 0 30px ${primaryGlow}` }}
                                         >
                                             {mission.title.replace('_', ' ')}
@@ -339,7 +336,7 @@ export default function EventDetailsPage() {
                                 <Info size={20} className={`text-${twTheme}-500`} />
                                 <h2 className="text-sm font-black uppercase tracking-widest">MISSION_BRIEF</h2>
                             </div>
-                            <p className="text-lg text-white/80 font-medium leading-relaxed font-mono">
+                            <p className="text-sm md:text-lg text-white/80 font-medium leading-relaxed font-mono">
                                 {mission.description}
                             </p>
                         </motion.section>
@@ -472,7 +469,7 @@ export default function EventDetailsPage() {
                 <motion.div
                     initial={{ opacity: 0, y: 40 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    className="mt-24 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+                    className="mt-16 md:mt-24 grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6"
                 >
                     <TechStatCard
                         icon={Calendar}

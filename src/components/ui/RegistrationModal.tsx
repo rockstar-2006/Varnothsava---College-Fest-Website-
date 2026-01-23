@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Users, ShieldCheck, Zap, AlertCircle, CheckCircle2, Loader2, Plus, Trash2, Hash } from 'lucide-react'
+import Image from 'next/image'
 import { Event } from '@/data/missions'
 import { UserData } from '@/context/AppContext'
 
@@ -102,7 +103,13 @@ export function RegistrationModal({ isOpen, onClose, event, userData, onConfirm 
                     >
                         {/* Header Image/Banner */}
                         <div className="h-32 relative overflow-hidden">
-                            <img src={event.visual} alt={event.title} className="w-full h-full object-cover opacity-40" />
+                            <Image
+                                src={event.visual}
+                                alt={event.title}
+                                fill
+                                className="w-full h-full object-cover opacity-40"
+                                loading="lazy"
+                            />
                             <div className="absolute inset-0 bg-gradient-to-t from-[#050905] to-transparent" />
                             <div className="absolute top-4 right-4">
                                 <button onClick={onClose} className="p-2 bg-black/50 hover:bg-black/80 text-white/50 hover:text-white rounded-full transition-all">

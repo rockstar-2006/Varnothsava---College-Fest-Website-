@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef, useEffect, useMemo } from 'react'
+import React, { useState, useRef, useEffect, useMemo, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Lock, Rocket, ArrowRight, Shield, Globe, Cpu, User, School, Search, Upload, CheckCircle2, ChevronDown, Camera, X, Phone, Zap } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
@@ -120,6 +120,14 @@ function StudentPortalSphere() {
 import Lottie from 'lottie-react'
 
 export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="h-screen w-full bg-[#050b14]" />}>
+            <LoginContent />
+        </Suspense>
+    )
+}
+
+function LoginContent() {
     const { needsOnboarding, registerUser, isLoggedIn, mountUser, login, isInitializing, userData } = useApp()
     const router = useRouter()
 
@@ -259,7 +267,7 @@ export default function LoginPage() {
     }
 
     return (
-        <main className="h-[100dvh] w-full bg-[#050b14] text-white relative flex items-center justify-center overflow-hidden root-container">
+        <main className="min-h-screen w-full bg-[#050b14] text-white relative flex items-center justify-center py-10 md:py-20 overflow-x-hidden root-container">
             {/* LIVELY STARFIELD BACKGROUND */}
             <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
                 <div className="absolute inset-0 bg-[#050b14]" />
@@ -327,7 +335,7 @@ export default function LoginPage() {
                     <motion.div
                         initial={{ opacity: 0, scale: 0.98 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-[#0c1420]/60 backdrop-blur-3xl border border-white/10 rounded-[2rem] md:rounded-[2.5rem] p-8 md:p-10 xl:p-14 shadow-2xl relative"
+                        className="bg-[#0c1420]/60 backdrop-blur-3xl border border-white/10 rounded-[2rem] md:rounded-[2.5rem] p-6 sm:p-8 md:p-10 xl:p-14 shadow-2xl relative"
                     >
                         <AnimatePresence mode="wait">
                             {step === 1 ? (
@@ -339,10 +347,10 @@ export default function LoginPage() {
                                     className="space-y-10"
                                 >
                                     <div className="space-y-2 text-center lg:text-left">
-                                        <h2 className="text-4xl font-bold tracking-tight">
+                                        <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
                                             {isRegister ? 'Sign Up' : 'Welcome Back'}
                                         </h2>
-                                        <p className="text-white/75 font-medium text-sm">
+                                        <p className="text-white/75 font-medium text-xs sm:text-sm">
                                             {isRegister ? 'Join the fest today.' : 'Login to your fest dashboard.'}
                                         </p>
                                     </div>
@@ -350,7 +358,7 @@ export default function LoginPage() {
                                     <button
                                         onClick={handleGoogleLoginStep1}
                                         disabled={isLoading}
-                                        className="w-full min-h-[56px] flex items-center justify-center gap-3 bg-white text-black hover:bg-white/90 rounded-2xl text-[13px] font-bold transition-all shadow-lg active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed hover-effect"
+                                        className="w-full min-h-[50px] md:min-h-[56px] flex items-center justify-center gap-3 bg-white text-black hover:bg-white/90 rounded-2xl text-[12px] md:text-[13px] font-bold transition-all shadow-lg active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed hover-effect"
                                     >
                                         {isLoading ? (
                                             <div className="flex items-center gap-2">
@@ -391,7 +399,7 @@ export default function LoginPage() {
 
                                         <button
                                             disabled={isLoading}
-                                            className="w-full min-h-[56px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl text-[14px] transition-all shadow-xl mt-4 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 hover-effect"
+                                            className="w-full min-h-[50px] md:min-h-[56px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl text-[13px] md:text-[14px] transition-all shadow-xl mt-4 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 hover-effect"
                                         >
                                             {isLoading && <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />}
                                             {isRegister ? 'Create Account' : 'Login'}

@@ -82,22 +82,19 @@ export function CosmicGallery() {
                 <AnimatePresence mode="popLayout">
                     <motion.div
                         key={`bg-${currentIndex}`}
-                        initial={{ opacity: 0, scale: 1.1 }}
+                        initial={{ opacity: 0 }}
                         animate={{
                             opacity: 1,
-                            scale: 1,
-                            x: mousePos.x,
-                            y: mousePos.y
                         }}
-                        exit={{ opacity: 0, scale: 1.05 }}
-                        transition={{ duration: 1.2, ease: "easeOut" }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.8, ease: "linear" }}
                         className="absolute inset-0"
                     >
                         <Image
                             src={activeItem.src}
                             alt="Background"
                             fill
-                            className="object-cover blur-[100px] brightness-[0.25] saturate-[1.5]"
+                            className="object-cover blur-[60px] brightness-[0.2] saturate-[1.2]"
                             priority
                         />
                     </motion.div>
@@ -125,13 +122,13 @@ export function CosmicGallery() {
                             key="showcase"
                             initial={{ opacity: 0, y: 50, scale: 0.95 }}
                             animate={{ opacity: 1, y: -40, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9, blur: "10px" }}
-                            transition={{ duration: 0.8, ease: [0.19, 1, 0.22, 1] }}
-                            className="w-full max-w-6xl flex flex-col md:flex-row items-center gap-12 px-8"
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ duration: 0.5, ease: "circOut" }}
+                            className="w-full max-w-6xl flex flex-col md:flex-row items-center gap-12 px-8 no-jank"
                         >
                             {/* SHARP IMAGE CARD */}
                             <motion.div
-                                className="relative w-full aspect-[3/4] md:w-[480px] md:h-[640px] rounded-[2.5rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,1)] border border-white/10 bg-neutral-900 group"
+                                className="relative w-full aspect-[3/4] md:w-[480px] md:h-[640px] rounded-[2.5rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,1)] border border-white/10 bg-neutral-900 group no-jank"
                                 layoutId="gallery-card"
                             >
                                 <motion.div
@@ -214,10 +211,10 @@ export function CosmicGallery() {
                                                 rotateY: wrappedDiff * -35,
                                                 opacity: isActive ? 1 : 0.25,
                                                 scale: isActive ? 1.05 : 0.8,
-                                                filter: isActive ? 'blur(0px)' : 'blur(4px)'
+                                                filter: isActive ? 'blur(0px)' : 'blur(2px)'
                                             }}
-                                            transition={{ type: 'spring', stiffness: 180, damping: 24 }}
-                                            className="absolute w-[300px] h-[450px] md:w-[420px] md:h-[600px] cursor-pointer"
+                                            transition={{ type: 'spring', stiffness: 220, damping: 28, mass: 0.6 }}
+                                            className="absolute w-[300px] h-[450px] md:w-[420px] md:h-[600px] cursor-pointer no-jank"
                                             onClick={() => {
                                                 if (isActive) setViewMode('showcase');
                                                 else setCurrentIndex(idx);

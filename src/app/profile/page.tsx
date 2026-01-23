@@ -8,7 +8,7 @@ import {
     Edit3, Award, Trophy, GraduationCap, CheckCircle,
     Settings, Globe, Calendar, Clock, CreditCard,
     BookOpen, Sparkles, ChevronRight, LayoutDashboard,
-    ArrowRight, MapPin, Link2
+    ArrowRight, MapPin, Link2, X
 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { useRouter } from 'next/navigation'
@@ -22,14 +22,14 @@ const ACCENT_CYAN = '#00f2ff'
 const AnimatedBorderCard = ({ children, className = "", noPadding = false, hoverEffect = true }: { children: React.ReactNode, className?: string, noPadding?: boolean, hoverEffect?: boolean }) => {
     return (
         <div className={`relative group p-[1px] rounded-[1.5rem] md:rounded-[2rem] overflow-hidden ${className} gpu-accel`}>
-            {/* The Animated Border Layer */}
-            <div className="absolute inset-[-1000%] animate-[spin_5s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#00ff9d_0%,#00f2ff_25%,#10b981_50%,#00f2ff_75%,#00ff9d_100%)] opacity-30 group-hover:opacity-100 transition-opacity duration-500" />
+            {/* The Animated Border Layer - Reduced intensity for performance */}
+            <div className="absolute inset-[-200%] md:inset-[-1000%] animate-[spin_10s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#00ff9d_0%,#00f2ff_25%,#10b981_50%,#00f2ff_75%,#00ff9d_100%)] opacity-20 group-hover:opacity-40 transition-opacity duration-1000" />
 
             {/* The Glass Content Layer */}
             <div className={`
-                relative h-full w-full backdrop-blur-3xl rounded-[1.45rem] md:rounded-[1.95rem] bg-[#08090f]/95 
+                relative w-full h-full backdrop-blur-2xl rounded-[1.45rem] md:rounded-[1.95rem] bg-[#08090f]/90 md:bg-[#08090f]/95 
                 shadow-[0_12px_40px_-10px_rgba(0,0,0,0.8)] transition-all duration-500
-                ${noPadding ? '' : 'p-6 md:p-8 lg:p-10'}
+                ${noPadding ? '' : 'p-5 md:p-8 lg:p-10'}
             `}>
                 {children}
             </div>
@@ -252,9 +252,9 @@ export default function ProfilePage() {
                 variants={containerVariants}
                 initial="hidden"
                 whileInView="visible"
-                viewport={{ once: true, margin: "-100px" }}
-                className="relative z-10 max-w-6xl mx-auto pt-24 md:pt-32 pb-20 px-4 md:px-8 root-container"
-                style={{ perspective: 1000 }}
+                viewport={{ once: true, margin: "-50px" }}
+                className="relative z-10 max-w-6xl mx-auto pt-20 md:pt-32 pb-40 px-4 md:px-8 root-container"
+                style={{ perspective: 1500 }}
             >
                 {/* --- CONTROL CENTER HEADER --- */}
                 <motion.div
@@ -269,7 +269,7 @@ export default function ProfilePage() {
                         </div>
 
                         <div className="space-y-4">
-                            <h1 className="text-6xl md:text-8xl font-black tracking-tight leading-[0.8] gpu-accel text-white uppercase italic">
+                            <h1 className="text-4xl sm:text-6xl md:text-8xl font-black tracking-tight leading-[0.8] gpu-accel text-white uppercase italic">
                                 MY <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">PROFILE</span>
                             </h1>
                             <div className="h-1.5 w-32 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full" />
@@ -556,7 +556,7 @@ export default function ProfilePage() {
             {/* --- MODALS --- */}
             <AnimatePresence>
                 {activeModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+                    <div className="fixed inset-0 z-[20000] flex items-center justify-center p-4 md:p-10">
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -566,21 +566,27 @@ export default function ProfilePage() {
                         />
 
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            initial={{ opacity: 0, scale: 0.95, y: 30 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="relative w-full max-w-md"
+                            exit={{ opacity: 0, scale: 1.05, y: 30 }}
+                            className="relative w-full max-w-lg max-h-[85vh] overflow-y-auto custom-scrollbar no-jank p-[1px] rounded-[2rem] overflow-hidden"
                         >
-                            <AnimatedBorderCard className="!bg-[#08090f] shadow-2xl">
-                                <div className="flex justify-between items-center mb-6">
-                                    <h3 className="text-xl font-black uppercase italic text-white flex items-center gap-3">
-                                        {activeModal === 'settings' && <><Settings size={20} className="text-emerald-400" /> Character Settings</>}
-                                        {activeModal === 'qr' && <><QrCode size={20} className="text-emerald-400" /> Student Pass</>}
-                                        {activeModal === 'scanner' && <><LayoutDashboard size={20} className="text-emerald-400" /> Ticket Scanner</>}
-                                        {activeModal === 'editProfile' && <><Edit3 size={20} className="text-emerald-400" /> Update Details</>}
+                            {/* Mobile Modal Glass Wrapper */}
+                            <div className="relative glass-modal rounded-[1.95rem] p-6 shadow-2xl overflow-hidden min-h-[300px]">
+                                <div className="absolute -top-24 -right-24 w-64 h-64 bg-emerald-500/10 blur-[80px] pointer-events-none" />
+
+                                <div className="flex justify-between items-center mb-8 relative z-10">
+                                    <h3 className="text-lg md:text-xl font-black uppercase italic text-white flex items-center gap-3">
+                                        {activeModal === 'settings' && <><Settings size={18} className="text-emerald-400" /> Personalization</>}
+                                        {activeModal === 'qr' && <><QrCode size={18} className="text-emerald-400" /> Digital Pass</>}
+                                        {activeModal === 'scanner' && <><LayoutDashboard size={18} className="text-emerald-400" /> Scanner</>}
+                                        {activeModal === 'editProfile' && <><Edit3 size={18} className="text-emerald-400" /> Update Hub</>}
                                     </h3>
-                                    <button onClick={() => setActiveModal(null)} className="p-2 hover:bg-white/5 rounded-full text-slate-500">
-                                        <ChevronRight size={20} className="rotate-90" />
+                                    <button
+                                        onClick={() => setActiveModal(null)}
+                                        className="p-3 bg-white/5 hover:bg-emerald-500/10 rounded-full text-slate-400 hover:text-emerald-400 transition-all active:scale-90"
+                                    >
+                                        <X size={20} />
                                     </button>
                                 </div>
 
@@ -608,7 +614,13 @@ export default function ProfilePage() {
                                                 <button
                                                     disabled={isRegenerating}
                                                     onClick={async () => {
-                                                        // ... existing logic ...
+                                                        setIsRegenerating(true)
+                                                        try {
+                                                            const seed = Math.floor(Math.random() * 1000)
+                                                            await updateAvatar(`https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&gender=male`)
+                                                        } finally {
+                                                            setIsRegenerating(false)
+                                                        }
                                                     }}
                                                     className={`p-4 bg-white/5 border border-white/10 ring-1 ring-white/5 text-white font-bold uppercase text-[9px] tracking-widest rounded-xl hover:bg-emerald-500/10 hover:border-emerald-500/30 transition-all flex flex-col items-center justify-center gap-1 ${isRegenerating ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                 >
@@ -618,7 +630,13 @@ export default function ProfilePage() {
                                                 <button
                                                     disabled={isRegenerating}
                                                     onClick={async () => {
-                                                        // ... existing logic ...
+                                                        setIsRegenerating(true)
+                                                        try {
+                                                            const seed = Math.floor(Math.random() * 1000)
+                                                            await updateAvatar(`https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&gender=female`)
+                                                        } finally {
+                                                            setIsRegenerating(false)
+                                                        }
                                                     }}
                                                     className={`p-4 bg-white/5 border border-white/10 ring-1 ring-white/5 text-white font-bold uppercase text-[9px] tracking-widest rounded-xl hover:bg-pink-500/10 hover:border-pink-500/30 transition-all flex flex-col items-center justify-center gap-1 ${isRegenerating ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                 >
@@ -630,7 +648,15 @@ export default function ProfilePage() {
                                             <button
                                                 disabled={isRegenerating}
                                                 onClick={async () => {
-                                                    // ... existing logic ...
+                                                    setIsRegenerating(true)
+                                                    try {
+                                                        const seed = Math.floor(Math.random() * 10000)
+                                                        const styles = ['avataaars', 'bottts', 'pixel-art', 'lorelei']
+                                                        const style = styles[Math.floor(Math.random() * styles.length)]
+                                                        await updateAvatar(`https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`)
+                                                    } finally {
+                                                        setIsRegenerating(false)
+                                                    }
                                                 }}
                                                 className={`w-full py-4 bg-emerald-500 text-black font-black uppercase text-xs tracking-widest rounded-xl hover:bg-emerald-400 transition-all flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(16,185,129,0.3)] ring-4 ring-emerald-500/20 border border-white/20 ${isRegenerating ? 'opacity-50 cursor-not-allowed' : ''}`}
                                             >
@@ -697,6 +723,42 @@ export default function ProfilePage() {
                                             className="space-y-6"
                                         >
                                             <div className="space-y-4">
+                                                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">Character Appearance</p>
+                                                <div className="grid grid-cols-2 gap-3 mb-6">
+                                                    <button
+                                                        type="button"
+                                                        disabled={isRegenerating}
+                                                        onClick={async () => {
+                                                            setIsRegenerating(true)
+                                                            try {
+                                                                const seed = Math.floor(Math.random() * 1000)
+                                                                await updateAvatar(`https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&gender=male`)
+                                                            } finally {
+                                                                setIsRegenerating(false)
+                                                            }
+                                                        }}
+                                                        className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-emerald-500/10 transition-all text-[10px] font-bold text-white uppercase"
+                                                    >
+                                                        Switch to Male
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        disabled={isRegenerating}
+                                                        onClick={async () => {
+                                                            setIsRegenerating(true)
+                                                            try {
+                                                                const seed = Math.floor(Math.random() * 1000)
+                                                                await updateAvatar(`https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&gender=female`)
+                                                            } finally {
+                                                                setIsRegenerating(false)
+                                                            }
+                                                        }}
+                                                        className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-pink-500/10 transition-all text-[10px] font-bold text-white uppercase"
+                                                    >
+                                                        Switch to Female
+                                                    </button>
+                                                </div>
+
                                                 <div className="space-y-2">
                                                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Full Name</label>
                                                     <input
@@ -739,7 +801,7 @@ export default function ProfilePage() {
                                         </form>
                                     )}
                                 </div>
-                            </AnimatedBorderCard>
+                            </div>
                         </motion.div>
                     </div>
                 )}

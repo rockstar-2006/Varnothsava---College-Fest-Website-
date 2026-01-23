@@ -66,6 +66,7 @@ body {
     background-color: var(--bg-dark);
     color: white;
     overflow-x: hidden;
+    position: relative;
     /* Zero Overflow */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -80,9 +81,22 @@ body {
 
 /* Hardware Acceleration */
 .gpu-accel {
-    transform: translate3d(0, 0, 0);
+    transform: translateZ(0);
     will-change: transform, opacity;
     backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+.no-jank {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transform: translate3d(0, 0, 0);
+    will-change: transform, opacity, filter;
+}
+
+.smooth-scroll-fix {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Zero Overflow Root */
@@ -90,6 +104,19 @@ body {
     width: 100%;
     overflow-x: hidden;
     position: relative;
+    padding-bottom: env(safe-area-inset-bottom, 120px);
+    touch-action: pan-y;
+}
+
+.modal-open {
+    overflow: hidden !important;
+}
+
+.glass-modal {
+    background: rgba(8, 10, 15, 0.8) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Touch Optimization - Disable hover on mobile */
@@ -121,10 +148,52 @@ body {
     background: var(--fest-emerald);
 }
 
+/* --- CONTINUOUS AMBIENT ANIMATIONS --- */
+@keyframes mesh-drift {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    33% {
+        transform: translate(5%, 5%) scale(1.1);
+    }
+
+    66% {
+        transform: translate(-5%, 10%) scale(0.9);
+    }
+
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+}
+
+@keyframes slow-pulse {
+
+    0%,
+    100% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.6;
+        transform: scale(1.05);
+    }
+}
+
+.ambient-glow {
+    position: absolute;
+    filter: blur(120px);
+    border-radius: 100%;
+    z-index: -1;
+    animation: mesh-drift 20s infinite alternate ease-in-out;
+}
+
 @layer base {
     @theme {
-        --font-sans: "Outfit", sans-serif;
-        --font-mono: "Inter", monospace;
+        --font-sans: "Inter", sans-serif;
+        --font-display: "Inter", sans-serif;
+        --font-mono: "monospace";
     }
 }
 
@@ -155,8 +224,27 @@ body {
     border-radius: 10px;
 }
 
+.custom-scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.custom-scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
 .ease-expo {
     transition-timing-function: var(--ease-expo);
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }
 
 /* --- RESPONSIVE TYPOGRAPHY HELPERS --- */

@@ -1,70 +1,76 @@
-import admin from "firebase-admin";
-import fs from "fs";
-import path from "path";
+import { Firestore } from '@google-cloud/firestore';
+import { JWT } from 'google-auth-library';
+import path from 'path';
+import fs from 'fs';
 
-// --- SECURE BACKEND INITIALIZATION ---
+/**
+ * REAL PRODUCTION-GRADE ADMINISTRATIVE ACCESS
+ * This implementation uses the Google Cloud SDKs directly.
+ * It provides full administrative privileges (bypassing Firestore rules)
+ * and uses your service-account.json for authentication.
+ */
+
 let serviceAccount: any = null;
-
 try {
-    // 1. Try Environment Variable (Production/Local .env)
     if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-        console.log("Found FIREBASE_SERVICE_ACCOUNT_KEY env var.");
         serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-    }
-    // 2. Try Local File (Development)
-    else {
-        const fullPath = path.join(process.cwd(), "src/lib/service-account.json");
-        console.log("Checking for service account at:", fullPath);
-
+    } else {
+        const fullPath = path.join(process.cwd(), 'src/lib/service-account.json');
         if (fs.existsSync(fullPath)) {
-            const serviceAccountJson = fs.readFileSync(fullPath, 'utf8');
-            serviceAccount = JSON.parse(serviceAccountJson);
-            console.log("Successfully loaded service-account.json from filesystem.");
-        } else {
-            console.warn("CRITICAL: service-account.json NOT FOUND at", fullPath);
-            // Check current directory listing for debugging
-            try {
-                const libFiles = fs.readdirSync(path.join(process.cwd(), "src/lib"));
-                console.log("Files in src/lib:", libFiles);
-            } catch (e) { }
+            serviceAccount = JSON.parse(fs.readFileSync(fullPath, 'utf8'));
         }
     }
-} catch (err: any) {
-    console.error("FATAL: Failed to load service account credentials:", err.message);
+} catch (err) {
+    console.error("FATAL: Failed to load service account:", err);
 }
 
-let firebaseAdminApp: admin.app.App | undefined;
-let db: admin.firestore.Firestore | undefined;
-let usersCollection: admin.firestore.CollectionReference | undefined;
-let auth: admin.auth.Auth | undefined;
+// 1. Initialize Real Admin Firestore
+export const adminDb = new Firestore({
+    projectId: serviceAccount?.project_id,
+    credentials: {
+        client_email: serviceAccount?.client_email,
+        private_key: serviceAccount?.private_key,
+    },
+});
 
-if (serviceAccount) {
+// 2. Real Token Verification using Google Auth Library
+export async function verifyAuthToken(token: string) {
+    if (!token) throw new Error("No token provided");
+
     try {
-        if (!admin.apps.length) {
-            firebaseAdminApp = admin.initializeApp({
-                credential: admin.credential.cert(serviceAccount),
-            });
-            console.log("Firebase Admin: Initialized new app successfully.");
-        } else {
-            firebaseAdminApp = admin.app();
-            console.log("Firebase Admin: Using existing app instance.");
+        // Verify token via Google's Identity Toolkit REST API (The real production method)
+        const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+        const response = await fetch(
+            `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idToken: token }),
+            }
+        );
+
+        const data = await response.json();
+        if (!response.ok || !data.users || data.users.length === 0) {
+            throw new Error(data.error?.message || "Invalid or expired token");
         }
-        db = admin.firestore();
-        usersCollection = db.collection('users');
-        auth = admin.auth();
-        console.log("Firebase Admin: Services (DB, Auth, Collections) initialized.");
-    } catch (error: any) {
-        console.error("Firebase Admin: Initialization Error ->", error.message);
+
+        const user = data.users[0];
+        return {
+            uid: user.localId,
+            email: user.email,
+            email_verified: user.emailVerified,
+            name: user.displayName,
+        };
+    } catch (error) {
+        console.error("Auth Verification Error:", error);
+        throw error;
     }
-} else {
-    console.error("Firebase Admin: NOT Initialized - serviceAccount is still NULL.");
 }
 
-export async function verifyAuthToken(token: string): Promise<admin.auth.DecodedIdToken> {
-    if (!auth) {
-        throw new Error("Backend Authentication System (FIREBASE_ADMIN) is not initialized. Please ensure src/lib/service-account.json is present or FIREBASE_SERVICE_ACCOUNT_KEY is set.");
-    }
-    return auth.verifyIdToken(token);
-}
+// 3. Compatibility Exports
+export const adminAuth = {
+    verifyIdToken: async (token: string) => verifyAuthToken(token),
+};
 
-export { firebaseAdminApp, db, usersCollection, auth as adminAuth, db as adminDb };
+export const usersCollection = adminDb.collection('users');
+export const db = adminDb;

@@ -147,7 +147,7 @@ export function InnovativeNavbar() {
                         exit={{ y: 150, opacity: 0 }}
                         style={{ x: isMobile ? 0 : navX, y: isMobile ? 0 : navY }}
                         transition={{ type: 'spring', ...springConfig }}
-                        className="fixed z-[5000] bottom-0 left-0 right-0 flex justify-center pb-8 px-4 pointer-events-none"
+                        className="fixed z-[5000] bottom-0 left-0 right-0 flex justify-center pb-4 md:pb-8 px-2 md:px-4 pointer-events-none no-jank"
                     >
                         {/* HOLOGRAPHIC SHOCKWAVE EFFECT */}
                         <AnimatePresence>
@@ -165,7 +165,7 @@ export function InnovativeNavbar() {
                             /* THE CYBER-BIOMETRIC TERMINAL */
                             <motion.div
                                 layoutId="nav-container"
-                                className="pointer-events-auto flex flex-col items-center gap-6"
+                                className="pointer-events-auto flex flex-col items-center gap-6 no-jank"
                             >
                                 <AnimatePresence>
                                     {showError && (
@@ -222,14 +222,14 @@ export function InnovativeNavbar() {
                                     </div>
 
                                     {/* DATA SHARDS */}
-                                    <div className="absolute -top-16 left-1/2 -translate-x-1/2 whitespace-nowrap z-30">
+                                    <div className="absolute -top-16 left-1/2 -translate-x-1/2 whitespace-nowrap z-30 w-full flex justify-center px-4">
                                         <motion.div
                                             animate={{ opacity: [0.3, 0.9, 0.3] }}
                                             transition={{ duration: 2, repeat: Infinity }}
-                                            className="text-[8px] text-emerald-300 font-bold flex items-center gap-2 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 backdrop-blur-sm"
+                                            className="text-[7px] md:text-[8px] text-emerald-300 font-bold flex items-center gap-2 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 backdrop-blur-sm max-w-full truncate"
                                         >
-                                            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-                                            STUDENT PORTAL ACCESS // 2026
+                                            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)] flex-shrink-0" />
+                                            <span className="truncate">STUDENT PORTAL ACCESS // 2026</span>
                                         </motion.div>
                                     </div>
 
@@ -275,9 +275,9 @@ export function InnovativeNavbar() {
                                     <motion.span
                                         animate={{ opacity: [0.3, 1, 0.3] }}
                                         transition={{ duration: 3, repeat: Infinity }}
-                                        className="text-[11px] font-bold tracking-[0.5em] text-emerald-400 uppercase drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]"
+                                        className="text-[9px] md:text-[11px] font-bold tracking-[0.3em] md:tracking-[0.5em] text-emerald-400 uppercase drop-shadow-[0_0_8px_rgba(16,185,129,0.5)] text-center px-4"
                                     >
-                                        {scanComplete ? "WELCOME STUDENT" : isScanning ? "UNLOCKING PORTAL..." : "HOLD TO ACCESS"}
+                                        {scanComplete ? "WELCOME STUDENT" : isScanning ? "UNLOCKING..." : "HOLD TO ACCESS"}
                                     </motion.span>
                                     <div className="w-24 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
                                 </div>
@@ -287,53 +287,58 @@ export function InnovativeNavbar() {
                             <motion.div
                                 layoutId="nav-container"
                                 initial={{ width: 100, height: 100, borderRadius: 50, filter: "brightness(0)" }}
-                                animate={{ width: "100%", height: 80, borderRadius: 0, filter: "brightness(1)" }}
-                                className="relative w-full max-w-[700px] h-[80px] flex items-center pointer-events-auto group/nav"
-                                style={{ willChange: 'transform, opacity, width, height' }}
+                                animate={{ width: "100%", height: isMobile ? 70 : 80, borderRadius: isMobile ? 24 : 0, filter: "brightness(1)" }}
+                                className="relative w-full max-w-[700px] h-[70px] md:h-[80px] flex items-center pointer-events-auto group/nav no-jank"
+                                style={{ willChange: 'transform, opacity, width, height', overflow: 'visible' }}
                             >
-                                <div className="absolute inset-0 -z-10 bg-[#050805]/80 backdrop-blur-xl rounded-[2.5rem] border border-white/10 overflow-hidden shadow-[0_25px_80px_rgba(0,0,0,0.8)]">
-                                    <motion.div
-                                        animate={{ x: ["-100%", "100%"] }}
-                                        transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-                                        className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-500/[0.04] to-transparent skew-x-12"
-                                    />
+                                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 z-[6000] pointer-events-none">
+                                    <div className={cn("absolute left-1/2 -translate-x-1/2", isMobile ? "-top-14" : "-top-20")}>
+                                        <Link href="/events" className="pointer-events-auto">
+                                            <Magnetic strength={0.4}>
+                                                <div className={cn("relative", isMobile ? "w-[70px] h-[70px]" : "w-[92px] h-[92px]")}>
+                                                    {/* Ambient Energy Ripples */}
+                                                    <motion.div
+                                                        animate={{ scale: [1, 2, 2.5], opacity: [0.5, 0.2, 0] }}
+                                                        transition={{ duration: 3, repeat: Infinity, ease: "easeOut" }}
+                                                        className="absolute inset-0 bg-emerald-500/20 rounded-full blur-xl pointer-events-none"
+                                                    />
+                                                    <motion.div
+                                                        animate={{ scale: [1, 1.8, 2.2], opacity: [0.3, 0.1, 0] }}
+                                                        transition={{ duration: 4, repeat: Infinity, ease: "easeOut", delay: 1 }}
+                                                        className="absolute inset-0 bg-emerald-400/10 rounded-full blur-lg pointer-events-none"
+                                                    />
 
-                                    <svg width="100%" height="80" viewBox="0 0 700 80" preserveAspectRatio="none" fill="none" className="absolute inset-0">
-                                        <path d="M0 40C0 17.9086 17.9086 0 40 0H270C285 0 290 5 300 18C315 35 385 35 400 18C410 5 415 0 430 0H660C682.091 0 700 17.9086 700 40V80H0V40Z" fill="rgba(8, 12, 8, 0.6)" />
-                                        <path d="M1 40C1 18.5 18.5 1 40 1H270C285 1 290 6 300 19C315 36 385 36 400 19C410 6 415 1 430 1H660C681 1 699 18.5 699 40" stroke="rgba(var(--nav-current-theme, 16, 185, 129), 0.3)" strokeWidth="0.5" strokeLinecap="round" />
-                                    </svg>
+                                                    <motion.div
+                                                        animate={{ scale: [1, 1.4, 1], rotate: [0, 90, 0] }}
+                                                        transition={{ duration: 4, repeat: Infinity }}
+                                                        className="absolute -inset-4 border border-[rgba(var(--nav-current-theme,16,185,129),0.2)] rounded-full border-dashed"
+                                                    />
+                                                    <motion.div
+                                                        whileHover={{ scale: 1.15, filter: "hue-rotate(30deg)" }}
+                                                        className="w-[70px] h-[70px] md:w-[92px] md:h-[92px] bg-gradient-to-br from-[rgb(var(--nav-current-theme,16,185,129))] to-black rounded-full border-[6px] md:border-[8px] border-[#0a120a] shadow-[0_20px_50px_rgba(var(--nav-current-theme,16,185,129),0.5)] flex items-center justify-center group relative overflow-hidden"
+                                                    >
+                                                        <Zap size={isMobile ? 28 : 36} className="text-black group-hover:scale-125 transition-transform" />
+                                                    </motion.div>
+                                                </div>
+                                            </Magnetic>
+                                        </Link>
+                                    </div>
                                 </div>
 
-                                <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-50">
-                                    <Link href="/events">
-                                        <Magnetic strength={0.4}>
-                                            <div className="relative">
-                                                {/* Ambient Energy Ripples */}
-                                                <motion.div
-                                                    animate={{ scale: [1, 2, 2.5], opacity: [0.5, 0.2, 0] }}
-                                                    transition={{ duration: 3, repeat: Infinity, ease: "easeOut" }}
-                                                    className="absolute inset-0 bg-emerald-500/20 rounded-full blur-xl pointer-events-none"
-                                                />
-                                                <motion.div
-                                                    animate={{ scale: [1, 1.8, 2.2], opacity: [0.3, 0.1, 0] }}
-                                                    transition={{ duration: 4, repeat: Infinity, ease: "easeOut", delay: 1 }}
-                                                    className="absolute inset-0 bg-emerald-400/10 rounded-full blur-lg pointer-events-none"
-                                                />
-
-                                                <motion.div
-                                                    animate={{ scale: [1, 1.4, 1], rotate: [0, 90, 0] }}
-                                                    transition={{ duration: 4, repeat: Infinity }}
-                                                    className="absolute -inset-4 border border-[rgba(var(--nav-current-theme,16,185,129),0.2)] rounded-full border-dashed"
-                                                />
-                                                <motion.div
-                                                    whileHover={{ scale: 1.15, filter: "hue-rotate(30deg)" }}
-                                                    className="w-[92px] h-[92px] bg-gradient-to-br from-[rgb(var(--nav-current-theme,16,185,129))] to-black rounded-full border-[8px] border-[#0a120a] shadow-[0_20px_50px_rgba(var(--nav-current-theme,16,185,129),0.5)] flex items-center justify-center group relative overflow-hidden"
-                                                >
-                                                    <Zap size={36} className="text-black group-hover:scale-125 transition-transform" />
-                                                </motion.div>
-                                            </div>
-                                        </Magnetic>
-                                    </Link>
+                                <div className="absolute inset-0 -z-10 overflow-visible">
+                                    <svg width="100%" height="80" viewBox="0 0 700 80" preserveAspectRatio="none" fill="none" className="absolute inset-0 z-0 drop-shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+                                        <path
+                                            d="M0 40C0 17.9086 17.9086 0 40 0H270C285 0 290 5 300 18C315 35 385 35 400 18C410 5 415 0 430 0H660C682.091 0 700 17.9086 700 40V80H0V40Z"
+                                            fill="rgba(5, 8, 5, 0.95)"
+                                        />
+                                        <path
+                                            d="M1 40C1 18.5 18.5 1 40 1H270C285 1 290 6 300 19C315 36 385 36 400 19C410 6 415 1 430 1H660C681 1 699 18.5 699 40"
+                                            stroke="rgba(var(--nav-current-theme, 16, 185, 129), 0.5)"
+                                            strokeWidth="1.5"
+                                            strokeLinecap="round"
+                                        />
+                                    </svg>
+                                    <div className="absolute inset-0 bg-white/[0.02] backdrop-blur-3xl rounded-[2.5rem] -z-20 pointer-events-none" style={{ clipPath: 'polygon(0% 20%, 100% 20%, 100% 100%, 0% 100%)' }} />
                                 </div>
 
                                 <div className="flex-1 flex justify-around items-center px-2 md:px-4">
@@ -350,6 +355,9 @@ export function InnovativeNavbar() {
                                         <span className={cn("text-[9px] md:text-[11px] tracking-[0.2em] font-bold uppercase transition-all duration-300", pathname === '/leaderboard' ? "theme-nav-accent drop-shadow-[0_0_8px_rgba(var(--nav-current-theme),0.8)] scale-110" : "text-white/95 md:group-hover:theme-nav-accent")}>SCORES</span>
                                     </Link>
                                 </div>
+
+                                {/* Central Spacer for action button */}
+                                <div className="w-20 md:w-32 flex-shrink-0" />
 
                                 <div className="flex-1 flex justify-around items-center px-2 md:px-4">
                                     <Link href="/gallery" className="group flex flex-col items-center gap-1 py-2 min-w-[60px] md:min-w-[80px]">
