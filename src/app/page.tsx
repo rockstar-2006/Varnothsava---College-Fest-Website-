@@ -6,6 +6,14 @@ import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import { Orbitron } from 'next/font/google' // Import new font
+import Link from 'next/link'
+const quickLinks = [
+    { label: "About Us", href: "#about" },
+    { label: "Events", href: "/events" },
+    { label: "Sponsors", href: "#sponsors" },
+    { label: "Contact", href: "#contact" },
+];
+
 import {
     ArrowRight, MapPin, Mail, Phone,
     Facebook, Instagram, Youtube, Twitter,
@@ -896,7 +904,7 @@ const AboutFestSection = () => {
     const y = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]) // Parallax effect
 
     return (
-        <section ref={sectionRef} className="py-32 px-4 md:px-6 container mx-auto relative z-10">
+        <section id='about' ref={sectionRef} className="py-32 px-4 md:px-6 container mx-auto relative z-10">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
                 <RevealOnScroll className="order-2 lg:order-1 space-y-8">
                     <StaggerTitle title="About The Fest" subtitle="A Legacy of Excellence" />
@@ -1172,7 +1180,7 @@ const SpecialAttractions = () => (
                             className="object-cover transition-transform duration-[1.5s] ease-in-out group-hover:scale-110 opacity-50 group-hover:opacity-70"
                             sizes="(max-width: 768px) 100vw, 25vw"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-black/10 to-transparent" />
                     </div>
 
                     <div className="relative z-10">
@@ -1370,7 +1378,9 @@ const FAQ = () => {
 }
 
 const Footer = () => (
-    <footer className="bg-[#020202] border-t border-white/5 pt-24 pb-12 px-4 md:px-6 relative overflow-hidden">
+
+    <footer id='contact' className="bg-[#020202] border-t border-white/5 pt-24 pb-12 px-4 md:px-6 relative overflow-hidden">
+
         {/* Giant Footer Text */}
         <div className="absolute top-0 left-0 w-full overflow-hidden pointer-events-none opacity-[0.03]">
             <ParallaxText baseVelocity={2}>VARNOTHSAVA</ParallaxText>
@@ -1385,33 +1395,70 @@ const Footer = () => (
                     The Ultimate Cultural & Entertainment Fest by SMVITM. Celebrating innovation, art, and tradition.
                 </p>
                 <div className="flex gap-4">
-                    {[
-                        { icon: Instagram, label: "Instagram" },
-                        { icon: Youtube, label: "Youtube" },
-                        { icon: Twitter, label: "Twitter" },
-                        { icon: Facebook, label: "Facebook" }
-                    ].map((item, i) => (
-                        <a key={i} href="#" aria-label={`Visit our ${item.label} page`} className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-emerald-500 hover:text-black transition-all hover:scale-110 border border-white/10 hover:border-emerald-500">
-                            <item.icon className="w-5 h-5" />
-                        </a>
-                    ))}
-                </div>
+    {[
+        {
+            icon: Instagram,
+            label: "Instagram",
+            href: "https://www.instagram.com/smvitm.sode?igsh=OGRscmdvNWE5cmw1"
+        },
+        {
+            icon: Youtube,
+            label: "Youtube",
+            href: "https://youtube.com/@smvitmbantakal?si=cxfczlxJ8UBSCnWk"
+        },
+        {
+            icon: Twitter,
+            label: "Twitter",
+            href: "https://x.com/SmvitM"
+        },
+        {
+            icon: Facebook,
+            label: "Facebook",
+            href: "https://www.bing.com/ck/a?!&&p=e16294a49a02fecc4f723d443aec0dc71fc7e868ca0a228b8f2992937a05870fJmltdHM9MTc2OTQ3MjAwMA&ptn=3&ver=2&hsh=4&fclid=1b88ac8a-931f-6104-1062-ba1f92ff6076&psq=sode+college+facebook+account&u=a1aHR0cHM6Ly93d3cuZmFjZWJvb2suY29tL29mZmljaWFsc212aXRtLw" // better than Instagram link
+        }
+    ].map((item, i) => (
+        <a
+            key={i}
+            href={item.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Visit our ${item.label} page`}
+            className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center 
+                       text-white hover:bg-emerald-500 hover:text-black transition-all 
+                       hover:scale-110 border border-white/10 hover:border-emerald-500"
+        >
+            <item.icon className="w-5 h-5" />
+        </a>
+    ))}
+</div>
+
             </div>
 
             {/* ... Other Footer Links ... */}
+
             <div>
-                <h4 className="text-white font-bold uppercase tracking-widest mb-8 text-xs font-[family-name:var(--font-inter)]">Quick Links</h4>
+                <h4 className="text-white font-bold uppercase tracking-widest mb-8 text-xs font-[family-name:var(--font-inter)]">
+                    Quick Links
+                </h4>
+
                 <ul className="space-y-4 text-sm text-gray-400 font-medium">
-                    {['About Us', 'Events', 'Sponsors', 'Contact'].map((link) => (
-                        <li key={link}>
-                            <a href="#" className="hover:text-emerald-400 transition-colors flex items-center gap-2 group">
-                                <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-transform" />
-                                {link}
-                            </a>
+                    {quickLinks.map((link) => (
+                        <li key={link.href}>
+                            <Link
+                                href={link.href}
+                                className="hover:text-emerald-400 transition-colors flex items-center gap-2 group"
+                            >
+                                <ArrowRight
+                                    className="w-3 h-3 opacity-0 group-hover:opacity-100 
+                        -translate-x-2 group-hover:translate-x-0 transition-transform"
+                                />
+                                {link.label}
+                            </Link>
                         </li>
                     ))}
                 </ul>
             </div>
+
 
             <div>
                 <h4 className="text-white font-bold uppercase tracking-widest mb-8 text-xs font-[family-name:var(--font-inter)]">Legal</h4>

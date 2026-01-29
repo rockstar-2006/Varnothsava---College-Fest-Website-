@@ -301,7 +301,9 @@ export default function ProEventBackground({ theme = 'emerald', scrollProgress =
     const [isMobile, setIsMobile] = React.useState(false)
 
     // Using useTransform for smooth parallax without re-renders
-    const amberY = useTransform(scrollProgress, (val: number) => val * 30)
+    const amberY = useTransform(scrollProgress,[0, 1], isMobile ? [40, 70] : [300, 600] )
+    //  starts lower, moves gently
+
 
     React.useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768)
@@ -353,38 +355,31 @@ export default function ProEventBackground({ theme = 'emerald', scrollProgress =
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_10%,rgba(245,158,11,0.15),transparent_60%)]" />
 
                     {!isDetailed && (
-                        <div className="absolute inset-0 z-0 overflow-hidden">
-                            {/* Blurred Background Base */}
-                            <Image
-                                src="/cultural-bg.png"
-                                alt=""
-                                fill
-                                className="object-cover blur-3xl opacity-30 scale-110"
-                                priority
-                            />
+                        <div className="absolute inset-0 z-0 overflow-hidden bg-[#0f0901]">
+    {/* Normalized Background Image */}
+    <motion.div
+    className="absolute inset-0 flex items-center justify-center"
+    style={{ y: amberY }}
+>
+    <Image
+        src="/cultural-bg.png"
+        alt=""
+        priority
+        className="max-w-full max-h-full object-contain"
+        width={1920}
+        height={1080}
+        style={{
+            filter: 'brightness(0.9) contrast(1.05)',
+        }}
+    />
+</motion.div>
 
-                            {/* Sharp Foreground Image */}
-                            <motion.div
-                                className="absolute inset-0 z-10"
-                                style={{
-                                    y: amberY
-                                }}
-                            >
-                                <Image
-                                    src="/cultural-bg.png"
-                                    alt="Cultural Background"
-                                    fill
-                                    className={`object-cover object-center opacity-70 ${isMobile ? 'scale-110' : 'scale-100'}`} // Slight zoom on mobile to ensure coverage during parallax
-                                    loading="eager"
-                                    priority
-                                    style={{
-                                        filter: isMobile ? 'brightness(0.6) contrast(1.2)' : 'brightness(1.1) contrast(1.05)',
-                                    }}
-                                />
-                            </motion.div>
-                            <div className="absolute inset-0 z-20 bg-gradient-to-b from-black/20 via-transparent to-[#0f0901] opacity-90" />
-                            <div className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-[#0f0901] via-[#0f0901]/40 to-transparent z-20" />
-                        </div>
+
+
+    {/* Soft vignette instead of heavy gradients */}
+    <div className="absolute inset-0 bg-radial-fade z-10" />
+</div>
+
                     )}
 
                     <FloatingOrbs theme="amber" />
