@@ -687,6 +687,89 @@ const ButtonSecondary = ({ children, onClick }: { children: React.ReactNode, onC
     </motion.button>
 )
 
+// --- Ancient Hero Overlay Component ---
+// --- Realistic Ancient Background Component ---
+// --- Realistic Ancient Background Component ---
+const RealisticAncientBackground = () => {
+    // FIX: Hydration Mismatch. Move random generation to useEffect.
+    const [dustParticles, setDustParticles] = useState<Array<{
+        width: number,
+        height: number,
+        left: number,
+        top: number,
+        duration: number,
+        delay: number,
+        initialX: number,
+        initialY: number,
+        travelX: number
+    }>>([])
+
+    useEffect(() => {
+        // Generate random particles ONLY on client-side to avoid mismatch
+        const particles = [...Array(6)].map(() => ({
+            width: Math.random() * 3 + 1,
+            height: Math.random() * 3 + 1,
+            left: Math.random() * 100,
+            top: Math.random() * 100,
+            duration: 15 + Math.random() * 10,
+            delay: Math.random() * 5,
+            initialX: Math.random() * 100,
+            initialY: Math.random() * 100,
+            travelX: Math.random() * 50 - 25
+        }))
+        setDustParticles(particles)
+    }, [])
+
+    return (
+        <div className="absolute inset-0 pointer-events-none z-0">
+            {/* 1. REALISTIC RUINS TEXTURE (Blended) */}
+            <div className="absolute inset-0 z-0 opacity-40 mix-blend-soft-light md:opacity-30">
+                <Image
+                    src="/img/ancient_ruins_dark.png"
+                    alt="Ancient Ruins Atmosphere"
+                    fill
+                    className="object-cover object-center"
+                    priority
+                />
+                {/* Gradient Fade to merge with black bg */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#020202] via-transparent to-[#020202]" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#020202] via-transparent to-[#020202]" />
+            </div>
+
+            {/* 2. CINEMATIC DUST / SPORES (Replaces cartoon stones) */}
+            <div className="absolute inset-0 z-10 overflow-hidden">
+                {dustParticles.map((p, i) => (
+                    <motion.div
+                        key={`dust-${i}`}
+                        initial={{ y: p.initialY, x: p.initialX, opacity: 0 }}
+                        animate={{
+                            y: [0, -100, 0],
+                            x: [0, p.travelX, 0],
+                            opacity: [0, 0.5, 0]
+                        }}
+                        transition={{
+                            duration: p.duration,
+                            repeat: Infinity,
+                            ease: "linear",
+                            delay: p.delay
+                        }}
+                        className="absolute rounded-full bg-emerald-100/20 blur-[1px]"
+                        style={{
+                            width: p.width + 'px',
+                            height: p.height + 'px',
+                            left: `${p.left}%`,
+                            top: `${p.top}%`,
+                        }}
+                    />
+                ))}
+            </div>
+
+            {/* 3. SUBTLE MIST LAYERS (Atmosphere) */}
+            <div className="absolute bottom-0 w-full h-[40vh] bg-gradient-to-t from-[#020202] to-transparent z-10" />
+        </div>
+    )
+}
+
 // --- Sections ---
 
 const HeroSection = ({ shouldRender3D }: { shouldRender3D: boolean }) => {
@@ -722,6 +805,9 @@ const HeroSection = ({ shouldRender3D }: { shouldRender3D: boolean }) => {
                     </>
                 )}
             </div>
+
+            {/* ANCIENT ATMOSPHERE OVERLAY - REALISTIC */}
+            <RealisticAncientBackground />
 
             <div className="container max-w-[1800px] mx-auto px-4 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center relative z-20 pt-20">
                 {/* Hero Text */}

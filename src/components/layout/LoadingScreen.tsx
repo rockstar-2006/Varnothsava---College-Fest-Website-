@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion'
 import { useState, useEffect, useMemo, Suspense } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import {
@@ -9,7 +9,28 @@ import {
 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 
-type ThemeType = 'GENERAL' | 'CULTURAL' | 'GAMING' | 'GALLERY' | 'PROFILE' | 'LOGIN'
+type ThemeType = 'GENERAL' | 'CULTURAL' | 'GAMING' | 'GALLERY' | 'PROFILE' | 'LOGIN' | 'MOTO'
+
+const MotorcycleIcon = ({ className, style }: { className?: string, style?: any }) => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+        style={style}
+    >
+        <circle cx="5.5" cy="17.5" r="3.5" />
+        <circle cx="18.5" cy="17.5" r="3.5" />
+        <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" />
+        <path d="M12 18h5.5v-5a3.5 3.5 0 0 0-3.5-3.5h-1l-2-3-3-2" />
+        <path d="M9 18H5.5" />
+        <path d="M13 11l2-5h3" />
+    </svg>
+)
 
 function LoadingContent() {
     const pathname = usePathname()
@@ -21,10 +42,33 @@ function LoadingContent() {
     const { setIsSiteLoaded } = useApp()
 
     const [isMounted, setIsMounted] = useState(false)
+    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+
+    // Parallax Motion Values
+    const mouseX = useMotionValue(0);
+    const mouseY = useMotionValue(0);
+
+    // Smooth transforms for Parallax
+    const moveX = useTransform(mouseX, [-1500, 1500], [20, -20]); // Reversed for background
+    const moveY = useTransform(mouseY, [-1000, 1000], [20, -20]);
+    const moveXFore = useTransform(mouseX, [-1500, 1500], [-30, 30]); // Foreground moves more
+    const moveYFore = useTransform(mouseY, [-1000, 1000], [-30, 30]);
 
     useEffect(() => {
         setIsMounted(true)
-    }, [])
+
+        const handleMouseMove = (e: MouseEvent) => {
+            // Disable Parallax on Mobile
+            if (window.innerWidth < 768) return;
+
+            // Update motion values
+            mouseX.set(e.clientX - window.innerWidth / 2);
+            mouseY.set(e.clientY - window.innerHeight / 2);
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        return () => window.removeEventListener('mousemove', handleMouseMove);
+    }, [mouseX, mouseY])
 
     // Detemine theme based on route & search params
     const theme: ThemeType = useMemo(() => {
@@ -32,6 +76,7 @@ function LoadingContent() {
         if (pathname === '/login') return 'LOGIN'
         if (pathname === '/profile') return 'PROFILE'
         if (pathname === '/gallery') return 'GALLERY'
+        if (pathname === '/leaderboard') return 'MOTO'
         if (pathname === '/events' || pathname === '/') {
             if (filter === 'Cultural' || pathname?.includes('cultural')) return 'CULTURAL'
             if (filter === 'Gaming' || pathname?.includes('gaming')) return 'GAMING'
@@ -47,8 +92,8 @@ function LoadingContent() {
                     color: '#10b981', // Emerald-500
                     dim: 'rgba(16, 185, 129, 0.1)',
                     icon: Music,
-                    label: 'Unveiling Cultural Memories',
-                    subLabel: 'Preparing the stage & instruments...',
+                    label: 'Unearthing Cultural Relics',
+                    subLabel: 'Dusting off the ancient instruments...',
                     bgGradient: 'radial-gradient(circle_at_50%_50%, rgba(16, 185, 129, 0.15) 0%, transparent 70%)',
                     accentIcon: Music
                 }
@@ -57,8 +102,8 @@ function LoadingContent() {
                     color: '#10b981', // Emerald-500
                     dim: 'rgba(16, 185, 129, 0.1)',
                     icon: Target,
-                    label: 'Opening Gaming Arena',
-                    subLabel: 'Readying the players & scores...',
+                    label: 'Entering Ancient Arena',
+                    subLabel: 'Summoning the challengers...',
                     bgGradient: 'radial-gradient(circle_at_50%_50%, rgba(16, 185, 129, 0.15) 0%, transparent 70%)',
                     accentIcon: Zap
                 }
@@ -67,8 +112,8 @@ function LoadingContent() {
                     color: '#10b981', // Emerald-500
                     dim: 'rgba(16, 185, 129, 0.1)',
                     icon: Camera,
-                    label: 'Browsing Fest Gallery',
-                    subLabel: 'Preparing photos & cinematic reels...',
+                    label: 'Deciphering Visual Glyphs',
+                    subLabel: 'Developing ancient memory reels...',
                     bgGradient: 'radial-gradient(circle_at_50%_50%, rgba(16, 185, 129, 0.15) 0%, transparent 70%)',
                     accentIcon: ImageIcon
                 }
@@ -77,8 +122,8 @@ function LoadingContent() {
                     color: '#10b981', // Emerald-500
                     dim: 'rgba(16, 185, 129, 0.1)',
                     icon: User,
-                    label: 'Accessing Student Profile',
-                    subLabel: 'Loading your fest credentials...',
+                    label: 'Scanning Biometric Runes',
+                    subLabel: 'Verifying explorer credentials...',
                     bgGradient: 'radial-gradient(circle_at_50%_50%, rgba(16, 185, 129, 0.15) 0%, transparent 70%)',
                     accentIcon: Shield
                 }
@@ -87,18 +132,28 @@ function LoadingContent() {
                     color: '#10b981', // Emerald-500
                     dim: 'rgba(16, 185, 129, 0.1)',
                     icon: Lock,
-                    label: 'Student Login Portal',
-                    subLabel: 'Verifying student access...',
+                    label: 'Portal Access Code',
+                    subLabel: 'Whispering the secret password...',
                     bgGradient: 'radial-gradient(circle_at_50%_50%, rgba(16, 185, 129, 0.15) 0%, transparent 70%)',
                     accentIcon: Rocket
+                }
+            case 'MOTO':
+                return {
+                    color: '#cd5c09', // Burnt Orange
+                    dim: 'rgba(205, 92, 9, 0.1)',
+                    icon: MotorcycleIcon,
+                    label: 'Unearthing Machines',
+                    subLabel: 'Firing up the ancient engines...',
+                    bgGradient: 'radial-gradient(circle_at_50%_50%, rgba(205, 92, 9, 0.15) 0%, transparent 70%)',
+                    accentIcon: Zap
                 }
             default:
                 return {
                     color: '#10b981', // Emerald-500
                     dim: 'rgba(16, 185, 129, 0.1)',
                     icon: Activity,
-                    label: 'Loading Student Portal',
-                    subLabel: 'Connecting to Varnothsava 2026...',
+                    label: 'Entering The Lost World',
+                    subLabel: 'Discovering Ancient Secrets...',
                     bgGradient: 'radial-gradient(circle_at_50%_50%, rgba(16, 185, 129, 0.15) 0%, transparent 70%)',
                     accentIcon: Terminal
                 }
@@ -218,44 +273,67 @@ function LoadingContent() {
             >
                 {/* 1. LUXURY CINEMATIC BACKGROUND */}
                 {/* 1. LUXURY CINEMATIC BACKGROUND */}
+                {/* 1. LUXURY CINEMATIC BACKGROUND */}
                 <div className="absolute inset-0 z-0 overflow-hidden">
-                    {/* Volumetric Spotlights - HIDDEN ON MOBILE */}
-                    {!isMobile && (
+                    {/* ANCIENT RUINS BACKGROUND IMAGE - WITH PARALLAX */}
+                    {/* ANCIENT RUINS BACKGROUND IMAGE - WITH PARALLAX & BREATHE */}
+                    <motion.div
+                        className="absolute inset-[-5%] w-[110%] h-[110%] z-[-1]"
+                        style={{ x: moveX, y: moveY }}
+                        animate={{
+                            scale: [1, 1.02, 1],
+                        }}
+                        transition={{
+                            duration: 20,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                        }}
+                    >
+                        <img
+                            src="/img/ancient_ruins_dark.png"
+                            alt="Ancient Ruins"
+                            className="w-full h-full object-cover opacity-100 grayscale-0"
+                        />
+                        {/* Dark Vignette */}
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,#000000_100%)] opacity-60" />
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
+
+                        {/* LIVELY ATMOSPHERE: Shifting Sunbeams / Light Leaks */}
                         <motion.div
-                            animate={{
-                                scale: [1, 1.3, 1],
-                                opacity: [0.3, 0.5, 0.3],
-                                x: ['-4%', '4%', '-4%'],
-                                y: ['-2%', '2%', '-2%'],
-                            }}
-                            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-                            className="absolute inset-0"
+                            className="absolute inset-0 opacity-20 mix-blend-overlay pointer-events-none"
                             style={{
-                                background: `radial-gradient(circle at 50% 40%, ${themeConfig.color}22 0%, transparent 70%)`
+                                background: 'radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.4) 0%, transparent 60%)'
+                            }}
+                            animate={{
+                                opacity: [0.1, 0.25, 0.1],
+                                scale: [1, 1.1, 1],
+                            }}
+                            transition={{
+                                duration: 8,
+                                repeat: Infinity,
+                                ease: "easeInOut"
                             }}
                         />
-                    )}
+                    </motion.div>
 
-                    {/* Elegant Light Leaks - HIDDEN ON MOBILE */}
-                    {!isMobile && (
-                        <>
-                            <motion.div
-                                animate={{ opacity: [0.1, 0.25, 0.1], scale: [1, 1.2, 1], rotate: [0, 45, 0] }}
-                                transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-                                className="absolute top-[-30%] left-[-20%] w-[100%] h-[100%] rounded-full blur-[200px]"
-                                style={{ background: `radial-gradient(circle, ${themeConfig.color}22, transparent)` }}
-                            />
-                            <motion.div
-                                animate={{ opacity: [0.05, 0.15, 0.05], scale: [1, 1.15, 1], rotate: [0, -45, 0] }}
-                                transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-                                className="absolute bottom-[-30%] right-[-20%] w-[100%] h-[100%] rounded-full blur-[220px]"
-                                style={{ background: `radial-gradient(circle, ${themeConfig.color}11, transparent)` }}
-                            />
-                        </>
-                    )}
+                    {/* ATMOSPHERIC MIST (New Layer) - HIDDEN ON MOBILE to save performance (blur-3xl is VERY heavy) */}
+                    <div className="hidden md:block absolute inset-0 pointer-events-none z-0">
+                        <div className="absolute bottom-[-10%] left-0 w-full h-[50vh] bg-gradient-to-t from-[#022c22]/60 via-[#064e3b]/20 to-transparent blur-3xl animate-pulse-slow will-change-[opacity]" />
+                    </div>
 
                     {/* High-End Film Grain Texture */}
                     <div className="absolute inset-0 opacity-[0.05] pointer-events-none mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+
+                    {/* INTERACTIVE FIREFLIES (Parallax Foreground) - HIDDEN ON MOBILE */}
+                    <motion.div
+                        className="hidden md:block absolute inset-0 pointer-events-none z-10"
+                        style={{ x: moveXFore, y: moveYFore }}
+                    >
+                        <div className="absolute top-1/4 left-1/4 w-1 h-1 bg-emerald-400 rounded-full blur-[1px] animate-float opacity-60" />
+                        <div className="absolute top-3/4 left-1/3 w-1.5 h-1.5 bg-amber-200 rounded-full blur-[2px] animate-float opacity-40 delay-300" />
+                        <div className="absolute top-1/2 right-1/4 w-1 h-1 bg-emerald-300 rounded-full blur-[1px] animate-float opacity-70 delay-700" />
+                        <div className="absolute bottom-1/3 right-1/3 w-2 h-2 bg-emerald-500/30 rounded-full blur-[4px] animate-float opacity-30 delay-1000" />
+                    </motion.div>
 
                     {/* Digital Snowfall / Floating Assets - HIDDEN ON MOBILE */}
                     {(!isMobile && isMounted) && snowParticles.map((p) => (
@@ -282,6 +360,42 @@ function LoadingContent() {
                         className="absolute inset-0"
                         style={{ background: themeConfig.bgGradient }}
                     />
+
+                    {/* Fireflies / Ancient Spores - FLOATY MAGIC - REDUCED ON MOBILE */}
+                    {isMounted && (
+                        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                            {[...Array(isMobile ? 5 : 15)].map((_, i) => (
+                                <motion.div
+                                    key={`firefly-${i}`}
+                                    className="absolute rounded-full mix-blend-screen"
+                                    initial={{
+                                        x: Math.random() * 100 + "%",
+                                        y: Math.random() * 100 + "%",
+                                        opacity: 0,
+                                        scale: 0
+                                    }}
+                                    animate={{
+                                        y: [null, Math.random() * -100 - 50], // Float up
+                                        x: [null, (Math.random() - 0.5) * 50], // Drift sideways
+                                        opacity: [0, 0.6, 0],
+                                        scale: [0, 1.5, 0]
+                                    }}
+                                    transition={{
+                                        duration: 8 + Math.random() * 10,
+                                        repeat: Infinity,
+                                        ease: "easeInOut",
+                                        delay: Math.random() * 5
+                                    }}
+                                    style={{
+                                        width: Math.random() * 4 + 2 + "px",
+                                        height: Math.random() * 4 + 2 + "px",
+                                        backgroundColor: i % 3 === 0 ? '#fbbf24' : '#10b981', // Golden & Emerald mix
+                                        boxShadow: `0 0 ${10 + Math.random() * 20}px ${i % 3 === 0 ? '#fbbf24' : '#10b981'}`
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    )}
 
                     {isMounted && !isMobile && (
                         <>
@@ -372,237 +486,253 @@ function LoadingContent() {
                     )}
                 </div>
 
-                {/* HUD FRAME */}
+                {/* HUD FRAME - COMPLETELY TRANSPARENT NOW */}
                 <motion.div
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="relative w-full max-w-5xl h-[85dvh] md:h-[75vh] flex items-center justify-center p-2"
+                    className="relative w-full max-w-7xl h-[85dvh] md:h-[90vh] flex items-center justify-center p-2"
                 >
-                    {/* The Cinematic Glass Frame */}
+                    {/* The Cinematic Frame - No Background Fill, Just Structure */}
                     <div
-                        className="absolute inset-0"
+                        className="absolute inset-0 pointer-events-none"
                         style={{
                             clipPath: cockpitClip,
-                            background: `linear-gradient(135deg, rgba(255,255,255,0.03), rgba(0,0,0,0.4))`,
-                            backdropFilter: isMobile ? 'none' : 'blur(12px)',
-                            WebkitBackdropFilter: isMobile ? 'none' : 'blur(12px)',
-                            border: `1px solid rgba(255,255,255,0.05)`,
-                            boxShadow: isMobile ? 'none' : `0 40px 100px rgba(0,0,0,0.8)`
+                            boxShadow: `inset 0 0 150px rgba(0,0,0,0.8)`, // Dark inner shadow for contrast
+                            // border: `1px solid ${themeConfig.color}11` // Removed outer border to keep only corners
                         }}
-                    />
+                    >
+                        {/* Subtle darker tint ONLY on edges for text readability, clear center */}
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_50%,rgba(0,0,0,0.4)_100%)]" />
+                    </div>
 
-                    {/* Professional Corner Brackets (The 'Good' Borders) */}
+                    {/* Professional Corner Brackets (The 'Good' Borders) - REFINED SIZE */}
                     <div className="absolute inset-0 pointer-events-none" style={{ clipPath: cockpitClip }}>
                         {/* Top-Left */}
                         <motion.div
-                            animate={{ opacity: [0.4, 0.8, 0.4] }}
-                            transition={{ duration: 2, repeat: Infinity }}
-                            className="absolute top-0 left-0 w-24 h-24 border-t-2 border-l-2"
-                            style={{ borderColor: themeConfig.color, borderRadius: '40px 0 0 0' }}
+                            animate={{ opacity: [0.5, 1, 0.5] }}
+                            transition={{ duration: 4, repeat: Infinity }}
+                            className="absolute top-0 left-0 w-16 h-16 md:w-20 md:h-20 border-t border-l"
+                            style={{ borderColor: themeConfig.color, borderRadius: '20px 0 0 0' }}
                         />
                         {/* Top-Right */}
                         <motion.div
-                            animate={{ opacity: [0.4, 0.8, 0.4] }}
-                            transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
-                            className="absolute top-0 right-0 w-24 h-24 border-t-2 border-r-2"
-                            style={{ borderColor: themeConfig.color, borderRadius: '0 40px 0 0' }}
+                            animate={{ opacity: [0.5, 1, 0.5] }}
+                            transition={{ duration: 4, repeat: Infinity, delay: 1 }}
+                            className="absolute top-0 right-0 w-16 h-16 md:w-20 md:h-20 border-t border-r"
+                            style={{ borderColor: themeConfig.color, borderRadius: '0 20px 0 0' }}
                         />
                         {/* Bottom-Left */}
                         <motion.div
-                            animate={{ opacity: [0.4, 0.8, 0.4] }}
-                            transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-                            className="absolute bottom-0 left-0 w-24 h-24 border-b-2 border-l-2"
-                            style={{ borderColor: themeConfig.color, borderRadius: '0 0 0 40px' }}
+                            animate={{ opacity: [0.5, 1, 0.5] }}
+                            transition={{ duration: 4, repeat: Infinity, delay: 2 }}
+                            className="absolute bottom-0 left-0 w-16 h-16 md:w-20 md:h-20 border-b border-l"
+                            style={{ borderColor: themeConfig.color, borderRadius: '0 0 0 20px' }}
                         />
                         {/* Bottom-Right */}
                         <motion.div
-                            animate={{ opacity: [0.4, 0.8, 0.4] }}
-                            transition={{ duration: 2, repeat: Infinity, delay: 1.5 }}
-                            className="absolute bottom-0 right-0 w-24 h-24 border-b-2 border-r-2"
-                            style={{ borderColor: themeConfig.color, borderRadius: '0 0 40px 0' }}
+                            animate={{ opacity: [0.5, 1, 0.5] }}
+                            transition={{ duration: 4, repeat: Infinity, delay: 3 }}
+                            className="absolute bottom-0 right-0 w-16 h-16 md:w-20 md:h-20 border-b border-r"
+                            style={{ borderColor: themeConfig.color, borderRadius: '0 0 20px 0' }}
                         />
                     </div>
 
-                    <div
-                        className="absolute inset-[4px] bg-[#010302]/90"
-                        style={{ clipPath: cockpitClip }}
-                    />
-
-                    {/* Corner HUD Metrics */}
-                    <div className="absolute top-6 left-6 md:top-14 md:left-16 flex flex-col gap-1 md:gap-2">
-                        <div className="flex items-center gap-2 font-black text-[7px] md:text-[8px] tracking-widest uppercase mb-0.5 md:mb-1" style={{ color: themeConfig.color }}>
-                            <Terminal className="w-2.5 h-2.5 md:w-3 md:h-3" /> Campus // {theme}
+                    {/* Corner HUD Metrics - Sharp & Visible */}
+                    <div className="absolute top-8 left-8 md:top-12 md:left-16 flex flex-col gap-2 drop-shadow-lg">
+                        <div className="flex items-center gap-3 font-black text-[10px] md:text-xs tracking-[0.3em] uppercase" style={{ color: themeConfig.color }}>
+                            <Terminal className="w-4 h-4" /> SYSTEM // {theme}
                         </div>
-                        <div className="text-white/10 text-[6px] md:text-[7px] font-mono tracking-widest uppercase truncate max-w-[100px] md:max-w-none">Account: Active</div>
-                        <div className="text-white/10 text-[6px] md:text-[7px] font-mono tracking-widest uppercase">Verified Access</div>
+                        <div className="h-[1px] w-24 bg-gradient-to-r from-white/40 to-transparent" />
+                        <div className="text-white/60 text-[8px] md:text-[9px] font-mono tracking-widest uppercase">
+                            Signal Str: 100%
+                        </div>
                     </div>
 
-                    <div className="absolute top-6 right-6 md:top-14 md:right-16 text-right flex flex-col gap-1 md:gap-2">
-                        <div className="flex items-center justify-end gap-2 font-black text-[7px] md:text-[8px] tracking-widest uppercase mb-0.5 md:mb-1" style={{ color: themeConfig.color }}>
-                            V_ARCHIVE <Star className="w-2.5 h-2.5 md:w-3 md:h-3" />
+                    <div className="absolute top-8 right-8 md:top-12 md:right-16 text-right flex flex-col gap-2 items-end drop-shadow-lg">
+                        <div className="flex items-center justify-end gap-3 font-black text-[10px] md:text-xs tracking-[0.3em] uppercase" style={{ color: themeConfig.color }}>
+                            V_ARCHIVE_26 <Star className="w-4 h-4" />
                         </div>
-                        <div className="text-white/10 text-[6px] md:text-[7px] font-mono tracking-widest uppercase">2026 EDITION</div>
+                        <div className="h-[1px] w-24 bg-gradient-to-l from-white/40 to-transparent" />
+                        <div className="text-white/60 text-[8px] md:text-[9px] font-mono tracking-widest uppercase">
+                            Secure Link
+                        </div>
                     </div>
 
-                    {/* CENTER CONTENT */}
-                    <div className="relative z-10 w-full max-w-2xl text-center space-y-12 px-8">
+                    {/* CENTER CONTENT - BALANCED & THEMATIC */}
+                    <div className="relative z-10 w-full max-w-6xl text-center flex flex-col items-center justify-center p-4">
                         <AnimatePresence mode="wait">
                             {step === 'SYNCING' && (
                                 <motion.div
                                     key="syncing"
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, scale: 0.9 }}
-                                    className="space-y-10"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0, filter: 'blur(10px)' }}
+                                    className="w-full flex flex-col items-center gap-10"
                                 >
-                                    <div className={`space-y-6 md:space-y-10 p-10 md:p-14 lg:p-16 rounded-[2.5rem] md:rounded-[3.5rem] border border-white/10 bg-white/[0.03] backdrop-blur-3xl gpu-accel relative overflow-hidden group shadow-2xl`}>
-                                        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.05] via-transparent to-transparent opacity-100" />
+                                    {/* Main Title - Smaller, cleaner, more elegant */}
+                                    <div className="relative z-20">
+                                        <h1 className="text-3xl sm:text-5xl md:text-6xl text-white tracking-[0.1em] uppercase leading-tight drop-shadow-[0_4px_11px_rgba(0,0,0,0.8)]" style={{ fontFamily: "'Rye', serif" }}>
+                                            ENTERING<br />
+                                            <span
+                                                className="text-transparent bg-clip-text bg-gradient-to-r from-white/60 via-white to-white/60 tracking-[0.1em] mt-2 block md:text-7xl animate-text-shimmer"
+                                            >
+                                                THE UNKNOWN
+                                            </span>
+                                        </h1>
+                                    </div>
 
-                                        {/* Animated Border Trail */}
-                                        <motion.div
-                                            className="absolute inset-0 pointer-events-none"
-                                            animate={{
-                                                background: [
-                                                    `conic-gradient(from 0deg at 50% 50%, transparent 0%, ${themeConfig.color}44 10%, transparent 20%)`,
-                                                    `conic-gradient(from 360deg at 50% 50%, transparent 0%, ${themeConfig.color}44 10%, transparent 20%)`
-                                                ]
-                                            }}
-                                            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                                            style={{ padding: '2px', WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)', WebkitMaskComposite: 'xor', maskComposite: 'exclude' }}
-                                        />
-
-                                        <div className="absolute inset-[-1px] border border-emerald-500/20 rounded-[inherit] pointer-events-none" />
-
-                                        <div className="flex flex-col sm:flex-row justify-between items-center sm:items-end gap-6 sm:gap-0 relative z-10">
-                                            <div className="flex flex-col items-center sm:items-start gap-3">
-                                                <span className="text-[11px] md:text-[13px] font-bold tracking-[0.5em] text-white/40 uppercase text-center sm:text-left">
-                                                    SYSTEM_AUTHENTICATION
-                                                </span>
-                                                <span className="text-white font-black text-2xl md:text-3xl uppercase tracking-widest">{themeConfig.label}</span>
-                                            </div>
-                                            <span className="text-5xl md:text-8xl font-black text-white italic tracking-tighter tabular-nums">{Math.round(progress)}%</span>
+                                    {/* High Contrast Progress Bar - Compact */}
+                                    <div className="w-full max-w-md space-y-4 backdrop-blur-sm bg-black/30 p-5 rounded-2xl border border-white/10 shadow-2xl">
+                                        <div className="flex justify-between items-end px-2">
+                                            <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-emerald-400 shadow-black drop-shadow-md">
+                                                {themeConfig.label}
+                                            </span>
+                                            <span className="text-2xl md:text-3xl font-black italic tabular-nums text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
+                                                {Math.round(progress)}%
+                                            </span>
                                         </div>
 
-                                        <div className="h-[2px] md:h-[3px] w-full bg-white/5 relative overflow-hidden rounded-full">
+                                        <div className="relative h-1 w-full bg-white/10 overflow-hidden rounded-full">
                                             <motion.div
                                                 initial={{ width: 0 }}
                                                 animate={{ width: `${progress}%` }}
-                                                className="absolute inset-y-0 left-0"
-                                                style={{ backgroundColor: themeConfig.color, boxShadow: `0 0 20px ${themeConfig.color}` }}
+                                                className="absolute inset-y-0 left-0 rounded-full"
+                                                style={{
+                                                    backgroundColor: themeConfig.color,
+                                                    boxShadow: `0 0 15px ${themeConfig.color}`
+                                                }}
                                             />
                                         </div>
 
-                                        <div className="flex justify-center gap-10 pt-4 opacity-30">
-                                            <Icon className="w-4 h-4" style={{ color: themeConfig.color }} />
-                                            <div className="w-10 h-[1px] bg-white/10 my-auto" />
-                                            <AccentIcon className="w-4 h-4" style={{ color: themeConfig.color }} />
-                                            <div className="w-10 h-[1px] bg-white/10 my-auto" />
-                                            <Star className="w-4 h-4" style={{ color: themeConfig.color }} />
+                                        <div className="flex justify-between text-[8px] uppercase tracking-widest text-white/50 font-mono">
+                                            <span>Loading Assets...</span>
+                                            <span>{themeConfig.subLabel}</span>
                                         </div>
                                     </div>
-
-                                    <h1 className="text-4xl sm:text-6xl md:text-8xl font-black text-white italic tracking-[0.05em] uppercase leading-none opacity-20 select-none text-center">
-                                        VARNOTHSAVA<br /><span className="text-white/5 not-italic">2K26</span>
-                                    </h1>
                                 </motion.div>
                             )}
 
                             {step === 'READY' && (
                                 <motion.div
                                     key="ready"
-                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    initial={{ opacity: 0, scale: 0.95 }}
                                     animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, y: -20 }}
-                                    className="space-y-10"
+                                    exit={{ opacity: 0, scale: 1.1 }}
+                                    className="flex flex-col items-center gap-8 z-20"
                                 >
-                                    <div className={`relative p-6 sm:p-10 md:p-16 border border-white/10 bg-white/[0.01] ${isMobile ? '' : 'backdrop-blur-xl'} rounded-[3rem] md:rounded-[4rem] gpu-accel shadow-2xl overflow-hidden`}>
-                                        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/[0.03] to-transparent" />
-
-                                        {/* Animated Border Trail for Ready Card */}
-                                        <motion.div
-                                            className="absolute inset-0 pointer-events-none"
-                                            animate={{
-                                                background: [
-                                                    `conic-gradient(from 0deg at 50% 50%, transparent 0%, ${themeConfig.color}44 10%, transparent 20%)`,
-                                                    `conic-gradient(from 360deg at 50% 50%, transparent 0%, ${themeConfig.color}44 10%, transparent 20%)`
-                                                ]
-                                            }}
-                                            transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-                                            style={{ padding: '2px', WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)', WebkitMaskComposite: 'xor', maskComposite: 'exclude' }}
-                                        />
-
-                                        <div className="w-20 h-20 md:w-28 md:h-28 bg-white/[0.03] border border-white/10 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-inner relative group">
-                                            <motion.div
-                                                className="absolute inset-0 rounded-[2rem] opacity-20 blur-xl"
-                                                style={{ backgroundColor: themeConfig.color }}
-                                                animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.3, 0.1] }}
-                                                transition={{ duration: 2, repeat: Infinity }}
-                                            />
-                                            <Icon className="w-10 h-10 md:w-14 md:h-14 relative z-10" style={{ color: themeConfig.color }} />
-                                        </div>
-
-                                        <h2 className="relative text-3xl sm:text-5xl md:text-7xl font-black text-white italic tracking-tighter uppercase mb-2 md:mb-4 drop-shadow-[0_0_25px_rgba(255,255,255,0.3)] leading-none overflow-hidden">
-                                            WELCOME TO <br className="sm:hidden" />
-                                            <span className="relative inline-block">
-                                                <span style={{ color: themeConfig.color, textShadow: `0 0 20px ${themeConfig.color}88` }}>SMVITM</span>
-                                                <motion.div
-                                                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-[-20deg] pointer-events-none"
-                                                    animate={{ x: ['-200%', '200%'] }}
-                                                    transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                                                />
-                                            </span>
-                                        </h2>
-                                        <p className="text-white/40 text-[11px] md:text-[13px] uppercase tracking-[0.4em] font-medium mb-12 max-w-sm mx-auto leading-relaxed">Your premium student festival <br /> dashboard is ready for access.</p>
-
-                                        <button
-                                            onClick={startExperience}
-                                            className="w-[200px] sm:w-[280px] md:w-full mx-auto py-4 md:py-7 bg-white text-black font-black uppercase text-[10px] md:text-xs tracking-[0.3em] md:tracking-[0.5em] hover:text-white transition-all shadow-2xl relative overflow-hidden group/btn"
-                                            style={{ clipPath: 'polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px)' }}
+                                    {/* Icon Container - Glowing & Distinct */}
+                                    <motion.div
+                                        animate={{ y: [0, -10, 0] }}
+                                        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                                        className="relative group cursor-pointer"
+                                    >
+                                        <div className="absolute inset-0 rounded-full blur-[40px] opacity-30" style={{ backgroundColor: themeConfig.color }} />
+                                        <div
+                                            className="relative w-20 h-20 md:w-24 md:h-24 rounded-full border border-white/20 bg-black/40 backdrop-blur-md flex items-center justify-center shadow-[0_0_30px_rgba(0,0,0,0.6)] group-hover:bg-black/50 transition-all duration-300"
+                                            style={{ boxShadow: `0 0 20px ${themeConfig.color}11` }}
                                         >
-                                            <div
-                                                className="absolute inset-0 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"
-                                                style={{ backgroundColor: themeConfig.color }}
-                                            />
-                                            <span className="relative z-10">OPEN PORTAL</span>
-                                        </button>
+                                            <Icon className="w-8 h-8 md:w-10 md:h-10 drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]" style={{ color: themeConfig.color }} />
+                                        </div>
+                                    </motion.div>
+
+                                    {/* Main Welcome Text - Balanced Size */}
+                                    <div className="text-center space-y-3">
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.2 }}
+                                            className="flex flex-col items-center"
+                                        >
+                                            <span
+                                                className="text-sm md:text-base tracking-[0.2em] text-white/70 uppercase mb-2 drop-shadow-md"
+                                                style={{ fontFamily: "'Rye', serif" }}
+                                            >
+                                                Welcome To
+                                            </span>
+                                            <h2
+                                                className="text-5xl sm:text-6xl md:text-7xl uppercase leading-none text-white drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)]"
+                                                style={{ fontFamily: "'Rye', serif" }}
+                                            >
+                                                SMVITM
+                                            </h2>
+                                            <span
+                                                className="text-transparent bg-clip-text bg-gradient-to-r from-white/80 via-[#10b981] to-white/80 text-xl md:text-2xl tracking-[0.4em] uppercase mt-2 drop-shadow-sm animate-text-shimmer"
+                                                style={{ fontFamily: "'Rye', serif" }}
+                                            >
+                                                FESTIVAL
+                                            </span>
+                                        </motion.div>
                                     </div>
+
+                                    {/* The Button - Ancient Stone Artifact Design */}
+                                    {/* The Button - LEVITATING RUNESTONE (Ancient & Heavy) */}
+                                    {/* The Button - FRACTURED ENERGY SEAL */}
+                                    <motion.button
+                                        initial={{ opacity: 0, y: 30 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.5 }}
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={startExperience}
+                                        className="relative group mt-8 md:mt-12 cursor-pointer outline-none focus:outline-none w-[85vw] max-w-[380px]"
+                                    >
+                                        {/* Outer Glow (The Aura) */}
+                                        <div className="absolute -inset-1 bg-emerald-500/30 rounded-lg blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                                        {/* Button Container */}
+                                        <div className="relative px-6 py-5 md:px-12 md:py-6 bg-black border border-emerald-900 overflow-hidden flex items-center justify-center rounded-lg shadow-[0_0_30px_rgba(0,0,0,0.8)]">
+
+                                            {/* THE CRACKS - jagged lines created with rotated gradients */}
+                                            {/* Main Fissure */}
+                                            <div className="absolute inset-0 opacity-40 group-hover:opacity-100 transition-opacity duration-500">
+                                                <div className="absolute top-[-50%] left-[40%] w-[2px] h-[200%] bg-emerald-400 rotate-[25deg] shadow-[0_0_10px_#10b981]" />
+                                                <div className="absolute top-[-50%] left-[45%] w-[1px] h-[200%] bg-emerald-500 rotate-[15deg] translate-x-4" />
+                                                <div className="absolute top-[20%] left-[20%] w-[60%] h-[2px] bg-emerald-400 rotate-[-10deg] shadow-[0_0_15px_#10b981]" />
+                                                <div className="absolute bottom-[30%] right-[20%] w-[40%] h-[1px] bg-white/80 rotate-[45deg]" />
+                                            </div>
+
+                                            {/* Fractured Glass/Energy Texture */}
+                                            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-emerald-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                                            {/* Text Content */}
+                                            <span className="relative z-10 text-xl md:text-3xl text-white uppercase tracking-[0.2em] flex items-center gap-4 drop-shadow-lg whitespace-nowrap" style={{ fontFamily: "'Rye', serif" }}>
+                                                <span className="text-emerald-500 group-hover:text-emerald-300 transition-colors hidden sm:inline">❖</span>
+                                                Enter Portal
+                                                <span className="text-emerald-500 group-hover:text-emerald-300 transition-colors hidden sm:inline">❖</span>
+                                            </span>
+
+                                        </div>
+                                        {/* Subtext underneath */}
+                                        <div className="absolute -bottom-6 left-0 right-0 text-center">
+                                            <span className="text-[9px] uppercase tracking-[0.3em] text-emerald-500/50 font-sans group-hover:text-emerald-400 transition-colors">
+                                                Break The Seal
+                                            </span>
+                                        </div>
+                                    </motion.button>
                                 </motion.div>
                             )}
 
                             {step === 'MESSAGE' && (
                                 <motion.div
                                     key="message"
-                                    initial={{ opacity: 0, y: 30 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, filter: 'blur(30px)' }}
-                                    className="space-y-12"
+                                    initial={{ opacity: 0, scale: 1.2 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, filter: 'blur(20px)' }}
+                                    className="flex flex-col items-center justify-center"
                                 >
-                                    <div className="flex flex-col items-center gap-10">
-                                        <div className="w-32 h-[2px]" style={{ background: `linear-gradient(to right, transparent, ${themeConfig.color}, transparent)` }} />
-                                        <h2 className="text-4xl sm:text-6xl md:text-8xl font-black text-white tracking-[0.1em] uppercase italic text-center leading-none">
-                                            FESTIVAL<br />
-                                            <span style={{ color: themeConfig.color }}>STARTS_NOW</span>
-                                        </h2>
-                                        <div className="flex items-center gap-6 text-emerald-400 font-mono text-[12px] md:text-[14px] tracking-[0.6em] uppercase font-bold">
-                                            PORTAL UNLOCKED _ 2026
-                                        </div>
-                                        <div className="w-32 h-[2px]" style={{ background: `linear-gradient(to right, transparent, ${themeConfig.color}, transparent)` }} />
-                                    </div>
+                                    <h2 className="text-6xl sm:text-8xl md:text-[150px] font-black italic tracking-tighter text-white leading-none drop-shadow-[0_0_50px_rgba(16,185,129,0.5)]">
+                                        GO
+                                    </h2>
                                 </motion.div>
                             )}
                         </AnimatePresence>
                     </div>
 
-                    {/* Bottom HUD metrics */}
-                    <div className="absolute bottom-10 inset-x-0 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-24 opacity-60">
-                        <div className="flex items-center gap-3">
-                            <Activity className="w-4 h-4" style={{ color: themeConfig.color }} />
-                            <span className="text-[9px] font-black text-white/30 tracking-widest uppercase">Experience Protocol Active</span>
-                        </div>
-                        <div className="hidden md:block w-16 h-[1px] bg-white/5" />
-                        <div className="flex items-center gap-3">
-                            <span className="text-[9px] font-black text-white/30 tracking-widest uppercase">Verified Node Access</span>
-                            <Shield className="w-4 h-4" style={{ color: themeConfig.color }} />
+                    {/* Bottom HUD metrics - Cleaner */}
+                    <div className="absolute bottom-10 inset-x-0 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-24 opacity-80 z-20">
+                        <div className="flex items-center gap-3 drop-shadow-md">
+                            <Activity className="w-3 h-3" style={{ color: themeConfig.color }} />
+                            <span className="text-[10px] font-bold text-white/50 tracking-widest uppercase">System Online</span>
                         </div>
                     </div>
                 </motion.div>
