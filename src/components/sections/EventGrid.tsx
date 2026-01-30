@@ -21,7 +21,10 @@ export function EventGrid({ missions }: EventGridProps) {
     const { userData, registerMission, isLoggedIn, isSiteLoaded } = useApp()
     const router = useRouter()
     const [filter, setFilter] = useState<'All' | 'Technical' | 'Cultural' | 'Gaming'>('All')
-    const [subFilter, setSubFilter] = useState<'All' | 'Hobby Club' | 'General' | 'Promotional'>('All')
+    const [subFilter, setSubFilter] = useState<
+        'All' | 'Solo' | 'Duo' | 'Group' | 'Promotional'
+    >('All')
+
     const [searchQuery, setSearchQuery] = useState('')
     const [activeThemeOverride, setActiveThemeOverride] = useState<'emerald' | 'amber' | 'cyan' | 'gaming' | null>(null)
     const [isRegModalOpen, setIsRegModalOpen] = useState(false)
@@ -50,17 +53,31 @@ export function EventGrid({ missions }: EventGridProps) {
     }, [])
 
     const filtered = useMemo(() => {
-        const base = missions.filter(m => {
+        return missions.filter((m) => {
+            // Main category filter (Technical / Cultural / Gaming)
             const matchesType = filter === 'All' || m.type === filter
-            const matchesSub = filter !== 'Cultural' || subFilter === 'All' || m.category === subFilter
-            const matchesSearch = m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+
+            // Sub-filter ONLY for Cultural events, based on teamFormat
+            let matchesSub = true
+            if (filter === 'Cultural' && subFilter !== 'All') {
+                const tf = m.teamFormate?.toLowerCase() || ''
+
+                if (subFilter === 'Solo') matchesSub = tf.includes('solo')
+                else if (subFilter === 'Duo') matchesSub = tf.includes('duo') || tf.includes('pair')
+                else if (subFilter === 'Group') matchesSub = tf.includes('group')
+                else if (subFilter === 'Promotional')
+                    matchesSub = tf.includes('media') || tf.includes('promo')
+            }
+
+            // Search filter
+            const matchesSearch =
+                m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 m.description.toLowerCase().includes(searchQuery.toLowerCase())
+
             return matchesType && matchesSub && matchesSearch
         })
-
-        // Return all filtered results
-        return base
     }, [missions, filter, subFilter, searchQuery])
+
 
     const groupedEvents = useMemo(() => ({
         technical: filtered.filter(m => m.type === 'Technical'),
@@ -373,28 +390,84 @@ export function EventGrid({ missions }: EventGridProps) {
 
                     <div className="header-reveal relative p-1 group/filter order-3 xl:order-3 w-full lg:w-auto mt-4 xl:mt-0">
                         <div className="flex flex-nowrap md:flex-wrap items-center justify-start md:justify-center gap-1 bg-white/[0.05] p-1.5 backdrop-blur-2xl border border-white/5 overflow-x-auto custom-scrollbar-hide" style={{ clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)' }}>
-                            {['All', 'Technical', 'Cultural', 'Gaming'].map((t) => (
-                                <button key={t} onClick={() => { setFilter(t as any); setSubFilter('All'); }} className={`px-4 md:px-6 py-3 md:py-2.5 text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] transition-all relative min-h-[48px] md:min-h-0 flex-shrink-0 ${filter === t ? 'text-black z-10' : 'text-white/70 hover:text-white'}`}>
-                                    {filter === t && <motion.div layoutId="activeFilter" className="absolute inset-0 shadow-[0_0_40px_rgba(255,255,255,0.6)]" style={{ backgroundColor: t === "Cultural" ? "#f59e0b" : "#ffffff", clipPath: 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)' }} transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />}
-                                    <span className="relative z-20">{t}</span>
-                                </button>
-                            ))}
+                            {['All', 'Technical', 'Cultural', 'Gaming']
+                                .filter(t => !(filter === 'Cultural' && t === 'All'))
+                                .map((t) => (
+                                    <button
+                                        key={t}
+                                        onClick={() => {
+                                            setFilter(t as any)
+                                            setSubFilter('All')
+                                        }}
+                                        className={`px-4 md:px-6 py-3 md:py-2.5 text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] transition-all relative min-h-[48px] md:min-h-0 flex-shrink-0 ${filter === t ? 'text-black z-10' : 'text-white/70 hover:text-white'
+                                            }`}
+                                    >
+                                        {filter === t && (
+                                            <motion.div
+                                                layoutId="activeFilter"
+                                                className="absolute inset-0 shadow-[0_0_40px_rgba(255,255,255,0.6)]"
+                                                style={{
+                                                    backgroundColor: t === 'Cultural' ? '#f59e0b' : '#ffffff',
+                                                    clipPath:
+                                                        'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)'
+                                                }}
+                                                transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                                            />
+                                        )}
+                                        <span className="relative z-20">{t}</span>
+                                    </button>
+                                ))}
+
                         </div>
                     </div>
                 </div>
 
                 <AnimatePresence>
                     {filter === 'Cultural' && (
-                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex flex-nowrap md:flex-wrap justify-start md:justify-center mb-8 gap-4 overflow-x-auto custom-scrollbar-hide pb-2">
-                            {['All', 'Hobby Club', 'General', 'Promotional'].map((sf) => (
-                                <button key={sf} onClick={() => setSubFilter(sf as any)} className={`px-8 py-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative flex-shrink-0 ${subFilter === sf ? 'text-black' : 'text-white hover:text-white'}`} style={{ clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 8px)', background: subFilter === sf ? '#fbbf24' : 'rgba(255,255,255,0.02)', backdropFilter: 'blur(10px)' }}>
-                                    {sf === 'Hobby Club' ? 'Club Events' : sf === 'General' ? 'General Events' : sf === 'Promotional' ? 'Media & Promo' : 'All Events'}
-                                    {subFilter === sf && <motion.div layoutId="subGlow" className="absolute inset-0 shadow-[0_0_30px_rgba(245,158,11,0.8)] blur-xl opacity-60 -z-10" style={{ backgroundColor: '#fbbf24' }} />}
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="flex flex-nowrap md:flex-wrap justify-start md:justify-center mb-8 gap-4 overflow-x-auto custom-scrollbar-hide pb-2"
+                        >
+                            {['All', 'Solo', 'Duo', 'Group', 'Promotional'].map((sf) => (
+                                <button
+                                    key={sf}
+                                    onClick={() => setSubFilter(sf as any)}
+                                    className={`px-8 py-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative flex-shrink-0 ${subFilter === sf ? 'text-black' : 'text-white hover:text-white'
+                                        }`}
+                                    style={{
+                                        clipPath:
+                                            'polygon(8px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 8px)',
+                                        background:
+                                            subFilter === sf ? '#fbbf24' : 'rgba(255,255,255,0.02)',
+                                        backdropFilter: 'blur(10px)'
+                                    }}
+                                >
+                                    {sf === 'Solo'
+                                        ? 'Solo Events'
+                                        : sf === 'Duo'
+                                            ? 'Duo Events'
+                                            : sf === 'Group'
+                                                ? 'Group Events'
+                                                : sf === 'Promotional'
+                                                    ? 'Media & Promo'
+                                                    : 'All Events'}
+
+
+                                    {subFilter === sf && (
+                                        <motion.div
+                                            layoutId="subGlow"
+                                            className="absolute inset-0 shadow-[0_0_30px_rgba(245,158,11,0.8)] blur-xl opacity-60 -z-10"
+                                            style={{ backgroundColor: '#fbbf24' }}
+                                        />
+                                    )}
                                 </button>
                             ))}
                         </motion.div>
                     )}
                 </AnimatePresence>
+
 
                 <div ref={gridRef} className="flex flex-col gap-24 pb-20">
                     {searchQuery === '' && filter === 'All' ? (

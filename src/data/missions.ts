@@ -244,7 +244,7 @@ export const missions: Event[] = [
         id: 'Solo-Singing',
         title: 'BHAVA TARANGA',
         type: 'Cultural',
-        category: 'Hobby Club',
+        category: 'Solo',
         description: 'A soulful solo singing event showcasing the beauty and depth of Bhavageethe.Participants mesmerize the audience using pure vocals with emotion and expression.',
         rules: [
             "No accompanying instruments are allowed",
@@ -269,7 +269,7 @@ export const missions: Event[] = [
         id: 'Group-Singing',
         title: 'Janapada nada',
         type: 'Cultural',
-        category: 'Hobby Club',
+        category: 'Duo',
         description: 'A vibrant group singing competition celebrating the spirit of folk music.Teams bring traditional rhythms to life with harmony, energy, and culture.',
         rules: [
             "Accompanying instruments are allowed (maximum 2)",
@@ -290,13 +290,13 @@ export const missions: Event[] = [
         location: 'Admin Block Seminar Hall',
         minTeamSize: 1,
         maxTeamSize: 1,
-        teamFormate: 'Group'
+        teamFormate: 'Duo'
     },
     {
         id: 'Solo-Classical-Dance',
         title: 'Thaka  Dhimi Tha',
         type: 'Cultural',
-        category: 'Hobby Club',
+        category: 'Solo',
         description: 'A graceful platform for classical dancers to express rhythm, devotion, and storytelling.Any Indian classical dance form is welcome with elegance and precision.',
         rules: [
             "Participants will get 5+1 minutes each",
@@ -325,7 +325,7 @@ export const missions: Event[] = [
         id: 'Group-Western-Dance',
         title: 'Groove Gala',
         type: 'Cultural',
-        category: 'Hobby Club',
+        category: 'Group',
         description: 'A high-energy western dance battle packed with synchronization and style.Teams set the stage on fire with creativity, coordination, and powerful moves.',
         rules: [
             "Each can have minimum of 4 and maximum 10 members ",
@@ -427,7 +427,7 @@ export const missions: Event[] = [
         id: 'Anime-Quiz',
         title: 'Anime Arena',
         type: 'Cultural',
-        category: 'General',
+        category: 'Duo',
         description: 'An exciting quiz testing knowledge of anime worlds, characters, and stories.Teams compete across rounds to prove their ultimate anime fandom.',
         rules: [
             "Team of 2 members",
@@ -445,14 +445,14 @@ export const missions: Event[] = [
         // tags: ['Writing', 'Poetry', 'Words'],
         // minTeamSize: 1,
         // maxTeamSize: 1
-        teamFormate: 'Group',
+        teamFormate: 'Duo',
         location: 'Caed lab & library Block seminar hall '
     },
     {
         id: 'Antakshari',
         title: 'Musical Marathon ',
         type: 'Cultural',
-        category: 'General',
+        category: 'Duo',
         description: 'Express your artistic talent through traditional and modern Mehandi designs.',
         rules: [
             "Team of 2 members",
@@ -470,7 +470,7 @@ export const missions: Event[] = [
         // tags: ['Art', 'Design', 'Henna'],
         // minTeamSize: 1,
         // maxTeamSize: 1
-        teamFormate: 'Group',
+        teamFormate: 'Duo',
         location: 'Library Block Seminar hall'
     },
 
@@ -582,7 +582,7 @@ export const missions: Event[] = [
         id: 'Rangoli',
         title: 'Bannada Prapancha',
         type: 'Cultural',
-        category: 'General',
+        category: 'Duo',
         description: 'A colorful rangoli competition celebrating tradition and symmetry.Teams craft vibrant designs using patterns, precision, and creativity.',
         rules: [
             "Each team will get 2 hours",
@@ -603,7 +603,7 @@ export const missions: Event[] = [
         // tags: ['Art', 'Design', 'Henna'],
         // minTeamSize: 1,
         // maxTeamSize: 1
-        teamFormate: 'Group',
+        teamFormate: 'Duo',
         location: 'Open Air Auditorium '
     }
     ,
@@ -723,7 +723,7 @@ export const missions: Event[] = [
         // tags: ['Art', 'Design', 'Henna'],
         // minTeamSize: 1,
         // maxTeamSize: 1
-        teamFormate: 'Solo',
+        teamFormate: 'Promotional',
         location: 'Full-Campus'
     }
     ,
@@ -731,7 +731,7 @@ export const missions: Event[] = [
         id: 'Videography',
         title: 'Cinecapture',
         type: 'Cultural',
-        category: 'General',
+        category: 'Duo',
         description: 'An official after-movie style videography challenge of the fest.Teams document events creatively with cinematic storytelling and editing.',
         rules: [
             "Team of 2 members",
@@ -758,7 +758,7 @@ export const missions: Event[] = [
         // tags: ['Art', 'Design', 'Henna'],
         // minTeamSize: 1,
         // maxTeamSize: 1
-        teamFormate: 'Group',
+        teamFormate: 'Promotional',
         location: 'Full-Campus'
     }
 
