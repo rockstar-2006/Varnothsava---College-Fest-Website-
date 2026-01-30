@@ -14,6 +14,7 @@ export interface Event {
     visual: string
     date: string
     tags?: string[]
+    themeIdeas?: string[]
     videoUrl?: string
     brochureUrl?: string
     minTeamSize?: number
@@ -510,9 +511,9 @@ export const missions: Event[] = [
         title: 'Kala Sangama',
         type: 'Cultural',
         category: 'General',
-        description: 'Express your artistic talent through traditional and modern Mehandi designs.',
+        description: 'A grand variety show combining multiple art forms into one performance.Teams convey powerful themes through creativity, coordination, and expression.',
         rules: [
-             "Team can have minimum of 6 and maximum of 15 members",
+            "Team can have minimum of 6 and maximum of 15 members",
             "Each team will get 15 minutes + 2 minutes for preparation",
             "The show should include a variety of performances such as singing, dancing, skits, and on-the-spot drawing",
             "The MC carries additional points",
@@ -524,9 +525,20 @@ export const missions: Event[] = [
             "Stage setting must be completed within a 2-minute preparation time",
             "Participants may choose from any of the given themes or select their own theme",
             "Participants must report 15 minutes prior to the event"
-        ]
+        ],
+        themeIdeas: [
+  "Save Girl Child",
+  "Unity in Diversity",
+  "School to College Journey",
+  "Women Empowerment",
+  "Peer Pressure Among Students in College Life",
+  "Child Labour",
+  "Save Environment",
+  "Mobile Addiction",
+  "Say No to Drugs and Tobacco"
+],
 
-        ,
+
         prizePool: '₹2,500',
         coordinators: ['Unknown', 'Shreya  ', 'Chirashree'],
         fee: 100,
@@ -537,5 +549,117 @@ export const missions: Event[] = [
         // maxTeamSize: 1
         teamFormate: 'Group',
         location: 'Open Air Auditorium '
+    }
+    ,
+    {
+        id: 'MIME',
+        title: 'Slient Symphony ',
+        type: 'Cultural',
+        category: 'General',
+        description: 'A silent yet powerful performance art conveying stories without words.Participants communicate emotions and messages through expressions and movement.',
+        rules: [
+            "Each team will get 5+2 minutes",
+            "Team can have minimum of 6 and maximum of 10 members",
+            "Recorded music is allowed",
+            "Participants should not convey any wrong or misleading information to the audience",
+            "Participants must report 15 minutes prior to the event",
+            "Properties and costumes are allowed and must be arranged by the participants themselves"
+        ]
+        ,
+        prizePool: '₹2,500',
+        coordinators: ['Unknown', 'Surabhi', 'Viraj'],
+        fee: 100,
+        visual: 'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=1200&q=80',
+        date: '12-MARCH',
+        // tags: ['Art', 'Design', 'Henna'],
+        // minTeamSize: 1,
+        // maxTeamSize: 1
+        teamFormate: 'Group',
+        location: 'Open Air Auditorium '
+    },
+    {
+        id: 'Rangoli',
+        title: 'Bannada Prapancha',
+        type: 'Cultural',
+        category: 'General',
+        description: 'A colorful rangoli competition celebrating tradition and symmetry.Teams craft vibrant designs using patterns, precision, and creativity.',
+        rules: [
+            "Each team will get 2 hours",
+            "Team of 2 members",
+            "Maximum size of the rangoli should be 4 ft by 4 ft",
+            "Rangoli should be made using rangoli colors only",
+            "Participants are not allowed to refer to any printed material, mobile phones, or other reference aids during the contest",
+            "Use of stencils or pre-drawn sketches is not allowed",
+            "Participants must report 15 minutes prior to the event"
+        ]
+
+        ,
+        prizePool: '₹2,500',
+        coordinators: ['Unknown', 'Deepa Prabhu', 'Sanjana'],
+        fee: 100,
+        visual: 'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=1200&q=80',
+        date: '12-MARCH',
+        // tags: ['Art', 'Design', 'Henna'],
+        // minTeamSize: 1,
+        // maxTeamSize: 1
+        teamFormate: 'Group',
+        location: 'Open Air Auditorium '
+    }
+    ,
+    {
+        id: 'Drawing',
+        title: 'Art of Tune',
+        type: 'Cultural',
+        category: 'General',
+        description: 'A drawing competition where imagination meets artistic technique.Participants express ideas visually using pencils, colors, and creativity.',
+        rules: [
+            "Each participant will get 90 Minutes",
+            "Drawing sheets of size A3 will be provided",
+            "Printed pictures, stamps, or stickers are not permitted",
+            "Use of mobile phones or any electronic devices during the drawing activity is strictly prohibited",
+            "Participants must work individually without any external assistance",
+            "Discussion or sharing of ideas and concepts during the activity is not allowed"
+        ]
+
+
+        ,
+        prizePool: '₹2,500',
+        coordinators: ['Unknown', 'Advaith ', 'Ashish'],
+        fee: 100,
+        visual: 'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=1200&q=80',
+        date: '12-MARCH',
+        // tags: ['Art', 'Design', 'Henna'],
+        // minTeamSize: 1,
+        // maxTeamSize: 1
+        teamFormate: 'Solo',
+        location: 'Classroom '
+    }
+    ,
+    {
+        id: 'Pencil Sketch',
+        title: 'Sketch Chronicles ',
+        type: 'Cultural',
+        category: 'General',
+        description: 'A colorful rangoli competition celebrating tradition and symmetry.Teams craft vibrant designs using patterns, precision, and creativity.',
+        rules: [
+            "Each participant will get 75 minutes",
+            "The theme for the contest will be revealed on the spot, 15 minutes prior to the event",
+            "Only A3 drawing sheets will be provided",
+            "The sketch must be done using gradation pencils such as HB, 2B, 3B, etc.",
+            "Participants must report 15 minutes prior to the event"
+        ]
+
+
+        ,
+        prizePool: '₹2,500',
+        coordinators: ['Unknown', 'Shivaprasdh ', 'Pragathi '],
+        fee: 100,
+        visual: 'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=1200&q=80',
+        date: '12-MARCH',
+        // tags: ['Art', 'Design', 'Henna'],
+        // minTeamSize: 1,
+        // maxTeamSize: 1
+        teamFormate: 'Solo',
+        location: 'Classroom'
     }
 ]

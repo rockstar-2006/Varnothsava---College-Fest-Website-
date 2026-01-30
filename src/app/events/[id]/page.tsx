@@ -9,6 +9,7 @@ import {
     FileText,
     Play,
     Users,
+    Lightbulb,
     Calendar,
     MapPin,
     Trophy,
@@ -358,8 +359,77 @@ export default function EventDetailsPage() {
                                 </TechContentCard>
                             </motion.div>
 
+                            {mission.evaluation && mission.evaluation.length > 0 && (
+                                <motion.div
+                                    initial={{ opacity: 0, x: themeColor === 'emerald' ? 50 : 0, y: themeColor === 'emerald' ? 0 : 20 }}
+                                    whileInView={{ opacity: 1, x: 0, y: 0 }}
+                                    viewport={{ once: true, amount: 0.2 }}
+                                    transition={{ duration: 0.4 }}
+                                >
+                                    <TechContentCard theme={twTheme}>
+                                        <div className="space-y-4 md:space-y-6">
+                                            <div className="flex items-center gap-3">
+                                                <Trophy size={18} className="text-amber-500" />
+                                                <h2 className="text-xs md:text-sm font-black uppercase tracking-widest">
+                                                    EVALUATION
+                                                </h2>
+                                            </div>
+
+                                            <ul className="space-y-3 md:space-y-4">
+                                                {mission.evaluation.map((item: string, idx: number) => (
+                                                    <li
+                                                        key={idx}
+                                                        className="flex gap-3 text-xs md:text-sm text-white/60 font-mono items-start"
+                                                    >
+                                                        <span className="text-amber-500 mt-0.5 md:mt-1 font-bold">
+                                                            {idx + 1}.
+                                                        </span>
+                                                        {item}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    </TechContentCard>
+                                </motion.div>
+                            )}
+                            {mission.themeIdeas && mission.themeIdeas.length > 0 && (
+                                <motion.div
+                                    initial={{ opacity: 0, x: themeColor === 'emerald' ? -50 : 0, y: themeColor === 'emerald' ? 0 : 20 }}
+                                    whileInView={{ opacity: 1, x: 0, y: 0 }}
+                                    viewport={{ once: true, amount: 0.2 }}
+                                    transition={{ duration: 0.4 }}
+                                >
+                                    <TechContentCard theme={twTheme}>
+                                        <div className="space-y-4 md:space-y-6">
+                                            <div className="flex items-center gap-3">
+                                                <Lightbulb size={18} className={`text-${twTheme}-500`} />
+                                                <h2 className="text-xs md:text-sm font-black uppercase tracking-widest">
+                                                    THEME IDEAS
+                                                </h2>
+                                            </div>
+
+                                            <ul className="space-y-3 md:space-y-4">
+                                                {mission.themeIdeas.map((theme: string, idx: number) => (
+                                                    <li
+                                                        key={idx}
+                                                        className="flex gap-3 text-xs md:text-sm text-white/60 font-mono items-start"
+                                                    >
+                                                        <span className={`text-${twTheme}-500 mt-0.5 md:mt-1 font-bold`}>
+                                                            {idx + 1}.
+                                                        </span>
+                                                        {theme}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    </TechContentCard>
+                                </motion.div>
+                            )}
+
+
+
                         </div>
-                        
+
                         {mission?.rounds && (
                             <motion.div
                                 initial={{ opacity: 0, x: themeColor === 'emerald' ? 50 : 0, y: themeColor === 'emerald' ? 0 : 20 }}
