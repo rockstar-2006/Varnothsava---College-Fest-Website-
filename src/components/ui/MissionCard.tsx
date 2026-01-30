@@ -27,6 +27,7 @@ export interface Event {
     brochureUrl?: string
     minTeamSize: number
     maxTeamSize: number
+    teamFormate?: string
 }
 
 export interface ThemeConfig {
@@ -279,7 +280,15 @@ export const MissionCard = memo(({
 
                 <div className={`px-6 z-10 w-full mt-auto mb-4 ${event.type === 'Technical' ? 'grid grid-cols-3 gap-2 border-y border-white/5 py-3 bg-white/[0.02]' : 'flex justify-between items-center'}`}>
                     <div className="flex flex-col gap-0.5"><span className="text-[9px] font-bold text-white/50 uppercase tracking-[0.2em]">DATE</span><span className="text-[12px] font-extrabold text-white tracking-wide">{event.date}</span></div>
-                    <div className="flex flex-col gap-0.5 items-center"><span className="text-[9px] font-bold text-white/50 uppercase tracking-[0.2em]">GROUP</span><span className="text-[11px] font-extrabold text-white uppercase truncate w-full text-center tracking-tight">{event.maxTeamSize > 1 ? `${event.minTeamSize}-${event.maxTeamSize}` : 'SOLO'}</span></div>
+                    <div className="flex flex-col gap-0.5 items-center">
+                        <span className="text-[9px] font-bold text-white/50 uppercase tracking-[0.2em]">
+                            GROUP
+                        </span>
+
+                        <span className="text-[11px] font-extrabold text-white uppercase truncate w-full text-center tracking-tight">
+                            {event.teamFormate}
+                        </span>
+                    </div>
                     <div className="flex flex-col items-end gap-0.5"><span className="text-[9px] font-bold text-white/50 uppercase tracking-[0.2em]">PRIZE</span><span className="text-[13px] text-white font-black italic tracking-tighter">{event.prizePool}</span></div>
                 </div>
 

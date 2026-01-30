@@ -301,7 +301,7 @@ export default function ProEventBackground({ theme = 'emerald', scrollProgress =
     const [isMobile, setIsMobile] = React.useState(false)
 
     // Using useTransform for smooth parallax without re-renders
-    const amberY = useTransform(scrollProgress,[0, 1], isMobile ? [40, 70] : [300, 600] )
+    const amberY = useTransform(scrollProgress, [0, 1], isMobile ? [40, 70] : [300, 600])
     //  starts lower, moves gently
 
 
@@ -356,29 +356,79 @@ export default function ProEventBackground({ theme = 'emerald', scrollProgress =
 
                     {!isDetailed && (
                         <div className="absolute inset-0 z-0 overflow-hidden bg-[#0f0901]">
-    {/* Normalized Background Image */}
-    <motion.div
-    className="absolute inset-0 flex items-center justify-center"
-    style={{ y: amberY }}
->
-    <Image
-        src="/cultural-bg.png"
-        alt=""
-        priority
-        className="max-w-full max-h-full object-contain"
-        width={1920}
-        height={1080}
-        style={{
-            filter: 'brightness(0.9) contrast(1.05)',
-        }}
-    />
-</motion.div>
+                            {/* Normalized Background Image */}
+                            <motion.div
+                                className="absolute inset-0"
+                                style={{
+                                    y: amberY,
+                                    WebkitMaskImage: `
+          linear-gradient(
+            to bottom,
+            transparent 0%,
+            black 18%,
+            black 82%,
+            transparent 100%
+          )
+        `,
+                                    maskImage: `
+          linear-gradient(
+            to bottom,
+            transparent 0%,
+            black 18%,
+            black 82%,
+            transparent 100%
+          )
+        `
+                                }}
+                            >
+                                <Image
+                                    src="/cultural-bg.png"
+                                    alt=""
+                                    priority
+                                    fill
+                                    className="absolute inset-0 w-full h-full object-cover scale-110"
+
+                                    style={{
+                                        filter: 'brightness(0.9) contrast(1.05)',
+                                    }}
+                                />
+                            </motion.div>
+                            {/* Full Border Black Contrast for Cultural Background */}
+                            <div className="absolute inset-0 z-20 pointer-events-none">
+                                <div
+                                    className="absolute inset-0"
+                                    style={{
+                                        background: `
+        linear-gradient(to top, rgba(0,0,0,0.85), transparent 35%),
+        linear-gradient(to bottom, rgba(0,0,0,0.75), transparent 35%),
+        linear-gradient(to left, rgba(0,0,0,0.8), transparent 30%),
+        linear-gradient(to right, rgba(0,0,0,0.8), transparent 30%)
+      `
+                                    }}
+                                />
+                            </div>
 
 
 
-    {/* Soft vignette instead of heavy gradients */}
-    <div className="absolute inset-0 bg-radial-fade z-10" />
-</div>
+
+
+
+                            {/* Soft vignette instead of heavy gradients */}
+                            {/* Top & Bottom Contrast Overlays for Cultural Events */}
+                            <div className="absolute inset-0 z-10 pointer-events-none">
+                                {/* Top contrast */}
+                                <div className="absolute top-0 left-0 w-full h-32 md:h-48
+                  bg-gradient-to-b from-black/90 via-black/50 to-transparent" />
+
+                                {/* Bottom contrast */}
+                                <div className="absolute bottom-0 left-0 w-full h-32 md:h-48
+                  bg-gradient-to-t from-black/95 via-black/60 to-transparent" />
+                            </div>
+
+                            {/* Keep soft vignette for edges */}
+                            <div className="absolute inset-0 bg-radial-fade z-[9]" />
+
+                        </div>
 
                     )}
 

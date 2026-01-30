@@ -24,7 +24,23 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'images.pexels.com' ,
+      },
+      {
+        protocol: 'https',
         hostname: 'img.youtube.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'in.pinterest.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'pin.it',
+      },
+      {
+        protocol: 'https',
+        hostname: 'encrypted-tbn0.gstatic.com',
       }
     ],
   },
