@@ -39,7 +39,7 @@ const getTailwindTheme = (theme: string) => {
 // Geometric Tech Card Component
 // Geometric Tech Card Component
 const TechStatCard = ({ icon: Icon, label, value, theme }: any) => (
-    <div className="relative group min-h-[100px] md:min-h-[140px]">
+    <div className="relative group min-h-[120px] md:min-h-[170px]">
         {/* Background Glow - Visible on hover */}
         <div
             className={`absolute inset-0 bg-${theme}-500/20 blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-500`}
@@ -58,7 +58,7 @@ const TechStatCard = ({ icon: Icon, label, value, theme }: any) => (
 
             {/* Inner Content */}
             <div
-                className="relative bg-black/80 backdrop-blur-lg md:backdrop-blur-2xl p-3 md:p-6 h-full flex flex-col items-center justify-center gap-1 md:gap-3 text-center"
+                className="relative bg-black/80 backdrop-blur-lg md:backdrop-blur-2xl p-4 md:p-8x h-full flex flex-col items-center justify-center gap-1 md:gap-3 text-center"
                 style={{ clipPath: 'polygon(15px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 15px), calc(100% - 15px) 100%, 8px 100%, 0 calc(100% - 8px), 0 15px)' }}
             >
                 <div className={`p-2 md:p-3 bg-${theme}-500/20 border-2 border-${theme}-500/40 group-hover:scale-110 transition-transform active:scale-95`} style={{ clipPath: 'polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)', willChange: 'transform' }}>
@@ -66,7 +66,8 @@ const TechStatCard = ({ icon: Icon, label, value, theme }: any) => (
                 </div>
                 <div>
                     <p className={`text-[7px] md:text-[9px] font-black uppercase tracking-[0.1em] md:tracking-[0.2em] text-${theme}-500/70 mb-0.5 md:mb-1`}>{label}</p>
-                    <p className="text-xs sm:text-base md:text-xl font-black italic uppercase tracking-tighter text-white truncate max-w-full">{value}</p>
+                    <p className="text-sm sm:text-lg md:text-2xl font-black italic uppercase tracking-tight text-white leading-snug">
+                        {value}</p>
                 </div>
             </div>
         </div>
@@ -216,8 +217,11 @@ export default function EventDetailsPage() {
                                             className={`text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-3 md:mb-4 ${twTheme === 'amber' ? 'text-amber-500' : (twTheme === 'red' ? 'text-red-500' : 'text-emerald-500')}`}
                                             style={{ textShadow: `0 0 30px ${primaryGlow}` }}
                                         >
+
+
                                             {mission.title.replace('_', ' ')}
                                         </motion.h1>
+
                                         <div className="flex flex-wrap gap-3 md:gap-4 items-center">
                                             <span className="px-2 md:px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-widest border border-white/20">
                                                 ID: {mission.id}
@@ -225,6 +229,7 @@ export default function EventDetailsPage() {
                                             <span className={`px-2 md:px-3 py-1 bg-${twTheme}-500/10 backdrop-blur-md rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-widest border border-${twTheme}-500/30 text-${twTheme}-400`}>
                                                 {mission.type}
                                             </span>
+
                                         </div>
                                     </div>
                                 </div>
@@ -286,7 +291,7 @@ export default function EventDetailsPage() {
                             >
                                 <div className="flex items-center gap-3">
                                     <Play size={18} className={`text-${twTheme}-500`} />
-                                    <h2 className="text-xs md:text-sm font-black uppercase tracking-widest">EVENT_GLIMPSE</h2>
+                                    <h2 className="text-xs md:text-sm font-black uppercase tracking-widest">EVENT GLIMPSE</h2>
                                 </div>
                                 {/* ... video container ... */}
                                 <div className="relative rounded-xl md:rounded-2xl overflow-hidden border border-white/10 aspect-video bg-black/40 group">
@@ -320,7 +325,7 @@ export default function EventDetailsPage() {
                         >
                             <div className="flex items-center gap-3">
                                 <Info size={18} className={`text-${twTheme}-500`} />
-                                <h2 className="text-xs md:text-sm font-black uppercase tracking-widest">MISSION_BRIEF</h2>
+                                <h2 className="text-xs md:text-sm font-black uppercase tracking-widest">MISSION BRIEF</h2>
                             </div>
                             <p className="text-sm sm:text-base md:text-lg text-white/80 font-medium leading-relaxed font-mono">
                                 {mission.description}
@@ -353,97 +358,88 @@ export default function EventDetailsPage() {
                                 </TechContentCard>
                             </motion.div>
 
+                        </div>
+                        {mission?.rounds && (
                             <motion.div
                                 initial={{ opacity: 0, x: themeColor === 'emerald' ? 50 : 0, y: themeColor === 'emerald' ? 0 : 20 }}
                                 whileInView={{ opacity: 1, x: 0, y: 0 }}
-                                viewport={{ once: true, amount: 0.2 }}
+                                viewport={{ once: true, amount: 0.3 }}
                                 transition={{ duration: 0.4 }}
                             >
                                 <TechContentCard theme={twTheme}>
                                     <div className="space-y-4 md:space-y-6">
-                                        <div className="flex items-center gap-3">
-                                            <Trophy size={18} className="text-amber-500" />
-                                            <h2 className="text-xs md:text-sm font-black uppercase tracking-widest">EVALUATION</h2>
+                                        <h2 className="text-lg md:text-xl font-black italic uppercase tracking-tighter">
+                                            ROUNDS
+                                        </h2>
+
+                                        <div className="space-y-5">
+                                            {Object.entries(mission.rounds).map(([roundKey, value]) => {
+                                                if (!Array.isArray(value)) return null
+
+                                                const points = value as string[]
+
+                                                return (
+                                                    <div key={roundKey} className="space-y-3">
+                                                        <h3 className="text-sm md:text-base font-bold uppercase">
+                                                            {roundKey.replace('round', 'Round ')}
+                                                        </h3>
+
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                                                            {points.map((text, idx) => (
+                                                                <div
+                                                                    key={idx}
+                                                                    className="flex gap-3 items-center p-3 bg-white/5 rounded-lg border border-white/5"
+                                                                >
+                                                                    <div className={`w-1.5 h-1.5 rounded-full bg-${twTheme}-500`} />
+                                                                    <span className="text-[10px] md:text-xs font-mono text-white/70">
+                                                                        {text}
+                                                                    </span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })}
                                         </div>
-                                        <ul className="space-y-3 md:space-y-4">
-                                            {(mission.evaluation || ['Innovation', 'Technical Implementation', 'Presentation', 'Theme Adherence']).map((item: string, idx: number) => (
-                                                <li key={idx} className="flex gap-3 text-xs md:text-sm text-white/60 font-mono items-start">
-                                                    <span className="text-amber-500 mt-0.5 md:mt-1 font-bold">{idx + 1}.</span>
-                                                    {item}
-                                                </li>
-                                            ))}
-                                        </ul>
                                     </div>
                                 </TechContentCard>
                             </motion.div>
-                        </div>
-                        {/* Wrapper for Regulations and Coordinators remains similar to original structure, just ensuring TechContentCard is used responsivenessly */}
-                        <motion.div
-                            initial={{ opacity: 0, x: themeColor === 'emerald' ? 50 : 0, y: themeColor === 'emerald' ? 0 : 20 }}
-                            whileInView={{ opacity: 1, x: 0, y: 0 }}
-                            viewport={{ once: true, amount: 0.3 }}
-                            transition={{ duration: 0.4 }}
-                        >
-                            <TechContentCard theme={twTheme}>
-                                <div className="space-y-4 md:space-y-6">
-                                    <h2 className="text-lg md:text-xl font-black italic uppercase tracking-tighter">REGULATIONS_&_COMPLIANCE</h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                                        {[
-                                            'Standard code of conduct applies.',
-                                            'Valid registration proof required for venue entry.',
-                                            'Organizers decision is final in case of disputes.',
-                                            'Malpractice leads to immediate disqualification.'
-                                        ].map((reg: string, idx: number) => (
-                                            <div key={idx} className="flex gap-3 items-center p-3 bg-white/5 rounded-lg border border-white/5">
-                                                <div className={`w-1.5 h-1.5 rounded-full bg-${twTheme}-500`} />
-                                                <span className="text-[10px] md:text-xs font-mono text-white/70">{reg}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </TechContentCard>
-                        </motion.div>
+                        )}
+                        {mission.coordinators?.map((name: string, idx: number) => (
+                            <motion.div
+                                key={idx}
+                                initial={{ opacity: 0, x: themeColor === 'emerald' ? (idx === 0 ? -30 : 30) : 0 }}
+                                whileInView={{ opacity: 1, x: 0 }}
+                                viewport={{ once: true, amount: 0.5 }}
+                                transition={{ duration: 0.3, delay: idx * 0.05 }}
+                            >
+                                <TechContentCard theme={twTheme}>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h3 className="text-base md:text-lg font-black uppercase tracking-tighter">
+                                                {name}
+                                            </h3>
+                                            <p className="text-[9px] md:text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">
+                                                {idx === 0 ? 'Faculty Coordinator' : 'Student Coordinator'}
+                                            </p>
+                                        </div>
 
-                        <motion.div
-                            className="space-y-6 md:space-y-8"
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true, amount: 0.2 }}
-                            transition={{ duration: 0.4 }}
-                        >
-                            <div className="flex items-center gap-3">
-                                <Users size={18} className={`text-${twTheme}-500`} />
-                                <h2 className="text-xs md:text-sm font-black uppercase tracking-widest">MISSION_COMMANDERS</h2>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                                {mission.coordinators?.map((name: string, idx: number) => (
-                                    <motion.div
-                                        key={idx}
-                                        initial={{ opacity: 0, x: themeColor === 'emerald' ? (idx % 2 === 0 ? -30 : 30) : 0 }}
-                                        whileInView={{ opacity: 1, x: 0 }}
-                                        viewport={{ once: true, amount: 0.5 }}
-                                        transition={{ duration: 0.3, delay: idx * 0.05 }}
-                                    >
-                                        <TechContentCard theme={twTheme}>
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <h3 className="text-base md:text-lg font-black uppercase tracking-tighter">{name}</h3>
-                                                    <p className="text-[9px] md:text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">Event Coordinator</p>
-                                                </div>
-                                                <div className="flex gap-4">
-                                                    <a href={`tel:${mission.coordinatorsContact?.[idx] || '#'}`} className="text-white/40 hover:text-emerald-500 transition-colors">
-                                                        <Phone size={16} />
-                                                    </a>
-                                                    <a href="#" className="text-white/40 hover:text-emerald-500 transition-colors">
-                                                        <Mail size={16} />
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </TechContentCard>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        </motion.div>
+                                        <div className="flex gap-4">
+                                            <a
+                                                href={`tel:${mission.coordinatorsContact?.[idx] || '#'}`}
+                                                className="text-white/40 hover:text-emerald-500 transition-colors"
+                                            >
+                                                <Phone size={16} />
+                                            </a>
+                                            <a href="#" className="text-white/40 hover:text-emerald-500 transition-colors">
+                                                <Mail size={16} />
+                                            </a>
+                                        </div>
+                                    </div>
+                                </TechContentCard>
+                            </motion.div>
+                        ))}
+
 
                     </div>
                 </div>
@@ -456,26 +452,27 @@ export default function EventDetailsPage() {
                 >
                     <TechStatCard
                         icon={Calendar}
-                        label="EVENT_DATE"
+                        label="EVENT DATE"
                         value={mission.date}
                         theme={twTheme}
                     />
                     <TechStatCard
                         icon={MapPin}
                         label="LOCATION"
-                        value="MAIN_SECTOR"
+                        value={mission.location}
                         theme={twTheme}
                     />
+
                     <TechStatCard
                         icon={Trophy}
-                        label="PRIZE_POOL"
+                        label="PRIZE POOL"
                         value={mission.prizePool}
                         theme={twTheme}
                     />
                     <TechStatCard
                         icon={Users}
-                        label="TEAM_FORMAT"
-                        value={mission.rules?.find((r: string) => r.includes('Solo') || r.includes('Team') || r.includes('Squad')) || 'VARIOUS'}
+                        label="TEAM FORMAT"
+                        value={mission.teamFormate}
                         theme={twTheme}
                     />
                 </motion.div>

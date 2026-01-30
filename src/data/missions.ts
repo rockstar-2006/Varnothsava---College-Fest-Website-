@@ -13,11 +13,17 @@ export interface Event {
     fee: number
     visual: string
     date: string
-    tags: string[]
+    tags?: string[]
     videoUrl?: string
     brochureUrl?: string
-    minTeamSize: number
-    maxTeamSize: number
+    minTeamSize?: number
+    maxTeamSize?: number
+    rounds?: {
+        round1?: string[]
+        round2?: string[]
+    };
+    location?: string
+    teamFormate?: string
 }
 
 export const missions: Event[] = [
@@ -26,23 +32,38 @@ export const missions: Event[] = [
         id: 't-algo',
         title: 'Algorithm Roulette',
         type: 'Technical',
-        description: 'A thrilling team-based machine learning challenge where teams are assigned random algorithms and must build working models on the spot.',
-        rules: ['Team of 2', '2-hour implementation window', 'No pre-trained models allowed', 'Spin for algorithm at start'],
-        regulations: [
-            'Participants must bring their own laptops with necessary environments installed.',
-            'Use of internet is strictly prohibited during the implementation phase.',
-            'Code must be written from scratch during the session.',
-            'Organizers decision is final.'
+        description: 'A team-based machine learning challenge where participants spin a wheel to receive a random algorithm, preprocess datasets, and build models within a time limit',
+        rules: [
+            "Teams spin a wheel to receive a random machine learning algorithm at the start",
+            "Teams must preprocess the provided dataset and apply the assigned algorithm",
+            "Participants must submit their predictions within the given time limits",
+            "Teams must present their solutions to the judges in the final round",
+            "Use of the internet is restricted except for documentation purposes"
         ],
+
+        regulations: []
+        ,
+        rounds: {
+            round1: [
+                "Spin the wheel to receive a random machine learning algorithm",
+                "Teams preprocess and apply the assigned algorithm to the dataset within 30 minutes",
+                "Top-performing teams are shortlisted based on accuracy and initial insights"
+            ],
+            round2: [
+                "Refine the models and prepare a short presentation",
+                "Present to judges, answer rapid-fire questions, and demonstrate creativity"
+            ]
+        }
+        ,
         evaluation: [
-            'Model Accuracy: 40%',
-            'Code Quality and Efficiency: 30%',
-            'Adaptability to the assigned algorithm: 20%',
-            'Presentation: 10%'
+            "Model Accuracy and Insights",
+            "Creativity in Problem-Solving",
+            "Clarity in Presentation and Explanation"
         ],
+
         prizePool: '₹20,000+',
-        coordinators: ['Ananya Bhat', 'Yathika P Amin'],
-        coordinatorsContact: ['+91 9876543210', '+91 8765432109'],
+        coordinators: ['Ms.Shalaka', 'Ananya Bhat', 'Yathika P Amin'],
+        coordinatorsContact: ['+91 9739118147', '+91 94831 46270', '+91 77950 62567'],
         fee: 200,
         visual: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=1200&q=80',
         date: '11 MAR',
@@ -219,69 +240,113 @@ export const missions: Event[] = [
 
     // --- CULTURAL EVENTS ---
     {
-        id: 'cm-marathon',
-        title: 'Musical Marathon',
+        id: 'Solo-Singing',
+        title: 'BHAVA TARANGA',
         type: 'Cultural',
         category: 'Hobby Club',
-        description: 'A competitive singing championship showcasing vocal talent across classical and modern music styles.',
-        rules: ['Max 3 per group', 'No auto-tune allowed', '5 min time limit', 'Live instruments permitted'],
+        description: 'A soulful solo singing event showcasing the beauty and depth of Bhavageethe.Participants mesmerize the audience using pure vocals with emotion and expression.',
+        rules: [
+            "No accompanying instruments are allowed",
+            "Only Bhavageethe is allowed",
+            "Shruti is allowed",
+            "Karaoke is not allowed",
+            "Participants must report 15 minutes prior to the event"
+        ]
+        ,
         prizePool: '₹15,000',
-        coordinators: ['Chitkala', 'Akash'],
+        coordinators: ['Unknown', 'Abhishek kini', 'Shreerama'],
         fee: 150,
         visual: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=1200&q=80',
-        date: '21 MAR',
+        date: '11-MARCH',
+        location: 'Admin Block Seminar Hall',
         tags: ['Singing', 'Music', 'Live'],
-        minTeamSize: 1,
-        maxTeamSize: 3
+        // minTeamSize: 1,
+        // maxTeamSize: 3,
+        teamFormate: 'Solo'
     },
     {
-        id: 'cd-groove',
+        id: 'Group-Singing',
+        title: 'Janapada nada',
+        type: 'Cultural',
+        category: 'Hobby Club',
+        description: 'A vibrant group singing competition celebrating the spirit of folk music.Teams bring traditional rhythms to life with harmony, energy, and culture.',
+        rules: [
+            "Accompanying instruments are allowed (maximum 2)",
+            "Maximum 7 participants including instrumentalists",
+            "Shruti is allowed",
+            "Karaoke is not allowed",
+            "Participants must report 15 minutes prior to the event",
+            "Each participant will get 5+1 minutes",
+        ]
+        ,
+        prizePool: '₹10,000',
+        coordinators: ['Unknown', 'Akash', 'Vaishnavi'],
+        fee: 150,
+        visual: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=1200&q=80',
+        date: '11-MARCH',
+        // tags: ['Dance', 'Group', 'Grooxe'],
+        videoUrl: 'https://cdn.pixabay.com/video/2021/08/04/83949-584736183_tiny.mp4',
+        location: 'Admin Block Seminar Hall',
+        minTeamSize: 1,
+        maxTeamSize: 1,
+        teamFormate: 'Group'
+    },
+    {
+        id: 'Solo-Classical-Dance',
+        title: 'Thaka  Dhimi Tha',
+        type: 'Cultural',
+        category: 'Hobby Club',
+        description: 'A graceful platform for classical dancers to express rhythm, devotion, and storytelling.Any Indian classical dance form is welcome with elegance and precision.',
+        rules: [
+            "Participants will get 5+1 minutes each",
+            "Recorded music is allowed",
+            "Any Indian pure classical dance form may be performed",
+            "The song must be submitted to the organizers one day prior to the competition",
+            "Film songs based on classical music may be used",
+            "Props are allowed",
+            "Use of water, colour, gas, and fire is strictly prohibited",
+            "Participants must report 15 minutes prior to the event"
+        ]
+        ,
+        prizePool: '₹12,000',
+        coordinators: ['Unknown', 'Sneha', 'Amrutha'],
+        fee: 150,
+        visual: 'https://images.unsplash.com/photo-1503095396549-807759245b35?w=1200&q=80',
+        location: 'Library block,Seminar hall',
+        date: '11-MARCH',
+        // tags: ['Drama', 'Silent', 'Acting'],
+        // minTeamSize: 4,
+        // maxTeamSize: 8
+        teamFormate: 'Solo'
+    },
+    {
+        id: 'Group-Western-Dance',
         title: 'Groove Gala',
         type: 'Cultural',
         category: 'Hobby Club',
-        description: 'High-energy solo dance battle fusing modern street-style with traditional dance forms.',
-        rules: ['Solo participation', 'Original choreography', 'Props allowed', '3 min performance'],
-        prizePool: '₹10,000',
-        coordinators: ['Rachana', 'Ananya'],
-        fee: 150,
-        visual: 'https://images.unsplash.com/photo-1503095396549-807759245b35?w=1200&q=80',
-        date: '22 MAR',
-        tags: ['Dance', 'Solo', 'Grooxe'],
-        videoUrl: 'https://cdn.pixabay.com/video/2021/08/04/83949-584736183_tiny.mp4',
-        minTeamSize: 1,
-        maxTeamSize: 1
-    },
-    {
-        id: 'cd-mime',
-        title: 'Neon Mime',
-        type: 'Cultural',
-        category: 'Hobby Club',
-        description: 'The art of silent storytelling. Express detailed themes and stories without using a single word.',
-        rules: ['Group performance (4-8)', 'No background vocals', 'White face-paint mandatory', '10 min maximum'],
-        prizePool: '₹12,000',
-        coordinators: ['Surabhi', 'Viraj'],
-        fee: 150,
-        visual: 'https://images.unsplash.com/photo-1503095396549-807759245b35?w=1200&q=80',
-        date: '21 MAR',
-        tags: ['Drama', 'Silent', 'Acting'],
-        minTeamSize: 4,
-        maxTeamSize: 8
-    },
-    {
-        id: 'cf-3d',
-        title: '3D Art Challenge',
-        type: 'Cultural',
-        category: 'Hobby Club',
-        description: 'Perspective-based drawing competition where students create amazing optical illusions on paper.',
-        rules: ['Solo entry', 'Canvas provided', 'Dry media only', '3 hour duration'],
+        description: 'A high-energy western dance battle packed with synchronization and style.Teams set the stage on fire with creativity, coordination, and powerful moves.',
+        rules: [
+            "Each can have minimum of 4 and maximum 10 members ",
+            "Each team will get 5+6 minutes ",
+            "Recorded music is allowed",
+            "Props may be used",
+            "Western dance forms can be performed",
+            "The song must be submitted to the organizers one day prior to the competition",
+            "Obscene dressing, presentation, and vulgarity are strictly not allowed",
+            "Use of water, colour, gas, and fire is prohibited",
+            "Participants must report 15 minutes prior to the event"
+        ]
+        ,
         prizePool: '₹5,000',
-        coordinators: ['Fine Arts Unit'],
+        coordinators: ['Unknown','Ananya Salian','Dharthi'],
         fee: 150,
         visual: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=1200&q=80',
-        date: '20 MAR',
-        tags: ['Sketching', '3D Art', 'Creative'],
-        minTeamSize: 1,
-        maxTeamSize: 1
+        location: 'Open Air Auditorium ',
+        date: '11-MARCH',
+        // tags: ['Sketching', '3D Art', 'Creative'],
+        minTeamSize: 4,
+        maxTeamSize: 10,
+        teamFormate:'Group'
     },
     {
         id: 'cm-pixel',
