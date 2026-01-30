@@ -359,6 +359,7 @@ export default function EventDetailsPage() {
                             </motion.div>
 
                         </div>
+                        
                         {mission?.rounds && (
                             <motion.div
                                 initial={{ opacity: 0, x: themeColor === 'emerald' ? 50 : 0, y: themeColor === 'emerald' ? 0 : 20 }}

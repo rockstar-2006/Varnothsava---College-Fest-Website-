@@ -338,7 +338,7 @@ export const missions: Event[] = [
         ]
         ,
         prizePool: '₹5,000',
-        coordinators: ['Unknown','Ananya Salian','Dharthi'],
+        coordinators: ['Unknown', 'Ananya Salian', 'Dharthi'],
         fee: 150,
         visual: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=1200&q=80',
         location: 'Open Air Auditorium ',
@@ -346,86 +346,196 @@ export const missions: Event[] = [
         // tags: ['Sketching', '3D Art', 'Creative'],
         minTeamSize: 4,
         maxTeamSize: 10,
-        teamFormate:'Group'
+        teamFormate: 'Group'
     },
     {
-        id: 'cm-pixel',
-        title: 'Pixel Perfect',
+        id: 'Stand-Up-Comedy',
+        title: 'Speech of Smiles',
         type: 'Cultural',
         category: 'Promotional',
-        description: 'On-spot photography competition. Capture the best moments of the festival through your lens.',
-        rules: ['On-spot registration', 'Edit within phone only', 'Max 3 submissions', 'Theme-based'],
+        description: 'A laughter-filled event where wit, humor, and timing take center stage.Participants entertain the crowd with clean, relatable, and engaging comedy.',
+        rules: [
+            "Each participant will get 4+2 mintues",
+            "Exceeding the time limit will result in negative marking",
+            "Performances must not include content that could offend any community based on religion, race, sex, culture, or heritage",
+            "Props are allowed only if they are relevant, safe, non-disruptive, and pre-approved by the organizers",
+            "Participants must report at least 15 minutes before the event"
+        ]
+        ,
         prizePool: '₹8,000',
-        coordinators: ['Media Club'],
+        coordinators: ['Unknown', 'Dheeraj', 'Sadhana'],
         fee: 150,
         visual: 'https://images.unsplash.com/photo-1452784444945-3f422708fe5e?w=1200&q=80',
-        date: 'Festival Duration',
-        tags: ['Photo', 'Camera', 'Capture'],
-        minTeamSize: 1,
-        maxTeamSize: 1
+        date: '11-MARCH',
+        // tags: ['Photo', 'Camera', 'Capture'],
+        // minTeamSize: 1,
+        // maxTeamSize: 1
+        teamFormate: 'Solo',
+        location: "Library Block,Seminar Hall"
     },
     {
-        id: 'cm-reels',
-        title: 'Reel Flow',
+        id: 'Face-Painting',
+        title: 'Who Am I',
         type: 'Cultural',
         category: 'Promotional',
         description: 'Short-form video storytelling. Create engaging Reels that capture the vibrant energy of Varnothsava.',
-        rules: ['Duration: 15-60s', 'Original music/audio', 'Must include fest branding', 'Judged on creativity'],
+        rules: [
+            "Each participant will get 75 minutes",
+            "No assistants are allowed during the competition (only two people are permitted: one competitor and one model for face painting)",
+            "Participants must use only FDA-approved, skin-safe face paints and brushes",
+            "Participants must report 15 minutes prior to the event"
+        ]
+        ,
         prizePool: '₹5,000',
-        coordinators: ['Media Club'],
+        coordinators: ['Unknown', 'Samarth Shettigar', 'Nishanth'],
         fee: 150,
         visual: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=1200&q=80',
-        date: 'Festival Duration',
-        tags: ['Video', 'Reels', 'Social'],
-        minTeamSize: 1,
-        maxTeamSize: 1
+        date: '11-MARCH',
+        // tags: ['Video', 'Reels', 'Social'],
+        // minTeamSize: 1,
+        // maxTeamSize: 1
+        teamFormate: 'Solo',
+        location: 'classroom'
     },
     {
-        id: 'cg-anime',
-        title: 'Anime Quiz',
+        id: 'Mehandi',
+        title: 'Hands of Art',
         type: 'Cultural',
         category: 'General',
-        description: 'Test your knowledge on anime and pop culture in this fun and interactive trivia session.',
-        rules: ['Team of 2', '3 rounds of trivia', 'Visual & Audio rounds', 'No mobile usage'],
+        description: 'A traditional mehandi art competition highlighting intricate hand designs.Participants showcase creativity using classic patterns and clean detailing.',
+        rules: [
+            "Each Participant will get 90 minutes",
+            "Participants must apply mehndi on the palmar and dorsal side of one hand (only one hand is sufficient)",
+            "Participants must bring a normal mehndi cone",
+            "Use of glitters, stencils, and other colours is not allowed",
+            "Participants must report 15 minutes prior to the event"
+        ]
+        ,
         prizePool: '₹3,000',
-        coordinators: ['Advaith'],
+        coordinators: ['Unknown', 'Ansira', 'Afeefa'],
         fee: 100,
         visual: 'https://images.unsplash.com/photo-1578632292335-df3abbb0d586?w=1200&q=80',
-        date: '22 MAR',
-        tags: ['Anime', 'Quiz', 'Trivia'],
-        minTeamSize: 2,
-        maxTeamSize: 2
+        date: '11-MARCH',
+        // tags: ['Anime', 'Quiz', 'Trivia'],
+        // minTeamSize: 2,
+        // maxTeamSize: 2
+        teamFormate: 'Solo'
     },
     {
-        id: 'cg-ink',
-        title: 'Ink & Imagination',
+        id: 'Anime-Quiz',
+        title: 'Anime Arena',
         type: 'Cultural',
         category: 'General',
-        description: 'Creative writing and poetry slam. Express your thoughts and stories through beautiful words and verses.',
-        rules: ['Solo entry', 'Theme given on spot', 'Multi-language support', 'Original pieces only'],
+        description: 'An exciting quiz testing knowledge of anime worlds, characters, and stories.Teams compete across rounds to prove their ultimate anime fandom.',
+        rules: [
+            "Team of 2 members",
+            "The competition will have 2 rounds",
+            "The first round will be conducted in the morning",
+            "Only selected teams will qualify for the final round",
+            "Participants must report 15 minutes prior to the event"
+        ]
+        ,
         prizePool: 'TBA',
-        coordinators: ['Advaith'],
+        coordinators: ['Unknown', 'Roylene', 'Roylene '],
         fee: 100,
         visual: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=1200&q=80',
-        date: '21 MAR',
-        tags: ['Writing', 'Poetry', 'Words'],
-        minTeamSize: 1,
-        maxTeamSize: 1
+        date: '11-MARCH',
+        // tags: ['Writing', 'Poetry', 'Words'],
+        // minTeamSize: 1,
+        // maxTeamSize: 1
+        teamFormate: 'Group',
+        location: 'Caed lab & library Block seminar hall '
     },
     {
-        id: 'cg-mehandi',
-        title: 'Traditional Mehandi',
+        id: 'Antakshari',
+        title: 'Musical Marathon ',
         type: 'Cultural',
         category: 'General',
         description: 'Express your artistic talent through traditional and modern Mehandi designs.',
-        rules: ['Solo participation', 'Traditional & Modern mix', '2 hour limit', 'Judged on detail'],
+        rules: [
+            "Team of 2 members",
+            "The competition will have 3 rounds",
+            "The first round will be conducted in the morning",
+            "Only selected teams will qualify for the final round",
+            "Participants must report 15 minutes prior to the event"
+        ]
+        ,
         prizePool: '₹2,500',
-        coordinators: ['Cultural Unit'],
+        coordinators: ['Unknown', 'Chitakla', 'Bhagyashree'],
         fee: 100,
         visual: 'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=1200&q=80',
-        date: '20 MAR',
-        tags: ['Art', 'Design', 'Henna'],
-        minTeamSize: 1,
-        maxTeamSize: 1
+        date: '12-MARCH',
+        // tags: ['Art', 'Design', 'Henna'],
+        // minTeamSize: 1,
+        // maxTeamSize: 1
+        teamFormate: 'Group',
+        location: 'Library Block Seminar hall'
+    },
+
+    {
+        id: 'Flower arrangement & vegetable carving',
+        title: 'Natures Palette',
+        type: 'Cultural',
+        category: 'General',
+        description: 'Express your artistic talent through traditional and modern Mehandi designs.',
+        rules: [
+            "Team of 3 members",
+            "Each team will get 2 hours",
+            "Only fresh and natural flowers are allowed",
+            "Use of pin holders and floral foam is allowed",
+            "No scraping or carving of vegetables is allowed before the start of the event; carving must be done only during the assigned time",
+            "All categories of vegetables and fruits may be used",
+            "Connections using toothpicks, skewers, etc. should not be visible",
+            "Participants must bring their own carving tools and cutting board",
+            "Use of artificial colors is not allowed",
+            "A minimum of 2 sculptures must be prepared for vegetable carving",
+            "Participants are not allowed to refer to printed material, mobile phones, or any external references during the contest",
+            "Participants must report 15 minutes prior to the event"
+        ]
+
+        ,
+        prizePool: '₹2,500',
+        coordinators: ['Unknown', 'Mansi', 'Prateksha'],
+        fee: 100,
+        visual: 'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=1200&q=80',
+        date: '12-MARCH',
+        // tags: ['Art', 'Design', 'Henna'],
+        // minTeamSize: 1,
+        // maxTeamSize: 1
+        teamFormate: 'Group',
+        location: 'Admin Block Seminar hall'
+    },
+    {
+        id: 'Variety-Act',
+        title: 'Kala Sangama',
+        type: 'Cultural',
+        category: 'General',
+        description: 'Express your artistic talent through traditional and modern Mehandi designs.',
+        rules: [
+             "Team can have minimum of 6 and maximum of 15 members",
+            "Each team will get 15 minutes + 2 minutes for preparation",
+            "The show should include a variety of performances such as singing, dancing, skits, and on-the-spot drawing",
+            "The MC carries additional points",
+            "Obscene dressing, presentation, and vulgarity are strictly not allowed",
+            "Props and recorded music are allowed",
+            "Use of water, colour, gas, and fire is prohibited",
+            "Participants must not convey incorrect or misleading information to the audience",
+            "The act must not be offensive to any individual or community",
+            "Stage setting must be completed within a 2-minute preparation time",
+            "Participants may choose from any of the given themes or select their own theme",
+            "Participants must report 15 minutes prior to the event"
+        ]
+
+        ,
+        prizePool: '₹2,500',
+        coordinators: ['Unknown', 'Shreya  ', 'Chirashree'],
+        fee: 100,
+        visual: 'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=1200&q=80',
+        date: '12-MARCH',
+        // tags: ['Art', 'Design', 'Henna'],
+        // minTeamSize: 1,
+        // maxTeamSize: 1
+        teamFormate: 'Group',
+        location: 'Open Air Auditorium '
     }
 ]
