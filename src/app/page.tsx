@@ -95,8 +95,17 @@ const SystemWindow = ({ children, title }: { children: React.ReactNode, title?: 
         {/* Scanline BG */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.05)_1px,transparent_1px)] bg-[size:100%_4px] pointer-events-none" />
 
+        {/* Runic Border Accents */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 opacity-20 pointer-events-none select-none text-[8px] text-emerald-400 font-serif tracking-[0.5em] whitespace-nowrap">
+            ᚦ ᚢ ᚱ ᛁ ᛗ ᚨ ᛏ ᛚ
+        </div>
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 opacity-20 pointer-events-none select-none text-[8px] text-emerald-400 font-serif tracking-[0.5em] whitespace-nowrap">
+            ᚨ ᛚ ᛁ ᚱ ᚦ ᚢ ᛗ ᛏ
+        </div>
+
         {title && (
-            <div className="absolute top-0 left-0 bg-emerald-600/20 px-4 py-1 border-b border-r border-emerald-500/50">
+            <div className="absolute top-0 left-0 bg-emerald-600/20 px-4 py-1 border-b border-r border-emerald-500/50 flex items-center gap-2">
+                <span className="text-[10px] text-emerald-400/50 font-serif italic">ᛗ</span>
                 <SystemText className="text-[10px] text-emerald-300 font-bold">{title}</SystemText>
             </div>
         )}
@@ -643,8 +652,12 @@ const ParallaxBackground = () => {
             className="absolute inset-0 z-0 pointer-events-none opacity-30"
         >
             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-900/40 via-[#020202] to-[#020202]"></div>
-            <div className="absolute top-[20%] right-[-10%] w-[600px] h-[600px] bg-purple-900/20 rounded-full blur-[120px]" />
-            <div className="absolute bottom-[20%] left-[-10%] w-[600px] h-[600px] bg-emerald-900/20 rounded-full blur-[120px]" />
+            {!isMobile && (
+                <>
+                    <div className="absolute top-[20%] right-[-10%] w-[600px] h-[600px] bg-purple-900/20 rounded-full blur-[120px]" />
+                    <div className="absolute bottom-[20%] left-[-10%] w-[600px] h-[600px] bg-emerald-900/20 rounded-full blur-[120px]" />
+                </>
+            )}
         </motion.div>
     );
 };
@@ -713,6 +726,32 @@ const ButtonSecondary = ({ children, onClick }: { children: React.ReactNode, onC
 )
 
 // --- Ancient Hero Overlay Component ---
+// --- Atmospheric Components ---
+
+const GodRays = () => (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute top-[-50%] left-[-20%] w-[150%] h-[200%] rotate-[25deg] opacity-20">
+            {[...Array(5)].map((_, i) => (
+                <motion.div
+                    key={`ray-${i}`}
+                    initial={{ opacity: 0.1, x: -100 }}
+                    animate={{
+                        opacity: [0.1, 0.3, 0.1],
+                        x: [0, 50, 0]
+                    }}
+                    transition={{
+                        duration: 8 + i * 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                    }}
+                    className="absolute h-full w-[10vw] bg-gradient-to-r from-transparent via-emerald-100/20 to-transparent blur-[80px]"
+                    style={{ left: `${20 * i}%` }}
+                />
+            ))}
+        </div>
+    </div>
+)
+
 // --- Realistic Ancient Background Component ---
 // --- Realistic Ancient Background Component ---
 const RealisticAncientBackground = () => {
@@ -727,13 +766,20 @@ const RealisticAncientBackground = () => {
         delay: number,
         initialX: number,
         initialY: number,
-        travelX: number
+        travelX: number,
+        color: string
+    }>>([])
+    const [runes, setRunes] = useState<Array<{
+        top: number,
+        left: number,
+        rotate: number,
+        char: string
     }>>([])
 
     useEffect(() => {
         setIsMobile(window.innerWidth < 768)
         // Generate random particles ONLY on client-side to avoid mismatch
-        const particles = [...Array(window.innerWidth < 768 ? 2 : 6)].map(() => ({
+        const particles = [...Array(window.innerWidth < 768 ? 4 : 12)].map(() => ({
             width: Math.random() * 3 + 1,
             height: Math.random() * 3 + 1,
             left: Math.random() * 100,
@@ -742,9 +788,20 @@ const RealisticAncientBackground = () => {
             delay: Math.random() * 5,
             initialX: Math.random() * 100,
             initialY: Math.random() * 100,
-            travelX: Math.random() * 50 - 25
+            travelX: Math.random() * 50 - 25,
+            color: Math.random() > 0.7 ? "bg-amber-400/40" : "bg-emerald-100/20"
         }))
         setDustParticles(particles)
+
+        // Generate random runes ONLY on client-side
+        const runeChars = ['ᚦ', 'ᚢ', 'ᚱ', 'ᛁ', 'ᛗ', 'ᚨ']
+        const newRunes = [...Array(6)].map((_, i) => ({
+            top: Math.random() * 100,
+            left: Math.random() * 100,
+            rotate: Math.random() * 360,
+            char: runeChars[i % runeChars.length]
+        }))
+        setRunes(newRunes)
     }, [])
 
     return (
@@ -763,7 +820,10 @@ const RealisticAncientBackground = () => {
                 <div className="absolute inset-0 bg-gradient-to-r from-[#020202] via-transparent to-[#020202]" />
             </div>
 
-            {/* 2. CINEMATIC DUST / SPORES (Replaces cartoon stones) */}
+            {/* God Rays */}
+            <GodRays />
+
+            {/* 2. CINEMATIC DUST / SPORES / EMBERS */}
             <div className="absolute inset-0 z-10 overflow-hidden">
                 {dustParticles.map((p, i) => (
                     <motion.div
@@ -780,7 +840,7 @@ const RealisticAncientBackground = () => {
                             ease: "linear",
                             delay: p.delay
                         }}
-                        className="absolute rounded-full bg-emerald-100/20 blur-[1px]"
+                        className={`absolute rounded-full blur-[1px] ${p.color}`}
                         style={{
                             width: p.width + 'px',
                             height: p.height + 'px',
@@ -793,6 +853,23 @@ const RealisticAncientBackground = () => {
 
             {/* 3. SUBTLE MIST LAYERS (Atmosphere) */}
             <div className="absolute bottom-0 w-full h-[40vh] bg-gradient-to-t from-[#020202] to-transparent z-10" />
+
+            {/* 4. ANCIENT RUNES (Background Layer) */}
+            <div className="absolute inset-0 opacity-5 pointer-events-none mix-blend-overlay">
+                {runes.map((rune, i) => (
+                    <div
+                        key={`bg-rune-${i}`}
+                        className="absolute text-[10rem] font-serif text-emerald-400"
+                        style={{
+                            top: `${rune.top}%`,
+                            left: `${rune.left}%`,
+                            transform: `rotate(${rune.rotate}deg)`
+                        }}
+                    >
+                        {rune.char}
+                    </div>
+                ))}
+            </div>
         </div>
     )
 }
@@ -950,6 +1027,11 @@ const HeroSection = ({ shouldRender3D }: { shouldRender3D: boolean }) => {
 }
 
 const WelcomeSection = () => {
+    const [isMobile, setIsMobile] = useState(false)
+    useEffect(() => {
+        setIsMobile(window.innerWidth < 768)
+    }, [])
+
     return (
         <section className="py-20 px-4 md:px-12 relative bg-[#020202] gpu-accel">
             <ParallaxBackground />
@@ -958,7 +1040,7 @@ const WelcomeSection = () => {
                 <RevealOnScroll className="relative group perspective-1000">
                     <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-purple-600 rounded-[3rem] blur-2xl opacity-20 group-hover:opacity-40 transition-opacity duration-700" />
                     <motion.div
-                        whileHover={{ scale: 1.02, rotateY: 5 }}
+                        whileHover={isMobile ? {} : { scale: 1.02, rotateY: 5 }}
                         transition={{ type: "spring", stiffness: 100 }}
                         className="relative h-[300px] md:h-[500px] rounded-[2.5rem] md:rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl"
                     >
@@ -1021,7 +1103,7 @@ const AboutFestSection = () => {
     const y = useTransform(ySpring, (v) => `${v}%`) // Convert to % string after spring
 
     return (
-        <section id='about' ref={sectionRef} className="py-32 px-4 md:px-6 container mx-auto relative z-10">
+        <section id='about' ref={sectionRef} className="py-32 px-4 md:px-6 container mx-auto relative z-10 gpu-accel">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
                 <RevealOnScroll className="order-2 lg:order-1 space-y-8">
                     <StaggerTitle title="About The Fest" subtitle="A Legacy of Excellence" />
@@ -1403,10 +1485,10 @@ const MarvelTrailerSection = () => {
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={currentIndex}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
+                        initial={{ opacity: 0, scale: 1 }}
+                        animate={{ opacity: 1, scale: 1.1 }}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: isMobile ? 0.8 : 0.1 }}
+                        transition={{ duration: isMobile ? 1.5 : 0.4, ease: "linear" }}
                         className="absolute inset-0"
                     >
                         <Image
@@ -1414,9 +1496,8 @@ const MarvelTrailerSection = () => {
                             alt="Montage"
                             fill
                             className="object-cover grayscale contrast-125 brightness-50"
-                            sizes="(max-width: 768px) 80vw, 100vw"
-                            quality={isMobile ? 15 : 30} // Lower quality on mobile for memory relief
-                            priority={currentIndex <= 2} // Only priority for first few to avoid preloader explosion
+                            priority
+                            sizes="100vw"
                         />
                     </motion.div>
                 </AnimatePresence>
@@ -1651,22 +1732,33 @@ const Footer = () => (
 
 const ViewportLazy = ({ children }: { children: React.ReactNode }) => {
     const [isVisible, setIsVisible] = useState(false);
-    const ref = useRef(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const heightRef = useRef<number | null>(null); // Memorize height
 
     useEffect(() => {
         const observer = new IntersectionObserver(([entry]) => {
-            // We keep the component mounted if it's within 800px of viewport
-            // This prevents the "memory pile-up" that crashes mobile browsers
-            setIsVisible(entry.isIntersecting);
+            if (entry.isIntersecting) {
+                setIsVisible(true);
+            } else {
+                // When unmounting, save the current height if it exists
+                if (containerRef.current && containerRef.current.offsetHeight > 0) {
+                    heightRef.current = containerRef.current.offsetHeight;
+                }
+                setIsVisible(false);
+            }
         }, { rootMargin: "600px" });
 
-        if (ref.current) observer.observe(ref.current);
+        if (containerRef.current) observer.observe(containerRef.current);
         return () => observer.disconnect();
     }, []);
 
     return (
-        <div ref={ref} className="w-full content-lazy" style={{ minHeight: '40vh' }}>
-            {isVisible ? children : <div className="h-[40vh]" />}
+        <div
+            ref={containerRef}
+            className="w-full content-lazy relative"
+            style={{ minHeight: heightRef.current ? `${heightRef.current}px` : '40vh' }}
+        >
+            {isVisible ? children : null}
         </div>
     )
 }

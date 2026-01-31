@@ -50,22 +50,48 @@ export function PageTransition({ children }: { children: ReactNode }) {
             </AnimatePresence>
 
             {/* Cinematic Shutter - Only for sub-pages, DISABLED for leaderboard to prevent clash */}
+            {/* Mini Loading Screen - Ensures smooth transition and readiness */}
             {pathname !== '/leaderboard' && (
                 <motion.div
-                    key={`sweep-${pathname}`}
-                    initial={{ x: '100%' }}
-                    animate={{ x: '-200%' }}
-                    transition={{ duration: 0.6, ease: [0.76, 0, 0.24, 1] }}
-                    className="fixed inset-0 z-[9999] pointer-events-none flex"
+                    key={`loader-${pathname}`}
+                    initial={{ opacity: 1 }}
+                    animate={{ opacity: 0 }}
+                    transition={{ duration: 0.5, delay: 0.4, ease: "easeInOut" }}
+                    onAnimationComplete={(definition) => {
+                        // Optional: Logic after load
+                    }}
+                    className="fixed inset-0 z-[9999] pointer-events-none bg-[#020202] flex items-center justify-center"
                 >
-                    <div className="flex-1 bg-black border-r flex flex-col items-end justify-center px-12" style={{ borderColor: `rgba(${pageTheme.rgb}, 0.2)` }}>
-                        <div className="flex flex-col items-center gap-2 opacity-50">
-                            <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: `rgba(${pageTheme.rgb}, 0.4)`, borderTopColor: 'transparent' }} />
-                            <span className="text-[10px] uppercase tracking-[0.4em] font-bold" style={{ color: `rgb(${pageTheme.rgb})` }}>Redirecting</span>
+                    <div className="flex flex-col items-center gap-4">
+                        {/* Advanced Spinner */}
+                        <div className="relative w-12 h-12">
+                            <div
+                                className="absolute inset-0 border-2 rounded-full animate-spin"
+                                style={{
+                                    borderTopColor: 'transparent',
+                                    borderRightColor: `rgba(${pageTheme.rgb}, 0.5)`,
+                                    borderBottomColor: `rgba(${pageTheme.rgb}, 0.5)`,
+                                    borderLeftColor: `rgba(${pageTheme.rgb}, 0.5)`
+                                }}
+                            />
+                            <div
+                                className="absolute inset-2 border-2 rounded-full animate-spin-reverse opacity-60"
+                                style={{
+                                    borderTopColor: 'transparent',
+                                    borderRightColor: `rgba(${pageTheme.rgb}, 0.8)`,
+                                    borderBottomColor: `rgba(${pageTheme.rgb}, 0.8)`,
+                                    borderLeftColor: `rgba(${pageTheme.rgb}, 0.8)`
+                                }}
+                            />
+                        </div>
+
+                        {/* Loading Text */}
+                        <div className="flex flex-col items-center gap-1">
+                            <span className="text-[10px] uppercase tracking-[0.3em] font-bold animate-pulse" style={{ color: `rgb(${pageTheme.rgb})` }}>
+                                Initializing
+                            </span>
                         </div>
                     </div>
-                    <div className="flex-1 bg-black border-x" style={{ borderColor: `rgba(${pageTheme.rgb}, 0.1)` }} />
-                    <div className="flex-1 bg-black border-l" style={{ borderColor: `rgba(${pageTheme.rgb}, 0.2)` }} />
                 </motion.div>
             )}
         </div>
