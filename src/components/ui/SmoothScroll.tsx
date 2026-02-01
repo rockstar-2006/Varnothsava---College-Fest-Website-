@@ -1,50 +1,64 @@
 "use client";
 
-import { useEffect, useRef, ReactNode } from "react";
+import { useEffect, useRef, ReactNode, createContext, useContext, useState } from "react";
 import Lenis from "lenis";
 
 interface SmoothScrollProps {
     children: ReactNode;
 }
 
+const LenisContext = createContext<Lenis | null>(null);
+
+export const useLenis = () => useContext(LenisContext);
+
 export const SmoothScroll = ({ children }: SmoothScrollProps) => {
-    const lenisRef = useRef<Lenis | null>(null);
+    const [lenis, setLenis] = useState<Lenis | null>(null);
+    const reqIdRef = useRef<number | null>(null);
 
     useEffect(() => {
-        // Disable Lenis on mobile devices to restore native hardware-accelerated scrolling
-        // This fixes the "laggy feel" caused by JS fighting the OS touch driver
-        if (typeof window !== 'undefined' && (window.innerWidth < 768 || 'ontouchstart' in window)) {
-            return;
-        }
+        // Disable Lenis on simple mobile devices if needed, but keeping it ensures consistency
+        // if (typeof window !== 'undefined' && (window.innerWidth < 768 || 'ontouchstart' in window)) {
+        //     return;
+        // }
 
-        // Initialize Lenis with Ultra-Responsive "Prime" Preset
-        const lenis = new Lenis({
-            duration: 0.8, // Faster, tighter scroll
+        const lenisInstance = new Lenis({
+            duration: 0.8,
             easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
             orientation: "vertical",
             gestureOrientation: "vertical",
             smoothWheel: true,
             wheelMultiplier: 1,
-            touchMultiplier: 1.2, // Tighter touch response
+            touchMultiplier: 1.2,
             infinite: false,
         });
 
-        lenisRef.current = lenis;
+        setLenis(lenisInstance);
 
-        function raf(time: number) {
-            lenis.raf(time);
-            requestAnimationFrame(raf);
+        // Sync GSAP ScrollTrigger
+        if (typeof window !== 'undefined') {
+            import('gsap/ScrollTrigger').then(({ ScrollTrigger }) => {
+                lenisInstance.on('scroll', ScrollTrigger.update)
+            });
         }
 
-        const rafId = requestAnimationFrame(raf);
+        const raf = (time: number) => {
+            lenisInstance.raf(time);
+            reqIdRef.current = requestAnimationFrame(raf);
+        };
+        reqIdRef.current = requestAnimationFrame(raf);
 
         return () => {
-            cancelAnimationFrame(rafId);
-            lenis.destroy();
+            if (reqIdRef.current) cancelAnimationFrame(reqIdRef.current);
+            lenisInstance.destroy();
+            setLenis(null);
         };
     }, []);
 
-    return <>{children}</>;
+    return (
+        <LenisContext.Provider value={lenis}>
+            {children}
+        </LenisContext.Provider>
+    );
 };
 
 export default SmoothScroll;

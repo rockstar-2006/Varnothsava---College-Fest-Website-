@@ -154,7 +154,7 @@ const GridBeams = React.memo(({ theme = 'emerald' }: { theme?: 'emerald' | 'ambe
         const isGaming = theme === 'gaming'
 
         // Optimization: Larger grid on mobile means fewer lines to draw
-        const gridSize = isMobile ? 80 : (isGaming ? 40 : 50)
+        const gridSize = isMobile ? 40 : (isGaming ? 40 : 50)
         const gridColor = `rgba(${rgb}, ${isEmerald ? 0.15 : (isGaming ? 0.12 : 0.08)})`
         // ... existing render logic simplified for brevity but needs to be complete ...
         const beams: { x: number; y: number; axis: 'x' | 'y'; life: number; speed: number }[] = []
@@ -215,7 +215,7 @@ const GridBeams = React.memo(({ theme = 'emerald' }: { theme?: 'emerald' | 'ambe
             }
 
             // SUPER LIVELY Pattern for Technical Theme - Constantly Animated!
-            const squareProb = isEmerald ? (isMobile ? 0.4 : 0.9) : (isTechnical ? 0.5 : 0.08) // Maximized for emerald
+            const squareProb = isEmerald ? 0 : (isTechnical ? 0.5 : 0.08)
             if (Math.random() < squareProb) {
                 squares.push({
                     x: Math.floor(Math.random() * (width / gridSize)) * gridSize,

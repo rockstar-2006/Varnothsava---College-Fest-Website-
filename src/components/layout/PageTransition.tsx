@@ -31,9 +31,9 @@ export function PageTransition({ children }: { children: ReactNode }) {
     }
 
     return (
-        <div className="relative w-full overflow-hidden bg-[#020202]">
+        <div className={`relative w-full overflow-hidden z-10 ${pathname === '/events' ? 'bg-transparent' : 'bg-[#020202]'}`}>
             {/* The Foundation Layer - ensures the viewport is never empty */}
-            <div className="fixed inset-0 bg-[#020202] -z-[10000] pointer-events-none" />
+            <div className={`fixed inset-0 -z-[10000] pointer-events-none ${pathname === '/events' ? 'bg-transparent' : 'bg-[#020202]'}`} />
 
             <AnimatePresence mode="wait" initial={false}>
                 <motion.div

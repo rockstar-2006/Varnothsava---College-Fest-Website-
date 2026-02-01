@@ -1,10 +1,12 @@
 ﻿'use client'
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValueEvent } from 'framer-motion'
 import { Search, Zap, ChevronDown, Trophy, X, CheckCircle2, Loader2, ShieldCheck, Mail, Grid, Filter } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/context/AppContext'
+import { useLenis } from '@/components/ui/SmoothScroll'
 import ProEventBackground from '@/components/ui/ProEventBackground'
 import DynamicEventBackground from '@/components/ui/DynamicEventBackground'
 import gsap from 'gsap'
@@ -210,51 +212,95 @@ export function EventGrid({ missions }: EventGridProps) {
 
         ScrollTrigger.refresh()
 
-        const sections = [
-            { ref: techRef, theme: 'emerald' as const },
-            { ref: cultRef, theme: 'amber' as const },
-            { ref: gameRef, theme: 'gaming' as const }
-        ]
-
-        sections.forEach(({ ref, theme }) => {
-            if (!ref.current) return
-            ScrollTrigger.create({
-                trigger: ref.current,
-                start: "top 60%",
-                end: "bottom 40%",
-                onEnter: () => {
-                    if (!isMobile) {
-                        const themeValue = theme as string
-                        const rgb = themeValue === 'amber' ? '245, 158, 11' : themeValue === 'cyan' ? '6, 182, 212' : themeValue === 'gaming' ? '139, 92, 246' : '16, 185, 129'
-                        const primary = themeValue === 'amber' ? '#f59e0b' : themeValue === 'cyan' ? '#06b6d4' : themeValue === 'gaming' ? '#8b5cf6' : '#10b981'
-
-                        setPageTheme({
-                            name: themeValue.toUpperCase(),
-                            rgb,
-                            primary
-                        })
-                    }
-                },
-                onEnterBack: () => {
-                    if (!isMobile) {
-                        const themeValue = theme as string
-                        const rgb = themeValue === 'amber' ? '245, 158, 11' : themeValue === 'cyan' ? '6, 182, 212' : themeValue === 'gaming' ? '139, 92, 246' : '16, 185, 129'
-                        const primary = themeValue === 'amber' ? '#f59e0b' : themeValue === 'cyan' ? '#06b6d4' : themeValue === 'gaming' ? '#8b5cf6' : '#10b981'
-
-                        setPageTheme({
-                            name: themeValue.toUpperCase(),
-                            rgb,
-                            primary
-                        })
-                    }
-                },
-            })
-        })
-
         return () => {
             ScrollTrigger.getAll().forEach(t => t.kill())
         }
     }, [filtered, isSiteLoaded])
+
+    // --- LENIS SCROLL LISTENER FOR THEME SWITCHING ---
+    const lenis = useLenis()
+
+    useEffect(() => {
+        if (!lenis || !isSiteLoaded) return
+
+        const sections = [
+            { ref: techRef, theme: 'emerald' },
+            { ref: cultRef, theme: 'amber' },
+            { ref: gameRef, theme: 'gaming' }
+        ]
+
+        const handleScroll = ({ scroll }: { scroll: number }) => {
+            const viewportMiddle = scroll + window.innerHeight / 2
+
+            // Find the current section
+            // We iterate in reverse or check ranges.
+            // Simple logic: If viewportMiddle is > sectionTop, it's a candidate.
+            // We pick the last candidate that matches.
+
+            let activeSectionTheme = 'emerald' // Default
+
+            sections.forEach(section => {
+                if (section.ref.current) {
+                    const { offsetTop } = section.ref.current
+                    // Adjust offset slightly if needed
+                    if (viewportMiddle >= offsetTop) {
+                        activeSectionTheme = section.theme
+                    }
+                }
+            })
+
+            // Only update if changed
+            if (activeThemeOverride !== activeSectionTheme && activeSectionTheme !== 'emerald') {
+                // Optimization: Only update state if it's NOT the default (which is handled by null or emerald)
+                // Actually, logic is: 'emerald' is default. If activeSectionTheme is different from current override...
+                // But wait, activeThemeOverride can be null.
+
+                // If activeSectionTheme is 'emerald', maybe we set override to null?
+                // The original logic set it to 'emerald'. Let's stick to that.
+
+                // However, we need to compare with current State. inside listener, state is stale closure?
+                // Lenis listener callback might close over old state.
+                // BETTER: Just set it. React batches updates.
+
+                // To avoid spamming state updates every frame, we need a ref to track last theme.
+            }
+        }
+
+        // We need a ref to track the last triggered theme to avoid setting state repeatedly
+        let lastTheme = 'emerald'
+
+        const onScroll = ({ scroll }: { scroll: number }) => {
+            const viewportMiddle = scroll + window.innerHeight * 0.5
+            let currentTheme = 'emerald'
+
+            for (const section of sections) {
+                if (section.ref.current && viewportMiddle >= section.ref.current.offsetTop) {
+                    currentTheme = section.theme
+                }
+            }
+
+            if (currentTheme !== lastTheme) {
+                console.log('[Lenis] Scroll Theme Switch:', currentTheme)
+                lastTheme = currentTheme
+
+                const rgb = currentTheme === 'amber' ? '245, 158, 11' : currentTheme === 'cyan' ? '6, 182, 212' : currentTheme === 'gaming' ? '139, 92, 246' : '16, 185, 129'
+                const primary = currentTheme === 'amber' ? '#f59e0b' : currentTheme === 'cyan' ? '#06b6d4' : currentTheme === 'gaming' ? '#8b5cf6' : '#10b981'
+
+                setPageTheme({
+                    name: currentTheme.toUpperCase(),
+                    rgb,
+                    primary
+                })
+                setActiveThemeOverride(currentTheme as any)
+            }
+        }
+
+        lenis.on('scroll', onScroll)
+
+        return () => {
+            lenis.off('scroll', onScroll)
+        }
+    }, [lenis, isSiteLoaded, setPageTheme, setActiveThemeOverride]) // Dependencies: lenis changes only on mount/unmount usually.
 
     const complexClip = filter === 'Cultural'
         ? `polygon(15px 0, calc(100% - 15px) 0, 100% 15px, 100% calc(100% - 15px), calc(100% - 15px) 100%, 15px 100%, 0 calc(100% - 15px), 0 15px)`
@@ -340,12 +386,25 @@ export function EventGrid({ missions }: EventGridProps) {
         }
     }
 
-    const backgroundComponent = useMemo(() => (
-        <>
-            <DynamicEventBackground theme={getBackgroundTheme() as any} />
-            <ProEventBackground theme={getBackgroundTheme()} scrollProgress={scrollYProgress} />
-        </>
-    ), [activeThemeOverride, filter]) // Removed scrollYProgress to prevent unnecessary re-renders during scroll
+    // Portal implementation to fix background scrolling issue
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+        return () => setMounted(false)
+    }, [])
+
+    const backgroundComponent = useMemo(() => {
+        if (!mounted) return null
+
+        return createPortal(
+            <div className="fixed inset-0 z-0">
+                <DynamicEventBackground theme={getBackgroundTheme() as any} />
+                <ProEventBackground theme={getBackgroundTheme()} scrollProgress={scrollYProgress} />
+            </div>,
+            document.body
+        )
+    }, [mounted, activeThemeOverride, filter, getBackgroundTheme, scrollYProgress])
 
     return (
         <>
@@ -389,7 +448,6 @@ export function EventGrid({ missions }: EventGridProps) {
                     >
                         <motion.div
                             className="header-reveal space-y-1 w-full xl:w-auto text-center xl:text-left py-2"
-                            style={{ y: filter === 'Cultural' ? 0 : headerY }}
                         >
                             <motion.div
                                 animate={{ opacity: [0.4, 1, 0.4] }}
@@ -456,8 +514,8 @@ export function EventGrid({ missions }: EventGridProps) {
                         {searchQuery === '' && filter === 'All' ? (
                             <motion.div layout className="space-y-12">
                                 {groupedEvents.technical.length > 0 && (
-                                    <div ref={techRef} className="space-y-12">
-                                        <motion.div className="flex items-center gap-4 px-8 opacity-90" style={{ y: techY }}>
+                                    <div ref={techRef} className="space-y-16">
+                                        <motion.div className="flex items-center gap-4 px-8 opacity-90 my-16 md:my-24" style={{ y: techY }}>
                                             <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-emerald-500/50 to-emerald-500" />
                                             <div className="flex flex-col items-center">
                                                 <span className="font-bold tracking-[0.3em] uppercase text-xl md:text-2xl text-emerald-500 drop-shadow-[0_0_10px_rgba(16,185,129,0.5)]">Technical Events</span>
@@ -473,8 +531,8 @@ export function EventGrid({ missions }: EventGridProps) {
                                     </div>
                                 )}
                                 {groupedEvents.cultural.length > 0 && (
-                                    <div ref={cultRef} className="space-y-16 mt-12">
-                                        <motion.div className="flex items-center gap-4 px-8 opacity-90" style={{ y: cultY }}>
+                                    <div ref={cultRef} className="space-y-16 mt-24">
+                                        <motion.div className="flex items-center gap-4 px-8 opacity-90 my-16 md:my-24" style={{ y: cultY }}>
                                             <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-amber-500/50 to-amber-500" />
                                             <div className="flex flex-col items-center">
                                                 <span className="font-bold tracking-[0.3em] uppercase text-xl md:text-3xl text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">Cultural Events</span>
@@ -491,8 +549,17 @@ export function EventGrid({ missions }: EventGridProps) {
                                     </div>
                                 )}
                                 {groupedEvents.gaming.length > 0 && (
-                                    <div ref={gameRef} className="space-y-12 mt-12">
-                                        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 lg:gap-10 px-4 md:px-8 pt-12">
+                                    <div ref={gameRef} className="space-y-16 mt-20 pt-24">
+                                        <motion.div className="flex items-center gap-4 px-8 opacity-90 my-16 md:my-20" style={{ y: gameY }}>
+                                            <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-violet-500/50 to-violet-500" />
+                                            <div className="flex flex-col items-center">
+                                                <span className="font-bold tracking-[0.3em] uppercase text-xl md:text-3xl text-violet-500 drop-shadow-[0_0_15px_rgba(139,92,246,0.5)]">Gaming Events</span>
+                                                <span className="text-[10px] tracking-[0.5em] text-violet-500/80 uppercase mt-2">Esports // Mobile // Console</span>
+                                                <div className="h-0.5 w-full bg-violet-500 mt-3 shadow-[0_0_10px_rgba(139,92,246,1)]" />
+                                            </div>
+                                            <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent via-violet-500/50 to-violet-500" />
+                                        </motion.div>
+                                        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 lg:gap-10 px-4 md:px-8">
                                             {groupedEvents.gaming.map((event, idx) => (
                                                 <MissionCard key={event.id} event={event} idx={idx} theme={getEventTheme(event.type)} complexClip={complexClip} isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)} isLoggedIn={isLoggedIn} onRegister={handleRegisterClick} className="will-change-gpu" />
                                             ))}

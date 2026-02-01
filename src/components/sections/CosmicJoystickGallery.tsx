@@ -467,7 +467,7 @@ export function CosmicJoystickGallery() {
             {/* INFINITE GALLERY SLIDER */}
             <div
                 ref={sliderRef}
-                className="relative w-full h-full flex items-center justify-center z-10 -translate-y-[10%] md:-translate-y-[8%]"
+                className="relative w-full h-full flex items-center justify-center z-10 -translate-y-[10%] md:translate-y-[8%]"
                 style={{ perspective: '2000px' }}
             >
                 {PRODUCTS.map((p, idx) => (
