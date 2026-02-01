@@ -20,12 +20,26 @@ export default function NotifyPage() {
         e.preventDefault()
         setIsLoading(true)
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500))
-
-        setIsLoading(false)
-        setIsSubmitted(true)
-        setEmail('')
+        fetch('/api/notify/email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email }),
+        }).then(async (res) => {
+            if (res.ok) {
+                // Success
+                setIsLoading(false)
+                setIsSubmitted(true)
+                setEmail('')
+            } else {
+                // Handle error
+                setIsLoading(false)
+            }
+        }).catch(() => {
+            // Handle network error
+            setIsLoading(false)
+        })
     }
 
     return (

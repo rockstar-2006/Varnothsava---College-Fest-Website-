@@ -1,4 +1,4 @@
-import { Firestore } from '@google-cloud/firestore';
+import { Firestore, FieldValue } from '@google-cloud/firestore';
 import { JWT } from 'google-auth-library';
 import path from 'path';
 import fs from 'fs';
@@ -83,3 +83,4 @@ export const adminAuth = {
 
 export const usersCollection = adminDb.collection('users');
 export const db = adminDb;
+export const fieldValue = FieldValue;

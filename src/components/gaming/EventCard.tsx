@@ -137,13 +137,13 @@ export default function EventCard({
                     </button>
 
                     {/* Register button - Primary */}
-                    {/* <button className="register-btn group" onClick={(e) => { e.stopPropagation(); onRegister?.(); }}>
+                    <button className="register-btn group" onClick={(e) => { e.stopPropagation(); onRegister?.(); }}>
                         <div className="btn-bg" />
                         <div className="btn-edge left" />
                         <div className="btn-edge right" />
                         <span className="btn-text font-display font-black tracking-widest group-hover:tracking-[0.2em] transition-all">REGISTER</span>
                         <div className="btn-shine" />
-                    </button> */}
+                    </button>
                 </div>
 
                 {/* Bottom diamond accent */}
