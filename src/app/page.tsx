@@ -1068,8 +1068,8 @@ const WelcomeSection = () => {
                     <StaggerTitle title="The Phenomenon" subtitle="Welcome to Varnothsava" />
                     <p className="text-lg leading-relaxed text-gray-400 font-light">
                        <span className="text-emerald-400 font-bold">varnothsava</span> is the annual state-level techno-cultural fest of{" "}
-                        <span className="text-white font-semibold">
-                            Shri Madhwa Vadiraja Institute of Technology &amp; Management, Udupi
+                        <span className="text-emerald font-bold">
+                            Shri Madhwa Vadiraja Institute of Technology &amp; Management, Bantakal
                         </span>
                         . It is a vibrant celebration where innovation, culture, and youthful creativity come together on one grand platform.
                         Blending cutting-edge technical events with mesmerizing cultural performances, thrilling gaming arenas, and engaging competitions,
@@ -1082,7 +1082,7 @@ const WelcomeSection = () => {
                         <span className="text-emerald-400 font-bold">
                            Creativity, Passion, and Celebration
                         </span>
-                        —where technology meets tradition and ideas turn into unforgettable experiences.
+                        — where technology meets tradition and ideas turn into unforgettable experiences.
                     </p>
 
 
