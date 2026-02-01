@@ -12,7 +12,7 @@ This project showcases the spirit of innovation, culture, and youthful creativit
 ## 🌐 Live Preview
 
 🔗 Live URL: *(Add deployment link here — Vercel / Netlify)*  
-Example: https://varnothsava.vercel.app
+[ https://varnothsava.vercel.app](https://varnothsava.sode-edu.in/)
 
 ---
 
