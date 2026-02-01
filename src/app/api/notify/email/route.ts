@@ -17,8 +17,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
             message: 'Notification email added successfully',
         }, { status: 200 });
-    } catch (error: any) {
-        console.error('Error:', error);
-        return NextResponse.json({ message: 'Internal server error', error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        console.log('Error:', error);
+        return NextResponse.json({ message: 'Internal server error', error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
     }
 }
