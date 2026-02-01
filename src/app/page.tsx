@@ -983,23 +983,6 @@ const HeroSection = ({ shouldRender3D }: { shouldRender3D: boolean }) => {
                                 className="w-full h-full relative z-10"
                             >
                                 <Fest3DModel />
-
-                                {/* Interactive Floating Card */}
-                                <motion.div
-                                    animate={{ y: [0, -15, 0] }}
-                                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                                    className="absolute bottom-10 -right-4 md:right-0 p-5 bg-white/5 border border-emerald-500/20 backdrop-blur-xl rounded-2xl z-20 shadow-[0_10px_40px_rgba(0,0,0,0.5)] hidden md:block"
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className="p-3 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-                                            <Sparkles className="w-6 h-6" />
-                                        </div>
-                                        <div>
-                                            <div className="text-sm font-bold text-gray-400 uppercase tracking-wider">Total Prize Pool</div>
-                                            <div className="text-2xl font-[900] text-emerald-400">₹ 5,00,000+</div>
-                                        </div>
-                                    </div>
-                                </motion.div>
                             </motion.div>
                         )}
                     </AnimatePresence>

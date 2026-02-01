@@ -9,7 +9,18 @@ export default function proxy(request: NextRequest) {
     const origin = request.headers.get('origin');
     const pathname = request.nextUrl.pathname;
 
-    const envOrigins = JSON.parse(process.env.NEXT_PUBLIC_APP_URL || '[]');
+    // Parse NEXT_PUBLIC_APP_URL - handle both string and JSON array formats
+    let envOrigins: string[] = [];
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (appUrl) {
+        try {
+            // Try parsing as JSON array first
+            envOrigins = JSON.parse(appUrl);
+        } catch {
+            // If parsing fails, treat as a single URL string
+            envOrigins = [appUrl];
+        }
+    }
 
     // Define allowed origins based on environment
     const allowedOrigins = [
