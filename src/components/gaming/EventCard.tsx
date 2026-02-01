@@ -111,14 +111,14 @@ export default function EventCard({
 
                 {/* Stats grid */}
                 <div className="stats-grid">
-                    <div className="stat-box">
+                    {/* <div className="stat-box">
                         <div className="stat-icon text-[10px]">🏆</div>
                         <div className="stat-content">
                             <span className="stat-label">PRIZE</span>
                             <span className="stat-value">{prizePool}</span>
                         </div>
                     </div>
-                    <div className="stat-divider" />
+                    <div className="stat-divider" /> */}
                     <div className="stat-box flex-center">
                         <div className="stat-icon text-[10px]">👥</div>
                         <div className="stat-content">

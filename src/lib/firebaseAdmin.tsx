@@ -35,11 +35,19 @@ export const adminDb = new Firestore({
 
 // 2. Real Token Verification using Google Auth Library
 export async function verifyAuthToken(token: string) {
-    if (!token) throw new Error("No token provided");
+    if (!token) {
+        console.error("Auth Verification Error: No token provided");
+        return null;
+    }
 
     try {
         // Verify token via Google's Identity Toolkit REST API (The real production method)
         const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+        if (!apiKey) {
+            console.error("Auth Verification Error: NEXT_PUBLIC_FIREBASE_API_KEY not set");
+            return null;
+        }
+
         const response = await fetch(
             `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`,
             {
@@ -51,7 +59,8 @@ export async function verifyAuthToken(token: string) {
 
         const data = await response.json();
         if (!response.ok || !data.users || data.users.length === 0) {
-            throw new Error(data.error?.message || "Invalid or expired token");
+            console.error("Auth Verification Error:", data.error?.message || "Invalid or expired token");
+            return null;
         }
 
         const user = data.users[0];
@@ -63,7 +72,7 @@ export async function verifyAuthToken(token: string) {
         };
     } catch (error) {
         console.error("Auth Verification Error:", error);
-        throw error;
+        return null;
     }
 }
 
