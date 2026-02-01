@@ -34,7 +34,7 @@ const MotorcycleIcon = ({ size = 24, className }: { size?: number, className?: s
 const NAV_LINKS = [
     { name: 'HOME', href: '/', icon: LayoutGrid },
     { name: 'EVENTS', href: '/events', icon: Zap },
-    { name: 'RIDERS', href: '/leaderboard', icon: MotorcycleIcon },
+    { name: 'RIDERS', href: '/moto-mania', icon: MotorcycleIcon },
     { name: 'GALLERY', href: '/gallery', icon: Camera },
 ]
 
@@ -112,17 +112,17 @@ export function InnovativeNavbar() {
                         </div>
 
                         <div className="flex-1 flex justify-around items-center px-1 xs:px-2 md:px-4 h-full">
-                            <Link href="/" onTouchStart={(e) => e.currentTarget.click()} prefetch={true} className="group h-full flex flex-col items-center justify-center gap-1 flex-1 min-w-0 md:min-w-[80px] cursor-pointer touch-manipulation pointer-events-auto">
+                            <Link href="/" onTouchStart={(e) => e.currentTarget.click()} prefetch={true} className="group relative z-10 h-full flex flex-col items-center justify-center gap-1 flex-1 min-w-0 md:min-w-[80px] cursor-pointer touch-manipulation pointer-events-auto">
                                 <div className={cn("relative p-2.5 xs:p-3.5 rounded-2xl transition-all duration-300", pathname === '/' ? "theme-nav-bg theme-nav-accent theme-nav-glow" : "text-white/80 group-hover:theme-nav-accent md:group-hover:bg-white/10")}>
                                     <LayoutGrid size={isMobile ? 22 : 24} />
                                 </div>
                                 <span className={cn("text-[8px] xs:text-[9px] md:text-[11px] tracking-[0.1em] xs:tracking-[0.2em] font-bold uppercase transition-all duration-300", pathname === '/' ? "theme-nav-accent drop-shadow-[0_0_8px_rgba(var(--theme-rgb),0.8)] scale-110" : "text-white/95 md:group-hover:theme-nav-accent")}>HOME</span>
                             </Link>
-                            <Link href="/leaderboard" onTouchStart={(e) => e.currentTarget.click()} prefetch={true} className="group h-full flex flex-col items-center justify-center gap-1 flex-1 min-w-0 md:min-w-[80px] cursor-pointer touch-manipulation pointer-events-auto">
-                                <div className={cn("relative p-2.5 xs:p-3.5 rounded-2xl transition-all duration-300", pathname === '/leaderboard' ? "theme-nav-bg theme-nav-accent theme-nav-glow" : "text-white/80 group-hover:theme-nav-accent md:group-hover:bg-white/10")}>
+                            <Link href="/moto-mania" onTouchStart={(e) => e.currentTarget.click()} prefetch={true} className="group relative z-10 h-full flex flex-col items-center justify-center gap-1 flex-1 min-w-0 md:min-w-[80px] cursor-pointer touch-manipulation pointer-events-auto">
+                                <div className={cn("relative p-2.5 xs:p-3.5 rounded-2xl transition-all duration-300", pathname === '/moto-mania' ? "theme-nav-bg theme-nav-accent theme-nav-glow" : "text-white/80 group-hover:theme-nav-accent md:group-hover:bg-white/10")}>
                                     <MotorcycleIcon size={isMobile ? 22 : 24} />
                                 </div>
-                                <span className={cn("text-[8px] xs:text-[9px] md:text-[11px] tracking-[0.1em] xs:tracking-[0.2em] font-bold uppercase transition-all duration-300", pathname === '/leaderboard' ? "theme-nav-accent drop-shadow-[0_0_8px_rgba(var(--theme-rgb),0.8)] scale-110" : "text-white/95 md:group-hover:theme-nav-accent")}>RIDERS</span>
+                                <span className={cn("text-[8px] xs:text-[9px] md:text-[11px] tracking-[0.1em] xs:tracking-[0.2em] font-bold uppercase transition-all duration-300", pathname === '/moto-mania' ? "theme-nav-accent drop-shadow-[0_0_8px_rgba(var(--theme-rgb),0.8)] scale-110" : "text-white/95 md:group-hover:theme-nav-accent")}>RIDERS</span>
                             </Link>
                         </div>
 
@@ -130,13 +130,13 @@ export function InnovativeNavbar() {
                         <div className="w-16 xs:w-20 md:w-32 flex-shrink-0 h-full" />
 
                         <div className="flex-1 flex justify-around items-center px-1 xs:px-2 md:px-4 h-full">
-                            <Link href="/gallery" onTouchStart={(e) => e.currentTarget.click()} prefetch={true} className="group h-full flex flex-col items-center justify-center gap-1 flex-1 min-w-0 md:min-w-[80px] cursor-pointer touch-manipulation pointer-events-auto">
+                            <Link href="/gallery" onTouchStart={(e) => e.currentTarget.click()} prefetch={true} className="group relative z-10 h-full flex flex-col items-center justify-center gap-1 flex-1 min-w-0 md:min-w-[80px] cursor-pointer touch-manipulation pointer-events-auto">
                                 <div className={cn("relative p-2.5 xs:p-3.5 rounded-2xl transition-all duration-300", pathname === '/gallery' ? "theme-nav-bg theme-nav-accent theme-nav-glow" : "text-white/80 group-hover:theme-nav-accent md:group-hover:bg-white/10")}>
                                     <Camera size={isMobile ? 22 : 24} />
                                 </div>
                                 <span className={cn("text-[8px] xs:text-[9px] md:text-[11px] tracking-[0.1em] xs:tracking-[0.2em] font-bold uppercase transition-all duration-300", pathname === '/gallery' ? "theme-nav-accent drop-shadow-[0_0_8px_rgba(var(--theme-rgb),0.8)] scale-110" : "text-white/95 md:group-hover:theme-nav-accent")}>GALLERY</span>
                             </Link>
-                            <Link href={isLoggedIn ? "/profile" : "/login"} onTouchStart={(e) => e.currentTarget.click()} prefetch={true} className="group h-full flex flex-col items-center justify-center gap-1 flex-1 min-w-0 md:min-w-[80px] cursor-pointer touch-manipulation pointer-events-auto">
+                            <Link href={isLoggedIn ? "/profile" : "/login"} onTouchStart={(e) => e.currentTarget.click()} prefetch={true} className="group relative z-10 h-full flex flex-col items-center justify-center gap-1 flex-1 min-w-0 md:min-w-[80px] cursor-pointer touch-manipulation pointer-events-auto">
                                 <div className={cn("relative p-2.5 xs:p-3.5 rounded-2xl transition-all duration-300", (pathname === '/profile' || pathname === '/login') ? "theme-nav-bg theme-nav-accent theme-nav-glow" : "text-white/80 group-hover:theme-nav-accent md:group-hover:bg-white/10")}>
                                     <User size={isMobile ? 22 : 24} />
                                 </div>
