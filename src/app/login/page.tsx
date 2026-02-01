@@ -455,7 +455,13 @@ function LoginContent() {
                                                     <select
                                                         required
                                                         value={college}
-                                                        onChange={(e) => setCollege(e.target.value)}
+                                                        onChange={(e) => {
+                                                            const value = e.target.value
+                                                            setCollege(value)
+                                                            if (value !== 'Other') {
+                                                                setOtherCollege('')
+                                                            }
+                                                        }}
                                                         disabled={email.endsWith('@sode-edu.in')}
                                                         className={`w-full bg-white/[0.05] border border-white/20 rounded-2xl px-6 py-4 text-sm focus:border-emerald-500 outline-none transition-all appearance-none cursor-pointer text-white ${email.endsWith('@sode-edu.in') ? 'opacity-60 cursor-not-allowed' : ''}`}
                                                     >
@@ -466,6 +472,19 @@ function LoginContent() {
                                                 </div>
                                                 {email.endsWith('@sode-edu.in') && (
                                                     <p className="text-[10px] text-emerald-400 ml-1 font-medium">Verified student domain detected.</p>
+                                                )}
+                                                {college === 'Other' && (
+                                                    <div className="mt-3">
+                                                        <label className="text-[12px] font-bold text-white/70 ml-1">Enter your college</label>
+                                                        <input
+                                                            required
+                                                            type="text"
+                                                            value={otherCollege}
+                                                            onChange={(e) => setOtherCollege(e.target.value)}
+                                                            placeholder="Your college name"
+                                                            className="mt-2 w-full bg-white/[0.05] border border-white/20 rounded-2xl px-6 py-4 text-sm focus:border-emerald-500 outline-none transition-all placeholder:text-white/30 text-white"
+                                                        />
+                                                    </div>
                                                 )}
                                             </div>
                                             <div className="space-y-2">

@@ -370,6 +370,9 @@ export function EventGrid({ missions }: EventGridProps) {
         if (!isLoggedIn) {
             router.push('/login')
             return
+        } else {
+            router.push('/notify')
+            return
         }
         setSelectedEvent(event)
         setIsRegModalOpen(true)
