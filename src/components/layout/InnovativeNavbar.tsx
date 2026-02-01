@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { LayoutGrid, Zap, Trophy, Camera, User, ShoppingCart, Rocket, Menu, X } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useApp } from '@/context/AppContext'
 import { Magnetic } from '@/components/ui/Magnetic'
 import { cn } from '@/lib/utils'
@@ -44,16 +44,39 @@ export function InnovativeNavbar() {
 
     const [isMobile, setIsMobile] = useState(false)
     const [isMenuOpen, setIsMenuOpen] = useState(false)
+    const lastScrollY = useRef(0)
+    const [isVisible, setIsVisible] = useState(true)
 
     useEffect(() => {
         const checkMobile = () => {
             const width = window.innerWidth;
             setIsMobile(width < 768 || 'ontouchstart' in window);
         }
+
+        const handleScroll = () => {
+            const currentScrollY = window.scrollY
+
+            // Optimization: Only update visibility state if it actually changes
+            if (currentScrollY < 50) {
+                setIsVisible(true)
+            } else if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+                setIsVisible((prev) => prev ? false : prev) // Only set false if currently true
+            } else if (currentScrollY < lastScrollY.current) {
+                setIsVisible((prev) => prev ? prev : true)  // Only set true if currently false
+            }
+
+            lastScrollY.current = currentScrollY
+        }
+
         checkMobile()
         window.addEventListener('resize', checkMobile)
-        return () => window.removeEventListener('resize', checkMobile)
-    }, [])
+        window.addEventListener('scroll', handleScroll, { passive: true })
+
+        return () => {
+            window.removeEventListener('resize', checkMobile)
+            window.removeEventListener('scroll', handleScroll)
+        }
+    }, []) // Empty dependency array: listener is set up once
 
     // Dynamic Theme Logic - Use Context
     const themeRgb = pageTheme.rgb
@@ -63,11 +86,19 @@ export function InnovativeNavbar() {
             <AnimatePresence mode="wait">
                 <motion.div
                     initial={{ y: 100, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
+                    animate={{
+                        y: isVisible ? 0 : 120,
+                        opacity: isVisible ? 1 : 0
+                    }}
                     style={{
                         '--theme-rgb': themeRgb
                     } as any}
-                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                    transition={{
+                        type: 'spring',
+                        stiffness: 260,
+                        damping: 20,
+                        mass: 0.8
+                    }}
                     className="fixed z-[5000] bottom-0 left-0 right-0 flex justify-center pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-8 px-4 md:px-8 pointer-events-none translate-gpu"
                 >
                     {/* THE CYBER-DOCK [OBSIDIAN NEON] */}
@@ -113,16 +144,31 @@ export function InnovativeNavbar() {
 
                         <div className="flex-1 flex justify-around items-center px-1 xs:px-2 md:px-4 h-full">
                             <Link href="/" onTouchStart={(e) => e.currentTarget.click()} prefetch={true} className="group relative z-10 h-full flex flex-col items-center justify-center gap-1 flex-1 min-w-0 md:min-w-[80px] cursor-pointer touch-manipulation pointer-events-auto">
-                                <div className={cn("relative p-2.5 xs:p-3.5 rounded-2xl transition-all duration-300", pathname === '/' ? "theme-nav-bg theme-nav-accent theme-nav-glow" : "text-white/80 group-hover:theme-nav-accent md:group-hover:bg-white/10")}>
+                                <div className={cn("relative p-2.5 xs:p-3.5 rounded-2xl transition-all duration-300", pathname === '/' ? "text-white" : "text-white/60 group-hover:text-white md:group-hover:bg-white/5")}>
+                                    {pathname === '/' && (
+                                        <motion.div
+                                            layoutId="active-pill"
+                                            className="absolute inset-0 theme-nav-bg rounded-2xl theme-nav-glow -z-10"
+                                            transition={{ type: 'spring', duration: 0.6 }}
+                                        />
+                                    )}
                                     <LayoutGrid size={isMobile ? 22 : 24} />
                                 </div>
-                                <span className={cn("text-[8px] xs:text-[9px] md:text-[11px] tracking-[0.1em] xs:tracking-[0.2em] font-bold uppercase transition-all duration-300", pathname === '/' ? "theme-nav-accent drop-shadow-[0_0_8px_rgba(var(--theme-rgb),0.8)] scale-110" : "text-white/95 md:group-hover:theme-nav-accent")}>HOME</span>
+                                <span className={cn("text-[8px] xs:text-[9px] md:text-[11px] tracking-[0.1em] xs:tracking-[0.2em] font-bold uppercase transition-all duration-300", pathname === '/' ? "theme-nav-accent drop-shadow-[0_0_8px_rgba(var(--theme-rgb),0.8)]" : "text-white/95")}>HOME</span>
                             </Link>
+
                             <Link href="/moto-mania" onTouchStart={(e) => e.currentTarget.click()} prefetch={true} className="group relative z-10 h-full flex flex-col items-center justify-center gap-1 flex-1 min-w-0 md:min-w-[80px] cursor-pointer touch-manipulation pointer-events-auto">
-                                <div className={cn("relative p-2.5 xs:p-3.5 rounded-2xl transition-all duration-300", pathname === '/moto-mania' ? "theme-nav-bg theme-nav-accent theme-nav-glow" : "text-white/80 group-hover:theme-nav-accent md:group-hover:bg-white/10")}>
+                                <div className={cn("relative p-2.5 xs:p-3.5 rounded-2xl transition-all duration-300", pathname === '/moto-mania' ? "text-white" : "text-white/60 group-hover:text-white md:group-hover:bg-white/5")}>
+                                    {pathname === '/moto-mania' && (
+                                        <motion.div
+                                            layoutId="active-pill"
+                                            className="absolute inset-0 theme-nav-bg rounded-2xl theme-nav-glow -z-10"
+                                            transition={{ type: 'spring', duration: 0.6 }}
+                                        />
+                                    )}
                                     <MotorcycleIcon size={isMobile ? 22 : 24} />
                                 </div>
-                                <span className={cn("text-[8px] xs:text-[9px] md:text-[11px] tracking-[0.1em] xs:tracking-[0.2em] font-bold uppercase transition-all duration-300", pathname === '/moto-mania' ? "theme-nav-accent drop-shadow-[0_0_8px_rgba(var(--theme-rgb),0.8)] scale-110" : "text-white/95 md:group-hover:theme-nav-accent")}>RIDERS</span>
+                                <span className={cn("text-[8px] xs:text-[9px] md:text-[11px] tracking-[0.1em] xs:tracking-[0.2em] font-bold uppercase transition-all duration-300", pathname === '/moto-mania' ? "theme-nav-accent drop-shadow-[0_0_8px_rgba(var(--theme-rgb),0.8)]" : "text-white/95")}>RIDERS</span>
                             </Link>
                         </div>
 
@@ -131,16 +177,31 @@ export function InnovativeNavbar() {
 
                         <div className="flex-1 flex justify-around items-center px-1 xs:px-2 md:px-4 h-full">
                             <Link href="/gallery" onTouchStart={(e) => e.currentTarget.click()} prefetch={true} className="group relative z-10 h-full flex flex-col items-center justify-center gap-1 flex-1 min-w-0 md:min-w-[80px] cursor-pointer touch-manipulation pointer-events-auto">
-                                <div className={cn("relative p-2.5 xs:p-3.5 rounded-2xl transition-all duration-300", pathname === '/gallery' ? "theme-nav-bg theme-nav-accent theme-nav-glow" : "text-white/80 group-hover:theme-nav-accent md:group-hover:bg-white/10")}>
+                                <div className={cn("relative p-2.5 xs:p-3.5 rounded-2xl transition-all duration-300", pathname === '/gallery' ? "text-white" : "text-white/60 group-hover:text-white md:group-hover:bg-white/5")}>
+                                    {pathname === '/gallery' && (
+                                        <motion.div
+                                            layoutId="active-pill"
+                                            className="absolute inset-0 theme-nav-bg rounded-2xl theme-nav-glow -z-10"
+                                            transition={{ type: 'spring', duration: 0.6 }}
+                                        />
+                                    )}
                                     <Camera size={isMobile ? 22 : 24} />
                                 </div>
-                                <span className={cn("text-[8px] xs:text-[9px] md:text-[11px] tracking-[0.1em] xs:tracking-[0.2em] font-bold uppercase transition-all duration-300", pathname === '/gallery' ? "theme-nav-accent drop-shadow-[0_0_8px_rgba(var(--theme-rgb),0.8)] scale-110" : "text-white/95 md:group-hover:theme-nav-accent")}>GALLERY</span>
+                                <span className={cn("text-[8px] xs:text-[9px] md:text-[11px] tracking-[0.1em] xs:tracking-[0.2em] font-bold uppercase transition-all duration-300", pathname === '/gallery' ? "theme-nav-accent drop-shadow-[0_0_8px_rgba(var(--theme-rgb),0.8)]" : "text-white/95")}>GALLERY</span>
                             </Link>
+
                             <Link href={isLoggedIn ? "/profile" : "/login"} onTouchStart={(e) => e.currentTarget.click()} prefetch={true} className="group relative z-10 h-full flex flex-col items-center justify-center gap-1 flex-1 min-w-0 md:min-w-[80px] cursor-pointer touch-manipulation pointer-events-auto">
-                                <div className={cn("relative p-2.5 xs:p-3.5 rounded-2xl transition-all duration-300", (pathname === '/profile' || pathname === '/login') ? "theme-nav-bg theme-nav-accent theme-nav-glow" : "text-white/80 group-hover:theme-nav-accent md:group-hover:bg-white/10")}>
+                                <div className={cn("relative p-2.5 xs:p-3.5 rounded-2xl transition-all duration-300", (pathname === '/profile' || pathname === '/login') ? "text-white" : "text-white/60 group-hover:text-white md:group-hover:bg-white/5")}>
+                                    {(pathname === '/profile' || pathname === '/login') && (
+                                        <motion.div
+                                            layoutId="active-pill"
+                                            className="absolute inset-0 theme-nav-bg rounded-2xl theme-nav-glow -z-10"
+                                            transition={{ type: 'spring', duration: 0.6 }}
+                                        />
+                                    )}
                                     <User size={isMobile ? 22 : 24} />
                                 </div>
-                                <span className={cn("text-[8px] xs:text-[9px] md:text-[11px] tracking-[0.1em] xs:tracking-[0.2em] font-bold uppercase transition-all duration-300", (pathname === '/profile' || pathname === '/login') ? "theme-nav-accent drop-shadow-[0_0_8px_rgba(var(--theme-rgb),0.8)] scale-110" : "text-white/95 md:group-hover:theme-nav-accent")}>{isLoggedIn ? 'PROFILE' : 'LOGIN'}</span>
+                                <span className={cn("text-[8px] xs:text-[9px] md:text-[11px] tracking-[0.1em] xs:tracking-[0.2em] font-bold uppercase transition-all duration-300", (pathname === '/profile' || pathname === '/login') ? "theme-nav-accent drop-shadow-[0_0_8px_rgba(var(--theme-rgb),0.8)]" : "text-white/95")}>{isLoggedIn ? 'PROFILE' : 'LOGIN'}</span>
                             </Link>
                         </div>
 

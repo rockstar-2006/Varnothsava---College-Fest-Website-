@@ -44,6 +44,7 @@ function LoadingContent() {
 
     const [isMounted, setIsMounted] = useState(false)
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+    const [assetsReady, setAssetsReady] = useState(false)
 
     // Parallax Motion Values
     const mouseX = useMotionValue(0);
@@ -70,6 +71,44 @@ function LoadingContent() {
         window.addEventListener('mousemove', handleMouseMove);
         return () => window.removeEventListener('mousemove', handleMouseMove);
     }, [mouseX, mouseY])
+
+    // Preload critical assets
+    useEffect(() => {
+        const preloadAssets = async () => {
+            try {
+                // Wait for fonts to load
+                if (document.fonts) {
+                    await document.fonts.ready
+                }
+
+                // Preload critical images
+                const criticalImages = [
+                    '/img/ancient_ruins_dark.png'
+                ]
+
+                const imagePromises = criticalImages.map(src => {
+                    return new Promise((resolve) => {
+                        const img = document.createElement('img')
+                        img.onload = () => resolve(true)
+                        img.onerror = () => resolve(false) // Don't fail if image doesn't load
+                        img.src = src
+                    })
+                })
+
+                await Promise.all(imagePromises)
+
+                // Small delay to ensure DOM is fully painted
+                await new Promise(resolve => setTimeout(resolve, 100))
+
+                setAssetsReady(true)
+            } catch (error) {
+                console.warn('Asset preload error:', error)
+                setAssetsReady(true) // Continue anyway
+            }
+        }
+
+        preloadAssets()
+    }, [])
 
     // Detemine theme based on route & search params
     const theme: ThemeType = useMemo(() => {
@@ -161,26 +200,30 @@ function LoadingContent() {
         }
     }, [theme])
 
-    // Pre-calculate particles to avoid Hydration Error
+    // Pre-calculate particles to avoid Hydration Error - OPTIMIZED FOR MOBILE
     const particles = useMemo(() => {
-        return [...Array(20)].map((_, i) => ({
+        // Drastically reduce particles on mobile for smooth performance
+        const count = isMobile ? 5 : 15
+        return [...Array(count)].map((_, i) => ({
             id: i,
             w: 2 + Math.random() * 4,
             h: 2 + Math.random() * 4,
             t: Math.random() * 100,
             l: Math.random() * 100,
-            dur: 6 + Math.random() * 8, // Made longer for smoothness
+            dur: 8 + Math.random() * 6, // Slower, smoother animations
             delay: Math.random() * 5
         }))
-    }, [])
+    }, [isMobile])
 
     const snowParticles = useMemo(() => {
-        return [...Array(isMobile ? 12 : 24)].map((_, i) => ({
+        // Reduce snow particles significantly on mobile
+        const count = isMobile ? 6 : 18
+        return [...Array(count)].map((_, i) => ({
             id: i,
             x: Math.random() * 2000 - 1000,
             yStart: Math.random() * 2000 - 1000,
             yEnd: Math.random() * 1000 + 500,
-            dur: 20 + Math.random() * 15,
+            dur: 25 + Math.random() * 10, // Slower for smoothness
             rotate: Math.random() * 360
         }))
     }, [isMobile])
@@ -205,23 +248,60 @@ function LoadingContent() {
         */
 
         if (step === 'SYNCING') {
+            const startTime = Date.now()
+            const MIN_LOADING_TIME = 3000 // Minimum 3 seconds loading time
+            const MAX_LOADING_TIME = 8000 // Maximum 8 seconds - force complete if stuck
+
             const timer = setInterval(() => {
                 setProgress(p => {
-                    // GATEKEEPER: Wait for DOM interactivity (snappier than full window load)
-                    const isReady = typeof document !== 'undefined' &&
+                    const elapsed = Date.now() - startTime
+
+                    // GATEKEEPER: Wait for DOM, images, fonts, and preloaded assets
+                    const isDOMReady = typeof document !== 'undefined' &&
                         (document.readyState === 'complete' || document.readyState === 'interactive')
 
-                    if (p >= 100) {
+                    // Check if critical images are loaded (more lenient - allow some to fail)
+                    const images = document.querySelectorAll('img')
+                    const totalImages = images.length
+                    const loadedImages = Array.from(images).filter(img => img.complete).length
+                    const imagesLoaded = totalImages === 0 || (loadedImages / totalImages) > 0.7 // 70% threshold
+
+                    // Check if fonts are loaded (more lenient)
+                    const fontsReady = !document.fonts || document.fonts.status === 'loaded' || elapsed > 4000
+
+                    const isFullyReady = isDOMReady && (imagesLoaded || elapsed > 4000) && (fontsReady || assetsReady)
+                    const hasMinTime = elapsed >= MIN_LOADING_TIME
+                    const isTimeout = elapsed >= MAX_LOADING_TIME // Force complete if taking too long
+
+                    // Complete if: reached 100% AND (everything ready OR timeout)
+                    if ((p >= 100 && isFullyReady && hasMinTime) || isTimeout) {
                         clearInterval(timer)
-                        setTimeout(() => setStep('READY'), 100)
+                        console.log('Loading complete:', { isDOMReady, imagesLoaded, fontsReady, assetsReady, elapsed })
+                        setTimeout(() => setStep('READY'), 200)
                         return 100
                     }
 
-                    // Dynamic speed: Faster initial climb to feel responsive
-                    const increment = isReady ? (p < 60 ? 4.0 : 2.5) : (p < 60 ? 2.0 : p < 90 ? 1.0 : 0.4)
+                    // SLOWER, MORE VISIBLE PROGRESS
+                    // Stage 1: 0-30% - Quick initial load (feels responsive)
+                    // Stage 2: 30-70% - Medium speed (loading assets)
+                    // Stage 3: 70-95% - Slow down (almost ready)
+                    // Stage 4: 95-100% - Very slow (final checks)
+
+                    let increment
+                    if (p < 30) {
+                        increment = isFullyReady ? 1.5 : 0.8 // Fast start
+                    } else if (p < 70) {
+                        increment = isFullyReady ? 0.8 : 0.5 // Medium
+                    } else if (p < 95) {
+                        increment = isFullyReady && hasMinTime ? 0.4 : 0.25 // Slow down
+                    } else {
+                        // Final stage - only proceed if everything is ready OR timeout approaching
+                        increment = (isFullyReady && hasMinTime) || elapsed > 6000 ? 0.3 : 0.1
+                    }
+
                     return Math.min(p + increment, 100)
                 })
-            }, 20)
+            }, 50) // Update every 50ms for smoother animation
             return () => clearInterval(timer)
         }
     }, [step])
@@ -233,8 +313,8 @@ function LoadingContent() {
                 setTimeout(() => {
                     setVisible(false)
                     setIsSiteLoaded(true) // UNLOCK THE SITE
-                }, 300)
-            }, 400)
+                }, 400) // Slightly longer for smoother transition
+            }, 600) // Show "GO" message longer
             return () => clearTimeout(timer)
         }
     }, [step])
@@ -261,7 +341,13 @@ function LoadingContent() {
             <motion.div
                 className="fixed inset-0 z-[11000] flex items-center justify-center p-4 md:p-12 overflow-hidden select-none"
                 initial={{ opacity: 1 }}
-                exit={{
+                exit={isMobile ? {
+                    // Simplified exit for mobile - no blur
+                    scale: 1.02,
+                    opacity: 0,
+                    transition: { duration: 0.4, ease: [0.33, 1, 0.68, 1] }
+                } : {
+                    // Full effect for desktop
                     scale: 1.05,
                     opacity: 0,
                     filter: "blur(10px)",
@@ -270,59 +356,88 @@ function LoadingContent() {
                 style={{
                     willChange: 'opacity, transform',
                     backgroundColor: '#020604',
+                    transform: 'translate3d(0, 0, 0)', // Force GPU acceleration
                 }}
             >
                 {/* 1. LUXURY CINEMATIC BACKGROUND */}
                 {/* 1. LUXURY CINEMATIC BACKGROUND */}
                 {/* 1. LUXURY CINEMATIC BACKGROUND */}
                 <div className="absolute inset-0 z-0 overflow-hidden">
-                    {/* ANCIENT RUINS BACKGROUND IMAGE - WITH PARALLAX */}
-                    {/* ANCIENT RUINS BACKGROUND IMAGE - WITH PARALLAX & BREATHE */}
-                    <motion.div
-                        className="absolute inset-[-5%] w-[110%] h-[110%] z-[-1]"
-                        style={{ x: moveX, y: moveY }}
-                        animate={{
-                            scale: [1, 1.02, 1],
-                        }}
-                        transition={{
-                            duration: 20,
-                            repeat: Infinity,
-                            ease: "easeInOut"
-                        }}
-                    >
-                        <Image
-                            src="/img/ancient_ruins_dark.png"
-                            alt="Ancient Ruins"
-                            fill
-                            priority
-                            className="w-full h-full object-cover opacity-100 grayscale-0"
-                        />
-                        {/* Dark Vignette */}
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,#000000_100%)] opacity-60" />
-                        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
-
-                        {/* LIVELY ATMOSPHERE: Shifting Sunbeams / Light Leaks */}
+                    {/* ANCIENT RUINS BACKGROUND IMAGE - Optimized for mobile */}
+                    {isMobile ? (
+                        // Static background for mobile - no parallax, no breathing
+                        <div className="absolute inset-0 w-full h-full z-[-1]">
+                            <Image
+                                src="/img/ancient_ruins_dark.png"
+                                alt="Ancient Ruins"
+                                fill
+                                priority
+                                className="w-full h-full object-cover opacity-100 grayscale-0"
+                                style={{ willChange: 'auto' }}
+                            />
+                            {/* Dark Vignette */}
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,#000000_100%)] opacity-60" />
+                            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
+                        </div>
+                    ) : (
+                        // Full parallax and breathing effect for desktop
                         <motion.div
-                            className="absolute inset-0 opacity-20 mix-blend-overlay pointer-events-none"
-                            style={{
-                                background: 'radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.4) 0%, transparent 60%)'
-                            }}
+                            className="absolute inset-[-5%] w-[110%] h-[110%] z-[-1]"
+                            style={{ x: moveX, y: moveY }}
                             animate={{
-                                opacity: [0.1, 0.25, 0.1],
-                                scale: [1, 1.1, 1],
+                                scale: [1, 1.02, 1],
                             }}
                             transition={{
-                                duration: 8,
+                                duration: 20,
                                 repeat: Infinity,
                                 ease: "easeInOut"
                             }}
-                        />
-                    </motion.div>
+                        >
+                            <Image
+                                src="/img/ancient_ruins_dark.png"
+                                alt="Ancient Ruins"
+                                fill
+                                priority
+                                className="w-full h-full object-cover opacity-100 grayscale-0"
+                            />
+                            {/* Dark Vignette */}
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,#000000_100%)] opacity-60" />
+                            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
 
-                    {/* ATMOSPHERIC MIST (New Layer) - HIDDEN ON MOBILE to save performance (blur-3xl is VERY heavy) */}
-                    <div className="hidden md:block absolute inset-0 pointer-events-none z-0">
-                        <div className="absolute bottom-[-10%] left-0 w-full h-[50vh] bg-gradient-to-t from-[#022c22]/60 via-[#064e3b]/20 to-transparent blur-3xl animate-pulse-slow will-change-[opacity]" />
-                    </div>
+                            {/* LIVELY ATMOSPHERE: Shifting Sunbeams / Light Leaks */}
+                            <motion.div
+                                className="absolute inset-0 opacity-20 mix-blend-overlay pointer-events-none"
+                                style={{
+                                    background: 'radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.4) 0%, transparent 60%)'
+                                }}
+                                animate={{
+                                    opacity: [0.1, 0.25, 0.1],
+                                    scale: [1, 1.1, 1],
+                                }}
+                                transition={{
+                                    duration: 8,
+                                    repeat: Infinity,
+                                    ease: "easeInOut"
+                                }}
+                            />
+                        </motion.div>
+                    )}
+
+                    {/* ATMOSPHERIC MIST - Optimized for mobile */}
+                    {isMobile ? (
+                        // Simple gradient overlay for mobile - no blur
+                        <div className="absolute inset-0 pointer-events-none z-0">
+                            <div
+                                className="absolute bottom-0 left-0 w-full h-[40vh] bg-gradient-to-t from-[#022c22]/50 via-[#064e3b]/15 to-transparent"
+                                style={{ willChange: 'opacity' }}
+                            />
+                        </div>
+                    ) : (
+                        // Full effect for desktop
+                        <div className="absolute inset-0 pointer-events-none z-0">
+                            <div className="absolute bottom-[-10%] left-0 w-full h-[50vh] bg-gradient-to-t from-[#022c22]/60 via-[#064e3b]/20 to-transparent blur-3xl animate-pulse-slow will-change-[opacity]" />
+                        </div>
+                    )}
 
                     {/* High-End Film Grain Texture - Disabled on mobile */}
                     {!isMobile && (
@@ -366,10 +481,10 @@ function LoadingContent() {
                         style={{ background: themeConfig.bgGradient }}
                     />
 
-                    {/* Fireflies / Ancient Spores - FLOATY MAGIC - REDUCED ON MOBILE */}
+                    {/* Fireflies / Ancient Spores - FLOATY MAGIC - HEAVILY REDUCED ON MOBILE */}
                     {isMounted && (
                         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                            {[...Array(isMobile ? 5 : 15)].map((_, i) => (
+                            {[...Array(isMobile ? 3 : 12)].map((_, i) => (
                                 <motion.div
                                     key={`firefly-${i}`}
                                     className="absolute rounded-full mix-blend-screen"
@@ -382,20 +497,23 @@ function LoadingContent() {
                                     animate={{
                                         y: [null, Math.random() * -100 - 50], // Float up
                                         x: [null, (Math.random() - 0.5) * 50], // Drift sideways
-                                        opacity: [0, 0.6, 0],
-                                        scale: [0, 1.5, 0]
+                                        opacity: [0, 0.5, 0], // Reduced max opacity on mobile
+                                        scale: [0, 1.2, 0] // Reduced scale on mobile
                                     }}
                                     transition={{
-                                        duration: 8 + Math.random() * 10,
+                                        duration: isMobile ? 12 : 10, // Slower on mobile for smoothness
                                         repeat: Infinity,
                                         ease: "easeInOut",
                                         delay: Math.random() * 5
                                     }}
                                     style={{
-                                        width: Math.random() * 4 + 2 + "px",
-                                        height: Math.random() * 4 + 2 + "px",
+                                        width: Math.random() * 3 + 1.5 + "px", // Smaller on mobile
+                                        height: Math.random() * 3 + 1.5 + "px",
                                         backgroundColor: i % 3 === 0 ? '#fbbf24' : '#10b981', // Golden & Emerald mix
-                                        boxShadow: `0 0 ${10 + Math.random() * 20}px ${i % 3 === 0 ? '#fbbf24' : '#10b981'}`
+                                        boxShadow: isMobile
+                                            ? `0 0 ${8 + Math.random() * 12}px ${i % 3 === 0 ? '#fbbf24' : '#10b981'}`
+                                            : `0 0 ${10 + Math.random() * 20}px ${i % 3 === 0 ? '#fbbf24' : '#10b981'}`,
+                                        willChange: 'transform, opacity'
                                     }}
                                 />
                             ))}
@@ -586,8 +704,8 @@ function LoadingContent() {
                                         </h1>
                                     </div>
 
-                                    {/* High Contrast Progress Bar - Compact */}
-                                    <div className="w-full max-w-md space-y-4 backdrop-blur-sm bg-black/30 p-5 rounded-2xl border border-white/10 shadow-2xl">
+                                    {/* High Contrast Progress Bar - Compact & Optimized */}
+                                    <div className={`w-full max-w-md space-y-4 p-5 rounded-2xl border border-white/10 shadow-2xl ${isMobile ? 'bg-black/30' : 'backdrop-blur-sm bg-black/30'}`}>
                                         <div className="flex justify-between items-end px-2">
                                             <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-emerald-400 shadow-black drop-shadow-md">
                                                 {themeConfig.label}
@@ -604,13 +722,21 @@ function LoadingContent() {
                                                 className="absolute inset-y-0 left-0 rounded-full"
                                                 style={{
                                                     backgroundColor: themeConfig.color,
-                                                    boxShadow: `0 0 15px ${themeConfig.color}`
+                                                    boxShadow: `0 0 15px ${themeConfig.color}`,
+                                                    willChange: 'width',
+                                                    transform: 'translate3d(0, 0, 0)' // GPU acceleration
                                                 }}
                                             />
                                         </div>
 
                                         <div className="flex justify-between text-[8px] uppercase tracking-widest text-white/50 font-mono">
-                                            <span>Loading Assets...</span>
+                                            <span>
+                                                {progress < 30 ? 'Initializing...' :
+                                                    progress < 60 ? 'Loading Assets...' :
+                                                        progress < 90 ? 'Preparing Experience...' :
+                                                            progress < 100 ? 'Almost Ready...' :
+                                                                'Complete!'}
+                                            </span>
                                             <span>{themeConfig.subLabel}</span>
                                         </div>
                                     </div>
@@ -625,16 +751,21 @@ function LoadingContent() {
                                     exit={{ opacity: 0, scale: 1.1 }}
                                     className="flex flex-col items-center gap-8 z-20"
                                 >
-                                    {/* Icon Container - Glowing & Distinct */}
+                                    {/* Icon Container - Glowing & Distinct - Optimized for mobile */}
                                     <motion.div
                                         animate={{ y: [0, -10, 0] }}
                                         transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
                                         className="relative group cursor-pointer"
                                     >
-                                        <div className="absolute inset-0 rounded-full blur-[40px] opacity-30" style={{ backgroundColor: themeConfig.color }} />
+                                        {/* Simplified glow for mobile - no blur */}
+                                        {isMobile ? (
+                                            <div className="absolute inset-0 rounded-full opacity-20" style={{ backgroundColor: themeConfig.color, boxShadow: `0 0 30px ${themeConfig.color}` }} />
+                                        ) : (
+                                            <div className="absolute inset-0 rounded-full blur-[40px] opacity-30" style={{ backgroundColor: themeConfig.color }} />
+                                        )}
                                         <div
-                                            className="relative w-20 h-20 md:w-24 md:h-24 rounded-full border border-white/20 bg-black/40 backdrop-blur-md flex items-center justify-center shadow-[0_0_30px_rgba(0,0,0,0.6)] group-hover:bg-black/50 transition-all duration-300"
-                                            style={{ boxShadow: `0 0 20px ${themeConfig.color}11` }}
+                                            className={`relative w-20 h-20 md:w-24 md:h-24 rounded-full border border-white/20 bg-black/40 flex items-center justify-center shadow-[0_0_30px_rgba(0,0,0,0.6)] group-hover:bg-black/50 transition-all duration-300 ${isMobile ? '' : 'backdrop-blur-md'}`}
+                                            style={{ boxShadow: `0 0 20px ${themeConfig.color}11`, willChange: 'transform' }}
                                         >
                                             <Icon className="w-8 h-8 md:w-10 md:h-10 drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]" style={{ color: themeConfig.color }} />
                                         </div>
@@ -745,7 +876,7 @@ function LoadingContent() {
                 {/* Outer HUD Decorative Elements */}
                 <div className="fixed top-8 left-1/2 -translate-x-1/2 flex items-center gap-4 opacity-40 z-[12000]">
                     <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: themeConfig.color }} />
-                    <span className="text-white text-[9px] font-black tracking-[0.5em] uppercase italic">National_Festival // Live_Feed</span>
+                    <span className="text-white text-[9px] font-black tracking-[0.5em] uppercase italic">State_Festival // Live_Feed</span>
                 </div>
 
                 <div className="fixed inset-0 pointer-events-none z-[12000] border-[20px] md:border-[40px] border-transparent">

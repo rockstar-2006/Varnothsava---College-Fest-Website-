@@ -57,6 +57,38 @@ const IMAGES = [
     "/img/IMG_4746.JPG"
 ];
 
+const ViewportLazy = ({ children }: { children: React.ReactNode }) => {
+    const [isVisible, setIsVisible] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const heightRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(([entry]) => {
+            if (entry.isIntersecting) {
+                setIsVisible(true);
+            } else {
+                if (containerRef.current && containerRef.current.offsetHeight > 0) {
+                    heightRef.current = containerRef.current.offsetHeight;
+                }
+                setIsVisible(false);
+            }
+        }, { rootMargin: "600px" });
+
+        if (containerRef.current) observer.observe(containerRef.current);
+        return () => observer.disconnect();
+    }, []);
+
+    return (
+        <div
+            ref={containerRef}
+            className="w-full relative"
+            style={{ minHeight: heightRef.current ? `${heightRef.current}px` : '40vh' }}
+        >
+            {isVisible ? children : null}
+        </div>
+    )
+}
+
 // --- Animation Components ---
 
 interface RevealProps {
@@ -291,7 +323,7 @@ const Marquee = ({ text, direction = 1 }: { text: string, direction?: number }) 
         <div ref={ref} className="relative flex overflow-hidden whitespace-nowrap border-y-2 border-[#3c2a21] bg-[#3c2a21] py-3">
             <motion.div
                 className="flex gap-8 font-serif text-lg md:text-xl font-bold uppercase tracking-widest text-[#e3ccb0]"
-                style={{ fontFamily: "'Rye', serif" }}
+                style={{ fontFamily: "'Rye', serif", willChange: "transform" }}
                 animate={isInView ? { x: direction > 0 ? ["0%", "-50%"] : ["-50%", "0%"] } : {}}
                 transition={{ duration: 30, repeat: Infinity, ease: "linear" }} // Slower is often smoother
             >
@@ -1293,7 +1325,7 @@ const HorizontalArchive = () => {
             </div>
 
             {/* --- Desktop View: Cinematic 'Inspector' Desk --- */}
-            <div ref={targetRef} className="hidden md:block relative h-[100vh] mb-0 pb-0">
+            <div ref={targetRef} className="hidden md:block relative h-[400vh] mb-0 pb-0">
                 <div className="sticky top-0 flex h-screen items-center bg-transparent overflow-hidden">
                     {/* Scientific Drawing/Technical Background Detail */}
                     <div className="absolute inset-x-0 top-0 h-full opacity-[0.03] pointer-events-none mix-blend-multiply flex items-center justify-center">
@@ -1737,24 +1769,25 @@ export default function MotomaniaPage() {
                 initial={{ opacity: 0 }}
                 animate={isRevealed ? { opacity: 1 } : { opacity: 0 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
+                className="gpu-accel"
                 style={{
                     pointerEvents: isRevealed ? "auto" : "none",
-                    visibility: isRevealed ? "visible" : "hidden" // Allows pre-fetching but hides from view
+                    visibility: isRevealed ? "visible" : "hidden"
                 }}
             >
                 <Hero />
-                <Marquee text="REGISTER NOW FOR 2K26" direction={1} />
-                <AboutSection />
+                <ViewportLazy><Marquee text="REGISTER NOW FOR 2K26" direction={1} /></ViewportLazy>
+                <ViewportLazy><AboutSection /></ViewportLazy>
                 <SectionDivider />
-                <RoadGallery />
+                <ViewportLazy><RoadGallery /></ViewportLazy>
                 <SectionDivider />
-                <HorizontalArchive />
+                <ViewportLazy><HorizontalArchive /></ViewportLazy>
                 <SectionDivider />
-                <ScheduleSection />
+                <ViewportLazy><ScheduleSection /></ViewportLazy>
                 <SectionDivider />
-                <RegistrationCTA />
+                <ViewportLazy><RegistrationCTA /></ViewportLazy>
                 <SectionDivider />
-                <SponsorSection />
+                <ViewportLazy><SponsorSection /></ViewportLazy>
 
                 <footer className="relative py-16 bg-[#3c2a21] text-[#f2e8cf]/60 border-t border-[#f2e8cf]/5 text-center px-4 overflow-hidden">
                     <div

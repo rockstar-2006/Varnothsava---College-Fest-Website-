@@ -149,6 +149,7 @@ export function OriginalMusic() {
                                 src={track.thumbnail}
                                 alt={track.title}
                                 fill
+                                unoptimized={true}
                                 className="object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
                                 sizes="(max-width: 768px) 90vw, (max-width: 1200px) 45vw, 30vw"
                             />

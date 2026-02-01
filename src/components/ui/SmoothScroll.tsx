@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, ReactNode, createContext, useContext, useState } from "react";
+import { usePathname } from "next/navigation";
 import Lenis from "lenis";
 
 interface SmoothScrollProps {
@@ -15,22 +16,33 @@ export const SmoothScroll = ({ children }: SmoothScrollProps) => {
     const [lenis, setLenis] = useState<Lenis | null>(null);
     const reqIdRef = useRef<number | null>(null);
 
-    useEffect(() => {
-        // Disable Lenis on simple mobile devices if needed, but keeping it ensures consistency
-        // if (typeof window !== 'undefined' && (window.innerWidth < 768 || 'ontouchstart' in window)) {
-        //     return;
-        // }
+    const pathname = usePathname();
 
+    useEffect(() => {
         const lenisInstance = new Lenis({
-            duration: 0.8,
+            duration: 1.2, // Slightly longer for more buttery feel
             easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
             orientation: "vertical",
             gestureOrientation: "vertical",
             smoothWheel: true,
-            wheelMultiplier: 1,
-            touchMultiplier: 1.2,
+            wheelMultiplier: 1.1, // Faster responsiveness
+            touchMultiplier: 1.5, // Better mobile feel
             infinite: false,
+            lerp: 0.1, // Smoother interpolation
         });
+
+        // SCROLL PERFORMANCE OPTIMIZATION
+        // When user scrolls, we add a class to body to disable heavy blurs
+        let scrollTimeout: NodeJS.Timeout;
+        const handleScrollStarted = () => {
+            document.body.classList.add('scrolling');
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                document.body.classList.remove('scrolling');
+            }, 150); // Remove after 150ms of inactivity
+        };
+
+        lenisInstance.on('scroll', handleScrollStarted);
 
         setLenis(lenisInstance);
 
@@ -47,12 +59,17 @@ export const SmoothScroll = ({ children }: SmoothScrollProps) => {
         };
         reqIdRef.current = requestAnimationFrame(raf);
 
+        // RESET SCROLL ON ROUTE CHANGE
+        lenisInstance.scrollTo(0, { immediate: true });
+
         return () => {
             if (reqIdRef.current) cancelAnimationFrame(reqIdRef.current);
+            lenisInstance.off('scroll', handleScrollStarted); // Correctly remove the listener
             lenisInstance.destroy();
             setLenis(null);
+            document.body.classList.remove('scrolling');
         };
-    }, []);
+    }, [pathname]); // Re-run on pathname change to reset scroll or re-init if needed
 
     return (
         <LenisContext.Provider value={lenis}>

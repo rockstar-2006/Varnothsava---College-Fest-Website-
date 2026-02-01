@@ -160,32 +160,49 @@ const ProNiteSection = () => {
     })
 
     const [activeIndex, setActiveIndex] = useState(-2) // -2: Intro, -1: Group, 0+: Members, -3: Exit
+    const [isMobile, setIsMobile] = useState(false)
+
+    useEffect(() => {
+        setIsMobile(window.innerWidth < 768)
+        const handleResize = () => setIsMobile(window.innerWidth < 768)
+        window.addEventListener('resize', handleResize)
+        return () => window.removeEventListener('resize', handleResize)
+    }, [])
 
     useMotionValueEvent(scrollYProgress, "change", (latest) => {
-        // Tighter exit logic to remove gap
-        if (latest > 0.98) {
+        // Quantized Sticky Logic: Creates 'Notches' in the scroll for a firm lock
+        if (latest > 0.96) {
             setActiveIndex(-3) // Exit phase
-        } else if (latest < 0.1) {
-            setActiveIndex(-2) // "SYSTEM ALERT"
-        } else if (latest < 0.2) {
-            setActiveIndex(-1) // Group Photo
+        } else if (latest < 0.05) {
+            setActiveIndex(-2) // Intro
+        } else if (latest < 0.15) {
+            setActiveIndex(-1) // Group photo - give it space to breathe
         } else {
-            // Compressed range for artists to finish sooner
-            const memberProgress = (latest - 0.2) / 0.78
-            const index = Math.floor(memberProgress * bandMembers.length)
-            setActiveIndex(Math.min(index, bandMembers.length - 1))
+            // Divide the 0.15 - 0.96 range into equal 'slots'
+            const sequenceRange = 0.81
+            const normalizedProgress = (latest - 0.15) / sequenceRange
+            const rawIndex = Math.floor(normalizedProgress * bandMembers.length)
+
+            // Limit index to valid bandMembers
+            const safeIndex = Math.max(0, Math.min(rawIndex, bandMembers.length - 1))
+
+            // Only update if we've moved significantly into the next slot
+            setActiveIndex(safeIndex)
         }
     })
 
     return (
-        <section ref={containerRef} className="relative h-[550vh] bg-[#020202]"> {/* Tighter height */}
-            <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center">
+        <section ref={containerRef} className={`relative ${isMobile ? 'h-[450vh]' : 'h-[900vh]'} bg-[#020202] isolate transition-all duration-300`}> {/* Adaptive Sticky Lock */}
+            <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center z-50">
 
                 {/* Background Stage - Fades out on exit */}
                 <motion.div
                     className="absolute inset-0"
-                    animate={{ opacity: activeIndex === -3 ? 0 : 1 }}
-                    transition={{ duration: 0.5 }}
+                    animate={{
+                        opacity: activeIndex === -3 ? 0 : 1,
+                        scale: activeIndex === -2 ? 1.1 : 1
+                    }}
+                    transition={{ duration: 0.8 }}
                 >
                     <ConcertStage />
                 </motion.div>
@@ -951,7 +968,7 @@ const HeroSection = ({ shouldRender3D }: { shouldRender3D: boolean }) => {
                         transition={{ delay: 0.3, duration: 0.8 }}
                         className="text-lg md:text-xl text-gray-400 font-medium max-w-2xl mt-6 leading-relaxed"
                     >
-                        The ultimate national-level techno-cultural phenomenon. <br className="hidden md:block" />
+                        The ultimate state-level techno-cultural phenomenon. <br className="hidden md:block" />
                         Where <span className="text-emerald-400">Innovation</span> meets <span className="text-purple-400">Celebrate</span>.
                     </motion.p>
 

@@ -73,19 +73,24 @@ body {
     width: 100%;
     min-height: 100vh;
     min-height: 100dvh;
-    background-color: var(--bg-dark);
+    background-color: #050805;
+    /* Consistent with layout theme */
     color: white;
     overflow-x: clip !important;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
     scroll-behavior: auto;
-    /* Changed to auto to let Framer Motion handle smoothness without clashing */
+    /* Managed by Lenis */
     position: relative;
     touch-action: pan-y pinch-zoom;
-    overscroll-behavior-y: none;
+    overscroll-behavior-y: auto;
+    /* Better for standard mobile feel */
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    /* FIX: Faster taps on mobile */
+    user-select: none;
+    /* Premium app feel */
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -580,27 +585,112 @@ body {
     overflow: hidden;
     pointer-events: none;
 }
+
 /* --- DYNAMIC BACKGROUND ANIMATIONS --- */
 @keyframes gridScroll {
-    0% { background-position: 0 0; }
-    100% { background-position: 50px 50px; }
+    0% {
+        background-position: 0 0;
+    }
+
+    100% {
+        background-position: 50px 50px;
+    }
 }
 
 @keyframes scanLine {
-    0% { transform: translateX(-100%); opacity: 0; }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { transform: translateX(100%); opacity: 0; }
+    0% {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    90% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateX(100%);
+        opacity: 0;
+    }
 }
 
 @keyframes floatParticle {
-    0%, 100% { transform: translate(0, 0) rotate(0deg); }
-    33% { transform: translate(10px, -20px) rotate(120deg); }
-    66% { transform: translate(-10px, -10px) rotate(240deg); }
+
+    0%,
+    100% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+
+    33% {
+        transform: translate(10px, -20px) rotate(120deg);
+    }
+
+    66% {
+        transform: translate(-10px, -10px) rotate(240deg);
+    }
 }
 
 @keyframes pulseGlow {
-    0%, 100% { box-shadow: 0 0 20px currentColor; }
-    50% { box-shadow: 0 0 40px currentColor; }
+
+    0%,
+    100% {
+        box-shadow: 0 0 20px currentColor;
+    }
+
+    50% {
+        box-shadow: 0 0 40px currentColor;
+    }
 }
 
+/* Optimized float animation for loading screen */
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translate3d(0, 0, 0);
+    }
+
+    50% {
+        transform: translate3d(0, -15px, 0);
+    }
+}
+
+/* Slower, smoother animation for mobile */
+@media (max-width: 768px) {
+    @keyframes float {
+
+        0%,
+        100% {
+            transform: translate3d(0, 0, 0);
+        }
+
+        50% {
+            transform: translate3d(0, -8px, 0);
+        }
+    }
+}
+
+.animate-float {
+    animation: float 3s ease-in-out infinite;
+    will-change: transform;
+}
+
+/* Pulse animation optimized for mobile */
+@keyframes animate-pulse-slow {
+
+    0%,
+    100% {
+        opacity: 0.3;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+}
+
+.animate-pulse-slow {
+    animation: animate-pulse-slow 4s ease-in-out infinite;
+}

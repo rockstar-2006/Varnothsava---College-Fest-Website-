@@ -19,7 +19,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-    title: "Varnothsava 2026 | National Level Techno-Cultural Fest",
+    title: "Varnothsava 2026 | State Level Techno-Cultural Fest",
     description: "Experience the ultimate fusion of technology and culture at Varnothsava 2026. Join the celebration of innovation and art.",
 };
 
