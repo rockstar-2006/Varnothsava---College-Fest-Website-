@@ -63,6 +63,8 @@ const ViewportLazy = ({ children }: { children: React.ReactNode }) => {
     const heightRef = useRef<number | null>(null);
 
     useEffect(() => {
+        const isMobile = window.innerWidth < 768;
+
         const observer = new IntersectionObserver(([entry]) => {
             if (entry.isIntersecting) {
                 setIsVisible(true);
@@ -72,7 +74,7 @@ const ViewportLazy = ({ children }: { children: React.ReactNode }) => {
                 }
                 setIsVisible(false);
             }
-        }, { rootMargin: "600px" });
+        }, { rootMargin: isMobile ? "200px" : "600px" });
 
         if (containerRef.current) observer.observe(containerRef.current);
         return () => observer.disconnect();
@@ -194,9 +196,9 @@ const StaggerItem = ({ children }: { children: React.ReactNode }) => {
             variants={{
                 hidden: {
                     opacity: 0,
-                    y: isMobile ? 30 : 100,
-                    rotateX: isMobile ? 0 : 15, // Reduced rotation
-                    filter: isMobile ? "blur(0px)" : "blur(3px)" // Reduced blur
+                    y: isMobile ? 15 : 100,
+                    rotateX: isMobile ? 0 : 15,
+                    filter: "blur(0px)"
                 },
                 show: {
                     opacity: 1,
@@ -204,7 +206,7 @@ const StaggerItem = ({ children }: { children: React.ReactNode }) => {
                     rotateX: 0,
                     filter: "blur(0px)",
                     transition: {
-                        duration: isMobile ? 0.6 : 1.0, // Faster on mobile
+                        duration: isMobile ? 0.4 : 1.0,
                         ease: [0.16, 1, 0.3, 1]
                     }
                 }
@@ -226,10 +228,11 @@ const PaperTexture = () => {
 
     return (
         <>
-            <div className="pointer-events-none fixed inset-0 z-[100] opacity-[0.35] md:opacity-[0.45] mix-blend-multiply transition-opacity duration-700"
+            <div className="pointer-events-none fixed inset-0 z-[100] opacity-[0.2] md:opacity-[0.45] transition-opacity duration-700"
                 style={{
-                    backgroundImage: isMobile ? "none" : `url('https://www.transparenttextures.com/patterns/handmade-paper.png')`,
-                    backgroundColor: isMobile ? "#f4f1ea" : "transparent"
+                    backgroundImage: `url('https://www.transparenttextures.com/patterns/handmade-paper.png')`,
+                    mixBlendMode: "multiply",
+                    backgroundSize: isMobile ? "200px" : "auto"
                 }}
             />
 
@@ -265,7 +268,7 @@ const GrainOverlay = () => {
 
     // Simplified static grain on mobile, animated on desktop
     return (
-        <div className="pointer-events-none fixed inset-0 z-[101] mix-blend-overlay opacity-20">
+        <div className="pointer-events-none fixed inset-0 z-[101] opacity-[0.15] md:opacity-20" style={{ mixBlendMode: "overlay" }}>
             {isMobile ? (
                 // Static grain for mobile
                 <div
@@ -588,11 +591,10 @@ const Hero = () => {
         setIsMobile(window.innerWidth < 768);
     }, []);
 
-    // Weighted parallax for buttery smoothness
-    const y1Raw = useTransform(scrollY, [0, 500], [0, isMobile ? 50 : 100]);
+    // Weighted parallax for buttery smoothness - DISABLED for mobile to prevent main-thread lag
+    const y1Raw = useTransform(scrollY, [0, 500], [0, 100]);
     const y1 = useSpring(y1Raw, { stiffness: 100, damping: 30, mass: 0.5 });
-
-    const scaleRaw = useTransform(scrollY, [0, 1000], [1, isMobile ? 1.05 : 1.15]);
+    const scaleRaw = useTransform(scrollY, [0, 1000], [1, 1.15]);
     const scale = useSpring(scaleRaw, { stiffness: 100, damping: 30, mass: 0.5 });
 
     const opacity = useTransform(scrollY, [0, 300], [1, 0]);
@@ -600,7 +602,7 @@ const Hero = () => {
     return (
         <section className="relative h-screen w-full overflow-hidden bg-transparent text-[#3c2a21]">
             <motion.div
-                style={{ y: y1, scale, opacity, willChange: "transform, opacity" }}
+                style={!isMobile ? { y: y1, scale, opacity, willChange: "transform, opacity" } : { opacity, willChange: "opacity" }}
                 className="absolute inset-0 z-0"
             >
                 <Image
@@ -619,8 +621,8 @@ const Hero = () => {
                 <div className="absolute inset-0 bg-[#3c2a21]/20 mix-blend-color pointer-events-none" />
 
                 {/* Vintage Vignette Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#e3ccb0]" />
-                <div className="absolute inset-0 shadow-[inset_0_0_200px_rgba(0,0,0,0.6)]" />
+                <div className={cn("absolute inset-0 bg-gradient-to-b from-transparent via-transparent", isMobile ? "to-[#e3ccb0]/80" : "to-[#e3ccb0]")} />
+                <div className="absolute inset-0 shadow-[inset_0_0_200px_rgba(0,0,0,0.6)] opacity-50 md:opacity-100" />
 
                 {/* Dynamic Light Leak Effect - Desktop only */}
                 {!isMobile && (
@@ -809,14 +811,14 @@ const AboutSection = () => {
                 >
                     <Image src={IMAGES[1]} alt="About Image" fill className="object-cover contrast-[1.1] brightness-[1.1] border-2 border-[#3c2a21]" />
 
-                    {/* Floating Badge - Optimized for Mobile */}
-                    <motion.div
-                        className="absolute -top-6 -right-6 bg-[#cd5c09] text-white w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center font-bold text-center text-xs uppercase border-4 border-white shadow-lg z-20"
-                        animate={isMobile ? {} : { rotate: 360 }}
-                        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                    >
-                        <div className="relative w-full h-full flex items-center justify-center">
-                            {!isMobile && (
+                    {/* Floating Badge - DISABLED on mobile for performance */}
+                    {!isMobile && (
+                        <motion.div
+                            className="absolute -top-6 -right-6 bg-[#cd5c09] text-white w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center font-bold text-center text-xs uppercase border-4 border-white shadow-lg z-20"
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                        >
+                            <div className="relative w-full h-full flex items-center justify-center">
                                 <svg viewBox="0 0 100 100" className="w-full h-full absolute inset-0 text-white fill-current">
                                     <path id="curve" d="M 50, 50 m -37, 0 a 37,37 0 1,1 74,0 a 37,37 0 1,1 -74,0" fill="transparent" />
                                     <text width="500">
@@ -825,10 +827,10 @@ const AboutSection = () => {
                                         </textPath>
                                     </text>
                                 </svg>
-                            )}
-                            <Skull size={isMobile ? 32 : 24} />
-                        </div>
-                    </motion.div>
+                                <Skull size={24} />
+                            </div>
+                        </motion.div>
+                    )}
                 </motion.div>
             </div>
         </section>
@@ -936,27 +938,31 @@ const VintageCard = ({ src, index, title }: { src: string, index: number, title?
         setIsMobile(window.innerWidth < 768);
     }, []);
 
-    // Use simplified scroll progress for card animations
+    // Use simplified scroll progress for card animations - DISABLED for mobile to save CPU
     const { scrollYProgress } = useScroll({
         target: ref,
         offset: ["start end", "end start"]
     });
 
-    // Weighted spring for smooth damping on cards
-    const yRaw = useTransform(scrollYProgress, [0, 1], isMobile ? [15, -15] : [40, -40]);
+    // Weighted spring for smooth damping on cards - only for desktop
+    const yRaw = useTransform(scrollYProgress, [0, 1], [40, -40]);
     const y = useSpring(yRaw, { stiffness: 60, damping: 25, mass: 0.5 });
-
-    const opacity = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
+    const opacity = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0.5, 1, 1, 0.5]);
 
     return (
         <motion.div
             ref={ref}
-            style={{
+            style={!isMobile ? {
                 opacity,
                 y,
                 transform: "translateZ(0)",
                 willChange: "transform, opacity"
+            } : {
+                willChange: "transform, opacity"
             }}
+            initial={isMobile ? { opacity: 0, y: 15 } : undefined}
+            whileInView={isMobile ? { opacity: 1, y: 0 } : undefined}
+            viewport={{ once: true, margin: "-5%" }}
             className="relative w-full max-w-4xl mx-auto z-10"
         >
             <motion.div
@@ -967,10 +973,10 @@ const VintageCard = ({ src, index, title }: { src: string, index: number, title?
                     index % 2 === 0 ? "rotate-1" : "-rotate-1"
                 )}
             >
-                {/* Tape Effect - No backdrop-blur on mobile */}
+                {/* Tape Effect - No backdrop-blur or complex shadow on mobile */}
                 <div className={cn(
-                    "absolute -top-6 left-1/2 -translate-x-1/2 w-48 h-12 bg-[#cd5c09]/80 rotate-2 shadow-lg z-20 flex items-center justify-center opacity-90 border-2 border-[#3c2a21]/20",
-                    isMobile ? "" : "backdrop-blur-sm"
+                    "absolute -top-6 left-1/2 -translate-x-1/2 w-48 h-12 bg-[#cd5c09]/90 rotate-2 z-20 flex items-center justify-center border-2 border-[#3c2a21]/20",
+                    isMobile ? "" : "backdrop-blur-sm shadow-lg opacity-90"
                 )}>
                     <span className="font-mono font-bold text-[#e3ccb0] tracking-[0.2em] text-xs uppercase">Restricted Access</span>
                 </div>
@@ -979,14 +985,15 @@ const VintageCard = ({ src, index, title }: { src: string, index: number, title?
                 <div className="relative aspect-video w-full overflow-hidden border-[8px] border-[#3c2a21] bg-[#3c2a21] transition-transform shadow-2xl">
                     <motion.div
                         className="relative w-full h-full overflow-hidden group"
-                        initial={{ clipPath: "polygon(0 0, 0 0, 0 100%, 0% 100%)" }}
-                        whileInView={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)" }}
-                        viewport={{ once: true, margin: "-10%" }}
+                        initial={isMobile ? { opacity: 0 } : { clipPath: "polygon(0 0, 0 0, 0 100%, 0% 100%)" }}
+                        whileInView={isMobile ? { opacity: 1 } : { clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)" }}
+                        viewport={{ once: true, margin: "-5%" }}
                         transition={{
-                            duration: isMobile ? 0.6 : 1.2, // Faster on mobile
+                            duration: isMobile ? 0.3 : 1.2,
                             ease: "easeOut"
                         }}
                     >
+                        <div className="absolute inset-0 bg-[#3c2a21] z-[-1]" /> {/* Background filler */}
                         <Image
                             src={src}
                             alt={title || "Auto Expo Memory"}
@@ -1089,11 +1096,14 @@ const RoadGallery = () => {
             {!isMobile && (
                 <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
                     <motion.div
-                        style={{
+                        style={!isMobile ? {
                             y: bgY,
                             opacity: bgOpacity,
                             scale: 1.2,
                             willChange: "transform, opacity"
+                        } : {
+                            opacity: 0.1,
+                            scale: 1.1
                         }}
                         className="absolute inset-0 flex items-center justify-center mix-blend-multiply"
                     >
@@ -1113,10 +1123,13 @@ const RoadGallery = () => {
             {!isMobile && (
                 <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
                     <motion.div
-                        style={{
+                        style={!isMobile ? {
                             y: carY,
                             opacity: carOpacity,
                             willChange: "transform, opacity"
+                        } : {
+                            opacity: 0.1,
+                            y: 50
                         }}
                         className="absolute top-[10%] -left-[10%] w-[120%] h-[120%] grayscale brightness-50 mix-blend-multiply opacity-30"
                     >
@@ -1134,7 +1147,7 @@ const RoadGallery = () => {
             {/* The Road Line - Starts AFTER the title */}
             <div className="absolute left-1/2 top-[22rem] bottom-0 w-4 -translate-x-1/2 bg-[#3c2a21] border-x border-[#cd5c09]/30 z-0">
                 <motion.div
-                    style={{ height: lineHeight, willChange: "height" }}
+                    style={!isMobile ? { height: lineHeight, willChange: "height" } : { height: "100%" }}
                     className="w-full bg-gradient-to-b from-[#3c2a21] via-[#cd5c09] to-[#3c2a21] shadow-[0_0_20px_rgba(205,92,9,0.3)]"
                 />
             </div>
@@ -1257,6 +1270,11 @@ const FingerprintAccess = ({ onUnlock }: { onUnlock: () => void }) => {
 const HorizontalArchive = () => {
     const targetRef = useRef<HTMLDivElement>(null);
     const { scrollYProgress } = useScroll({ target: targetRef });
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        setIsMobile(window.innerWidth < 768);
+    }, []);
 
     // Ultra-Smooth Spring Physics - Optimized for performance
     const xRaw = useTransform(scrollYProgress, [0, 1], [0, -75]);
@@ -1408,8 +1426,8 @@ const HorizontalArchive = () => {
                                                         sizes="450px"
                                                         quality={80}
                                                     />
-                                                    {/* Film Grain Mesh */}
-                                                    <div className="absolute inset-0 opacity-20 pointer-events-none mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/dust.png')]" />
+                                                    {/* Film Grain Mesh - Removed on mobile */}
+                                                    {!isMobile && <div className="absolute inset-0 opacity-20 pointer-events-none mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/dust.png')]" />}
                                                 </div>
 
                                                 {/* Backside Label Details */}
@@ -1570,6 +1588,9 @@ const ScheduleSection = () => {
 };
 
 const RegistrationCTA = () => {
+    const [isMobile, setIsMobile] = useState(false);
+    useEffect(() => { setIsMobile(window.innerWidth < 768); }, []);
+
     return (
         <section className="relative py-16 bg-transparent text-[#3c2a21] overflow-hidden flex items-center justify-center min-h-[60vh]">
 
@@ -1580,8 +1601,8 @@ const RegistrationCTA = () => {
                         key={i}
                         className="absolute border border-[#cd5c09]/20 rounded-full"
                         style={{ width: `${i * 30}vw`, height: `${i * 30}vw` }}
-                        animate={{ rotate: i % 2 === 0 ? 360 : -360 }}
-                        transition={{ duration: 30 + i * 10, repeat: Infinity, ease: "linear" }}
+                        animate={!isMobile ? { rotate: i % 2 === 0 ? 360 : -360 } : {}}
+                        transition={!isMobile ? { duration: 30 + i * 10, repeat: Infinity, ease: "linear" } : {}}
                     />
                 ))}
             </div>
@@ -1699,13 +1720,12 @@ const TechnicalOverlay = ({ isRevealed }: { isRevealed: boolean }) => {
             <div className="absolute bottom-8 left-8 w-12 h-12 border-b-2 border-l-2 border-[#cd5c09]/20" />
             <div className="absolute bottom-8 right-8 w-12 h-12 border-b-2 border-r-2 border-[#cd5c09]/20" />
 
-            {/* Breathing Vignette - Simplified for Mobile */}
-            <motion.div
-                animate={isMobile ? { opacity: 0.3 } : { opacity: [0.3, 0.5, 0.3] }}
-                transition={isMobile ? {} : { duration: 8, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute inset-0 shadow-[inset_0_0_150px_rgba(0,0,0,0.4)]"
-                style={{ willChange: "opacity" }}
-            />
+            {/* Breathing Vignette - DISABLED for Mobile */}
+            {!isMobile && (
+                <div
+                    className="absolute inset-0 shadow-[inset_0_0_150px_rgba(0,0,0,0.4)] opacity-30"
+                />
+            )}
 
             {/* Dynamic Scan Info */}
             <div className="absolute top-1/2 -translate-y-1/2 right-4 flex flex-col gap-8 opacity-20">

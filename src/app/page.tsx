@@ -16,7 +16,7 @@ const quickLinks = [
 ];
 
 import {
-    ArrowRight, MapPin, Mail, Phone,
+    ArrowRight, MapPin, Mail, Phone, Globe,
     Facebook, Instagram, Youtube, Twitter,
     ChevronDown, Plus, Utensils, Gamepad2, Lightbulb, Zap, Activity,
     Sparkles, Star, Users, Trophy, Mic, Music
@@ -1183,7 +1183,7 @@ const timelineData = [
         day: "Day 02",
         date: "March 12",
         title: "Tech Zenith",
-        image: "/img/3.jpg",
+        image: "/img/technical-arena.jpg",
         events: [
             { time: "09:30 AM", name: "Robo Soccer League", type: "Tech" },
             { time: "11:00 AM", name: "Pitch-a-thon", type: "Tech" },
@@ -1218,22 +1218,32 @@ const timelineData = [
 ]
 
 const HorizontalTimeline = () => {
+    const targetRef = useRef<HTMLDivElement>(null)
     const [isMobile, setIsMobile] = useState(false)
 
     useEffect(() => {
         setIsMobile(window.innerWidth < 768)
+        const handleResize = () => setIsMobile(window.innerWidth < 768)
+        window.addEventListener('resize', handleResize)
+        return () => window.removeEventListener('resize', handleResize)
     }, [])
 
+    const { scrollYProgress } = useScroll({
+        target: targetRef
+    })
+
+    const xRaw = useTransform(scrollYProgress, [0, 1], ["0%", isMobile ? "-82%" : "-70%"])
+    const x = useSpring(xRaw, { stiffness: 100, damping: 30, mass: 0.5 })
+
     return (
-        <section className="relative py-20 bg-[#020202] gpu-accel">
-            <div className="h-screen flex items-center overflow-x-auto overflow-y-hidden"
-                style={{
-                    scrollbarWidth: 'thin',
-                    scrollbarColor: '#10b981 #020202'
-                }}
-            >
+        <section ref={targetRef} className="relative h-[400vh] bg-[#020202] gpu-accel">
+            <div className="sticky top-0 h-screen flex items-center overflow-hidden">
                 <div className="absolute top-4 left-4 md:top-8 md:left-12 z-40 pointer-events-none">
-                    <div className="bg-black/95 backdrop-blur-2xl px-5 py-4 md:px-6 md:py-5 rounded-xl md:rounded-2xl border border-emerald-500/30 shadow-[0_0_40px_rgba(0,0,0,0.8)] flex flex-col gap-1 md:gap-4">
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        className="bg-black/95 backdrop-blur-2xl px-5 py-4 md:px-6 md:py-5 rounded-xl md:rounded-2xl border border-emerald-500/30 shadow-[0_0_40px_rgba(0,0,0,0.8)] flex flex-col gap-1 md:gap-4"
+                    >
                         <div className="flex flex-col gap-0 md:gap-1">
                             <span className="text-emerald-400 text-[9px] md:text-[10px] font-bold tracking-[0.3em] uppercase opacity-80">
                                 4 Days. Infinite Memories.
@@ -1243,7 +1253,7 @@ const HorizontalTimeline = () => {
                             </h2>
                         </div>
 
-                        <div className="h-[px] w-full bg-emerald-500/20 hidden md:block" />
+                        <div className="h-[1px] w-full bg-emerald-500/20 hidden md:block" />
 
                         <div className="md:flex items-center gap-4 hidden">
                             <div className="flex items-center gap-2">
@@ -1252,20 +1262,20 @@ const HorizontalTimeline = () => {
                             </div>
                             <div className="flex flex-col">
                                 <span className={`${orbitron.className} text-[11px] text-white font-bold uppercase tracking-[0.1em]`}>
-                                    Scroll Horizontally
+                                    Scroll Down
                                 </span>
                                 <span className="text-[9px] text-emerald-500/70 font-bold uppercase tracking-widest">
-                                    To Explore The Saga
+                                    To Slide The Saga
                                 </span>
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
 
                 {/* Animated Gradient Background for Liveliness */}
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-900/10 via-black to-purple-900/10 animate-pulse-slow" />
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-900/10 via-black to-purple-900/10 animate-pulse-slow opacity-30" />
 
-                <div className="flex gap-6 md:gap-16 px-4 md:px-[10vw] items-center pt-44 md:pt-0">
+                <motion.div style={{ x }} className="flex gap-6 md:gap-16 px-6 md:px-[10vw] items-center pt-20 md:pt-0">
                     {timelineData.map((day, i) => (
                         <div key={i} className="relative w-[88vw] md:w-[600px] h-[62vh] md:h-[75vh] flex-shrink-0 group perspective-1000">
                             {/* 3D Tilt Wrapper */}
@@ -1347,7 +1357,7 @@ const HorizontalTimeline = () => {
                             </motion.div>
                         </div>
                     ))}
-                </div>
+                </motion.div>
             </div>
         </section>
     )
@@ -1523,6 +1533,90 @@ const MarvelTrailerSection = () => {
             {/* Cinematic Borders */}
             <div className="absolute top-0 left-0 w-full h-[10vh] bg-black z-20" />
             <div className="absolute bottom-0 left-0 w-full h-[10vh] bg-black z-20" />
+        </section>
+    )
+}
+
+const ContactSection = () => {
+    const contacts = [
+        {
+            role: "Overall Coordinator",
+            name: "Dr. Deepika B. V.",
+            phone: "+91 94810 71562",
+            icon: Users,
+            color: "text-emerald-400"
+        },
+        {
+            role: "Cultural Coordinator",
+            name: "Mrs. Savitha Shenoy",
+            phone: "+91 98803 43498",
+            icon: Music,
+            color: "text-purple-400"
+        },
+        {
+            role: "Technical Coordinator",
+            name: "Dr. Renita Sharon Monis",
+            phone: "+91 99005 81417",
+            icon: Zap,
+            color: "text-blue-400"
+        }
+    ]
+
+    return (
+        <section className="py-24 px-4 md:px-6 container mx-auto relative">
+            {/* Background elements */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-emerald-900/10 via-transparent to-transparent opacity-50 blur-3xl pointer-events-none" />
+
+            <div className="max-w-6xl mx-auto relative z-10">
+                <StaggerTitle title="Contact Us" subtitle="Festival Coordinators" />
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
+                    {contacts.map((contact, i) => (
+                        <motion.div
+                            key={i}
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: i * 0.1, duration: 0.6, ease: "easeOut" }}
+                            className="relative group"
+                        >
+                            {/* Card Background with hover lift */}
+                            <div className="relative bg-white/5 border border-white/10 rounded-[2rem] p-8 md:p-10 h-full flex flex-col items-center text-center transition-all duration-500 hover:border-emerald-500/40 hover:-translate-y-2 hover:bg-white/[0.08] group overflow-hidden">
+
+                                {/* Glow Effect on hover */}
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl group-hover:bg-emerald-500/10 transition-colors" />
+
+                                {/* Icon container */}
+                                <div className={`w-20 h-20 rounded-2xl bg-white/5 flex items-center justify-center mb-8 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 ${contact.color}`}>
+                                    <contact.icon className="w-10 h-10" />
+                                </div>
+
+                                {/* Role & Name */}
+                                <div className="space-y-3 mb-10">
+                                    <h3 className="text-emerald-500/80 text-[10px] font-black uppercase tracking-[0.3em] font-[family-name:var(--font-orbitron)]">
+                                        {contact.role}
+                                    </h3>
+                                    <p className="text-2xl md:text-3xl font-black text-white font-[family-name:var(--font-poppins)] leading-tight tracking-tight">
+                                        {contact.name}
+                                    </p>
+                                </div>
+
+                                {/* Call Button */}
+                                <a
+                                    href={`tel:${contact.phone.replace(/\s+/g, '')}`}
+                                    className="mt-auto group/btn relative inline-flex items-center gap-4 px-8 py-4 bg-white/5 hover:bg-emerald-500 text-white hover:text-black rounded-2xl transition-all duration-300 font-bold border border-white/10 overflow-hidden"
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-emerald-400 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
+                                    <Phone className="w-5 h-5 relative z-10 group-hover/btn:rotate-12 transition-transform" />
+                                    <span className="relative z-10 tracking-wider">
+                                        {contact.phone}
+                                    </span>
+                                </a>
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+            </div>
         </section>
     )
 }
@@ -1770,6 +1864,7 @@ export default function LandingPage() {
                 <ViewportLazy><OriginalMusic /></ViewportLazy>
             </div>
             <ViewportLazy><MarvelTrailerSection /></ViewportLazy>
+            <ViewportLazy><ContactSection /></ViewportLazy>
             <ViewportLazy><FAQ /></ViewportLazy>
             <Footer />
         </main>
