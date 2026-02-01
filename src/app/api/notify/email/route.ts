@@ -10,9 +10,9 @@ export async function POST(req: NextRequest) {
         }
 
         const notifRef = adminDb.collection('varnothsava-2026').doc("notifications");
-        await notifRef.update({
+        await notifRef.set({
             emails: fieldValue.arrayUnion(email)
-        });
+        }, { merge: true });
 
         return NextResponse.json({
             message: 'Notification email added successfully',
