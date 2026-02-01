@@ -18,15 +18,15 @@ This project showcases the spirit of innovation, culture, and youthful creativit
 
 ## ✨ Key Highlights
 
-- 🎭 Cultural, Technical & Gaming events in one platform
-- ⚡ High-performance animations & smooth scrolling
-- 🔍 Advanced event filtering & search
-- 🧑‍💻 Firebase-powered authentication
-- 📝 Event registration with team management
-- 📱 Fully responsive (mobile-first)
-- 🎨 Premium UI with dynamic backgrounds
-- 🏆 Leaderboards & profiles
-- 🌙 Dark, cinematic design language
+-  Cultural, Technical & Gaming events in one platform
+-  High-performance animations & smooth scrolling
+-  Advanced event filtering & search
+-  Firebase-powered authentication
+-  Event registration with team management
+-  Fully responsive (mobile-first)
+-  Premium UI with dynamic backgrounds
+-  Leaderboards & profiles
+-  Dark, cinematic design language
 
 ---
 
