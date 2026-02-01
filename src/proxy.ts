@@ -9,9 +9,11 @@ export default function proxy(request: NextRequest) {
     const origin = request.headers.get('origin');
     const pathname = request.nextUrl.pathname;
 
+    const envOrigins = JSON.parse(process.env.NEXT_PUBLIC_APP_URL || '[]');
+
     // Define allowed origins based on environment
     const allowedOrigins = [
-        process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+        ...envOrigins,
         'http://localhost:3000',
         'http://127.0.0.1:3000',
         'http://192.168.1.100:3000',
