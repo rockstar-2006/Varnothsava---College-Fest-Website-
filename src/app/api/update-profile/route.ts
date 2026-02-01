@@ -13,6 +13,10 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: 'Firebase Admin not initialized' }, { status: 500 });
         }
         const decodedToken = await adminAuth.verifyIdToken(token);
+        if(!decodedToken) {
+            return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
+        }
+
         const uid = decodedToken.uid;
 
         const { name, usn, phone, collegeName } = await req.json();
