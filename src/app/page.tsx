@@ -968,8 +968,8 @@ const HeroSection = ({ shouldRender3D }: { shouldRender3D: boolean }) => {
                         transition={{ delay: 0.3, duration: 0.8 }}
                         className="text-lg md:text-xl text-gray-400 font-medium max-w-2xl mt-6 leading-relaxed"
                     >
-                        The ultimate state-level techno-cultural phenomenon. <br className="hidden md:block" />
-                        Where <span className="text-emerald-400">Innovation</span> meets <span className="text-purple-400">Celebrate</span>.
+                        The ultimate state-level techno-cultural phenomenon — <br className="hidden md:block" />
+                        Where <span className="text-emerald-400">Innovation</span> meets <span className="text-purple-400">Celebration</span>.
                     </motion.p>
 
                     <motion.div
@@ -1058,7 +1058,7 @@ const WelcomeSection = () => {
                                 Unity in Diversity
                             </h3>
                             <p className="text-emerald-300 transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 delay-100">
-                                Celebrating talent across the nation.
+                                Celebrating talent across the State.
                             </p>
                         </div>
                     </motion.div>
@@ -1067,12 +1067,29 @@ const WelcomeSection = () => {
                 <RevealOnScroll className="space-y-8">
                     <StaggerTitle title="The Phenomenon" subtitle="Welcome to Varnothsava" />
                     <p className="text-lg leading-relaxed text-gray-400 font-light">
-                        Varnothsava represents the pinnacle of student creativity. It's not merely an event; it's a <span className="text-white font-bold">living, breathing ecosystem</span> of talent, tech, and art.
+                       <span className="text-emerald-400 font-bold">varnothsava</span> is the annual state-level techno-cultural fest of{" "}
+                        <span className="text-white font-semibold">
+                            Shri Madhwa Vadiraja Institute of Technology &amp; Management, Udupi
+                        </span>
+                        . It is a vibrant celebration where innovation, culture, and youthful creativity come together on one grand platform.
+                        Blending cutting-edge technical events with mesmerizing cultural performances, thrilling gaming arenas, and engaging competitions,
+                        Varnothsava offers something for everyone.
                     </p>
+
+                    <p className="text-lg leading-relaxed text-gray-400 font-light mt-4">
+                        The fest encourages students to showcase talent, challenge ideas, and collaborate beyond boundaries.
+                        With high-energy events, artistic expression, and a spirit of healthy competition, Varnothsava stands as a  symbol of {" "}
+                        <span className="text-emerald-400 font-bold">
+                           Creativity, Passion, and Celebration
+                        </span>
+                        —where technology meets tradition and ideas turn into unforgettable experiences.
+                    </p>
+
+
 
                     <div className="grid grid-cols-2 gap-6">
                         {[
-                            { label: "Colleges", value: "100+", icon: Users },
+                            { label: "Colleges", value: "50+", icon: Users },
                             { label: "Events", value: "50+", icon: Trophy },
                             { label: "Artists", value: "25+", icon: Sparkles },
                             { label: "Sponsors", value: "30+", icon: Star },
@@ -1122,15 +1139,15 @@ const AboutFestSection = () => {
 
                     <div className="flex gap-8 pt-8">
                         <div className="text-center">
-                            <div className="text-3xl font-[900] text-white">5000+</div>
+                            <div className="text-3xl font-[900] text-white">4000+</div>
                             <div className="text-xs uppercase tracking-widest text-emerald-500 font-bold">Footfall</div>
                         </div>
                         <div className="text-center">
-                            <div className="text-3xl font-[900] text-white">40+</div>
+                            <div className="text-3xl font-[900] text-white">50+</div>
                             <div className="text-xs uppercase tracking-widest text-emerald-500 font-bold">Insts</div>
                         </div>
                         <div className="text-center">
-                            <div className="text-3xl font-[900] text-white">3 Days</div>
+                            <div className="text-3xl font-[900] text-white">4 Days</div>
                             <div className="text-xs uppercase tracking-widest text-emerald-500 font-bold">Non-Stop</div>
                         </div>
                     </div>
@@ -1155,7 +1172,7 @@ const AboutFestSection = () => {
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
                         <div className="absolute bottom-8 left-8 right-8">
                             <div className="text-2xl font-bold text-white mb-2">Unity in Diversity</div>
-                            <div className="text-sm text-gray-300">Celebrating talent across the nation.</div>
+                            <div className="text-sm text-gray-300">Celebrating talent across the State.</div>
                         </div>
                     </motion.div>
                 </RevealOnScroll>
@@ -1703,7 +1720,7 @@ const Footer = () => (
                         {
                             icon: Instagram,
                             label: "Instagram",
-                            href: "https://www.instagram.com/smvitm.sode?igsh=OGRscmdvNWE5cmw1"
+                            href: "https://www.instagram.com/varnothsava.2026?igsh=MXNuajEyNmgyemxiZQ=="
                         },
                         {
                             icon: Youtube,
