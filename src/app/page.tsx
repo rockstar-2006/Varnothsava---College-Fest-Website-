@@ -1201,37 +1201,20 @@ const timelineData = [
 ]
 
 const HorizontalTimeline = () => {
-    const sectionRef = useRef<HTMLDivElement>(null)
-    const { scrollYProgress } = useScroll({ target: sectionRef })
-
-    // Dynamic transform to fix gap based on screen width
-    const [endValue, setEndValue] = useState("-55%") // Default safe value
     const [isMobile, setIsMobile] = useState(false)
 
     useEffect(() => {
-        const updateTarget = () => {
-            const mobile = window.innerWidth < 768
-            setIsMobile(mobile)
-            // Mobile needs ~75-85%, Desktop/Wide needs much less ~35-45%
-            setEndValue(mobile ? "-85%" : "-40%")
-        }
-        updateTarget()
-        window.addEventListener('resize', updateTarget)
-        return () => window.removeEventListener('resize', updateTarget)
+        setIsMobile(window.innerWidth < 768)
     }, [])
 
-    const xRaw = useTransform(scrollYProgress, [0, 1], [1, parseFloat(endValue)])
-    const xSmooth = useSpring(xRaw, {
-        stiffness: 40,
-        damping: 20,
-        mass: 0.5,
-        restDelta: 0.001
-    })
-    const x = useTransform(xSmooth, (v) => `${v}%`)
-
     return (
-        <section ref={sectionRef} className="relative h-[350vh] bg-[#020202] gpu-accel smooth-scroll-fix">
-            <div className="sticky top-0 h-screen flex items-center overflow-hidden">
+        <section className="relative py-20 bg-[#020202] gpu-accel">
+            <div className="h-screen flex items-center overflow-x-auto overflow-y-hidden"
+                style={{
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: '#10b981 #020202'
+                }}
+            >
                 <div className="absolute top-4 left-4 md:top-8 md:left-12 z-40 pointer-events-none">
                     <div className="bg-black/95 backdrop-blur-2xl px-5 py-4 md:px-6 md:py-5 rounded-xl md:rounded-2xl border border-emerald-500/30 shadow-[0_0_40px_rgba(0,0,0,0.8)] flex flex-col gap-1 md:gap-4">
                         <div className="flex flex-col gap-0 md:gap-1">
@@ -1246,13 +1229,13 @@ const HorizontalTimeline = () => {
                         <div className="h-[px] w-full bg-emerald-500/20 hidden md:block" />
 
                         <div className="md:flex items-center gap-4 hidden">
-                            <div className="flex flex-col items-center">
-                                <ChevronDown className="w-5 h-5 text-emerald-400 animate-bounce mb-[-4px]" />
-                                <ChevronDown className="w-5 h-5 text-emerald-400/50 animate-bounce" />
+                            <div className="flex items-center gap-2">
+                                <ArrowRight className="w-5 h-5 text-emerald-400 animate-pulse" />
+                                <ArrowRight className="w-5 h-5 text-emerald-400/50 animate-pulse" />
                             </div>
                             <div className="flex flex-col">
                                 <span className={`${orbitron.className} text-[11px] text-white font-bold uppercase tracking-[0.1em]`}>
-                                    Scroll Down
+                                    Scroll Horizontally
                                 </span>
                                 <span className="text-[9px] text-emerald-500/70 font-bold uppercase tracking-widest">
                                     To Explore The Saga
@@ -1265,7 +1248,7 @@ const HorizontalTimeline = () => {
                 {/* Animated Gradient Background for Liveliness */}
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-900/10 via-black to-purple-900/10 animate-pulse-slow" />
 
-                <motion.div style={{ x }} className="flex gap-6 md:gap-16 px-4 md:px-[10vw] items-center pt-44 md:pt-0">
+                <div className="flex gap-6 md:gap-16 px-4 md:px-[10vw] items-center pt-44 md:pt-0">
                     {timelineData.map((day, i) => (
                         <div key={i} className="relative w-[88vw] md:w-[600px] h-[62vh] md:h-[75vh] flex-shrink-0 group perspective-1000">
                             {/* 3D Tilt Wrapper */}
@@ -1347,14 +1330,6 @@ const HorizontalTimeline = () => {
                             </motion.div>
                         </div>
                     ))}
-                </motion.div>
-
-                {/* Progress Bar */}
-                <div className="absolute bottom-6 md:bottom-10 left-10 md:left-20 right-10 md:right-20 h-1 bg-white/10 rounded-full overflow-hidden">
-                    <motion.div
-                        style={{ width: useTransform(scrollYProgress, [0, 1], ["0%", "100%"]) }}
-                        className="h-full bg-emerald-500 shadow-[0_0_15px_#10b981]"
-                    />
                 </div>
             </div>
         </section>
@@ -1370,10 +1345,10 @@ const SpecialAttractions = () => (
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-                { title: "Food Fest", icon: Utensils, color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/20", img: "/img/1.jpg" },
-                { title: "Gaming Warp", icon: Gamepad2, color: "text-violet-400", bg: "bg-violet-500/10", border: "border-violet-500/20", img: "/img/3.jpg" },
-                { title: "Inno Bazar", icon: Lightbulb, color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20", img: "/img/5.jpg" },
-                { title: "Techno Night", icon: Zap, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", img: "/img/8.jpg" }
+                { title: "Food Fest", icon: Utensils, color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/20", img: "https://media.istockphoto.com/id/2174881887/photo/guests-enjoying-delicious-buffet-meals-during-a-lively-food-festival-celebration-event.webp?a=1&b=1&s=612x612&w=0&k=20&c=Sbcwx_6ofqOsvC6GSfHHkwhOYfi62aBPaZHna9qWILY=" },
+                { title: "Gaming Warp", icon: Gamepad2, color: "text-violet-400", bg: "bg-violet-500/10", border: "border-violet-500/20", img: "/gaming-warp.png" },
+                { title: "Inno Bazar", icon: Lightbulb, color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20", img: "/innobazar.png" },
+                { title: "Techno Night", icon: Zap, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", img: "/technical-arena.jpg" }
             ].map((item, i) => (
                 <motion.div
                     key={i}

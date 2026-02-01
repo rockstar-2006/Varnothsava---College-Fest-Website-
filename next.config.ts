@@ -45,6 +45,14 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'www.mekathlon.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'media.istockphoto.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
       }
     ],
   },
