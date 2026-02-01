@@ -178,13 +178,6 @@ Enable the following in Firebase Console:
 
 ---
 
-## 📜 License
-
-MIT License
-Free to use, modify, and distribute.
-
----
-
 ## ❤️ Credits
 
 This project was designed and developed with dedication by:
