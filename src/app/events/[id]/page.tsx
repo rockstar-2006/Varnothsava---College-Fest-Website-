@@ -141,7 +141,7 @@ const TechContentCard = ({ children, theme }: any) => {
 export default function EventDetailsPage() {
     const { id } = useParams()
     const router = useRouter()
-    const { addToCart, cart } = useApp()
+    const { userData, addToCart, cart } = useApp()
 
     const [mission, setMission] = useState<any | null>(null)
     const [isVideoPlaying, setIsVideoPlaying] = useState(false)
@@ -166,7 +166,7 @@ export default function EventDetailsPage() {
 
     const handleRegisterClick = (event: any) => {
         // Placeholder for now - redirect to login if not logged in, else open modal
-        if (!isAdded) {
+        if (!userData) {
             router.push('/login')
         } else {
             router.push('/notify')
