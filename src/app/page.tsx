@@ -1643,10 +1643,10 @@ const FAQ = () => {
 
     // ... existing FAQ data ...
     const faqs = [
-        { q: "What is Varnothsava?", a: "Varnothsava is the annual national-level techno-cultural fest of SMVITM." },
+        { q: "What is Varnothsava?", a: "Varnothsava is the annual State-level techno-cultural fest of SMVITM." },
         { q: "How do I register?", a: "You can register directly through this website by clicking the 'Register Now' button." },
-        { q: "Is there a specific dress code?", a: "Yes, distinct dress codes apply for specific events. Please refer to the event rulebook for details." },
-        { q: "Do you provide accommodation?", a: "Yes, accommodation is provided for outstation participants." },
+        { q: "Is there a specific dress code?", a: "No , but we recommend comfortable clothing." },
+        { q: "Do you provide accommodation?", a: "No, accommodation is not provided for participants." },
         { q: "Are participation certificates provided?", a: "All participants receive E-participation certificates. Winners receive Merit certificates." }
     ]
 
