@@ -504,7 +504,13 @@ export function EventGrid({ missions }: EventGridProps) {
                                 className="flex flex-nowrap md:flex-wrap justify-start md:justify-center mb-8 gap-4 overflow-x-auto custom-scrollbar-hide pb-2 flex-shrink-0"
                             >
                                 {['All', 'Hobby Club', 'General', 'Promotional'].map((sf) => (
-                                    <button key={sf} onClick={() => setSubFilter(sf as any)} className={`px-8 py-3 text-xs font-black uppercase tracking-[0.2em] transition-all relative flex-shrink-0 ${subFilter === sf ? 'text-black' : 'text-white hover:text-white'}`} style={{ clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 8px)', background: subFilter === sf ? '#fbbf24' : 'rgba(255,255,255,0.02)', backdropFilter: 'blur(10px)' }}>
+                                    <button key={sf} onClick={() => setSubFilter(sf as any)} className={`px-8 py-3 text-xs font-black uppercase tracking-[0.2em] transition-all relative flex-shrink-0 ${subFilter === sf ? 'text-black' : 'text-black hover:text-black'
+                                        }`} style={{
+                                            clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 8px)',
+                                            background: subFilter === sf ? '#fbbf24' : '#ffffff',
+                                            backdropFilter: 'blur(10px)'
+                                        }}
+                                    >
                                         {sf === 'Hobby Club' ? 'Club Events' : sf === 'General' ? 'General Events' : sf === 'Promotional' ? 'Media & Promo' : 'All Events'}
                                         {subFilter === sf && <motion.div layoutId="subGlow" className="absolute inset-0 shadow-[0_0_30px_rgba(245,158,11,0.8)] blur-xl opacity-60 -z-10" style={{ backgroundColor: '#fbbf24' }} />}
                                     </button>
@@ -572,39 +578,106 @@ export function EventGrid({ missions }: EventGridProps) {
                             </motion.div>
                         ) : (
                             <motion.div layout>
-                                {filter === 'Cultural' && searchQuery === '' ? (
+
+                                {(filter === 'Cultural' || filter === 'Technical' || filter === 'Gaming') && searchQuery === '' ? (
                                     <div className="min-h-screen">
-                                        {/* Hero Section - Scrolls over fixed background */}
-                                        <div className="min-h-[100vh] flex flex-col items-center justify-center text-center px-4">
+
+                                        {/* HERO SECTION */}
+                                        <div className="min-h-[50vh] flex flex-col items-center justify-center text-center px-4">
                                             <motion.div
                                                 initial={{ opacity: 0, scale: 0.9 }}
                                                 animate={{ opacity: 1, scale: 1 }}
                                                 transition={{ duration: 1 }}
-                                                className="space-y-6"
+                                                className="space-y-2"
                                             >
                                                 <div className="flex flex-col items-center gap-4">
-                                                    <span className="text-amber-500 font-black tracking-[1em] uppercase text-[10px] md:text-[12px] opacity-70">Experience // Culture</span>
-                                                    <h1 className="text-4xl md:text-7xl font-black text-white italic tracking-tighter uppercase drop-shadow-[0_0_30px_rgba(245,158,11,0.3)]">
-                                                        THE CULTURAL<br />
+
+                                                    {/* SUB TITLE */}
+                                                    <span
+                                                        className={`font-black tracking-[1em] uppercase text-[10px] md:text-[12px] opacity-70 ${filter === 'Cultural'
+                                                            ? 'text-amber-500'
+                                                            : filter === 'Gaming'
+                                                                ? 'text-violet-500'
+                                                                : 'text-emerald-500'
+                                                            }`}
+                                                    >
+                                                        Experience //
+                                                        {filter === 'Cultural'
+                                                            ? ' Culture'
+                                                            : filter === 'Gaming'
+                                                                ? ' Play'
+                                                                : ' Innovation'}
+                                                    </span>
+
+                                                    {/* MAIN TITLE */}
+                                                    <h1
+                                                        className={`text-4xl md:text-7xl font-black text-white italic tracking-tighter uppercase ${filter === 'Cultural'
+                                                            ? 'drop-shadow-[0_0_30px_rgba(245,158,11,0.3)]'
+                                                            : filter === 'Gaming'
+                                                                ? 'drop-shadow-[0_0_30px_rgba(139,92,246,0.4)]'
+                                                                : 'drop-shadow-[0_0_30px_rgba(16,185,129,0.4)]'
+                                                            }`}
+                                                    >
+                                                        THE {filter === 'Cultural'
+                                                            ? 'CULTURAL'
+                                                            : filter === 'Gaming'
+                                                                ? 'GAMING'
+                                                                : 'TECHNICAL'}
+                                                        <br />
                                                         STAGE
                                                     </h1>
-                                                    <div className="h-1 w-24 bg-gradient-to-r from-transparent via-amber-500 to-transparent" />
+
+                                                    {/* UNDERLINE */}
+                                                    <div
+                                                        className={`h-1 w-24 bg-gradient-to-r from-transparent ${filter === 'Cultural'
+                                                            ? 'via-amber-500'
+                                                            : filter === 'Gaming'
+                                                                ? 'via-violet-500'
+                                                                : 'via-emerald-500'
+                                                            } to-transparent`}
+                                                    />
                                                 </div>
 
+                                                {/* SCROLL HINT */}
                                                 <motion.div
                                                     animate={{ y: [0, 10, 0] }}
                                                     transition={{ duration: 2, repeat: Infinity }}
-                                                    className="pt-12 flex flex-col items-center gap-3"
+                                                    className="pt-2 flex flex-col items-center gap-2"
                                                 >
-                                                    <span className="text-amber-500/60 font-bold tracking-[0.4em] uppercase text-[10px]">Scroll to explore events</span>
-                                                    <ChevronDown className="w-6 h-6 text-amber-500/40" />
+                                                    <span
+                                                        className={`font-bold tracking-[0.4em] uppercase text-[10px] ${filter === 'Cultural'
+                                                            ? 'text-amber-500/60'
+                                                            : filter === 'Gaming'
+                                                                ? 'text-violet-500/60'
+                                                                : 'text-emerald-500/60'
+                                                            }`}
+                                                    >
+                                                        Scroll to explore events
+                                                    </span>
+
+                                                    <ChevronDown
+                                                        className={`w-6 h-6 ${filter === 'Cultural'
+                                                            ? 'text-amber-500/40'
+                                                            : filter === 'Gaming'
+                                                                ? 'text-violet-500/40'
+                                                                : 'text-emerald-500/40'
+                                                            }`}
+                                                    />
                                                 </motion.div>
                                             </motion.div>
                                         </div>
 
-                                        {/* Event Cards Grid - Scrolls smoothly over fixed background */}
+                                        {/* EVENT GRID */}
                                         <div className="min-h-screen px-4 md:px-12 pb-32">
-                                            <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-16 xl:gap-24">
+                                            <motion.div
+                                                layout
+                                                className={`grid grid-cols-1 md:grid-cols-2 ${filter === 'Cultural'
+                                                    ? 'lg:grid-cols-3 gap-10 md:gap-16 xl:gap-24'
+                                                    : filter === 'Gaming'
+                                                        ? 'lg:grid-cols-3 xl:grid-cols-4 gap-8 lg:gap-10'
+                                                        : 'lg:grid-cols-3 xl:grid-cols-4 gap-8 lg:gap-10'
+                                                    }`}
+                                            >
                                                 {filtered.map((event, idx) => (
                                                     <MissionCard
                                                         key={event.id}
@@ -615,19 +688,37 @@ export function EventGrid({ missions }: EventGridProps) {
                                                         isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)}
                                                         isLoggedIn={isLoggedIn}
                                                         onRegister={handleRegisterClick}
-                                                        className="event-card-reveal will-change-gpu transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_0_30px_rgba(245,158,11,0.5)]"
+                                                        className="event-card-reveal will-change-gpu"
                                                     />
                                                 ))}
                                             </motion.div>
                                         </div>
                                     </div>
                                 ) : (
-                                    <motion.div layout className={`grid grid-cols-1 md:grid-cols-2 ${filter === 'Cultural' ? 'lg:grid-cols-3 gap-10 md:gap-16 xl:gap-24 px-8 md:px-12' : 'xl:grid-cols-3 2xl:grid-cols-4 gap-8 lg:gap-10 px-4 md:px-8'}`}>
+                                    <motion.div
+                                        layout
+                                        className={`grid grid-cols-1 md:grid-cols-2 ${filter === 'Cultural'
+                                                ? 'lg:grid-cols-3 gap-10 md:gap-16 xl:gap-24 px-8 md:px-12'
+                                                : 'xl:grid-cols-3 2xl:grid-cols-4 gap-8 lg:gap-10 px-4 md:px-8'
+                                            }`}
+                                    >
                                         {filtered.map((event, idx) => (
-                                            <MissionCard key={event.id} event={event} idx={idx} theme={getEventTheme(event.type)} complexClip={complexClip} isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)} isLoggedIn={isLoggedIn} onRegister={handleRegisterClick} className="will-change-gpu" />
+                                            <MissionCard
+                                                key={event.id}
+                                                event={event}
+                                                idx={idx}
+                                                theme={getEventTheme(event.type)}
+                                                complexClip={complexClip}
+                                                isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)}
+                                                isLoggedIn={isLoggedIn}
+                                                onRegister={handleRegisterClick}
+                                                className="will-change-gpu"
+                                            />
                                         ))}
                                     </motion.div>
                                 )}
+
+
                             </motion.div>
                         )}
                     </AnimatePresence>
