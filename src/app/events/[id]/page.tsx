@@ -368,7 +368,7 @@ export default function EventDetailsPage() {
                         >
                             <div className="flex items-center gap-3">
                                 <Info size={18} className={`text-${twTheme}-500`} />
-                                <h2 className="text-sm md:text-base font-black uppercase tracking-widest">MISSION BRIEF</h2>
+                                <h2 className="text-sm md:text-base font-black uppercase tracking-widest">ABOUT THE EVENT</h2>
                             </div>
                             <p className="text-base md:text-lg text-white/80 font-medium leading-relaxed font-mono">
                                 {mission.description}
