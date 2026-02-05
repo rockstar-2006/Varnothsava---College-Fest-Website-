@@ -462,7 +462,7 @@ export const missions: Event[] = [
         id: 'Solo-Singing',
         title: 'BHAVA TARANGA',
         type: 'Cultural',
-        category: 'Solo',
+        category: 'Hobby Club',
         description: 'A soulful solo singing event showcasing the beauty and depth of Bhavageethe.Participants mesmerize the audience using pure vocals with emotion and expression.',
         rules: [
             "No accompanying instruments are allowed",
@@ -489,7 +489,7 @@ export const missions: Event[] = [
         id: 'Group-Singing',
         title: 'Janapada nada',
         type: 'Cultural',
-        category: 'Duo',
+        category: 'Hobby Club',
         description: 'A vibrant group singing competition celebrating the spirit of folk music.Teams bring traditional rhythms to life with harmony, energy, and culture.',
         rules: [
             "Accompanying instruments are allowed (maximum 2)",
@@ -518,7 +518,7 @@ export const missions: Event[] = [
         id: 'Solo-Classical-Dance',
         title: 'Thaka  Dhimi Tha',
         type: 'Cultural',
-        category: 'Solo',
+        category: 'Hobby Club',
         description: 'A graceful platform for classical dancers to express rhythm, devotion, and storytelling.Any Indian classical dance form is welcome with elegance and precision.',
         rules: [
             "Participants will get 5+1 minutes each",
@@ -549,7 +549,7 @@ export const missions: Event[] = [
         id: 'Group-Western-Dance',
         title: 'Groove Gala',
         type: 'Cultural',
-        category: 'Group',
+        category: 'Hobby Club',
         description: 'A high-energy western dance battle packed with synchronization and style.Teams set the stage on fire with creativity, coordination, and powerful moves.',
         rules: [
             "Each can have minimum of 4 and maximum 10 members ",
@@ -580,7 +580,7 @@ export const missions: Event[] = [
         id: 'Stand-Up-Comedy',
         title: 'Speech of Smiles',
         type: 'Cultural',
-        category: 'Promotional',
+        category: 'Hobby Club',
         description: 'A laughter-filled event where wit, humor, and timing take center stage.Participants entertain the crowd with clean, relatable, and engaging comedy.',
         rules: [
             "Each participant will get 4+2 mintues",
@@ -607,7 +607,7 @@ export const missions: Event[] = [
         id: 'Face-Painting',
         title: 'Who Am I',
         type: 'Cultural',
-        category: 'Promotional',
+        category: 'General',
         description: 'Short-form video storytelling. Create engaging Reels that capture the vibrant energy of Varnothsava.',
         rules: [
             "Each participant will get 75 minutes",
@@ -660,7 +660,7 @@ export const missions: Event[] = [
         id: 'Anime-Quiz',
         title: 'Anime Arena',
         type: 'Cultural',
-        category: 'Duo',
+        category: 'General',
         description: 'An exciting quiz testing knowledge of anime worlds, characters, and stories.Teams compete across rounds to prove their ultimate anime fandom.',
         rules: [
             "Team of 2 members",
@@ -687,7 +687,7 @@ export const missions: Event[] = [
         id: 'Antakshari',
         title: 'Musical Marathon ',
         type: 'Cultural',
-        category: 'Duo',
+        category: 'Hobby Club',
         description: 'Express your artistic talent through traditional and modern Mehandi designs.',
         rules: [
             "Team of 2 members",
@@ -799,7 +799,7 @@ export const missions: Event[] = [
         id: 'MIME',
         title: 'Slient Symphony ',
         type: 'Cultural',
-        category: 'General',
+        category: 'Hobby Club',
         description: 'A silent yet powerful performance art conveying stories without words.Participants communicate emotions and messages through expressions and movement.',
         rules: [
             "Each team will get 5+2 minutes",
@@ -827,7 +827,7 @@ export const missions: Event[] = [
         id: 'Rangoli',
         title: 'Bannada Prapancha',
         type: 'Cultural',
-        category: 'Duo',
+        category: 'General',
         description: 'A colorful rangoli competition celebrating tradition and symmetry.Teams craft vibrant designs using patterns, precision, and creativity.',
         rules: [
             "Each team will get 2 hours",
@@ -858,7 +858,7 @@ export const missions: Event[] = [
         id: 'Drawing',
         title: 'Art of Tune',
         type: 'Cultural',
-        category: 'General',
+        category: 'Hobby Club',
         description: 'A drawing competition where imagination meets artistic technique.Participants express ideas visually using pencils, colors, and creativity.',
         rules: [
             "Each participant will get 90 Minutes",
@@ -889,7 +889,7 @@ export const missions: Event[] = [
         id: 'Pencil-Sketch',
         title: 'Sketch Chronicles ',
         type: 'Cultural',
-        category: 'General',
+        category: 'Hobby Club',
         description: 'A pencil sketching contest focused on shading, depth, and realism.Artists bring the given theme to life using only gradation pencils.',
         rules: [
             "Each participant will get 75 minutes",
@@ -955,7 +955,7 @@ export const missions: Event[] = [
         id: 'Photography',
         title: 'Shutterverse ',
         type: 'Cultural',
-        category: 'General',
+        category: 'Promotional',
         description: 'A photography contest capturing the true essence of Varnothsava 2026.Participants tell powerful stories through frames, light, and composition.',
         rules: [
             "Photography is permitted only on 11th March 2026 during fest hours",
@@ -989,7 +989,7 @@ export const missions: Event[] = [
         id: 'Videography',
         title: 'Cinecapture',
         type: 'Cultural',
-        category: 'Duo',
+        category: 'Promotional',
         description: 'An official after-movie style videography challenge of the fest.Teams document events creatively with cinematic storytelling and editing.',
         rules: [
             "Team of 2 members",
