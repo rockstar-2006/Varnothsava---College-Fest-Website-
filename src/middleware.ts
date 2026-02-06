@@ -2,33 +2,18 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 /**
- * Security Proxy
+ * Security Middleware
  * Implements CORS, security headers, and basic request validation
  */
-export default function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
     const origin = request.headers.get('origin');
     const pathname = request.nextUrl.pathname;
 
-    // Parse NEXT_PUBLIC_APP_URL - handle both string and JSON array formats
-    let envOrigins: string[] = [];
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-    if (appUrl) {
-        try {
-            // Try parsing as JSON array first
-            envOrigins = JSON.parse(appUrl);
-        } catch {
-            // If parsing fails, treat as a single URL string
-            envOrigins = [appUrl];
-        }
-    }
-
     // Define allowed origins based on environment
     const allowedOrigins = [
-        ...envOrigins,
+        process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
         'http://localhost:3000',
         'http://127.0.0.1:3000',
-        'http://192.168.1.100:3000',
-        'http://192.168.56.1:3000',
     ];
 
     // Production origins (add your production domains)
