@@ -340,8 +340,9 @@ const FloatingOrbs = React.memo(({ theme = 'emerald' }: { theme?: 'emerald' | 'a
 export default function ProEventBackground({ theme = 'emerald', scrollProgress = 0, isDetailed = false }: { theme: any, scrollProgress: any, isDetailed?: boolean }) {
     const [isMobile, setIsMobile] = React.useState(false)
 
-    // Proportions and stickiness for Cultural theme
-    // amberY removed as it's no longer needed for static stickiness
+    // Using useTransform for smooth parallax without re-renders
+    const amberY = useTransform(scrollProgress, [0, 1], isMobile ? [40, 70] : [300, 600])
+    //  starts lower, moves gently
 
 
     React.useEffect(() => {
@@ -391,104 +392,166 @@ export default function ProEventBackground({ theme = 'emerald', scrollProgress =
                 >
                     {!isDetailed && (
                         <div className="absolute inset-0 z-0 overflow-hidden bg-[#0f0901]">
-                            {/* Single Professional FIXED Background Layer - PRESERVING PROPORTIONS */}
-                            <div
-                                className="absolute inset-0 w-full h-full"
+                            {/* Normalized Background Image */}
+                            <motion.div
+                                className="absolute inset-0"
                                 style={{
-                                    backgroundColor: '#0f0901',
-                                    backgroundImage: `
-                                            radial-gradient(ellipse at center 20%, transparent 30%, rgba(15, 9, 1, 0.3) 100%),
-                                            url('/cultural-bg-new.png')
-                                        `,
-                                    backgroundSize: 'cover',
-                                    backgroundPosition: 'center top',
-                                    backgroundRepeat: 'no-repeat',
-                                    filter: 'brightness(1.5) contrast(1.4) saturate(1.25)',
-                                    maskImage: 'linear-gradient(to bottom, black 0%, black 95%, transparent 100%)',
-                                    WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 95%, transparent 100%)',
+                                    y: amberY,
+                                    WebkitMaskImage: `
+          linear-gradient(
+            to bottom,
+            transparent 0%,
+            black 18%,
+            black 82%,
+            transparent 100%
+          )
+        `,
+                                    maskImage: `
+          linear-gradient(
+            to bottom,
+            transparent 0%,
+            black 18%,
+            black 82%,
+            transparent 100%
+          )
+        `
                                 }}
-                            />
+                            >
+                                <Image
+                                    src="/cultural-bg.png"
+                                    alt=""
+                                    priority
+                                    fill
+                                    className="absolute inset-0 w-full h-full object-cover scale-110"
 
-                            {/* Cinematic Top Glow to connect with Headers */}
-                            <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-[#f59e0b]/25 to-transparent pointer-events-none" />
-                        </div>
-                    )}
-
-                    <FloatingOrbs theme="amber" />
-                </motion.div>
-            )}
-
-            {theme === 'emerald' && (
-                <motion.div
-                    key="emerald-layer"
-                    className="fixed inset-0 z-0 pointer-events-none bg-transparent will-change-opacity gpu-accel"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.8 }}
-                >
-                    {/* Main Technical Page */}
-                    {!isDetailed ? (
-                        <>
-                            {/* Animated Beams on top of the dynamic background */}
-                            <div className="absolute inset-0 opacity-100">
-                                <GridBeams theme={theme} />
+                                    style={{
+                                        filter: 'brightness(0.9) contrast(1.05)',
+                                    }}
+                                />
+                            </motion.div>
+                            {/* Full Border Black Contrast for Cultural Background */}
+                            <div className="absolute inset-0 z-20 pointer-events-none">
+                                <div
+                                    className="absolute inset-0"
+                                    style={{
+                                        background: `
+        linear-gradient(to top, rgba(0,0,0,0.85), transparent 35%),
+        linear-gradient(to bottom, rgba(0,0,0,0.75), transparent 35%),
+        linear-gradient(to left, rgba(0,0,0,0.8), transparent 30%),
+        linear-gradient(to right, rgba(0,0,0,0.8), transparent 30%)
+      `
+                                    }}
+                                />
                             </div>
 
-                            <FloatingOrbs theme="emerald" />
 
-                            {/* Vignette Overlay - Reduced intensity */}
-                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_20%,rgba(1,5,2,0.4)_100%)] pointer-events-none" />
-                        </>
-                    ) : (
-                        // Detailed Page - Clean, Dark
-                        <>
-                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,rgba(16,185,129,0.1),transparent_70%)]" />
-                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_90%_90%,rgba(16,185,129,0.05),transparent_50%)]" />
-                            <FloatingOrbs theme="emerald" />
-                        </>
-                    )}
-                </motion.div>
+
+
+
+
+                            {/* Soft vignette instead of heavy gradients */}
+                            {/* Top & Bottom Contrast Overlays for Cultural Events */}
+                            <div className="absolute inset-0 z-10 pointer-events-none">
+                                {/* Top contrast */}
+                                <div className="absolute top-0 left-0 w-full h-32 md:h-48
+                  bg-gradient-to-b from-black/90 via-black/50 to-transparent" />
+
+                                {/* Bottom contrast */}
+                                <div className="absolute bottom-0 left-0 w-full h-32 md:h-48
+                  bg-gradient-to-t from-black/95 via-black/60 to-transparent" />
+                            </div>
+
+                            {/* Keep soft vignette for edges */}
+                            <div className="absolute inset-0 bg-radial-fade z-[9]" />
+
+                        </div>
+
+                            {/* Cinematic Top Glow to connect with Headers */}
+                    <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-[#f59e0b]/25 to-transparent pointer-events-none" />
+                </div>
             )}
 
-            {theme === 'cyan' && (
-                <motion.div
-                    key="cyan-layer"
-                    className="fixed inset-0 z-0 pointer-events-none bg-[#00080d] will-change-opacity gpu-accel"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.8 }}
-                >
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(6,182,212,0.18),transparent_70%)]" />
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgba(6,182,212,0.1),transparent_50%)]" />
-                    <div className="absolute inset-0 opacity-100 mix-blend-screen">
-                        <GridBeams theme="cyan" />
-                    </div>
-                    <FloatingOrbs theme="cyan" />
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_40%,rgba(0,8,13,0.5)_100%)] pointer-events-none" />
-                </motion.div>
-            )}
-
-            {theme === 'indigo' && (
-                <motion.div
-                    key="indigo-layer"
-                    className="fixed inset-0 z-0 pointer-events-none bg-[#03030f] will-change-opacity gpu-accel"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.8 }}
-                >
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(99,102,241,0.18),transparent_70%)]" />
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,rgba(99,102,241,0.1),transparent_50%)]" />
-                    <div className="absolute inset-0 opacity-100 mix-blend-screen">
-                        <GridBeams theme="indigo" />
-                    </div>
-                    <FloatingOrbs theme="indigo" />
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_30%,rgba(3,3,15,0.6)_100%)] pointer-events-none" />
-                </motion.div>
-            )}
-        </AnimatePresence>
+            <FloatingOrbs theme="amber" />
+        </motion.div>
     )
 }
 
+{
+    theme === 'emerald' && (
+        <motion.div
+            key="emerald-layer"
+            className="fixed inset-0 z-0 pointer-events-none bg-transparent will-change-opacity gpu-accel"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+        >
+            {/* Main Technical Page */}
+            {!isDetailed ? (
+                <>
+                    {/* Animated Beams on top of the dynamic background */}
+                    <div className="absolute inset-0 opacity-100">
+                        <GridBeams theme={theme} />
+                    </div>
+
+                    <FloatingOrbs theme="emerald" />
+
+                    {/* Vignette Overlay - Reduced intensity */}
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_20%,rgba(1,5,2,0.4)_100%)] pointer-events-none" />
+                </>
+            ) : (
+                // Detailed Page - Clean, Dark
+                <>
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,rgba(16,185,129,0.1),transparent_70%)]" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_90%_90%,rgba(16,185,129,0.05),transparent_50%)]" />
+                    <FloatingOrbs theme="emerald" />
+                </>
+            )}
+        </motion.div>
+    )
+}
+
+{
+    theme === 'cyan' && (
+        <motion.div
+            key="cyan-layer"
+            className="fixed inset-0 z-0 pointer-events-none bg-[#00080d] will-change-opacity gpu-accel"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+        >
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(6,182,212,0.18),transparent_70%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgba(6,182,212,0.1),transparent_50%)]" />
+            <div className="absolute inset-0 opacity-100 mix-blend-screen">
+                <GridBeams theme="cyan" />
+            </div>
+            <FloatingOrbs theme="cyan" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_40%,rgba(0,8,13,0.5)_100%)] pointer-events-none" />
+        </motion.div>
+    )
+}
+
+{
+    theme === 'indigo' && (
+        <motion.div
+            key="indigo-layer"
+            className="fixed inset-0 z-0 pointer-events-none bg-[#03030f] will-change-opacity gpu-accel"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+        >
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(99,102,241,0.18),transparent_70%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,rgba(99,102,241,0.1),transparent_50%)]" />
+            <div className="absolute inset-0 opacity-100 mix-blend-screen">
+                <GridBeams theme="indigo" />
+            </div>
+            <FloatingOrbs theme="indigo" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_30%,rgba(3,3,15,0.6)_100%)] pointer-events-none" />
+        </motion.div>
+    )
+}
+        </AnimatePresence >
+    )
+}

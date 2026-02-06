@@ -1,12 +1,34 @@
 'use client'
 
 import React, { memo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import Tilt from 'react-parallax-tilt'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { CheckCircle2, UserPlus, Loader2 } from 'lucide-react'
-import { Event } from '@/data/missions'
+import { CheckCircle2, UserPlus } from 'lucide-react'
+
+export interface Event {
+    id: string
+    title: string
+    type: 'Technical' | 'Cultural' | 'Gaming'
+    category?: string
+    description: string
+    rules: string[]
+    regulations?: string[]
+    evaluation?: string[]
+    prizePool: string
+    coordinators: string[]
+    coordinatorsContact?: string[]
+    fee: number
+    visual: string
+    date: string
+    tags: string[]
+    videoUrl?: string
+    brochureUrl?: string
+    minTeamSize: number
+    maxTeamSize: number
+    teamFormate?: string
+}
 
 export interface ThemeConfig {
     primary: string
@@ -51,7 +73,6 @@ export const MissionCard = memo(({
 }: EventCardProps) => {
     const router = useRouter()
     const [isMobile, setIsMobile] = React.useState(false)
-    const [isNavigating, setIsNavigating] = React.useState(false)
 
     React.useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768)
@@ -60,47 +81,25 @@ export const MissionCard = memo(({
         return () => window.removeEventListener('resize', checkMobile)
     }, [])
 
-    const handleCardClick = () => {
-        setIsNavigating(true)
-        // Instant feedback before routing
-        router.push(`/events/${event.id}`)
-    }
-
     if (event.type === 'Gaming') {
         const content = (
-            <div className="relative w-full h-full">
-                <EventCard
-                    gameName={event.category || 'GAMING'}
-                    eventTitle={event.title}
-                    date={event.date}
-                    prizePool={event.prizePool || "TBA"}
-                    slots="REG OPEN"
-                    image={event.visual}
-                    theme={event.title.toLowerCase().includes('valorant') ? 'valorant' : 'bgmi'}
-                    onRegister={() => onRegister(event)}
-                    onDetail={handleCardClick}
-                />
-                <AnimatePresence>
-                    {isNavigating && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="absolute inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center rounded-2xl"
-                        >
-                            <Loader2 className="w-8 h-8 text-white animate-spin" />
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
+            <EventCard
+                gameName={event.category || 'GAMING'}
+                eventTitle={event.title}
+                date={event.date}
+                prizePool={event.prizePool}
+                slots="64 TEAMS"
+                image={event.visual}
+                theme={event.title.toLowerCase().includes('valorant') ? 'valorant' : 'bgmi'}
+                onRegister={() => onRegister(event)}
+                onDetail={() => router.push(`/events/${event.id}`)}
+            />
         )
 
         return (
-            <div
-                className={`event-card-reveal will-change-transform will-change-opacity translate-z-0 ${className}`}
-                onClick={handleCardClick}
-            >
+            <div className={`event-card-reveal will-change-transform will-change-opacity translate-z-0 ${className}`}>
                 {isMobile ? (
-                    <div className="w-full h-[520px] gpu-accel transition-transform active:scale-95">{content}</div>
+                    <div className="w-full h-[520px] gpu-accel">{content}</div>
                 ) : (
                     <Tilt
                         tiltMaxAngleX={10}
@@ -118,7 +117,7 @@ export const MissionCard = memo(({
     }
 
     const cardContent = (
-        <div className="w-full h-full relative cursor-pointer" onClick={handleCardClick}>
+        <div className="w-full h-full relative cursor-pointer" onClick={() => router.push(`/events/${event.id}`)}>
             {/* GLOW BACKDROP */}
             <div
                 className={`absolute inset-[-20px] transition-all duration-500 opacity-30 group-hover:opacity-100 ${isMobile ? 'blur-[15px]' : 'blur-[40px]'}`}
@@ -128,23 +127,11 @@ export const MissionCard = memo(({
                 }}
             />
 
-            <AnimatePresence>
-                {isNavigating && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        style={{ clipPath: complexClip }}
-                        className="absolute inset-[10px] bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center"
-                    >
-                        <Loader2 className="w-8 h-8 text-white animate-spin" />
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
+            {/* GEOMETRIC BORDER SYSTEM */}
             <svg
-                className={`absolute ${event.type === 'Cultural' ? (isMobile ? 'inset-[-30px] w-[calc(100%+60px)] h-[calc(100%+60px)]' : 'inset-[-45px] w-[calc(100%+90px)] h-[calc(100%+90px)]') : 'inset-0 w-full h-full'} pointer-events-none z-10 overflow-visible`}
+                className={`absolute ${event.type === 'Cultural' ? (isMobile ? 'inset-[-20px] w-[calc(100%+40px)] h-[calc(100%+40px)]' : 'inset-[-45px] w-[calc(100%+90px)] h-[calc(100%+90px)]') : 'inset-0 w-full h-full'} pointer-events-none z-10 overflow-visible`}
                 preserveAspectRatio="none"
-                viewBox={event.type === 'Cultural' ? (isMobile ? "-30 -30 360 520" : "-45 -45 390 530") : "0 0 300 440"}
+                viewBox={event.type === 'Cultural' ? (isMobile ? "-20 -20 340 500" : "-45 -45 390 530") : "0 0 300 440"}
             >
                 <defs>
                     <filter id={`glow-${event.type}-${idx}`} x="-20%" y="-20%" width="140%" height="140%">
@@ -167,8 +154,8 @@ export const MissionCard = memo(({
                     fill="none"
                     stroke={event.type === 'Cultural' ? "#fbbf24" : "currentColor"}
                     strokeWidth={event.type === 'Cultural' ? "2" : "6"}
-                    className={event.type === 'Cultural' ? (isMobile ? "opacity-90" : "opacity-40") : theme.border}
-                    style={{ filter: isMobile ? 'drop-shadow(0 0 3px rgba(245, 158, 11, 0.4))' : (event.type === 'Cultural' ? 'drop-shadow(0 0 15px rgba(245, 158, 11, 0.6))' : `url(#glow-${event.type}-${idx}) drop-shadow(0 0 10px ${theme.glow})`) }}
+                    className={event.type === 'Cultural' ? "opacity-40" : theme.border}
+                    style={{ filter: event.type === 'Cultural' ? 'drop-shadow(0 0 15px rgba(245, 158, 11, 0.6))' : `url(#glow-${event.type}-${idx}) drop-shadow(0 0 10px ${theme.glow})` }}
                 />
 
                 {event.type === 'Cultural' && (
@@ -181,14 +168,10 @@ export const MissionCard = memo(({
                             style={{ filter: isMobile ? 'none' : 'blur(45px)' }}
                         />
                         <g style={{ filter: isMobile ? 'none' : 'drop-shadow(0 12px 25px rgba(0,0,0,0.9))' }}>
-                            {/* Simplified details for mobile: significantly reduced path count */}
-                            {!isMobile && (
-                                <g stroke="#5c2d0b" strokeWidth="4" fill="none" transform="translate(2, 2)" opacity="0.5">
-                                    {[...Array(14)].map((_, i) => (<path key={`sh-l-${i}`} d={`M-18,${25 + i * 28} q-15,14 0,28`} />))}
-                                    {[...Array(14)].map((_, i) => (<path key={`sh-r-${i}`} d={`M318,${25 + i * 28} q15,14 0,28`} />))}
-                                </g>
-                            )}
-
+                            <g stroke="#5c2d0b" strokeWidth="4" fill="none" transform="translate(2, 2)" opacity={isMobile ? "0.2" : "0.5"}>
+                                {[...Array(14)].map((_, i) => (<path key={`sh-l-${i}`} d={`M-18,${25 + i * 28} q-15,14 0,28`} />))}
+                                {[...Array(14)].map((_, i) => (<path key={`sh-r-${i}`} d={`M318,${25 + i * 28} q15,14 0,28`} />))}
+                            </g>
                             <g stroke={`url(#gold-grad-${idx})`} strokeWidth="3.5" fill="none" strokeLinecap="round">
                                 {!isMobile && [...Array(15)].map((_, i) => (
                                     <g key={`l-royal-${i}`} transform={`translate(-22, ${i * 28 + 25})`}>
@@ -204,22 +187,19 @@ export const MissionCard = memo(({
                                         <path d="M-2,6 a3,3 0 1,0 0.1,0" fill={`url(#gold-grad-${idx})`} stroke="none" />
                                     </g>
                                 ))}
-
-                                {/* Reduced ornaments on mobile */}
-                                {[...Array(isMobile ? 2 : 10)].map((_, i) => (
-                                    <g key={`t-royal-${i}`} transform={`translate(${i * (isMobile ? 150 : 30) + (isMobile ? 30 : 15)}, -22)`}>
+                                {[...Array(isMobile ? 5 : 10)].map((_, i) => (
+                                    <g key={`t-royal-${i}`} transform={`translate(${i * (isMobile ? 60 : 30) + 15}, -22)`}>
                                         <path d="M0,8 c5,-18 15,-18 20,0 c-8,-12 -12,-12 -20,0" strokeWidth="2.2" />
                                         <circle cx="10" cy="-2" r="1.5" fill="#fff" stroke="none" />
                                     </g>
                                 ))}
-                                {[...Array(isMobile ? 2 : 10)].map((_, i) => (
-                                    <g key={`b-royal-${i}`} transform={`translate(${i * (isMobile ? 150 : 30) + (isMobile ? 30 : 15)}, 462)`}>
+                                {[...Array(isMobile ? 5 : 10)].map((_, i) => (
+                                    <g key={`b-royal-${i}`} transform={`translate(${i * (isMobile ? 60 : 30) + 15}, 462)`}>
                                         <path d="M0,-8 c5,18 15,18 20,0 c-8,12 -12,12 -20,0" strokeWidth="2.2" />
                                         <circle cx="10" cy="2" r="1.5" fill="#fff" stroke="none" />
                                     </g>
                                 ))}
-
-                                {!isMobile && [
+                                {[
                                     { t: "translate(-30, -30)", s: "1, 1" },
                                     { t: "translate(330, -30)", s: "-1, 1" },
                                     { t: "translate(-30, 470)", s: "1, -1" },
@@ -287,10 +267,10 @@ export const MissionCard = memo(({
 
                 <div className="pt-8 px-5 text-center z-20 relative">
                     <div className="flex items-center justify-between mb-3 px-1">
-                        <div className={`text-[10px] font-bold ${theme.text} tracking-[0.2em] transition-colors uppercase`}>EVENT ID: {event.id}</div>
-                        <div className={`text-[10px] font-black text-white/50 tracking-[0.1em] px-2 py-0.5 border border-white/10 rounded-full uppercase transition-all`}>{event.type}</div>
+                        <div className={`text-[9px] font-bold ${theme.text} tracking-[0.2em] transition-colors uppercase`}>EVENT ID: {event.id}</div>
+                        <div className={`text-[9px] font-black text-white/50 tracking-[0.1em] px-2 py-0.5 border border-white/10 rounded-full uppercase transition-all`}>{event.type}</div>
                     </div>
-                    <h3 className={`${event.type === 'Cultural' ? 'text-[20px] md:text-[22px] italic' : 'text-[18px] md:text-[20px]'} font-bold uppercase text-white tracking-[0.02em] break-words transition-all leading-snug drop-shadow-[0_2px_10px_rgba(0,0,0,1)] mb-1 min-h-[3rem] flex items-center justify-center`}>{event.title}</h3>
+                    <h3 className={`${event.type === 'Cultural' ? 'text-[17px] md:text-[18px] italic' : 'text-[15px] md:text-[16px]'} font-bold uppercase text-white tracking-[0.02em] break-words transition-all leading-snug drop-shadow-[0_2px_10px_rgba(0,0,0,1)] mb-1 min-h-[3rem] flex items-center justify-center`}>{event.title}</h3>
                 </div>
 
                 <div className={`relative overflow-hidden bg-black/40 border transition-all duration-700 z-10 shadow-2xl ${event.type === 'Cultural' ? 'mx-6 mt-0 mb-4 h-32 border-amber-500/30' : 'h-48 mx-5 mt-2 mb-2 border-white/10 group-hover:border-emerald-500/50'}`} style={{ clipPath: event.type === 'Cultural' ? 'polygon(0 28%, 50% 0, 100% 28%, 100% 100%, 0 100%)' : 'polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px)' }}>
@@ -299,23 +279,31 @@ export const MissionCard = memo(({
                 </div>
 
                 <div className={`px-6 z-10 w-full mt-auto mb-4 ${event.type === 'Technical' ? 'grid grid-cols-3 gap-2 border-y border-white/5 py-3 bg-white/[0.02]' : 'flex justify-between items-center'}`}>
-                    <div className="flex flex-col gap-0.5"><span className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">DATE</span><span className="text-sm font-extrabold text-white tracking-wide">{event.date}</span></div>
-                    <div className="flex flex-col gap-0.5 items-center"><span className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">GROUP</span><span className="text-xs font-extrabold text-white uppercase truncate w-full text-center tracking-tight">{(event.maxTeamSize && event.maxTeamSize > 1) ? `${event.minTeamSize || 1}-${event.maxTeamSize}` : 'SOLO'}</span></div>
-                    <div className="flex flex-col items-end gap-0.5"><span className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">TIME</span><span className="text-sm text-white font-black italic tracking-tighter">{event.time || 'TBA'}</span></div>
+                    <div className="flex flex-col gap-0.5"><span className="text-[9px] font-bold text-white/50 uppercase tracking-[0.2em]">DATE</span><span className="text-[12px] font-extrabold text-white tracking-wide">{event.date}</span></div>
+                    <div className="flex flex-col gap-0.5 items-center">
+                        <span className="text-[9px] font-bold text-white/50 uppercase tracking-[0.2em]">
+                            GROUP
+                        </span>
+
+                        <span className="text-[11px] font-extrabold text-white uppercase truncate w-full text-center tracking-tight">
+                            {event.teamFormate}
+                        </span>
+                    </div>
+                    <div className="flex flex-col items-end gap-0.5"><span className="text-[9px] font-bold text-white/50 uppercase tracking-[0.2em]">PRIZE</span><span className="text-[13px] text-white font-black italic tracking-tighter">{event.prizePool}</span></div>
                 </div>
 
                 <div className={`px-8 pb-8 z-20 w-full mt-auto`}>
-                    <div className="grid grid-cols-2 gap-3 w-full justify-center">
-                        <button onClick={(e) => { e.stopPropagation(); onRegister(event); }} className={`relative py-4 md:py-3 text-xs font-black uppercase tracking-widest transition-all duration-300 overflow-hidden group/btn border-2 ${event.type === 'Cultural' ? 'border-amber-500 bg-amber-500 text-black' : 'border-emerald-500 bg-emerald-500 text-black'} shadow-[0_0_20px_rgba(0,0,0,0.4)] active:scale-95 flex items-center justify-center gap-2 touch-manipulation min-h-[48px]`} style={{ clipPath: 'polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px)' }}>
+                    <div className="grid grid-cols-2 gap-3 w-full">
+                        <button onClick={(e) => { e.stopPropagation(); onRegister(event); }} className={`relative py-4 md:py-3 text-[10px] font-black uppercase tracking-widest transition-all duration-300 overflow-hidden group/btn border-2 ${event.type === 'Cultural' ? 'border-amber-500 bg-amber-500 text-black' : 'border-emerald-500 bg-emerald-500 text-black'} shadow-[0_0_20px_rgba(0,0,0,0.4)] active:scale-95 flex items-center justify-center gap-2 touch-manipulation min-h-[48px]`} style={{ clipPath: 'polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px)' }}>
                             <UserPlus className="w-4 h-4" /> {isLoggedIn ? 'REGISTER' : 'LOGIN'}
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); router.push(`/events/${event.id}`); }} className={`relative py-4 md:py-3 text-xs font-black uppercase tracking-widest transition-all duration-300 overflow-hidden group/btn border-2 ${event.type === 'Cultural' ? 'border-amber-500 text-amber-500' : 'border-emerald-500 text-emerald-500'} bg-black/40 active:scale-95 flex items-center justify-center gap-2 touch-manipulation min-h-[48px]`} style={{ clipPath: 'polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px)' }}>
+                        <button onClick={(e) => { e.stopPropagation(); router.push(`/events/${event.id}`); }} className={`relative py-4 md:py-3 text-[10px] font-black uppercase tracking-widest transition-all duration-300 overflow-hidden group/btn border-2 ${event.type === 'Cultural' ? 'border-amber-500 text-amber-500' : 'border-emerald-500 text-emerald-500'} bg-black/40 active:scale-95 flex items-center justify-center gap-2 touch-manipulation min-h-[48px]`} style={{ clipPath: 'polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px)' }}>
                             DETAILS
                         </button>
                     </div>
                 </div>
             </div>
-        </div >
+        </div>
     )
 
     return (
