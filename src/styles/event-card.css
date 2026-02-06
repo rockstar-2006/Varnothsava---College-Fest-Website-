@@ -17,19 +17,17 @@
 
 /* Theme variations */
 .event-card-wrapper.bgmi {
-    /* Violet & Cyan - Cyberpunk Gaming Theme */
-    --theme-primary: 265 90% 60%;
-    --theme-secondary: 190 90% 50%;
-    --theme-glow: 265 100% 50%;
-    --theme-dark: 260 60% 6%;
+    --theme-primary: 25 100% 55%;
+    --theme-secondary: 40 100% 50%;
+    --theme-glow: 30 100% 45%;
+    --theme-dark: 25 60% 6%;
 }
 
 .event-card-wrapper.valorant {
-    /* Deep Purple & Pink - Valorant Theme (Adjusted for Background Match) */
-    --theme-primary: 280 85% 60%;
-    --theme-secondary: 320 90% 60%;
-    --theme-glow: 280 100% 55%;
-    --theme-dark: 270 50% 6%;
+    --theme-primary: 0 85% 55%;
+    --theme-secondary: 350 90% 60%;
+    --theme-glow: 355 85% 50%;
+    --theme-dark: 0 50% 6%;
 }
 
 /* Outer geometric frames */
@@ -538,8 +536,6 @@
 /* Actions container for dual buttons */
 .actions-container {
     display: flex;
-    /* temp for disabling registration */
-    /* justify-content: center; */
     align-items: center;
     gap: 12px;
     margin: 10px 20px 25px;
