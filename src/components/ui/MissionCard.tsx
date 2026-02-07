@@ -163,7 +163,9 @@ export const MissionCard = memo(({
                 <path
                     d={event.type === 'Cultural'
                         ? "M 50 0 L 250 0 L 300 50 L 300 390 L 260 440 L 205 440 L 190 415 L 110 415 L 95 440 L 40 440 L 0 400 L 0 50 Z"
-                        : "M 30 0 L 300 0 L 300 440 L 210 440 L 195 414 L 105 414 L 90 440 L 0 440 L 0 264 L 14 264 L 14 176 L 0 176 L 0 30 Z"}
+                        : event.type === 'Business'
+                            ? "M 50 0 L 250 0 L 300 60 L 300 380 L 250 440 L 50 440 L 0 380 L 0 60 Z"
+                            : "M 30 0 L 300 0 L 300 440 L 210 440 L 195 414 L 105 414 L 90 440 L 0 440 L 0 264 L 14 264 L 14 176 L 0 176 L 0 30 Z"}
                     fill="none"
                     stroke={event.type === 'Cultural' ? "#fbbf24" : "currentColor"}
                     strokeWidth={event.type === 'Cultural' ? "2" : "6"}
@@ -265,7 +267,7 @@ export const MissionCard = memo(({
             {/* INNER BORDER */}
             <svg className="absolute inset-[8px] w-[calc(100%-16px)] h-[calc(100%-16px)] pointer-events-none z-10" preserveAspectRatio="none" viewBox="0 0 280 420">
                 <path
-                    d={event.type === 'Cultural' ? "M 15 0 L 265 0 L 280 15 L 280 405 L 265 420 L 15 420 L 0 405 L 0 15 Z" : "M 28 0 L 280 0 L 280 420 L 196 420 L 182 394.8 L 98 394.8 L 84 420 L 0 420 L 0 252 L 13 252 L 13 168 L 0 168 L 0 28 Z"}
+                    d={event.type === 'Cultural' ? "M 15 0 L 265 0 L 280 15 L 280 405 L 265 420 L 15 420 L 0 405 L 0 15 Z" : event.type === 'Business' ? "M 48 0 L 232 0 L 280 50 L 280 370 L 232 420 L 48 420 L 0 370 L 0 50 Z" : "M 28 0 L 280 0 L 280 420 L 196 420 L 182 394.8 L 98 394.8 L 84 420 L 0 420 L 0 252 L 13 252 L 13 168 L 0 168 L 0 28 Z"}
                     fill="none" stroke="currentColor" strokeWidth={event.type === 'Cultural' ? "1.5" : "3"}
                     className={theme.border.replace('60', '50')}
                     style={{ filter: isMobile ? `drop-shadow(0 0 5px ${theme.glow})` : `drop-shadow(0 0 20px ${theme.glow})` }}
@@ -276,7 +278,7 @@ export const MissionCard = memo(({
                 className={`absolute inset-[10px] flex flex-col overflow-hidden transition-all duration-700 shadow-[inset_0_0_40px_rgba(0,0,0,0.9)] ${event.type === 'Cultural' ? (isMobile ? '' : 'backdrop-blur-3xl border border-white/10') : 'bg-gradient-to-b from-emerald-900/20 via-black to-black'}`}
                 style={{
                     clipPath: complexClip,
-                    background: event.type === 'Cultural' ? 'linear-gradient(180deg, rgba(10,12,11,0.9) 0%, rgba(0,0,0,1) 100%)' : undefined
+                    background: event.type === 'Cultural' ? 'linear-gradient(180deg, rgba(10,12,11,0.9) 0%, rgba(0,0,0,1) 100%)' : event.type === 'Business' ? 'linear-gradient(180deg, rgba(3,3,15,0.9) 0%, rgba(0,0,0,1) 100%)' : undefined
                 }}
             >
                 <div className="absolute inset-0 opacity-[0.08] pointer-events-none bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:30px_30px]" />
@@ -301,15 +303,15 @@ export const MissionCard = memo(({
                 <div className={`px-6 z-10 w-full mt-auto mb-4 ${event.type === 'Technical' ? 'grid grid-cols-3 gap-2 border-y border-white/5 py-3 bg-white/[0.02]' : 'flex justify-between items-center'}`}>
                     <div className="flex flex-col gap-0.5"><span className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">DATE</span><span className="text-sm font-extrabold text-white tracking-wide">{event.date}</span></div>
                     <div className="flex flex-col gap-0.5 items-center"><span className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">GROUP</span><span className="text-xs font-extrabold text-white uppercase truncate w-full text-center tracking-tight">{(event.maxTeamSize && event.maxTeamSize > 1) ? `${event.minTeamSize || 1}-${event.maxTeamSize}` : 'SOLO'}</span></div>
-                    <div className="flex flex-col items-end gap-0.5"><span className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">TIME</span><span className="text-sm text-white font-black italic tracking-tighter">{event.time || 'TBA'}</span></div>
+                    <div className="flex flex-col items-end gap-0.5"><span className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">TIME</span><span className="text-sm text-white font-black italic tracking-tighter">{'TBA'}</span></div>
                 </div>
 
                 <div className={`px-8 pb-8 z-20 w-full mt-auto`}>
                     <div className="grid grid-cols-2 gap-3 w-full justify-center">
-                        <button onClick={(e) => { e.stopPropagation(); onRegister(event); }} className={`relative py-4 md:py-3 text-xs font-black uppercase tracking-widest transition-all duration-300 overflow-hidden group/btn border-2 ${event.type === 'Cultural' ? 'border-amber-500 bg-amber-500 text-black' : 'border-emerald-500 bg-emerald-500 text-black'} shadow-[0_0_20px_rgba(0,0,0,0.4)] active:scale-95 flex items-center justify-center gap-2 touch-manipulation min-h-[48px]`} style={{ clipPath: 'polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px)' }}>
+                        <button onClick={(e) => { e.stopPropagation(); onRegister(event); }} className={`relative py-4 md:py-3 text-xs font-black uppercase tracking-widest transition-all duration-300 overflow-hidden group/btn border-2 ${event.type === 'Cultural' ? 'border-amber-500 bg-amber-500 text-black' : event.type === 'Business' ? 'border-sky-500 bg-sky-500 text-white' : 'border-emerald-500 bg-emerald-500 text-black'} shadow-[0_0_20px_rgba(0,0,0,0.4)] active:scale-95 flex items-center justify-center gap-2 touch-manipulation min-h-[48px]`} style={{ clipPath: 'polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px)' }}>
                             <UserPlus className="w-4 h-4" /> {isLoggedIn ? 'REGISTER' : 'LOGIN'}
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); router.push(`/events/${event.id}`); }} className={`relative py-4 md:py-3 text-xs font-black uppercase tracking-widest transition-all duration-300 overflow-hidden group/btn border-2 ${event.type === 'Cultural' ? 'border-amber-500 text-amber-500' : 'border-emerald-500 text-emerald-500'} bg-black/40 active:scale-95 flex items-center justify-center gap-2 touch-manipulation min-h-[48px]`} style={{ clipPath: 'polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px)' }}>
+                        <button onClick={(e) => { e.stopPropagation(); router.push(`/events/${event.id}`); }} className={`relative py-4 md:py-3 text-xs font-black uppercase tracking-widest transition-all duration-300 overflow-hidden group/btn border-2 ${event.type === 'Cultural' ? 'border-amber-500 text-amber-500' : event.type === 'Business' ? 'border-sky-500 text-sky-500' : 'border-emerald-500 text-emerald-500'} bg-black/40 active:scale-95 flex items-center justify-center gap-2 touch-manipulation min-h-[48px]`} style={{ clipPath: 'polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px)' }}>
                             DETAILS
                         </button>
                     </div>

@@ -12,14 +12,14 @@ const quickLinks = [
     { label: "About Us", href: "#about" },
     { label: "Events", href: "/events" },
     { label: "Sponsors", href: "#sponsors" },
-    { label: "Contact", href: "#contact" },
+    { label: "Contact", href: "/contact" },
 ];
 
 import {
     ArrowRight, MapPin, Mail, Phone, Globe,
     Facebook, Instagram, Youtube, Twitter,
     ChevronDown, Plus, Utensils, Gamepad2, Lightbulb, Zap, Activity,
-    Sparkles, Star, Users, Trophy, Mic, Music
+    Sparkles, Star, Users, Trophy, Mic, Music, Banknote
 } from 'lucide-react'
 import { TaranaInPixels, OriginalMusic } from '@/components/sections/TaranaSections'
 
@@ -715,15 +715,31 @@ const LivelyBorder = () => (
 const ButtonPrimary = ({ children, onClick }: { children: React.ReactNode, onClick?: () => void }) => (
     <motion.button
         onClick={onClick}
-        whileHover={{ scale: 1.05 }}
+        whileHover={{ scale: 1.05, y: -2 }}
         whileTap={{ scale: 0.95 }}
-        className="group relative px-6 py-4 md:px-10 md:py-5 bg-emerald-600 text-white font-extrabold text-xs md:text-sm tracking-[0.2em] uppercase rounded-full shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_40px_rgba(16,185,129,0.7)] hover:scale-105 transition-all duration-300 border border-emerald-400/50"
+        className="group relative px-6 py-4 md:px-10 md:py-5 bg-black/40 backdrop-blur-md text-white font-extrabold text-xs md:text-sm tracking-[0.2em] uppercase rounded-xl transition-all duration-300 border border-emerald-500/30 isolate overflow-hidden"
     >
-        <span className="relative z-20 flex items-center gap-2 md:gap-3 font-[family-name:var(--font-poppins)]">
+        {/* Futuristic Animated Border */}
+        <div className="absolute inset-0 -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+            <div className="absolute inset-[-200%] bg-[conic-gradient(from_0deg,transparent_0_340deg,#10b981_360deg)] animate-[spin_3s_linear_infinite]" />
+        </div>
+
+        {/* Button Face Shine */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 via-transparent to-white/5 pointer-events-none" />
+
+        {/* Glow Layer */}
+        <div className="absolute inset-0 shadow-[inset_0_0_20px_rgba(16,185,129,0.2)] group-hover:shadow-[inset_0_0_30px_rgba(16,185,129,0.4)] transition-all" />
+
+        <span className={`${orbitron.className} relative z-20 flex items-center gap-2 md:gap-3 text-emerald-400 group-hover:text-white transition-colors`}>
             {children} <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" />
         </span>
+
+        {/* Corner Tech Accents */}
+        <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-emerald-500/50" />
+        <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-emerald-500/50" />
     </motion.button>
 )
+
 
 const ButtonSecondary = ({ children, onClick }: { children: React.ReactNode, onClick?: () => void }) => (
     <motion.button
@@ -968,8 +984,13 @@ const HeroSection = ({ shouldRender3D }: { shouldRender3D: boolean }) => {
                         transition={{ delay: 0.3, duration: 0.8 }}
                         className="text-lg md:text-xl text-gray-400 font-medium max-w-2xl mt-6 leading-relaxed"
                     >
-                        The ultimate state-level techno-cultural phenomenon — <br className="hidden md:block" />
+                        The ultimate national-level techno-cultural phenomenon — <br className="hidden md:block" />
                         Where <span className="text-emerald-400">Innovation</span> meets <span className="text-purple-400">Celebration</span>.
+                        <br />
+                        <span className="inline-flex items-center gap-2 mt-4 text-emerald-400 font-bold uppercase tracking-[0.2em] text-sm group/prize">
+                            <Trophy className="w-5 h-5 animate-pulse" />
+                            Total Prize Pool: ₹3,00,000
+                        </span>
                     </motion.p>
 
                     <motion.div
@@ -986,6 +1007,8 @@ const HeroSection = ({ shouldRender3D }: { shouldRender3D: boolean }) => {
                                 window.scrollTo({ top, behavior: 'smooth' });
                             }
                         }}>Pro Nite</ButtonPrimary>
+                        <ButtonPrimary onClick={() => router.push('/rulebook')}>Rulebook</ButtonPrimary>
+
                     </motion.div>
                 </motion.div>
 
@@ -1067,7 +1090,7 @@ const WelcomeSection = () => {
                 <RevealOnScroll className="space-y-8">
                     <StaggerTitle title="The Phenomenon" subtitle="Welcome to Varnothsava" />
                     <p className="text-lg leading-relaxed text-gray-400 font-light">
-                       <span className="text-emerald-400 font-bold">varnothsava</span> is the annual state-level techno-cultural fest of{" "}
+                        <span className="text-emerald-400 font-bold">Varnothsava</span> is the annual national-level techno-cultural fest of{" "}
                         <span className="text-emerald font-bold">
                             Shri Madhwa Vadiraja Institute of Technology &amp; Management, Bantakal
                         </span>
@@ -1080,7 +1103,7 @@ const WelcomeSection = () => {
                         The fest encourages students to showcase talent, challenge ideas, and collaborate beyond boundaries.
                         With high-energy events, artistic expression, and a spirit of healthy competition, Varnothsava stands as a  symbol of {" "}
                         <span className="text-emerald-400 font-bold">
-                           Creativity, Passion, and Celebration
+                            Creativity, Passion, and Celebration
                         </span>
                         — where technology meets tradition and ideas turn into unforgettable experiences.
                     </p>
@@ -1089,9 +1112,9 @@ const WelcomeSection = () => {
 
                     <div className="grid grid-cols-2 gap-6">
                         {[
-                            { label: "Colleges", value: "50+", icon: Users },
+                            { label: "Colleges", value: "100+", icon: Users },
                             { label: "Events", value: "50+", icon: Trophy },
-                            { label: "Artists", value: "25+", icon: Sparkles },
+                            { label: "Prize Pool", value: "3L+", icon: Banknote },
                             { label: "Sponsors", value: "30+", icon: Star },
                         ].map((stat, i) => (
                             <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-emerald-500/30 transition-colors cursor-pointer group/stat">
@@ -1190,10 +1213,20 @@ const timelineData = [
         title: "The Awakening",
         image: "/img/1.jpg",
         events: [
-            { time: "09:00 AM", name: "Inauguration Ceremony", type: "Main" },
-            { time: "11:00 AM", name: "Algorithm Roulette", type: "Tech" },
-            { time: "01:30 PM", name: "Vocal Solo (Prelims)", type: "Cultural" },
-            { time: "05:00 PM", name: "Evening Jam", type: "General" }
+            { name: "Inauguration Ceremony", type: "Main Event", status: "Not Started" },
+            { name: "Algorithm Roulette", type: "Technical", status: "Not Started" },
+            { name: "Prompt to Product", type: "Technical", status: "Not Started" },
+            { name: "Valorant Clash", type: "Gaming", status: "Not Started" },
+            { name: "BGMI Battlegrounds", type: "Gaming", status: "Not Started" },
+            { name: "Visionary Money", type: "Business", status: "Not Started" },
+            { name: "BHAVA TARANGA", type: "Cultural", status: "Not Started" },
+            { name: "Janapada nada", type: "Cultural", status: "Not Started" },
+            { name: "Thaka Dhimi Tha", type: "Cultural", status: "Not Started" },
+            { name: "Groove Gala", type: "Cultural", status: "Not Started" },
+            { name: "Speech of Smiles", type: "Cultural", status: "Not Started" },
+            { name: "Who Am I", type: "Cultural", status: "Not Started" },
+            { name: "Hands of Art", type: "Cultural", status: "Not Started" },
+            { name: "Anime Arena", type: "Cultural", status: "Not Started" }
         ]
     },
     {
@@ -1202,34 +1235,18 @@ const timelineData = [
         title: "Tech Zenith",
         image: "/img/technical-arena.jpg",
         events: [
-            { time: "09:30 AM", name: "Robo Soccer League", type: "Tech" },
-            { time: "11:00 AM", name: "Pitch-a-thon", type: "Tech" },
-            { time: "01:00 PM", name: "Valorant Clash", type: "Gaming" },
-            { time: "05:00 PM", name: "Tech Showdown", type: "Tech" }
-        ]
-    },
-    {
-        day: "Day 03",
-        date: "March 13",
-        title: "Cultural Pulse",
-        image: "/img/5.jpg",
-        events: [
-            { time: "09:00 AM", name: "Classical Dance", type: "Cultural" },
-            { time: "12:30 PM", name: "Fashion Show", type: "Cultural" },
-            { time: "03:30 PM", name: "Battle of Bands", type: "Cultural" },
-            { time: "05:00 PM", name: "Fusion Night", type: "Cultural" }
-        ]
-    },
-    {
-        day: "Day 04",
-        date: "March 14",
-        title: "Final Zenith",
-        image: "/img/DSC_0046.JPG",
-        events: [
-            { time: "11:00 AM", name: "Valedictory Ceremony", type: "Main" },
-            { time: "01:00 PM", name: "Mega Concert (Pro Nite)", type: "Main" },
-            { time: "04:30 PM", name: "Star Night", type: "Main" },
-            { time: "06:00 PM", name: "Closing Fireworks", type: "Main" }
+            { name: "Hack Hunt", type: "Technical", status: "Not Started" },
+            { name: "Pitch-a-thon", type: "Technical", status: "Not Started" },
+            { name: "Musical Marathon", type: "Cultural", status: "Not Started" },
+            { name: "Natures Palette", type: "Cultural", status: "Not Started" },
+            { name: "Kala Sangama", type: "Cultural", status: "Not Started" },
+            { name: "Slient Symphony", type: "Cultural", status: "Not Started" },
+            { name: "Bannada Prapancha", type: "Cultural", status: "Not Started" },
+            { name: "Art of Tune", type: "Cultural", status: "Not Started" },
+            { name: "Sketch Chronicles", type: "Cultural", status: "Not Started" },
+            { name: "JAM", type: "Cultural", status: "Not Started" },
+            { name: "Shutterverse", type: "Cultural", status: "Not Started" },
+            { name: "Cinecapture", type: "Cultural", status: "Not Started" }
         ]
     }
 ]
@@ -1245,21 +1262,27 @@ const HorizontalTimeline = () => {
         return () => window.removeEventListener('resize', handleResize)
     }, [])
 
-    const { scrollYProgress } = useScroll({
-        target: targetRef
-    })
-
-    const xRaw = useTransform(scrollYProgress, [0, 1], ["0%", isMobile ? "-82%" : "-70%"])
-    const x = useSpring(xRaw, { stiffness: 100, damping: 30, mass: 0.5 })
-
     return (
-        <section ref={targetRef} className="relative h-[400vh] bg-[#020202] gpu-accel">
-            <div className="sticky top-0 h-screen flex items-center overflow-hidden">
-                <div className="absolute top-4 left-4 md:top-8 md:left-12 z-40 pointer-events-none">
+        <section ref={targetRef} className="relative py-20 bg-[#020202] overflow-hidden">
+            {/* Background Image for the whole section */}
+            <div className="absolute inset-0 z-0 pointer-events-none opacity-20">
+                <Image
+                    src="/img/ancient_ruins_bg.png"
+                    alt="Section Background"
+                    fill
+                    className="object-cover"
+                    priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-[#020202] via-transparent to-[#020202]" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#020202] via-transparent to-[#020202]" />
+            </div>
+
+            <div className="container mx-auto px-4 mb-12">
+                <div className="relative z-40">
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         whileInView={{ opacity: 1, x: 0 }}
-                        className="bg-black/95 backdrop-blur-2xl px-5 py-4 md:px-6 md:py-5 rounded-xl md:rounded-2xl border border-emerald-500/30 shadow-[0_0_40px_rgba(0,0,0,0.8)] flex flex-col gap-1 md:gap-4"
+                        className="bg-black/95 backdrop-blur-md md:backdrop-blur-2xl px-5 py-4 md:px-6 md:py-5 rounded-xl md:rounded-2xl border border-emerald-500/30 shadow-[0_0_30px_rgba(0,0,0,0.6)] flex flex-col gap-1 md:gap-4"
                     >
                         <div className="flex flex-col gap-0 md:gap-1">
                             <span className="text-emerald-400 text-[9px] md:text-[10px] font-bold tracking-[0.3em] uppercase opacity-80">
@@ -1288,60 +1311,63 @@ const HorizontalTimeline = () => {
                         </div>
                     </motion.div>
                 </div>
+            </div>
 
-                {/* Animated Gradient Background for Liveliness */}
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-900/10 via-black to-purple-900/10 animate-pulse-slow opacity-30" />
-
-                <motion.div style={{ x }} className="flex gap-6 md:gap-16 px-6 md:px-[10vw] items-center pt-20 md:pt-0">
+            <div className="relative">
+                {/* Manual Horizontal Scroll Container - "Beast" Mobile Performance */}
+                <div className="flex gap-8 md:gap-16 overflow-x-auto overflow-y-hidden px-4 md:px-[10vw] pb-12 snap-x snap-mandatory custom-scrollbar-hide will-change-scroll items-center pt-8">
                     {timelineData.map((day, i) => (
-                        <div key={i} className="relative w-[88vw] md:w-[600px] h-[62vh] md:h-[75vh] flex-shrink-0 group perspective-1000">
+                        <motion.div
+                            key={i}
+                            initial={{ opacity: 0, y: 50 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8, delay: i * 0.1 }}
+                            className="relative w-[85vw] md:w-[600px] h-[70vh] md:h-[75vh] flex-shrink-0 snap-center group perspective-1000"
+                        >
                             {/* 3D Tilt Wrapper */}
                             <motion.div
                                 className="w-full h-full relative preserve-3d transition-all duration-500 ease-out"
-                                whileHover={{ rotateY: 12, rotateX: -5, scale: 1.02 }}
+                                whileHover={{ rotateY: 10, rotateX: -5, scale: 1.02 }}
                             >
-                                {/* Card Container with Animated Border */}
-                                <div className="w-full h-full bg-[#080808] rounded-[2.5rem] relative shadow-2xl isolate overflow-hidden">
+                                {/* Card Container with Dual Animated Borders */}
+                                <div className="w-full h-full bg-[#050505] rounded-[2.5rem] relative shadow-[0_0_50px_rgba(0,0,0,0.8)] isolate overflow-hidden border border-white/5 group-hover:bg-black transition-colors duration-500">
 
-                                    {/* Main Card Animated Border */}
-                                    <div className="absolute inset-[-2px] -z-10 rounded-[inherit] overflow-hidden">
-                                        <div className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent_0_340deg,#10b981_360deg)] animate-[spin_4s_linear_infinite]" />
+                                    {/* Layer 1: White Spinning Glow (Slow & Elegant) */}
+                                    <div className="absolute inset-[-6px] -z-20 rounded-[inherit] overflow-hidden opacity-60 group-hover:opacity-100 transition-opacity">
+                                        <div className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent_0_300deg,#ffffff_360deg)] animate-[spin_12s_linear_infinite]"
+                                            style={{ willChange: 'transform' }} />
                                     </div>
-                                    <div className="absolute inset-[1px] bg-[#080808] rounded-[2.4rem] -z-5" />
-
-                                    <div className="relative h-full flex flex-col rounded-[2.4rem] overflow-hidden">
-                                        {/* Image Section with its own Animated Border */}
-                                        <div className="relative w-[full] h-[45%] m-4 mb-0 rounded-[2rem] overflow-hidden isolate">
-                                            {/* Image Border Animation */}
-                                            <div className="absolute inset-[-2px] -z-10 rounded-[inherit] overflow-hidden">
-                                                <div className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent_0_340deg,#ffffff_360deg)] animate-[spin_3s_linear_infinite_reverse]" />
-                                            </div>
-                                            <div className="absolute inset-[2px] bg-[#080808] rounded-[1.9rem] -z-5" />
-
-                                            {/* Actual Image */}
-                                            <div className="absolute inset-[2px] rounded-[1.9rem] overflow-hidden">
-                                                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#080808] z-10" />
-                                                <Image
-                                                    src={day.image}
-                                                    alt={day.title}
-                                                    fill
-                                                    className="object-cover transition-transform duration-1000 group-hover:scale-110 opacity-80 group-hover:opacity-100"
-                                                    sizes="(max-width: 768px) 80vw, 400px"
-                                                    quality={40}
-                                                />
-                                                <div className="absolute top-4 left-4 md:top-6 md:left-6 z-20">
-                                                    <div className="text-[3.5rem] md:text-[5rem] leading-none font-[1000] text-white/10 select-none font-[family-name:var(--font-poppins)] group-hover:text-emerald-500/20 transition-colors">
-                                                        {day.day.split(' ')[1]}
-                                                    </div>
-                                                </div>
-                                            </div>
+                                    {/* Layer 2: Emerald Spinning Glow (Disabled on mobile for performance) */}
+                                    {!isMobile && (
+                                        <div className="absolute inset-[-6px] -z-20 rounded-[inherit] overflow-hidden opacity-40 group-hover:opacity-100 transition-opacity">
+                                            <div className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent_0_300deg,#10b981_360deg)] animate-[spin_20s_linear_infinite_reverse]"
+                                                style={{ willChange: 'transform' }} />
                                         </div>
+                                    )}
 
+                                    {/* Dark Backdrop */}
+                                    <div className="absolute inset-[1px] bg-[#030303] rounded-[2.4rem] -z-10" />
+
+                                    {/* Card Background Image (How it was previously) */}
+                                    <div className="absolute inset-0 z-0 opacity-40 group-hover:opacity-60 transition-opacity duration-1000">
+                                        <Image
+                                            src={day.image}
+                                            alt={day.title}
+                                            fill
+                                            className="object-cover"
+                                            priority
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-b from-[#030303] via-transparent to-[#030303]" />
+                                    </div>
+
+                                    <div className="relative h-full flex flex-col rounded-[2.4rem] overflow-hidden z-20">
                                         {/* Content Section */}
-                                        <div className="flex-1 pt-4 md:pt-6 px-6 md:px-8 pb-6 md:pb-8 flex flex-col relative z-20">
-                                            <h3 className="text-2xl md:text-4xl font-[900] text-white uppercase tracking-tighter mb-2 md:mb-4 font-[family-name:var(--font-poppins)] group-hover:text-emerald-400 transition-colors">
+                                        <div className="flex-1 pt-12 md:pt-16 px-6 md:px-12 pb-6 md:pb-8 flex flex-col relative">
+                                            <motion.h3
+                                                className="text-3xl md:text-5xl font-[1000] text-white uppercase tracking-tighter mb-4 font-[family-name:var(--font-poppins)] group-hover:text-emerald-400 transition-colors drop-shadow-[0_0_20px_rgba(0,0,0,0.8)]"
+                                            >
                                                 {day.title}
-                                            </h3>
+                                            </motion.h3>
                                             <div className="flex items-center gap-3 mb-4 md:mb-8">
                                                 <div className="px-4 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] md:text-xs font-bold uppercase tracking-widest group-hover:bg-emerald-500 group-hover:text-black transition-all shadow-[0_0_10px_rgba(16,185,129,0.2)]">
                                                     {day.date}
@@ -1351,10 +1377,21 @@ const HorizontalTimeline = () => {
 
                                             {/* Timeline Events List */}
                                             <div className={`flex-1 ${isMobile ? 'overflow-visible' : 'overflow-y-auto custom-scrollbar-hide'} space-y-0 relative pr-2`}>
-                                                <div className="absolute left-[7px] top-2 bottom-2 w-[2px] bg-white/10 group-hover:bg-emerald-500/20 transition-colors" />
+                                                <motion.div
+                                                    initial={{ height: 0 }}
+                                                    whileInView={{ height: "100%" }}
+                                                    transition={{ duration: 1.5, ease: "easeOut" }}
+                                                    className="absolute left-[7px] top-2 w-[2px] bg-emerald-500/20 z-0"
+                                                />
 
                                                 {day.events.map((ev, j) => (
-                                                    <div key={j} className="relative pl-7 md:pl-8 py-2 md:py-3 group/item transition-colors hover:bg-white/5 rounded-r-xl">
+                                                    <motion.div
+                                                        key={j}
+                                                        initial={{ opacity: 0, x: -20 }}
+                                                        whileInView={{ opacity: 1, x: 0 }}
+                                                        transition={{ duration: 0.8, delay: 0.1 * j + 0.5 }}
+                                                        className="relative pl-7 md:pl-8 py-2 md:py-3 group/item transition-colors hover:bg-white/5 rounded-r-xl"
+                                                    >
                                                         <div className="absolute left-[3px] top-[18px] md:top-[22px] w-2 h-2 md:w-2.5 md:h-2.5 rounded-full border-2 border-[#080808] bg-gray-600 group-hover/item:bg-emerald-500 transition-colors z-10 shadow-[0_0_10px_black] group-hover/item:shadow-[0_0_10px_#10b981]" />
                                                         <div className="flex justify-between items-center">
                                                             <div className="min-w-0 pr-2">
@@ -1362,19 +1399,19 @@ const HorizontalTimeline = () => {
                                                                 <div className="text-[9px] md:text-xs font-bold text-gray-500 uppercase tracking-wider mt-0.5">{ev.type}</div>
                                                             </div>
                                                             <div className="text-[10px] md:text-xs font-bold text-emerald-500/80 bg-emerald-500/5 px-2 py-1 rounded border border-emerald-500/10 group-hover/item:border-emerald-500 transition-colors shrink-0">
-                                                                {ev.time}
+                                                                {ev.status}
                                                             </div>
                                                         </div>
-                                                    </div>
+                                                    </motion.div>
                                                 ))}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </motion.div>
-                        </div>
+                        </motion.div>
                     ))}
-                </motion.div>
+                </div>
             </div>
         </section>
     )
@@ -1643,10 +1680,10 @@ const FAQ = () => {
 
     // ... existing FAQ data ...
     const faqs = [
-        { q: "What is Varnothsava?", a: "Varnothsava is the annual State-level techno-cultural fest of SMVITM." },
+        { q: "What is Varnothsava?", a: "Varnothsava is the annual National-level techno-cultural fest of SMVITM." },
         { q: "How do I register?", a: "You can register directly through this website by clicking the 'Register Now' button." },
         { q: "Is there a specific dress code?", a: "No , but we recommend comfortable clothing." },
-        { q: "Do you provide accommodation?", a: "No, accommodation is not provided for participants." },
+        { q: "Do you provide accommodation?", a: "Yes, accommodation is provided for participants." },
         { q: "Are participation certificates provided?", a: "All participants receive E-participation certificates. Winners receive Merit certificates." }
     ]
 

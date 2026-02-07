@@ -4,7 +4,8 @@
     --theme-primary: 25 100% 50%;
     --theme-secondary: 35 100% 55%;
     --theme-glow: 25 100% 45%;
-    --theme-dark: 25 80% 8%;
+    --theme-dark: 245 70% 3%;
+    /* Matches #03020d Gaming Background */
     position: relative;
     width: min(100%, 320px);
     aspect-ratio: 320 / 520;
@@ -15,21 +16,14 @@
     /* gpu-accel base */
 }
 
-/* Theme variations */
-.event-card-wrapper.bgmi {
-    /* Violet & Cyan - Cyberpunk Gaming Theme */
-    --theme-primary: 265 90% 60%;
-    --theme-secondary: 190 90% 50%;
-    --theme-glow: 265 100% 50%;
-    --theme-dark: 260 60% 6%;
-}
-
+/* Theme variations - Unified Purple/Violet Gaming Theme */
+.event-card-wrapper.bgmi,
 .event-card-wrapper.valorant {
-    /* Deep Purple & Pink - Valorant Theme (Adjusted for Background Match) */
-    --theme-primary: 280 85% 60%;
-    --theme-secondary: 320 90% 60%;
-    --theme-glow: 280 100% 55%;
-    --theme-dark: 270 50% 6%;
+    --theme-primary: 265 90% 60%;
+    /* Violet */
+    --theme-secondary: 190 90% 60%;
+    /* Cyan */
+    --theme-glow: 265 100% 50%;
 }
 
 /* Outer geometric frames */
@@ -74,7 +68,7 @@
     height: 100%;
     background: linear-gradient(160deg,
             hsl(var(--theme-dark)) 0%,
-            hsl(230 40% 6%) 40%,
+            hsl(245 40% 6%) 40%,
             hsl(var(--theme-dark)) 100%);
     clip-path: polygon(20px 0, calc(100% - 20px) 0,
             100% 20px, 100% calc(100% - 40px),
@@ -288,8 +282,8 @@
     font-size: clamp(0.7rem, 2vw, 0.9rem);
     font-weight: 800;
     letter-spacing: 0.3em;
-    color: hsl(230 40% 6%);
-    text-shadow: 0 1px 2px hsl(0 0% 100% / 0.2);
+    color: hsl(0 0% 100%);
+    text-shadow: 0 0 10px rgba(var(--theme-glow), 0.5), 0 1px 2px hsl(0 0% 100% / 0.2);
 }
 
 /* Character container */
@@ -538,8 +532,6 @@
 /* Actions container for dual buttons */
 .actions-container {
     display: flex;
-    /* temp for disabling registration */
-    /* justify-content: center; */
     align-items: center;
     gap: 12px;
     margin: 10px 20px 25px;

@@ -495,22 +495,29 @@ const FlipNumber = ({ value }: { value: number }) => {
     const formatted = String(value).padStart(2, '0');
 
     return (
-        <div className="flex gap-2">
+        <div className="flex gap-1 md:gap-2">
             {formatted.split('').map((digit, i) => (
-                <div key={i} className="relative w-[40px] h-[60px] md:w-[60px] md:h-[90px] perspective-[1000px]">
+                <div key={i} className="relative w-[32px] h-[50px] sm:w-[40px] sm:h-[60px] md:w-[60px] md:h-[90px] perspective-[1000px]">
                     <AnimatePresence mode="popLayout" initial={false}>
                         <motion.div
                             key={digit}
-                            initial={{ rotateX: 90, opacity: 0 }}
-                            animate={{ rotateX: 0, opacity: 1 }}
-                            exit={{ rotateX: -90, opacity: 0 }}
+                            initial={{ rotateX: 90, opacity: 0, scale: 0.9 }}
+                            animate={{ rotateX: 0, opacity: 1, scale: 1 }}
+                            exit={{ rotateX: -90, opacity: 0, scale: 0.9 }}
                             transition={{
-                                duration: 0.8,
-                                ease: [0.4, 0, 0.2, 1], // Smooth mechanical timing
-                                opacity: { duration: 0.3 }
+                                type: "spring",
+                                stiffness: 300,
+                                damping: 30,
+                                mass: 1,
+                                opacity: { duration: 0.2 }
                             }}
-                            style={{ transformStyle: "preserve-3d", transformOrigin: "center center" }}
-                            className="absolute inset-0 bg-[#3c2a21] border-2 border-[#cd5c09]/40 rounded-lg flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.5)] overflow-hidden"
+                            style={{
+                                transformStyle: "preserve-3d",
+                                transformOrigin: "center center",
+                                backfaceVisibility: "hidden",
+                                willChange: "transform, opacity"
+                            }}
+                            className="absolute inset-0 bg-[#3c2a21] border-2 border-[#cd5c09]/40 rounded-lg flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.5)] overflow-hidden transform-gpu"
                         >
                             {/* Mechanical Split Line */}
                             <div className="absolute inset-x-0 top-[calc(50%-1px)] h-[2px] bg-black/80 z-30 shadow-sm" />
@@ -519,7 +526,7 @@ const FlipNumber = ({ value }: { value: number }) => {
                             <div className="absolute top-[calc(50%-3px)] left-1 w-1.5 h-1.5 bg-[#cd5c09]/60 rounded-full z-40 border border-black/20" />
                             <div className="absolute top-[calc(50%-3px)] right-1 w-1.5 h-1.5 bg-[#cd5c09]/60 rounded-full z-40 border border-black/20" />
 
-                            <span className={cn("relative z-20 text-3xl md:text-5xl text-[#f2e8cf] font-black leading-none drop-shadow-md", bebasNeue.className)}>
+                            <span className={cn("relative z-20 text-2xl sm:text-3xl md:text-5xl text-[#f2e8cf] font-black leading-none drop-shadow-md", bebasNeue.className)}>
                                 {digit}
                             </span>
 
@@ -561,18 +568,18 @@ const RaceCountdown = () => {
     const TimeUnit = ({ value, label }: { value: number, label: string }) => (
         <div className="relative group flex flex-col items-center">
             <FlipNumber value={value} />
-            <span className={cn("mt-4 text-[10px] md:text-xs uppercase tracking-[0.4em] text-[#cd5c09] font-black italic drop-shadow-sm", specialElite.className)}>{label}</span>
+            <span className={cn("mt-2 md:mt-4 text-[8px] sm:text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.4em] text-[#cd5c09] font-black italic drop-shadow-sm text-center", specialElite.className)}>{label}</span>
 
-            {/* Connecting Hardware */}
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-full flex justify-between px-2">
-                <div className="w-2 h-2 bg-[#cd5c09] rounded-full border border-black/40" />
-                <div className="w-2 h-2 bg-[#cd5c09] rounded-full border border-black/40" />
+            {/* Connecting Hardware - Scaled for mobile */}
+            <div className="absolute -top-2 md:-top-3 left-1/2 -translate-x-1/2 w-full flex justify-between px-1 md:px-2">
+                <div className="w-1 md:w-2 h-1 md:h-2 bg-[#cd5c09] rounded-full border border-black/40" />
+                <div className="w-1 md:w-2 h-1 md:h-2 bg-[#cd5c09] rounded-full border border-black/40" />
             </div>
         </div>
     );
 
     return (
-        <div className="flex justify-center gap-6 md:gap-12 mt-20 z-20">
+        <div className="flex justify-center gap-3 sm:gap-6 md:gap-12 mt-12 md:mt-20 z-20">
             <TimeUnit value={timeLeft.days} label="Days" />
             <TimeUnit value={timeLeft.hours} label="Hours" />
             <TimeUnit value={timeLeft.minutes} label="Mins" />

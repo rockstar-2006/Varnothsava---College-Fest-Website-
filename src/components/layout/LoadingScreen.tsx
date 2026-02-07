@@ -334,9 +334,10 @@ function LoadingContent() {
     const Icon = themeConfig.icon
     const AccentIcon = themeConfig.accentIcon
 
-    if (!visible) return null
+    if (!visible || pathname === '/rulebook') return null
 
     return (
+
         <AnimatePresence>
             <motion.div
                 className="fixed inset-0 z-[11000] flex items-center justify-center p-4 md:p-12 overflow-hidden select-none"

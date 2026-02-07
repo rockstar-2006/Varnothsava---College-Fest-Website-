@@ -39,13 +39,18 @@ const AnimatedBorderCard = ({ children, className = "", noPadding = false, hover
 
     return (
         <div className={`relative group p-[1px] rounded-[1.5rem] md:rounded-[2rem] overflow-hidden ${className} gpu-accel`}>
-            {/* The Animated Border Layer - Reduced intensity for performance */}
-            <div className={`absolute inset-[-200%] md:inset-[-1000%] ${isMobile ? 'animate-[spin_15s_linear_infinite]' : 'animate-[spin_10s_linear_infinite]'} bg-[conic-gradient(from_90deg_at_50%_50%,#00ff9d_0%,#00f2ff_25%,#10b981_50%,#00f2ff_75%,#00ff9d_100%)] opacity-20 group-hover:opacity-40 transition-opacity duration-1000`} />
+            {/* The Animated Border Layer - Disabled on mobile for 60fps scroll */}
+            {!isMobile && (
+                <div className="absolute inset-[-1000%] animate-[spin_10s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#00ff9d_0%,#00f2ff_25%,#10b981_50%,#00f2ff_75%,#00ff9d_100%)] opacity-20 group-hover:opacity-40 transition-opacity duration-1000 will-change-transform" />
+            )}
+            {isMobile && (
+                <div className="absolute inset-0 border border-emerald-500/20 rounded-[inherit]" />
+            )}
 
             {/* The Glass Content Layer */}
             <div className={`
-                relative w-full h-full ${isMobile ? 'backdrop-blur-lg' : 'backdrop-blur-2xl'} rounded-[1.45rem] md:rounded-[1.95rem] bg-[#08090f]/90 md:bg-[#08090f]/95 
-                shadow-[0_12px_40px_-10px_rgba(0,0,0,0.8)] transition-all duration-500
+                relative w-full h-full ${isMobile ? 'backdrop-blur-none bg-[#08090f]' : 'backdrop-blur-xl bg-[#08090f]/95'} rounded-[1.45rem] md:rounded-[1.95rem] 
+                shadow-[0_12px_40px_-10px_rgba(0,0,0,0.8)] transition-transform duration-500 transform-gpu translate-z-0
                 ${noPadding ? '' : 'p-5 md:p-8 lg:p-10'}
             `}>
                 {children}
@@ -56,7 +61,7 @@ const AnimatedBorderCard = ({ children, className = "", noPadding = false, hover
 
 // --- HIGH-ENERGY ANIMATED BACKGROUND ---
 
-const BackgroundElements = () => {
+const BackgroundElements = React.memo(() => {
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
     const [isMounted, setIsMounted] = useState(false)
     const [isMobile, setIsMobile] = useState(false)
@@ -77,7 +82,7 @@ const BackgroundElements = () => {
     }, [isMobile])
 
     return (
-        <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-[#03050a]">
+        <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-[#03050a] transform-gpu">
             {/* Animated Mesh Gradient Layer */}
             <div className="absolute inset-0 opacity-40">
                 <motion.div
@@ -88,7 +93,7 @@ const BackgroundElements = () => {
                         y: ['-10%', '10%', '-10%'],
                     }}
                     transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-                    className={`absolute top-[-30%] left-[-30%] w-[120%] h-[120%] bg-emerald-500/20 rounded-full ${isMobile ? 'blur-[100px]' : 'blur-[180px]'}`}
+                    className={`absolute top-[-30%] left-[-30%] w-[120%] h-[120%] bg-emerald-500/20 rounded-full ${isMobile ? 'blur-[100px]' : 'blur-[180px]'} will-change-transform`}
                 />
                 {!isMobile && (
                     <motion.div
@@ -99,27 +104,27 @@ const BackgroundElements = () => {
                             y: ['10%', '-10%', '10%'],
                         }}
                         transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
-                        className="absolute bottom-[-30%] right-[-20%] w-[100%] h-[100%] bg-blue-600/15 rounded-full blur-[180px]"
+                        className="absolute bottom-[-30%] right-[-20%] w-[100%] h-[100%] bg-blue-600/15 rounded-full blur-[180px] will-change-transform"
                     />
                 )}
             </div>
 
-            {/* Interactive Neural Glow - Disabled on Mobile for performance */}
+            {/* Interactive Neural Glow - Disabled on Mobile */}
             {!isMobile && (
                 <motion.div
                     animate={{
                         x: mousePos.x - 300,
                         y: mousePos.y - 300,
                     }}
-                    transition={{ type: 'spring', damping: 40, stiffness: 40, mass: 1 }}
-                    className="absolute w-[600px] h-[600px] bg-emerald-400/[0.08] rounded-full blur-[140px]"
+                    transition={{ type: 'spring', damping: 50, stiffness: 30, mass: 1 }}
+                    className="absolute w-[600px] h-[600px] bg-emerald-400/[0.08] rounded-full blur-[140px] will-change-transform"
                 />
             )}
 
-            {/* Micro-Particle Field - Reduced for mobile */}
-            {isMounted && (
+            {/* Micro-Particle Field - Disabled on mobile */}
+            {isMounted && !isMobile && (
                 <div className="absolute inset-0">
-                    {[...Array(isMobile ? 8 : 30)].map((_, i) => (
+                    {[...Array(12)].map((_, i) => (
                         <motion.div
                             key={i}
                             initial={{
@@ -128,32 +133,35 @@ const BackgroundElements = () => {
                                 scale: Math.random() * 0.5 + 0.5
                             }}
                             animate={{
-                                y: ['-10%', '110%'],
-                                opacity: [0, 0.6, 0]
+                                y: ['-5%', '105%'],
+                                opacity: [0, 0.4, 0]
                             }}
                             transition={{
                                 duration: Math.random() * 10 + 15,
                                 repeat: Infinity,
                                 ease: "linear",
-                                delay: Math.random() * 10
+                                delay: Math.random() * 5
                             }}
-                            className="absolute w-1 h-1 bg-emerald-400/30 rounded-full blur-[1px]"
+                            className="absolute w-1 h-1 bg-emerald-400/20 rounded-full blur-[1px] will-change-transform"
                         />
                     ))}
                 </div>
             )}
 
-            {/* Dynamic Scanning Rays - Simplified on Mobile */}
-            <motion.div
-                animate={{
-                    left: ['-50%', '150%']
-                }}
-                transition={{ duration: isMobile ? 20 : 12, repeat: Infinity, ease: "easeInOut" }}
-                className={`absolute top-0 w-[1px] md:w-[2px] h-full bg-emerald-500/10 skew-x-[45deg] ${isMobile ? 'blur-xl' : 'blur-2xl'}`}
-            />
+            {/* Dynamic Scanning Rays - Disabled on mobile */}
+            {!isMobile && (
+                <motion.div
+                    animate={{
+                        left: ['-20%', '120%']
+                    }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                    className="absolute top-0 w-[2px] h-full bg-emerald-500/10 skew-x-[45deg] blur-xl will-change-transform"
+                />
+            )}
         </div>
     )
-}
+})
+BackgroundElements.displayName = 'BackgroundElements'
 
 // --- HELPER COMPONENTS ---
 
@@ -230,10 +238,11 @@ export default function ProfilePage() {
     const { scrollY } = useScroll()
 
     // Convert absolute scroll to visible transforms
-    const headerY = useTransform(scrollY, [0, 400], [0, -100])
-    const contentY = useTransform(scrollY, [0, 600], [0, -60])
-    const rotationX = useTransform(scrollY, [0, 1000], [0, 8])
-    const backgroundOpacity = useTransform(scrollY, [0, 500], [0.6, 0.2])
+    // Convert absolute scroll to visible transforms - ONLY ON DESKTOP
+    const headerY = useTransform(scrollY, [0, 400], [0, isMobile ? 0 : -100])
+    const contentY = useTransform(scrollY, [0, 600], [0, isMobile ? 0 : -60])
+    const rotationX = useTransform(scrollY, [0, 1000], [0, isMobile ? 0 : 8])
+    const backgroundOpacity = useTransform(scrollY, [0, 500], [0.6, 0.4])
 
     const containerVariants: Variants = {
         hidden: { opacity: 0 },
@@ -249,20 +258,18 @@ export default function ProfilePage() {
     const itemVariants: Variants = {
         hidden: {
             opacity: 0,
-            y: isMobile ? 30 : 100,
-            filter: isMobile ? 'none' : 'blur(20px)',
-            scale: 0.95
+            y: isMobile ? 10 : 100,
+            scale: isMobile ? 1 : 0.95
         },
         visible: {
             opacity: 1,
             y: 0,
-            filter: 'blur(0px)',
             scale: 1,
             transition: {
                 type: 'spring',
-                damping: isMobile ? 25 : 20,
-                stiffness: isMobile ? 120 : 80,
-                duration: isMobile ? 0.6 : 1.2,
+                damping: isMobile ? 30 : 20,
+                stiffness: isMobile ? 150 : 80,
+                duration: isMobile ? 0.3 : 1.2,
                 willChange: 'transform, opacity'
             } as any
         }
@@ -296,8 +303,8 @@ export default function ProfilePage() {
                 variants={containerVariants}
                 initial="hidden"
                 whileInView="visible"
-                viewport={{ once: true, margin: "-50px" }}
-                className="relative z-10 max-w-6xl mx-auto pt-10 md:pt-32 pb-0 px-4 md:px-8 root-container gpu-accel"
+                viewport={{ once: true, margin: "-20px" }}
+                className="relative z-10 max-w-6xl mx-auto pt-10 md:pt-32 pb-40 px-4 md:px-8 root-container transform-gpu translate-z-0"
                 style={{ perspective: 1500 }}
             >
                 {/* --- CONTROL CENTER HEADER --- */}
@@ -585,7 +592,7 @@ export default function ProfilePage() {
                                 </p>
                                 <div className="mt-6 md:mt-10 flex items-center gap-3 md:gap-4 text-slate-300 relative z-10 py-3 md:py-4 px-4 md:px-6 bg-white/5 rounded-xl md:rounded-2xl border border-white/10">
                                     <MapPin size={16} className="text-emerald-500" />
-                                    <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest">State Level Techno-Cultural Fest</span>
+                                    <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest">National Level Techno-Cultural Fest</span>
                                 </div>
                                 <div className="absolute -top-20 -right-20 w-64 md:w-96 h-64 md:h-96 bg-emerald-500/[0.03] blur-[120px] pointer-events-none" />
                             </div>

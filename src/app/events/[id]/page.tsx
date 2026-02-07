@@ -18,7 +18,8 @@ import {
     Phone,
     Mail,
     Globe,
-    Clock
+    Clock,
+    MessageCircle
 } from 'lucide-react'
 import { missions } from '@/data/missions'
 import { useApp } from '@/context/AppContext'
@@ -31,6 +32,7 @@ import { cn } from '@/lib/utils'
 const getTheme = (type: string) => {
     if (type === 'Cultural') return 'amber'
     if (type === 'Gaming') return 'gaming'
+    if (type === 'Business') return 'sky'
     return 'emerald'
 }
 
@@ -172,14 +174,28 @@ export default function EventDetailsPage() {
             router.push('/notify')
         }
     }
+    const openWhatsApp = (phone?: string) => {
+        if (!phone) {
+            alert('Coordinator contact not available')
+            return
+        }
+
+        const message = encodeURIComponent(
+            `Hi, I have a query regarding the event "${mission.title}" at Varnothsava.`
+        )
+
+        window.open(`https://wa.me/${phone}?text=${message}`, '_blank')
+    }
+
 
     const themeColor = mission ? (
         mission.type === 'Cultural' ? 'amber' :
-            (mission.type === 'Gaming' ? 'gaming' : 'emerald')
+            mission.type === 'Business' ? 'sky' :
+                (mission.type === 'Gaming' ? 'gaming' : 'emerald')
     ) : 'emerald'
 
     const twTheme = getTailwindTheme(themeColor)
-    const primaryGlow = themeColor === 'amber' ? 'rgba(245, 158, 11, 0.5)' : (themeColor === 'gaming' ? 'rgba(139, 92, 246, 0.5)' : 'rgba(16, 185, 129, 0.5)')
+    const primaryGlow = themeColor === 'amber' ? 'rgba(245, 158, 11, 0.5)' : (themeColor === 'gaming' ? 'rgba(139, 92, 246, 0.5)' : (themeColor === 'sky' ? 'rgba(14, 165, 233, 0.5)' : 'rgba(16, 185, 129, 0.5)'))
 
     return (
         <main className="min-h-screen bg-[#020202] text-white relative overflow-x-hidden font-sans" style={{ contain: 'layout paint' }}>
@@ -190,10 +206,10 @@ export default function EventDetailsPage() {
 
             {/* Scroll Progress Indicator - GPU Optimized */}
             <motion.div
-                className={`fixed top-0 left-0 right-0 h-1 bg-gradient-to-r ${twTheme === 'amber' ? 'from-amber-500 to-amber-300' : (twTheme === 'violet' ? 'from-violet-500 to-violet-300' : 'from-emerald-500 to-emerald-300')} z-[100] origin-left`}
+                className={`fixed top-0 left-0 right-0 h-1 bg-gradient-to-r ${twTheme === 'amber' ? 'from-amber-500 to-amber-300' : (twTheme === 'violet' ? 'from-violet-500 to-violet-300' : (twTheme === 'sky' ? 'from-sky-500 to-sky-300' : 'from-emerald-500 to-emerald-300'))} z-[100] origin-left`}
                 style={{
                     scaleX: scrollYProgress,
-                    boxShadow: `0 0 20px ${themeColor === 'amber' ? 'rgba(245, 158, 11, 0.8)' : (themeColor === 'gaming' ? 'rgba(139, 92, 246, 0.8)' : 'rgba(16, 185, 129, 0.8)')}`
+                    boxShadow: `0 0 20px ${themeColor === 'amber' ? 'rgba(245, 158, 11, 0.8)' : (themeColor === 'gaming' ? 'rgba(139, 92, 246, 0.8)' : (themeColor === 'sky' ? 'rgba(14, 165, 233, 0.8)' : 'rgba(16, 185, 129, 0.8)'))}`
                 }}
             />
 
@@ -299,6 +315,7 @@ export default function EventDetailsPage() {
                             <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
+                                onClick={() => router.push('/rulebook')}
                                 className="py-3 md:py-4 bg-white/[0.03] border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all rounded-xl flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest backdrop-blur-md"
                             >
                                 <Download size={14} />
@@ -368,7 +385,7 @@ export default function EventDetailsPage() {
                         >
                             <div className="flex items-center gap-3">
                                 <Info size={18} className={`text-${twTheme}-500`} />
-                                <h2 className="text-sm md:text-base font-black uppercase tracking-widest">MISSION BRIEF</h2>
+                                <h2 className="text-sm md:text-base font-black uppercase tracking-widest">ABOUT THE EVENT</h2>
                             </div>
                             <p className="text-base md:text-lg text-white/80 font-medium leading-relaxed font-mono">
                                 {mission.description}
@@ -537,17 +554,29 @@ export default function EventDetailsPage() {
                                             </p>
                                         </div>
 
-                                        <div className="flex gap-4">
+                                        <div className="flex gap-4 items-center">
+                                            {/* Call */}
                                             <a
-                                                href={`tel:${mission.coordinatorsContact?.[idx] || '#'}`}
+                                                href={`tel:${mission.coordinatorsContact?.[idx]}`}
                                                 className="text-white/40 hover:text-emerald-500 transition-colors"
                                             >
                                                 <Phone size={16} />
                                             </a>
-                                            <a href="#" className="text-white/40 hover:text-emerald-500 transition-colors">
+
+                                            {/* WhatsApp */}
+                                            <button
+                                                onClick={() => openWhatsApp(mission.coordinatorsContact?.[idx])}
+                                                className="text-white/40 hover:text-green-500 transition-colors"
+                                            >
+                                                <MessageCircle size={16} />
+                                            </button>
+
+                                            {/* Email (optional later) */}
+                                            <button className="text-white/40 hover:text-sky-500 transition-colors">
                                                 <Mail size={16} />
-                                            </a>
+                                            </button>
                                         </div>
+
                                     </div>
                                 </TechContentCard>
                             </motion.div>
