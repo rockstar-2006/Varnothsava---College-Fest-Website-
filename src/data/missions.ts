@@ -1,7 +1,7 @@
 export interface Event {
     id: string
     title: string
-    type: 'Technical' | 'Cultural' | 'Gaming'
+    type: 'Technical' | 'Cultural' | 'Gaming' | 'Business'
     category?: string
     description: string
     rules: string[]
