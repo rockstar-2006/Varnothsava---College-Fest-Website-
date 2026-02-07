@@ -2,7 +2,8 @@
 @import "tailwindcss";
 
 html {
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
+    /* Managed by Lenis to prevent jitter */
     overflow-x: hidden;
 }
 
@@ -110,8 +111,11 @@ body {
 /* Hardware Acceleration */
 .gpu-accel {
     transform: translateZ(0);
+    -webkit-transform: translateZ(0);
     backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
     perspective: 1000px;
+    -webkit-perspective: 1000px;
     will-change: transform, opacity;
 }
 
@@ -120,7 +124,9 @@ body {
     .gpu-accel {
         will-change: transform, opacity;
         transform: translateZ(0);
+        -webkit-transform: translateZ(0);
         backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
     }
 
     /* Disable intensive blur calculations during active scrolling */
@@ -135,12 +141,15 @@ body {
 
 .buttery-smooth {
     transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    -webkit-transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
     will-change: transform, opacity;
 }
 
 .interactive-spring {
     transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    -webkit-transition: -webkit-transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
+
 
 .smooth-scroll-fix {
     scroll-behavior: smooth;

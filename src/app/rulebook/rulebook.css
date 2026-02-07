@@ -1,0 +1,366 @@
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600&display=swap");
+
+.rulebook-page-container {
+    width: 100vw;
+    height: 100vh;
+    background-size: cover;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: "Bricolage Grotesque", sans-serif;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: none;
+}
+
+.book-container-relative {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+.book-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    perspective: 2000px;
+    -webkit-perspective: 2000px;
+    z-index: 10;
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+}
+
+
+/* Glassmorphism Button Styles */
+.nav-button {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 20;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.nav-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 0 15px rgba(255, 255, 215, 0.2);
+}
+
+.left-button {
+    left: 40px;
+}
+
+.right-button {
+    right: 40px;
+}
+
+.zoom-controls {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 8px 20px;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    z-index: 20;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.zoom-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.zoom-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    transform: scale(1.1);
+}
+
+.zoom-btn svg {
+    width: 22px;
+    height: 22px;
+}
+
+.zoom-level {
+    color: rgba(255, 255, 255, 0.9);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    min-width: 45px;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+@media (max-width: 1024px) or (orientation: portrait) {
+    .book-container-relative {
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        padding: 0;
+    }
+
+    .book-wrapper {
+        width: 100%;
+        height: auto;
+        max-height: 80vh;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: visible;
+        transform-origin: center center;
+    }
+
+    .page-image {
+        object-fit: contain;
+        width: 100%;
+        height: 100%;
+    }
+
+    .zoom-controls {
+        bottom: 15px;
+        z-index: 150;
+    }
+
+    .nav-button {
+        top: auto;
+        bottom: 20px;
+        width: 44px;
+        height: 44px;
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        transform: none;
+    }
+
+    .nav-button:hover {
+        transform: scale(1.1);
+    }
+
+    .left-button {
+        left: 20px;
+    }
+
+    .right-button {
+        right: 20px;
+    }
+}
+
+
+
+
+.flip-book {
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(4px);
+    border-radius: 5px;
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+}
+
+.page {
+    background-color: transparent;
+    overflow: hidden;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+.page-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    padding: 0 !important;
+    background-color: transparent;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+.page-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    /* Changed to contain for better aspect ratio handling */
+    display: block;
+    image-rendering: -webkit-optimize-contrast;
+    /* Sharpness for mobile */
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+}
+
+
+
+.page:first-child {
+    box-shadow: inset -5px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.page:last-child {
+    box-shadow: inset 5px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.stf__parent {
+    cursor: grab;
+}
+
+.stf__parent:active {
+    cursor: grabbing;
+}
+
+.particle {
+    position: absolute;
+    bottom: -10%;
+    left: calc(var(--i) * 100%);
+    width: 4px;
+    height: 4px;
+    background: rgba(255, 215, 0, 0.6);
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.8), 0 0 20px rgba(255, 255, 255, 0.5);
+    animation: float-particle 15s infinite linear;
+    animation-delay: calc(var(--i) * -15s);
+    opacity: 0;
+}
+
+.particle:nth-child(even) {
+    background: rgba(0, 191, 255, 0.6);
+    box-shadow: 0 0 10px rgba(0, 191, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.5);
+    animation-duration: 18s;
+}
+
+@keyframes float-particle {
+    0% {
+        bottom: -10%;
+        transform: translateX(0) scale(0);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+        transform: translateX(var(--tx)) scale(1);
+    }
+
+    50% {
+        transform: translateX(calc(var(--tx) * -1)) scale(1.2);
+    }
+
+    80% {
+        opacity: 0.8;
+    }
+
+    100% {
+        bottom: 110%;
+        transform: translateX(var(--ty)) scale(0);
+        opacity: 0;
+    }
+}
+
+.stf__parent {
+    overflow: visible !important;
+}
+
+/* Download Button Styles */
+.download-brochure-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.download-btn-inner {
+    background: rgba(16, 185, 129, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #10b981;
+    padding: 12px 24px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    transition: all 0.3s ease;
+    z-index: 2;
+}
+
+.download-brochure-btn:hover .download-btn-inner {
+    background: rgba(16, 185, 129, 0.4);
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
+    color: #fff;
+}
+
+.pulse-ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50px;
+    border: 2px solid rgba(16, 185, 129, 0.5);
+    animation: pulse-animation 2s infinite;
+    z-index: 1;
+}
+
+@keyframes pulse-animation {
+    0% {
+        transform: scale(0.9);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: scale(1.4);
+        opacity: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .download-brochure-btn {
+        top: 20px !important;
+        right: 20px !important;
+    }
+
+    .back-btn {
+        top: 20px !important;
+        left: 20px !important;
+    }
+
+    .download-btn-inner {
+        padding: 8px 14px;
+        border-radius: 50px;
+    }
+}

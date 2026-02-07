@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react'
 import { motion, useSpring, useMotionValue, AnimatePresence } from 'framer-motion'
+import { usePathname } from 'next/navigation'
 
 export function CustomCursor() {
     const [isHovering, setIsHovering] = useState(false)
@@ -70,7 +71,9 @@ export function CustomCursor() {
         }
     }, [cursorX, cursorY, isVisible, isMobile])
 
-    if (isMobile) return null
+    const pathname = usePathname()
+
+    if (isMobile || pathname === '/rulebook') return null
 
     return (
         <div className="fixed inset-0 pointer-events-none z-[99999] overflow-hidden">

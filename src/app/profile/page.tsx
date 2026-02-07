@@ -568,7 +568,7 @@ export default function ProfilePage() {
                                 </p>
                                 <div className="mt-6 md:mt-10 flex items-center gap-3 md:gap-4 text-slate-300 relative z-10 py-3 md:py-4 px-4 md:px-6 bg-white/5 rounded-xl md:rounded-2xl border border-white/10">
                                     <MapPin size={16} className="text-emerald-500" />
-                                    <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest">State Level Techno-Cultural Fest</span>
+                                    <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest">National Level Techno-Cultural Fest</span>
                                 </div>
                                 <div className="absolute -top-20 -right-20 w-64 md:w-96 h-64 md:h-96 bg-emerald-500/[0.03] blur-[120px] pointer-events-none" />
                             </div>

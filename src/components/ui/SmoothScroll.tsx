@@ -60,7 +60,7 @@ export const SmoothScroll = ({ children }: SmoothScrollProps) => {
         reqIdRef.current = requestAnimationFrame(raf);
 
         // RESET SCROLL ON ROUTE CHANGE
-        lenisInstance.scrollTo(0, { immediate: true });
+        lenisInstance.scrollTo(0, { immediate: false, duration: 1.5 });
 
         return () => {
             if (reqIdRef.current) cancelAnimationFrame(reqIdRef.current);

@@ -21,6 +21,13 @@ export interface UserData {
     idCardUrl?: string
 }
 
+
+export interface PageTheme {
+    name: string
+    rgb: string
+    primary: string
+}
+
 interface Event {
     id: string
     title: string
@@ -49,20 +56,8 @@ interface AppContextType {
     mountUser: () => Promise<void>,
     isSiteLoaded: boolean,
     setIsSiteLoaded: (val: boolean) => void,
-    pageTheme: PageTheme,
-    setPageTheme: (theme: PageTheme) => void
-}
-
-export type PageTheme = {
-    name: string;
-    rgb: string;
-    primary: string;
-}
-
-const DEFAULT_THEME: PageTheme = {
-    name: 'DEFAULT',
-    rgb: '16, 185, 129', // Emerald
-    primary: '#10b981'
+    pageTheme: PageTheme | null,
+    setPageTheme: (theme: PageTheme | any) => void
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -110,13 +105,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const [userData, setUserData] = useState<UserData | null>(null)
     const [needsOnboarding, setNeedsOnboarding] = useState(false)
     const [isSiteLoaded, setIsSiteLoaded] = useState(false)
-    const [pageTheme, setPageTheme] = useState<PageTheme>(DEFAULT_THEME)
+    const [pageTheme, setPageTheme] = useState<PageTheme | null>(null)
     const router = useRouter();
-
-    // Sync state with CSS Variable for global access
-    useEffect(() => {
-        document.documentElement.style.setProperty('--nav-current-theme', pageTheme.rgb);
-    }, [pageTheme]);
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((user) => {

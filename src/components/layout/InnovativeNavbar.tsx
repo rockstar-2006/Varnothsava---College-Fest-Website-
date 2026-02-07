@@ -79,9 +79,13 @@ export function InnovativeNavbar() {
     }, []) // Empty dependency array: listener is set up once
 
     // Dynamic Theme Logic - Use Context
-    const themeRgb = pageTheme.rgb
+    const themeRgb = pageTheme?.rgb || '16, 185, 129'
+
+    if (pathname === '/rulebook') return null;
 
     return (
+
+
         <>
             <AnimatePresence mode="wait">
                 <motion.div
