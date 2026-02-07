@@ -1081,7 +1081,7 @@ const WelcomeSection = () => {
                                 Unity in Diversity
                             </h3>
                             <p className="text-emerald-300 transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 delay-100">
-                                Celebrating talent across the State.
+                                Celebrating talent across the Nation.
                             </p>
                         </div>
                     </motion.div>
@@ -1195,7 +1195,7 @@ const AboutFestSection = () => {
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
                         <div className="absolute bottom-8 left-8 right-8">
                             <div className="text-2xl font-bold text-white mb-2">Unity in Diversity</div>
-                            <div className="text-sm text-gray-300">Celebrating talent across the State.</div>
+                            <div className="text-sm text-gray-300">Celebrating talent across the Nation.</div>
                         </div>
                     </motion.div>
                 </RevealOnScroll>

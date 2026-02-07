@@ -877,7 +877,7 @@ function LoadingContent() {
                 {/* Outer HUD Decorative Elements */}
                 <div className="fixed top-8 left-1/2 -translate-x-1/2 flex items-center gap-4 opacity-40 z-[12000]">
                     <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: themeConfig.color }} />
-                    <span className="text-white text-[9px] font-black tracking-[0.5em] uppercase italic">State_Festival // Live_Feed</span>
+                    <span className="text-white text-[9px] font-black tracking-[0.5em] uppercase italic">National_Festival // Live_Feed</span>
                 </div>
 
                 <div className="fixed inset-0 pointer-events-none z-[12000] border-[20px] md:border-[40px] border-transparent">

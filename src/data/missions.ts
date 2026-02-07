@@ -1,7 +1,7 @@
 export interface Event {
     id: string
     title: string
-    type: 'Technical' | 'Cultural' | 'Gaming'
+    type: 'Technical' | 'Cultural' | 'Gaming' | 'Business'
     category?: string
     description: string
     rules: string[]
@@ -379,7 +379,7 @@ export const missions: Event[] = [
     {
         id: "MBA-001",
         title: "Money Matters",
-        type: "Technical",
+        type: "Business",
         category: "Management",
         description: "Are you ready to put your financial instincts to the test? Money Matters is a fast-paced finance challenge designed to evaluate your understanding of money, markets, and managerial decision-making. Participants will step into real-world financial scenarios demanding sharp thinking and logical analysis.",
         rules: [
@@ -406,7 +406,7 @@ export const missions: Event[] = [
     {
         id: "MBA-002",
         title: "Visionary Ventures",
-        type: "Technical",
+        type: "Business",
         category: "Management",
         description: "Every great business begins with an idea—but only the best ideas survive execution. Visionary Ventures challenges you to turn bold ideas into structured, practical business plans. This event is your chance to pitch innovation with purpose.",
         rules: [
@@ -433,7 +433,7 @@ export const missions: Event[] = [
     {
         id: "MBA-003",
         title: "The Ultimate Biz Team",
-        type: "Technical",
+        type: "Business",
         category: "Management",
         description: "Welcome to the battlefield of management mastery. The Ultimate Biz Team is a multi-round corporate challenge that tests how well your team thinks, adapts, and performs under pressure. From strategy formulation to rapid decision-making.",
         rules: [
