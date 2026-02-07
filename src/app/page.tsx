@@ -1262,15 +1262,8 @@ const HorizontalTimeline = () => {
         return () => window.removeEventListener('resize', handleResize)
     }, [])
 
-    const { scrollYProgress } = useScroll({
-        target: targetRef
-    })
-
-    const xRaw = useTransform(scrollYProgress, [0, 1], ["0%", isMobile ? "-60%" : "-45%"])
-    const x = useSpring(xRaw, { stiffness: 100, damping: 30, mass: 0.5 })
-
     return (
-        <section ref={targetRef} className="relative h-[200vh] bg-[#020202] gpu-accel">
+        <section ref={targetRef} className="relative py-20 bg-[#020202] overflow-hidden">
             {/* Background Image for the whole section */}
             <div className="absolute inset-0 z-0 pointer-events-none opacity-20">
                 <Image
@@ -1284,12 +1277,12 @@ const HorizontalTimeline = () => {
                 <div className="absolute inset-0 bg-gradient-to-r from-[#020202] via-transparent to-[#020202]" />
             </div>
 
-            <div className="sticky top-0 h-screen flex items-center overflow-hidden">
-                <div className="absolute top-4 left-4 md:top-8 md:left-12 z-40 pointer-events-none">
+            <div className="container mx-auto px-4 mb-12">
+                <div className="relative z-40">
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         whileInView={{ opacity: 1, x: 0 }}
-                        className="bg-black/95 backdrop-blur-2xl px-5 py-4 md:px-6 md:py-5 rounded-xl md:rounded-2xl border border-emerald-500/30 shadow-[0_0_40px_rgba(0,0,0,0.8)] flex flex-col gap-1 md:gap-4"
+                        className="bg-black/95 backdrop-blur-md md:backdrop-blur-2xl px-5 py-4 md:px-6 md:py-5 rounded-xl md:rounded-2xl border border-emerald-500/30 shadow-[0_0_30px_rgba(0,0,0,0.6)] flex flex-col gap-1 md:gap-4"
                     >
                         <div className="flex flex-col gap-0 md:gap-1">
                             <span className="text-emerald-400 text-[9px] md:text-[10px] font-bold tracking-[0.3em] uppercase opacity-80">
@@ -1318,35 +1311,39 @@ const HorizontalTimeline = () => {
                         </div>
                     </motion.div>
                 </div>
+            </div>
 
-                {/* Animated Gradient Background for Liveliness */}
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-900/10 via-black to-purple-900/10 animate-pulse-slow opacity-30" />
-
-                <motion.div style={{ x }} className="flex gap-12 md:gap-24 pl-12 md:pl-[450px] pr-6 md:pr-[10vw] items-center pt-48 md:pt-32">
+            <div className="relative">
+                {/* Manual Horizontal Scroll Container - "Beast" Mobile Performance */}
+                <div className="flex gap-8 md:gap-16 overflow-x-auto overflow-y-hidden px-4 md:px-[10vw] pb-12 snap-x snap-mandatory custom-scrollbar-hide will-change-scroll items-center pt-8">
                     {timelineData.map((day, i) => (
                         <motion.div
                             key={i}
-                            initial={{ opacity: 0, y: 50, scale: 0.95 }}
-                            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                            transition={{ duration: 0.8, delay: i * 0.2 }}
-                            className="relative w-[88vw] md:w-[600px] h-[62vh] md:h-[75vh] flex-shrink-0 group perspective-1000"
+                            initial={{ opacity: 0, y: 50 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8, delay: i * 0.1 }}
+                            className="relative w-[85vw] md:w-[600px] h-[70vh] md:h-[75vh] flex-shrink-0 snap-center group perspective-1000"
                         >
                             {/* 3D Tilt Wrapper */}
                             <motion.div
                                 className="w-full h-full relative preserve-3d transition-all duration-500 ease-out"
-                                whileHover={{ rotateY: 15, rotateX: -5, scale: 1.05 }}
+                                whileHover={{ rotateY: 10, rotateX: -5, scale: 1.02 }}
                             >
                                 {/* Card Container with Dual Animated Borders */}
                                 <div className="w-full h-full bg-[#050505] rounded-[2.5rem] relative shadow-[0_0_50px_rgba(0,0,0,0.8)] isolate overflow-hidden border border-white/5 group-hover:bg-black transition-colors duration-500">
 
-                                    {/* Layer 1: White Spinning Glow (Intense) */}
-                                    <div className="absolute inset-[-6px] -z-20 rounded-[inherit] overflow-hidden opacity-80 group-hover:opacity-100 transition-opacity">
-                                        <div className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent_0_280deg,#ffffff_360deg)] animate-[spin_4s_linear_infinite]" />
-                                    </div>
-                                    {/* Layer 2: Emerald Spinning Glow (Vibrant Green) */}
+                                    {/* Layer 1: White Spinning Glow (Slow & Elegant) */}
                                     <div className="absolute inset-[-6px] -z-20 rounded-[inherit] overflow-hidden opacity-60 group-hover:opacity-100 transition-opacity">
-                                        <div className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent_0_280deg,#10b981_360deg)] animate-[spin_7s_linear_infinite_reverse]" />
+                                        <div className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent_0_300deg,#ffffff_360deg)] animate-[spin_12s_linear_infinite]"
+                                            style={{ willChange: 'transform' }} />
                                     </div>
+                                    {/* Layer 2: Emerald Spinning Glow (Disabled on mobile for performance) */}
+                                    {!isMobile && (
+                                        <div className="absolute inset-[-6px] -z-20 rounded-[inherit] overflow-hidden opacity-40 group-hover:opacity-100 transition-opacity">
+                                            <div className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent_0_300deg,#10b981_360deg)] animate-[spin_20s_linear_infinite_reverse]"
+                                                style={{ willChange: 'transform' }} />
+                                        </div>
+                                    )}
 
                                     {/* Dark Backdrop */}
                                     <div className="absolute inset-[1px] bg-[#030303] rounded-[2.4rem] -z-10" />
@@ -1390,9 +1387,9 @@ const HorizontalTimeline = () => {
                                                 {day.events.map((ev, j) => (
                                                     <motion.div
                                                         key={j}
-                                                        initial={{ opacity: 0, x: -10 }}
+                                                        initial={{ opacity: 0, x: -20 }}
                                                         whileInView={{ opacity: 1, x: 0 }}
-                                                        transition={{ delay: 0.1 * j }}
+                                                        transition={{ duration: 0.8, delay: 0.1 * j + 0.5 }}
                                                         className="relative pl-7 md:pl-8 py-2 md:py-3 group/item transition-colors hover:bg-white/5 rounded-r-xl"
                                                     >
                                                         <div className="absolute left-[3px] top-[18px] md:top-[22px] w-2 h-2 md:w-2.5 md:h-2.5 rounded-full border-2 border-[#080808] bg-gray-600 group-hover/item:bg-emerald-500 transition-colors z-10 shadow-[0_0_10px_black] group-hover/item:shadow-[0_0_10px_#10b981]" />
@@ -1414,7 +1411,7 @@ const HorizontalTimeline = () => {
                             </motion.div>
                         </motion.div>
                     ))}
-                </motion.div>
+                </div>
             </div>
         </section>
     )
