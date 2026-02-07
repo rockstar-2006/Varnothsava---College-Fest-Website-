@@ -483,7 +483,7 @@ export const missions: Event[] = [
         // maxTeamSize: 3,
         teamFormate: 'Solo',
         time: '10.30 AM',
-        coordinatorsContact: ["919900656796", "+91 9844101520", "917625093587"]
+        coordinatorsContact: ["9900656796", "9844101520", "7625093587"]
     },
     {
         id: 'Group-Singing',

@@ -174,17 +174,23 @@ export default function EventDetailsPage() {
             router.push('/notify')
         }
     }
+    const formatForWhatsApp = (phone: string) => {
+        return phone.replace(/\D/g, '') // removes +, spaces, hyphens
+    }
+
     const openWhatsApp = (phone?: string) => {
         if (!phone) {
             alert('Coordinator contact not available')
             return
         }
 
+        const cleanNumber = formatForWhatsApp(phone)
+
         const message = encodeURIComponent(
             `Hi, I have a query regarding the event "${mission.title}" at Varnothsava.`
         )
 
-        window.open(`https://wa.me/${phone}?text=${message}`, '_blank')
+        window.open(`https://wa.me/${cleanNumber}?text=${message}`, '_blank')
     }
 
 
