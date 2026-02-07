@@ -18,7 +18,8 @@ import {
     Phone,
     Mail,
     Globe,
-    Clock
+    Clock,
+    MessageCircle
 } from 'lucide-react'
 import { missions } from '@/data/missions'
 import { useApp } from '@/context/AppContext'
@@ -173,6 +174,19 @@ export default function EventDetailsPage() {
             router.push('/notify')
         }
     }
+    const openWhatsApp = (phone?: string) => {
+        if (!phone) {
+            alert('Coordinator contact not available')
+            return
+        }
+
+        const message = encodeURIComponent(
+            `Hi, I have a query regarding the event "${mission.title}" at Varnothsava.`
+        )
+
+        window.open(`https://wa.me/${phone}?text=${message}`, '_blank')
+    }
+
 
     const themeColor = mission ? (
         mission.type === 'Cultural' ? 'amber' :
@@ -540,17 +554,29 @@ export default function EventDetailsPage() {
                                             </p>
                                         </div>
 
-                                        <div className="flex gap-4">
+                                        <div className="flex gap-4 items-center">
+                                            {/* Call */}
                                             <a
-                                                href={`tel:${mission.coordinatorsContact?.[idx] || '#'}`}
+                                                href={`tel:${mission.coordinatorsContact?.[idx]}`}
                                                 className="text-white/40 hover:text-emerald-500 transition-colors"
                                             >
                                                 <Phone size={16} />
                                             </a>
-                                            <a href="#" className="text-white/40 hover:text-emerald-500 transition-colors">
+
+                                            {/* WhatsApp */}
+                                            <button
+                                                onClick={() => openWhatsApp(mission.coordinatorsContact?.[idx])}
+                                                className="text-white/40 hover:text-green-500 transition-colors"
+                                            >
+                                                <MessageCircle size={16} />
+                                            </button>
+
+                                            {/* Email (optional later) */}
+                                            <button className="text-white/40 hover:text-sky-500 transition-colors">
                                                 <Mail size={16} />
-                                            </a>
+                                            </button>
                                         </div>
+
                                     </div>
                                 </TechContentCard>
                             </motion.div>
