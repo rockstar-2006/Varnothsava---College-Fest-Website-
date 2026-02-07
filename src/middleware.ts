@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
 
     // Define allowed origins based on environment
     const allowedOrigins = [
-        process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+        ...(JSON.parse(process.env.NEXT_PUBLIC_APP_URL || '[]') as string[]).filter(Boolean),
         'http://localhost:3000',
         'http://127.0.0.1:3000',
     ];
