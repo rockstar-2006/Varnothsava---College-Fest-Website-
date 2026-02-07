@@ -24,7 +24,7 @@ interface EventGridProps {
 export function EventGrid({ missions }: EventGridProps) {
     const { userData, registerMission, isLoggedIn, isSiteLoaded, setPageTheme } = useApp()
     const router = useRouter()
-    const [filter, setFilter] = useState<'All' | 'Technical' | 'Cultural' | 'Gaming'>('All')
+    const [filter, setFilter] = useState<'All' | 'Technical' | 'Cultural' | 'Gaming' | 'Business'>('All')
     const [subFilter, setSubFilter] = useState<'All' | 'Hobby Club' | 'General' | 'Promotional'>('All')
     const [searchQuery, setSearchQuery] = useState('')
     const [activeThemeOverride, setActiveThemeOverride] = useState<'emerald' | 'amber' | 'cyan' | 'gaming' | null>(null)
@@ -85,10 +85,28 @@ export function EventGrid({ missions }: EventGridProps) {
     const groupedEvents = useMemo(() => ({
         technical: filtered.filter(m => m.type === 'Technical'),
         gaming: filtered.filter(m => m.type === 'Gaming'),
-        cultural: filtered.filter(m => m.type === 'Cultural')
+        cultural: filtered.filter(m => m.type === 'Cultural'),
+        business: filtered.filter(m => m.type === 'Business')
     }), [filtered])
 
-    const getEventTheme = useCallback((type: 'Technical' | 'Cultural' | 'Gaming') => {
+    const getEventTheme = useCallback((type: 'Technical' | 'Cultural' | 'Gaming' | 'Business') => {
+        if (type === 'Business') {
+            return {
+                primary: 'sky-500',
+                secondary: 'blue-400',
+                glow: 'rgba(14, 165, 233, 0.6)',
+                border: 'text-sky-500/60 group-hover:text-sky-400',
+                borderHover: 'border-sky-500/50',
+                text: 'text-sky-400',
+                textHover: 'group-hover:text-sky-300',
+                bg: 'bg-sky-500',
+                bgHover: 'hover:bg-sky-500',
+                shadow: 'shadow-[0_0_20px_rgba(14,165,233,0.4)]',
+                gradient: 'from-sky-600 via-sky-400 to-blue-300',
+                pulse: 'bg-sky-500/5 group-hover:bg-sky-500/20',
+                radarColor: 'rgba(14, 165, 233, 0.15)'
+            }
+        }
         if (type === 'Cultural') {
             return {
                 primary: 'amber-500',
@@ -484,10 +502,17 @@ export function EventGrid({ missions }: EventGridProps) {
                         <div
                             className="header-reveal relative p-1 group/filter order-3 xl:order-3 w-full lg:w-auto mt-4 xl:mt-0"
                         >
-                            <div className="flex flex-nowrap md:flex-wrap items-center justify-start md:justify-center gap-1 bg-white/[0.05] p-1.5 backdrop-blur-2xl border border-white/5 overflow-x-auto custom-scrollbar-hide" style={{ clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)' }}>
-                                {['All', 'Technical', 'Cultural', 'Gaming'].map((t) => (
-                                    <button key={t} onClick={() => { setFilter(t as any); setSubFilter('All'); }} className={`px-4 md:px-6 py-3 md:py-2.5 text-xs md:text-sm font-black uppercase tracking-[0.2em] transition-all relative min-h-[48px] md:min-h-0 flex-shrink-0 ${filter === t ? 'text-black z-10' : 'text-white/70 hover:text-white'}`}>
-                                        {filter === t && <motion.div layoutId="activeFilter" className="absolute inset-0 shadow-[0_0_40px_rgba(255,255,255,0.6)]" style={{ backgroundColor: t === "Cultural" ? "#f59e0b" : "#ffffff", clipPath: 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)' }} transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />}
+                            <div className="flex flex-wrap items-center justify-center gap-2 bg-white/[0.05] p-2 backdrop-blur-2xl border border-white/5" style={{ clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)' }}>
+                                {['All', 'Technical', 'Cultural', 'Gaming', 'Business'].map((t) => (
+                                    <button key={t} onClick={() => {
+                                        if (t === 'Business') {
+                                            router.push('/business-carnival');
+                                        } else {
+                                            setFilter(t as any);
+                                            setSubFilter('All');
+                                        }
+                                    }} className={`px-4 md:px-6 py-3 md:py-2.5 text-xs md:text-sm font-black uppercase tracking-[0.2em] transition-all relative min-h-[48px] md:min-h-0 flex-shrink-0 ${filter === t ? 'text-black z-10' : 'text-white/70 hover:text-white'}`}>
+                                        {filter === t && <motion.div layoutId="activeFilter" className="absolute inset-0 shadow-[0_0_40px_rgba(255,255,255,0.6)]" style={{ backgroundColor: t === "Cultural" ? "#f59e0b" : (t === "Business" ? "#0ea5e9" : "#ffffff"), clipPath: 'polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)' }} transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />}
                                         <span className="relative z-20">{t}</span>
                                     </button>
                                 ))}
@@ -501,7 +526,7 @@ export function EventGrid({ missions }: EventGridProps) {
                                 initial={{ y: -10 }}
                                 animate={{ y: 0 }}
                                 exit={{ y: -10 }}
-                                className="flex flex-nowrap md:flex-wrap justify-start md:justify-center mb-8 gap-4 overflow-x-auto custom-scrollbar-hide pb-2 flex-shrink-0"
+                                className="flex flex-wrap justify-center mb-8 gap-3 pb-2 w-full"
                             >
                                 {['All', 'Hobby Club', 'General', 'Promotional'].map((sf) => (
                                     <button key={sf} onClick={() => setSubFilter(sf as any)} className={`px-8 py-3 text-xs font-black uppercase tracking-[0.2em] transition-all relative flex-shrink-0 ${subFilter === sf ? 'text-black' : 'text-black hover:text-black'

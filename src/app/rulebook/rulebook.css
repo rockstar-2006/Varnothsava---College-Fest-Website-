@@ -11,6 +11,8 @@
     font-family: "Bricolage Grotesque", sans-serif;
     overscroll-behavior: none;
     -webkit-overflow-scrolling: none;
+    transform: translateZ(0);
+    /* Force GPU */
 }
 
 .book-container-relative {
@@ -200,6 +202,7 @@
     transform: translateZ(0);
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
+    will-change: transform;
 }
 
 .page-content {
@@ -212,6 +215,7 @@
     transform: translateZ(0);
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
+    will-change: transform;
 }
 
 .page-image {
@@ -266,18 +270,17 @@
 
 @keyframes float-particle {
     0% {
-        bottom: -10%;
-        transform: translateX(0) scale(0);
+        transform: translateY(110vh) translateX(0) scale(0);
         opacity: 0;
     }
 
     10% {
         opacity: 1;
-        transform: translateX(var(--tx)) scale(1);
+        transform: translateY(90vh) translateX(var(--tx)) scale(1);
     }
 
     50% {
-        transform: translateX(calc(var(--tx) * -1)) scale(1.2);
+        transform: translateY(50vh) translateX(calc(var(--tx) * -1)) scale(1.2);
     }
 
     80% {
@@ -285,8 +288,7 @@
     }
 
     100% {
-        bottom: 110%;
-        transform: translateX(var(--ty)) scale(0);
+        transform: translateY(-10vh) translateX(var(--ty)) scale(0);
         opacity: 0;
     }
 }
@@ -296,10 +298,29 @@
 }
 
 /* Download Button Styles */
-.download-brochure-btn {
+.download-brochure-btn,
+.back-btn {
     display: flex;
     align-items: center;
     justify-content: center;
+    position: fixed;
+    /* Keep fixed as per page.tsx but ensure size is consistent */
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border-radius: 50px;
+    width: auto;
+    height: auto;
+}
+
+.back-btn {
+    top: 30px;
+    left: 30px;
+    z-index: 2000;
+}
+
+.download-brochure-btn {
+    top: 30px;
+    right: 30px;
+    z-index: 2000;
 }
 
 .download-btn-inner {
@@ -319,11 +340,23 @@
     z-index: 2;
 }
 
+.back-btn .download-btn-inner {
+    background: rgba(0, 150, 255, 0.2);
+    border-color: rgba(0, 150, 255, 0.4);
+    color: #00ccff;
+    box-shadow: 0 0 20px rgba(0, 150, 255, 0.2);
+}
+
 .download-brochure-btn:hover .download-btn-inner {
     background: rgba(16, 185, 129, 0.4);
-    transform: scale(1.05);
-    box-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
     color: #fff;
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
+}
+
+.back-btn:hover .download-btn-inner {
+    background: rgba(0, 150, 255, 0.4);
+    color: #fff;
+    box-shadow: 0 0 30px rgba(0, 150, 255, 0.4);
 }
 
 .pulse-ring {
@@ -334,16 +367,23 @@
     border: 2px solid rgba(16, 185, 129, 0.5);
     animation: pulse-animation 2s infinite;
     z-index: 1;
+    pointer-events: none;
+    top: 0;
+    left: 0;
+}
+
+.back-btn .pulse-ring {
+    border-color: rgba(0, 150, 255, 0.5);
 }
 
 @keyframes pulse-animation {
     0% {
-        transform: scale(0.9);
+        transform: scale(0.95);
         opacity: 0.8;
     }
 
     100% {
-        transform: scale(1.4);
+        transform: scale(1.15, 1.4);
         opacity: 0;
     }
 }

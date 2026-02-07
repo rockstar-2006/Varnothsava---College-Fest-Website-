@@ -3,7 +3,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 
-const DynamicEventBackground = ({ theme = 'emerald' }: { theme?: 'emerald' | 'amber' | 'gaming' | 'all' }) => {
+const DynamicEventBackground = ({ theme = 'emerald' }: { theme?: 'emerald' | 'amber' | 'gaming' | 'all' | 'indigo' | 'cyan' | 'technical' | 'sky' }) => {
     const [isMobile, setIsMobile] = React.useState(false)
     const [mounted, setMounted] = React.useState(false)
     const [particles, setParticles] = React.useState<any[]>([])
@@ -64,10 +64,34 @@ const DynamicEventBackground = ({ theme = 'emerald' }: { theme?: 'emerald' | 'am
             gridColor: 'rgba(255, 255, 255, 0.05)',
             scanColor: 'rgba(255, 255, 255, 0.1)',
             particles: 'mixed'
+        },
+        indigo: {
+            primary: '#6366f1',
+            secondary: '#818cf8',
+            gradient: 'from-slate-900/40 via-black to-black',
+            gridColor: 'rgba(255, 255, 255, 0.05)',
+            scanColor: 'rgba(255, 255, 255, 0.1)',
+            particles: 'indigo'
+        },
+        cyan: {
+            primary: '#06b6d4',
+            secondary: '#22d3ee',
+            gradient: 'from-cyan-900/20 via-slate-900 to-black',
+            gridColor: 'rgba(6, 182, 212, 0.1)',
+            scanColor: 'rgba(6, 182, 212, 0.3)',
+            particles: 'cyan'
+        },
+        sky: {
+            primary: '#0ea5e9',
+            secondary: '#38bdf8',
+            gradient: 'from-sky-900/20 via-slate-900 to-black',
+            gridColor: 'rgba(14, 165, 233, 0.1)',
+            scanColor: 'rgba(14, 165, 233, 0.3)',
+            particles: 'sky'
         }
     }
 
-    const normalizedTheme = ((theme as any) === 'cyan' || (theme as any) === 'indigo' || (theme as any) === 'technical') ? 'emerald' : theme
+    const normalizedTheme = theme === 'technical' ? 'emerald' : theme
     const current = themes[normalizedTheme as keyof typeof themes] || themes.all
     const isAmber = normalizedTheme === 'amber'
     const isGaming = normalizedTheme === 'gaming'
@@ -127,7 +151,10 @@ const DynamicEventBackground = ({ theme = 'emerald' }: { theme?: 'emerald' | 'am
                         key={p.id}
                         className={`absolute rounded-full ${isAmber ? 'bg-amber-400/30' :
                             isGaming ? 'bg-purple-400/30' :
-                                'bg-emerald-400/30'
+                                normalizedTheme === 'indigo' ? 'bg-indigo-400/30' :
+                                    normalizedTheme === 'cyan' ? 'bg-cyan-400/30' :
+                                        normalizedTheme === 'sky' ? 'bg-sky-400/30' :
+                                            'bg-emerald-400/30'
                             }`}
                         style={{
                             width: p.width,

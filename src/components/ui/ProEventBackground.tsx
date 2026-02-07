@@ -5,7 +5,7 @@ import { motion, AnimatePresence, useTransform } from 'framer-motion'
 import Image from 'next/image'
 
 interface ProEventBackgroundProps {
-    theme?: 'emerald' | 'amber' | 'cyan' | 'indigo' | 'gaming'
+    theme?: 'emerald' | 'amber' | 'cyan' | 'indigo' | 'gaming' | 'sky'
     scrollProgress?: number
     isDetailed?: boolean
 }
@@ -470,22 +470,38 @@ export default function ProEventBackground({ theme = 'emerald', scrollProgress =
                 </motion.div>
             )}
 
-            {theme === 'indigo' && (
+            {(theme === 'indigo' || theme === 'sky') && (
                 <motion.div
                     key="indigo-layer"
-                    className="fixed inset-0 z-0 pointer-events-none bg-[#03030f] will-change-opacity gpu-accel"
+                    className="fixed inset-0 z-0 pointer-events-none bg-black will-change-opacity gpu-accel"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.8 }}
                 >
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(99,102,241,0.18),transparent_70%)]" />
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,rgba(99,102,241,0.1),transparent_50%)]" />
-                    <div className="absolute inset-0 opacity-100 mix-blend-screen">
-                        <GridBeams theme="indigo" />
+                    {/* Corporate Skyscraper Background Image - Cinematic Zoom */}
+                    <div className="absolute inset-0 z-0 overflow-hidden">
+                        <motion.div
+                            className="absolute inset-0"
+                            initial={{ scale: 1 }}
+                            animate={{ scale: 1.1 }}
+                            transition={{ duration: 20, repeat: Infinity, repeatType: "reverse", ease: "linear" }}
+                        >
+                            <Image
+                                src="/business_carnival_bg.png"
+                                alt="Business World"
+                                fill
+                                priority
+                                sizes="100vw"
+                                quality={90}
+                                className="object-cover opacity-60"
+                            />
+                        </motion.div>
+
+                        {/* Static Gradients overlaying the moving image */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-black/80" />
                     </div>
-                    <FloatingOrbs theme="indigo" />
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_30%,rgba(3,3,15,0.6)_100%)] pointer-events-none" />
                 </motion.div>
             )}
         </AnimatePresence>

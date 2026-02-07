@@ -91,7 +91,7 @@ function Book() {
                     className="flip-book"
                     ref={book}
                     onFlip={playFlipSound}
-                    flippingTime={1000} // Slower for Safari stability
+                    flippingTime={800} // Snappier flip for better UX
 
                     style={{
                         position: 'relative',
@@ -120,9 +120,10 @@ function Book() {
                                     src={url}
                                     alt={`Page ${index + 1}`}
                                     className="page-image"
-                                    loading={index < 4 ? "eager" : "lazy"}
+                                    loading={index < 6 ? "eager" : "lazy"} // Eager load more pages
                                     decoding="async"
-                                    fetchPriority={index < 2 ? "high" : "low"}
+                                    fetchPriority={index < 4 ? "high" : "low"}
+                                    style={{ willChange: 'transform' }}
                                 />
                             </div>
                         </div>

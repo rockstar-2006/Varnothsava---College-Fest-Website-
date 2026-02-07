@@ -1,7 +1,7 @@
 export interface Event {
     id: string
     title: string
-    type: 'Technical' | 'Cultural' | 'Gaming'
+    type: 'Technical' | 'Cultural' | 'Gaming' | 'Business'
     category?: string
     description: string
     rules: string[]
@@ -760,6 +760,70 @@ export const missions: Event[] = [
         // maxTeamSize: 1
         teamFormate: 'Promotional',
         location: 'Full-Campus'
-    }
+    },
 
+    // --- BUSINESS EVENTS ---
+    {
+        id: 'b-money',
+        title: 'Money Matters',
+        type: 'Business',
+        description: 'Comprehensive financial knowledge and investment strategy challenge. Master the markets and manage portfolios to prove your fiscal intelligence.',
+        rules: [
+            "Team of 2 members mandatory",
+            "Initial screening via financial aptitude test",
+            "Round 2 involves real-time investment simulations",
+            "Final round: Portfolio defense before industry experts",
+            "Use of basic calculators allowed; mobile phones prohibited during sessions"
+        ],
+        prizePool: '₹15,000+',
+        coordinators: ['Ananth Hegde', 'Meghana Bhat'],
+        fee: 250,
+        visual: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=1200&q=80',
+        date: '12 MAR',
+        tags: ['Finance', 'Investment', 'Strategy'],
+        minTeamSize: 2,
+        maxTeamSize: 2
+    },
+    {
+        id: 'b-vision',
+        title: 'Visionary Ventures',
+        type: 'Business',
+        description: 'The premier entrepreneurship competition. Pitch your groundbreaking startup ideas, build business models, and secure virtual funding.',
+        rules: [
+            "Team of 1-4 members",
+            "Executive summary must be submitted 2 days prior",
+            "10-minute pitch followed by 5-minute Q&A",
+            "Focus on scalability, innovation, and market viability",
+            "Pitch deck must follow the provided standard format"
+        ],
+        prizePool: '₹25,000+',
+        coordinators: ['Supriya Shetty', 'Rohit Pai'],
+        fee: 300,
+        visual: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=1200&q=80',
+        date: '13 MAR',
+        tags: ['Entrepreneurship', 'Pitching', 'Startups'],
+        minTeamSize: 1,
+        maxTeamSize: 4
+    },
+    {
+        id: 'b-ultimate',
+        title: 'The Ultimate Biz Team',
+        type: 'Business',
+        description: 'A high-pressure business case study challenge. Analyze complex industrial problems and provide strategic solutions under tight deadlines.',
+        rules: [
+            "Team of 3 members exactly",
+            "Case study will be provided at the venue",
+            "3 hours for analysis and presentation preparation",
+            "Judging based on analytical depth and practical feasibility",
+            "Laptops with presentation software mandatory"
+        ],
+        prizePool: '₹20,000+',
+        coordinators: ['Vignesh Rao', 'Pooja Nayak'],
+        fee: 300,
+        visual: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200&q=80',
+        date: '13 MAR',
+        tags: ['Case Study', 'Management', 'Leadership'],
+        minTeamSize: 3,
+        maxTeamSize: 3
+    }
 ]

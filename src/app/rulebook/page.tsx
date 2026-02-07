@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Download, ArrowLeft } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useApp } from '@/context/AppContext';
@@ -43,22 +44,49 @@ export default function RuleBookPage() {
     const [pageMounted, setPageMounted] = useState(false);
     const { setIsSiteLoaded } = useApp();
 
+    const [imagesPreloaded, setImagesPreloaded] = useState(false);
+    const [progress, setProgress] = useState(0);
+
     useEffect(() => {
         setPageMounted(true);
         // Clean up body styles if any global ones are interfering
         document.body.style.overflow = 'hidden';
         document.body.style.backgroundColor = '#000';
+
+        // Preload first 5 images for smooth mobile data experience
+        const preloadImages = async () => {
+            const imagesToLoad = Array.from({ length: 5 }, (_, i) =>
+                `/rulebook/${encodeURIComponent(`VARNOTHSAVA Brochure 2026-images-${i}.jpg`)}`
+            );
+
+            let loadedCount = 0;
+            const total = imagesToLoad.length;
+
+            const promises = imagesToLoad.map(src => {
+                return new Promise((resolve) => {
+                    const img = new window.Image();
+                    img.src = src;
+                    img.onload = () => {
+                        loadedCount++;
+                        setProgress(Math.round((loadedCount / total) * 100));
+                        resolve(true);
+                    };
+                    img.onerror = () => resolve(false); // Resolve even on error to prevent hanging
+                });
+            });
+
+            await Promise.all(promises);
+            // Add a small artificial delay for the 'premium' feel
+            setTimeout(() => setImagesPreloaded(true), 800);
+        };
+
+        preloadImages();
+
         return () => {
             document.body.style.overflow = '';
             document.body.style.backgroundColor = '';
         };
     }, []);
-
-    if (!pageMounted) return (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: '#000', zIndex: 50000, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontFamily: 'sans-serif' }}>
-            Loading Rulebook...
-        </div>
-    );
 
     return (
         <div
@@ -89,18 +117,10 @@ export default function RuleBookPage() {
                     priority
                 />
             </div>
-            {/* Back Button */}
             <Link
                 href="/"
                 className="back-btn"
                 onClick={() => setIsSiteLoaded(true)}
-                style={{
-                    position: 'fixed',
-                    top: '30px',
-                    left: '30px',
-                    zIndex: 2000,
-                    textDecoration: 'none'
-                }}
             >
                 <div className="download-btn-inner">
                     <ArrowLeft className="w-5 h-5" />
@@ -114,13 +134,6 @@ export default function RuleBookPage() {
                 href="/VARNOTHSAVA Brochure 2026.pdf"
                 download
                 className="download-brochure-btn"
-                style={{
-                    position: 'fixed',
-                    top: '30px',
-                    right: '30px',
-                    zIndex: 2000,
-                    textDecoration: 'none'
-                }}
             >
                 <div className="download-btn-inner">
                     <Download className="w-5 h-5" />
@@ -131,9 +144,34 @@ export default function RuleBookPage() {
             </a>
 
             <ParticleLayer />
-            <div style={{ position: 'relative', zIndex: 10, width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            {/* Premium Cinematic Readiness Overlay */}
+            <AnimatePresence>
+                {!imagesPreloaded && (
+                    <motion.div
+                        initial={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[50000] bg-[#010202] flex flex-col items-center justify-center gap-6"
+                    >
+                        <div className="relative">
+                            <div className="w-16 h-16 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
+                            <div className="absolute inset-0 blur-xl bg-emerald-500/10 animate-pulse rounded-full" />
+                        </div>
+                        <div className="flex flex-col items-center gap-2">
+                            <span className="text-[10px] md:text-xs font-black tracking-[0.5em] text-emerald-500/60 animate-pulse uppercase">INITIALIZING_ARCHIVES</span>
+                            <span className="text-[9px] font-mono text-emerald-500/40">{progress}% BUFFERED</span>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                style={{ position: 'relative', zIndex: 10, width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+            >
                 <Book />
-            </div>
+            </motion.div>
         </div>
     );
 }

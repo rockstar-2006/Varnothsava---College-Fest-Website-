@@ -31,7 +31,7 @@ export interface PageTheme {
 interface Event {
     id: string
     title: string
-    type: 'Technical' | 'Cultural' | 'Gaming'
+    type: 'Technical' | 'Cultural' | 'Gaming' | 'Business'
     fee: number
     visual: string
 }

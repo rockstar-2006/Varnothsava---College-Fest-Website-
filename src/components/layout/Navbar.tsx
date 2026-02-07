@@ -27,6 +27,7 @@ export function Navbar() {
         { name: 'MISSIONS', href: '/events', icon: Zap },
         { name: 'LEADERBOARD', href: '/leaderboard', icon: Trophy },
         { name: 'ARCHIVE', href: '/gallery', icon: Camera },
+        { name: 'CONTACT', href: '/contact', icon: User },
     ]
 
     return (

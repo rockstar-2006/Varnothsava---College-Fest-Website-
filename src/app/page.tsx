@@ -12,7 +12,7 @@ const quickLinks = [
     { label: "About Us", href: "#about" },
     { label: "Events", href: "/events" },
     { label: "Sponsors", href: "#sponsors" },
-    { label: "Contact", href: "#contact" },
+    { label: "Contact", href: "/contact" },
 ];
 
 import {
@@ -1090,7 +1090,7 @@ const WelcomeSection = () => {
                 <RevealOnScroll className="space-y-8">
                     <StaggerTitle title="The Phenomenon" subtitle="Welcome to Varnothsava" />
                     <p className="text-lg leading-relaxed text-gray-400 font-light">
-                        <span className="text-emerald-400 font-bold">varnothsava</span> is the annual national-level techno-cultural fest of{" "}
+                        <span className="text-emerald-400 font-bold">Varnothsava</span> is the annual national-level techno-cultural fest of{" "}
                         <span className="text-emerald font-bold">
                             Shri Madhwa Vadiraja Institute of Technology &amp; Management, Bantakal
                         </span>
@@ -1112,7 +1112,7 @@ const WelcomeSection = () => {
 
                     <div className="grid grid-cols-2 gap-6">
                         {[
-                            { label: "Colleges", value: "50+", icon: Users },
+                            { label: "Colleges", value: "100+", icon: Users },
                             { label: "Events", value: "50+", icon: Trophy },
                             { label: "Prize Pool", value: "3L+", icon: Banknote },
                             { label: "Sponsors", value: "30+", icon: Star },

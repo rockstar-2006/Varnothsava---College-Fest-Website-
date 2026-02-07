@@ -36,6 +36,7 @@ const NAV_LINKS = [
     { name: 'EVENTS', href: '/events', icon: Zap },
     { name: 'RIDERS', href: '/moto-mania', icon: MotorcycleIcon },
     { name: 'GALLERY', href: '/gallery', icon: Camera },
+    { name: 'CONTACT', href: '/contact', icon: User },
 ]
 
 export function InnovativeNavbar() {
@@ -87,11 +88,11 @@ export function InnovativeNavbar() {
 
 
         <>
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
                 <motion.div
-                    initial={{ y: 100, opacity: 0 }}
+                    initial={{ y: 50, opacity: 0 }}
                     animate={{
-                        y: isVisible ? 0 : 120,
+                        y: isVisible ? 0 : 100,
                         opacity: isVisible ? 1 : 0
                     }}
                     style={{
@@ -99,8 +100,8 @@ export function InnovativeNavbar() {
                     } as any}
                     transition={{
                         type: 'spring',
-                        stiffness: 260,
-                        damping: 20,
+                        stiffness: 220,
+                        damping: 25,
                         mass: 0.8
                     }}
                     className="fixed z-[5000] bottom-0 left-0 right-0 flex justify-center pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-8 px-4 md:px-8 pointer-events-none translate-gpu"
