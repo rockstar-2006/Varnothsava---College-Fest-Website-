@@ -60,7 +60,7 @@ export const missions: Event[] = [
             "Clarity in presentation and explanation."
         ],
         prizePool: "₹20,000+",
-        coordinators: ["Ms. Shalaka (Faculty)", "Ananya Bhat", "Yathika P Amin"],
+        coordinators: ["Ms. Shalaka", "Ananya Bhat", "Yathika P Amin"],
         coordinatorsContact: ["9739118147", "9483146270", "7795062567"],
         fee: 200,
         visual: "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=1200&q=80",
@@ -69,7 +69,8 @@ export const missions: Event[] = [
         minTeamSize: 2,
         maxTeamSize: 3,
         teamFormate: "Team (2-3 members)",
-        tags: ['ML', 'Coding', 'Python']
+        tags: ['ML', 'Coding', 'Python'],
+       
     },
     {
         id: "TECH-002",
@@ -100,7 +101,7 @@ export const missions: Event[] = [
             "Practical Feasibility"
         ],
         prizePool: "₹12,000+",
-        coordinators: ["Dr. Rashmi (Faculty)", "Suraj Bhagwat", "BHUSHAN POOJARY"],
+        coordinators: ["Dr. Rashmi", "Suraj Bhagwat", "BHUSHAN POOJARY"],
         coordinatorsContact: ["9686143861", "8660293807", "7381709385"],
         fee: 200,
         visual: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&q=80",
@@ -132,7 +133,7 @@ export const missions: Event[] = [
             "The perfection of the output."
         ],
         prizePool: "₹6,000",
-        coordinators: ["Mr. Sandeep Prabhu (Faculty)", "PRERANA SHETTY", "NISHMITHA"],
+        coordinators: ["Mr. Sandeep Prabhu", "PRERANA SHETTY", "NISHMITHA"],
         coordinatorsContact: ["9480390687", "7676603539", "6366258564"],
         fee: 200,
         visual: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&q=80",
@@ -167,7 +168,7 @@ export const missions: Event[] = [
             "Penalties for deviating or exceeding time."
         ],
         prizePool: "₹10,000",
-        coordinators: ["Ms. Sthuthi (Faculty)", "KAUSHIK", "K S Raveesha Padmashali"],
+        coordinators: ["Ms. Sthuthi", "KAUSHIK", "K S Raveesha Padmashali"],
         coordinatorsContact: ["8762840054", "7406500325", "7899417146"],
         fee: 200,
         visual: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=1200&q=80",
@@ -194,7 +195,7 @@ export const missions: Event[] = [
             "Zero tolerance for cheating, exploiting bugs, or unsportsmanlike behavior."
         ],
         prizePool: "₹40,000",
-        coordinators: ["Ms. Ashwitha (Faculty)", "U PRADYUMNA", "SATHWIK S BHAT"],
+        coordinators: ["Ms. Ashwitha", "U PRADYUMNA", "SATHWIK S BHAT"],
         coordinatorsContact: ["9900656796", "9980441036", "8660964094"],
         fee: 500,
         visual: "https://wallpapers.com/images/featured/valorant-305kescxw5dpup7y.jpg",
@@ -227,7 +228,7 @@ export const missions: Event[] = [
             "Explanations provided for each flag found."
         ],
         prizePool: "₹15,000+",
-        coordinators: ["Ms. Ashwitha (Faculty)", "SUMEDH NAVADA", "Tejas Nayak"],
+        coordinators: ["Ms. Ashwitha", "SUMEDH NAVADA", "Tejas Nayak"],
         coordinatorsContact: ["9900656796", "8217534845", "8296151023"],
         fee: 200,
         visual: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&q=80",
@@ -262,7 +263,7 @@ export const missions: Event[] = [
             "Time management"
         ],
         prizePool: "₹25,000+",
-        coordinators: ["Ms. Shalaka (Faculty)", "PAI AVANI", "Bhushan Poojary"],
+        coordinators: ["Ms. Shalaka ", "PAI AVANI", "Bhushan Poojary"],
         coordinatorsContact: ["9739118147", "8197434587", "7381709385"],
         fee: 200,
         visual: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&q=80",
@@ -298,7 +299,7 @@ export const missions: Event[] = [
             "Flight Distance (meters) and Time of Flight."
         ],
         prizePool: "₹8,000",
-        coordinators: ["Dr. Madhukar Nayak (Faculty)", "ABHISHEK K N", "VAIBHAV C MENDON"],
+        coordinators: ["Dr. Madhukar Nayak", "ABHISHEK K N", "VAIBHAV C MENDON"],
         coordinatorsContact: ["9535626843", "9019857838", "8971293716"],
         fee: 200,
         visual: "https://images.unsplash.com/photo-1517976487492-5750f3195933?w=1200&q=80",
@@ -335,7 +336,7 @@ export const missions: Event[] = [
             "Deductions for penalties."
         ],
         prizePool: "₹12,000",
-        coordinators: ["Ms. Sthuthi (Faculty)", "Shreekiran Bhat", "Riston"],
+        coordinators: ["Ms. Sthuthi", "Shreekiran Bhat", "Riston"],
         coordinatorsContact: ["8762840054", "7019267494", "9606721573"],
         fee: 200,
         visual: "https://images.unsplash.com/photo-1561557944-6e7860d1a7eb?w=1200&q=80",
@@ -364,7 +365,7 @@ export const missions: Event[] = [
             "Bonus/tiebreaker rounds if scores are tied."
         ],
         prizePool: "₹30,000",
-        coordinators: ["Mr. Sandeep Prabhu (Faculty)", "KEVIN MENDONCA"],
+        coordinators: ["Mr. Sandeep Prabhu", "KEVIN MENDONCA"],
         coordinatorsContact: ["9686789467", "8147282737"],
         fee: 400,
         visual: "https://images.unsplash.com/photo-1542751110-97427bbecf20?w=1200&q=80",
@@ -378,7 +379,7 @@ export const missions: Event[] = [
     {
         id: "MBA-001",
         title: "Money Matters",
-        type: "Technical",
+        type: "Business",
         category: "Management",
         description: "Are you ready to put your financial instincts to the test? Money Matters is a fast-paced finance challenge designed to evaluate your understanding of money, markets, and managerial decision-making. Participants will step into real-world financial scenarios demanding sharp thinking and logical analysis.",
         rules: [
@@ -392,7 +393,7 @@ export const missions: Event[] = [
             "Logical analysis and judgment."
         ],
         prizePool: "TBD",
-        coordinators: ["Prof. Steevan Robert Tellies (Faculty)", "Mr. Arwin Menezes", "Ms. Shravya"],
+        coordinators: ["Prof. Steevan Robert Tellies ", "Mr. Arwin Menezes", "Ms. Shravya"],
         coordinatorsContact: ["9900411805", "7829722176", "7406949755"],
         fee: 0,
         visual: "/img/money-matters.png",
@@ -405,7 +406,7 @@ export const missions: Event[] = [
     {
         id: "MBA-002",
         title: "Visionary Ventures",
-        type: "Technical",
+        type: "Business",
         category: "Management",
         description: "Every great business begins with an idea—but only the best ideas survive execution. Visionary Ventures challenges you to turn bold ideas into structured, practical business plans. This event is your chance to pitch innovation with purpose.",
         rules: [
@@ -419,7 +420,7 @@ export const missions: Event[] = [
             "Clarity of the pitch."
         ],
         prizePool: "TBD",
-        coordinators: ["Prof. Melanie Pius Dsouza (Faculty)", "Ms. Krithika", "Ms. Rashmitha Raghavendra Shet"],
+        coordinators: ["Prof. Melanie Pius Dsouza ", "Ms. Krithika", "Ms. Rashmitha Raghavendra Shet"],
         coordinatorsContact: ["9870183149", "8904079764", "7204703743"],
         fee: 0,
         visual: "/img/visionary-ventures.png",
@@ -432,7 +433,7 @@ export const missions: Event[] = [
     {
         id: "MBA-003",
         title: "The Ultimate Biz Team",
-        type: "Technical",
+        type: "Business",
         category: "Management",
         description: "Welcome to the battlefield of management mastery. The Ultimate Biz Team is a multi-round corporate challenge that tests how well your team thinks, adapts, and performs under pressure. From strategy formulation to rapid decision-making.",
         rules: [
@@ -446,7 +447,7 @@ export const missions: Event[] = [
             "Decision-making agility."
         ],
         prizePool: "TBD",
-        coordinators: ["Prof. Aurin Madtha (Faculty)", "Ms. Sannidhi Shetty", "Ms. Shruthi Shetty"],
+        coordinators: ["Prof. Aurin Madtha", "Ms. Sannidhi Shetty", "Ms. Shruthi Shetty"],
         coordinatorsContact: ["8884185475", "9901532401", "9972832840"],
         fee: 0,
         visual: "/img/ultimate-biz.png",

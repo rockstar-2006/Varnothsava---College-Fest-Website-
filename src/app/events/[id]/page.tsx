@@ -562,12 +562,16 @@ export default function EventDetailsPage() {
 
                                         <div className="flex gap-4 items-center">
                                             {/* Call */}
-                                            <a
-                                                href={`tel:${mission.coordinatorsContact?.[idx]}`}
-                                                className="text-white/40 hover:text-emerald-500 transition-colors"
-                                            >
-                                                <Phone size={16} />
-                                            </a>
+                                            {mission.coordinatorsContact?.[idx] && (
+                                                <a
+                                                    href={`tel:+91${mission.coordinatorsContact[idx]}`}
+                                                    className="flex items-center gap-2 text-white/50 hover:text-emerald-500 transition-colors font-mono text-xs md:text-sm"
+                                                >
+                                                    <span>+91 {mission.coordinatorsContact[idx]}</span>
+                                                    <Phone size={16} />
+                                                </a>
+                                            )}
+
 
                                             {/* WhatsApp */}
                                             <button
@@ -577,10 +581,8 @@ export default function EventDetailsPage() {
                                                 <MessageCircle size={16} />
                                             </button>
 
-                                            {/* Email (optional later) */}
-                                            <button className="text-white/40 hover:text-sky-500 transition-colors">
-                                                <Mail size={16} />
-                                            </button>
+
+
                                         </div>
 
                                     </div>
