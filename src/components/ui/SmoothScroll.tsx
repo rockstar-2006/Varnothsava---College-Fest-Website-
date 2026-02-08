@@ -20,30 +20,27 @@ export const SmoothScroll = ({ children }: SmoothScrollProps) => {
 
     useEffect(() => {
         const lenisInstance = new Lenis({
-            duration: 1.2, // Slightly longer for more buttery feel
-            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            duration: 1.5, // Smoother glide
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Exponential ease-out
             orientation: "vertical",
             gestureOrientation: "vertical",
             smoothWheel: true,
-            wheelMultiplier: 1.1, // Faster responsiveness
-            touchMultiplier: 1.5, // Better mobile feel
+            wheelMultiplier: 0.8, // More controlled scroll speed
+            touchMultiplier: 1.5, // Natural touch feel
             infinite: false,
-            lerp: 0.1, // Smoother interpolation
         });
 
         // SCROLL PERFORMANCE OPTIMIZATION
-        // When user scrolls, we add a class to body to disable heavy blurs
         let scrollTimeout: NodeJS.Timeout;
         const handleScrollStarted = () => {
             document.body.classList.add('scrolling');
             clearTimeout(scrollTimeout);
             scrollTimeout = setTimeout(() => {
                 document.body.classList.remove('scrolling');
-            }, 150); // Remove after 150ms of inactivity
+            }, 150);
         };
 
         lenisInstance.on('scroll', handleScrollStarted);
-
         setLenis(lenisInstance);
 
         // Sync GSAP ScrollTrigger
@@ -64,12 +61,12 @@ export const SmoothScroll = ({ children }: SmoothScrollProps) => {
 
         return () => {
             if (reqIdRef.current) cancelAnimationFrame(reqIdRef.current);
-            lenisInstance.off('scroll', handleScrollStarted); // Correctly remove the listener
+            lenisInstance.off('scroll', handleScrollStarted);
             lenisInstance.destroy();
             setLenis(null);
             document.body.classList.remove('scrolling');
         };
-    }, [pathname]); // Re-run on pathname change to reset scroll or re-init if needed
+    }, [pathname]);
 
     return (
         <LenisContext.Provider value={lenis}>

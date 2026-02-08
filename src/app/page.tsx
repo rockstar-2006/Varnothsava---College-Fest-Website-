@@ -78,6 +78,40 @@ const bandMembers = [
 
 // --- Solo Leveling / System UI Components ---
 
+// --- Scramble Text Component ---
+const ScrambleText = ({ text, className }: { text: string; className?: string }) => {
+    const [display, setDisplay] = useState(text || "");
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&";
+
+    useEffect(() => {
+        if (!text) return;
+        let iteration = 0;
+        const interval = setInterval(() => {
+            setDisplay(
+                text
+                    .split("")
+                    .map((letter, index) => {
+                        if (index < iteration) {
+                            return text[index];
+                        }
+                        return chars[Math.floor(Math.random() * chars.length)];
+                    })
+                    .join("")
+            );
+
+            if (iteration >= text.length) {
+                clearInterval(interval);
+            }
+
+            iteration += 1 / 3;
+        }, 30);
+
+        return () => clearInterval(interval);
+    }, [text]);
+
+    return <span className={className}>{display}</span>;
+};
+
 const SystemText = ({ children, className = "" }: { children: string, className?: string }) => (
     <div className={`font-[family-name:var(--font-orbitron)] tracking-widest uppercase ${className}`}>
         {children}
@@ -214,7 +248,7 @@ const ProNiteSection = () => {
                             key="system-intro"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            exit={{ opacity: 0, scale: 2, filter: "blur(20px)" }}
+                            exit={{ opacity: 0, scale: 2 }}
                             transition={{ duration: 0.3 }}
                             className="absolute inset-0 flex flex-col items-center justify-center z-50 pointer-events-none"
                         >
@@ -279,7 +313,7 @@ const ProNiteSection = () => {
                             key="group-reveal"
                             initial={{ opacity: 0, scale: 0.8 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 1.1, filter: "blur(20px)" }}
+                            exit={{ opacity: 0, scale: 1.1 }}
                             transition={{ duration: 0.8, ease: "circOut" }}
                             className="absolute inset-0 flex flex-col items-center justify-center z-40 pointer-events-none"
                         >
@@ -386,7 +420,7 @@ const ProNiteSection = () => {
                                 className="order-1 lg:order-2 relative h-[35vh] md:h-[65vh] w-full flex items-center justify-center perspective-1000"
                                 initial={{ x: 200, opacity: 0, scale: 0.5, rotateY: 60 }}
                                 animate={{ x: 0, opacity: 1, scale: 1, rotateY: 0 }}
-                                exit={{ x: 200, opacity: 0, scale: 1.2, rotateY: -60, filter: "brightness(2) blur(20px)" }}
+                                exit={{ x: 200, opacity: 0, scale: 1.2, rotateY: -60 }}
                                 transition={{ type: "spring", stiffness: 80, damping: 15, mass: 1.5 }}
                             >
                                 <motion.div
@@ -922,35 +956,49 @@ const HeroSection = ({ shouldRender3D }: { shouldRender3D: boolean }) => {
     const yHero = useSpring(yHeroRaw, { stiffness: 100, damping: 30 })
     const opacityHero = useTransform(scrollY, [0, 1200], [1, 0])
 
+    const mouseX = useMotionValue(0)
+    const mouseY = useMotionValue(0)
+    const springX = useSpring(mouseX, { stiffness: 50, damping: 20 })
+    const springY = useSpring(mouseY, { stiffness: 50, damping: 20 })
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (isMobile) return
+        const x = (e.clientX - window.innerWidth / 2) / 20
+        const y = (e.clientY - window.innerHeight / 2) / 20
+        mouseX.set(x)
+        mouseY.set(y)
+    }
+
+    const textRotateX = useTransform(springY, [-50, 50], [10, -10])
+    const textRotateY = useTransform(springX, [-50, 50], [-10, 10])
+
+    const modelX = useTransform(springX, (v) => v * 1.5)
+    const modelY = useTransform(springY, (v) => v * 1.5)
+
     return (
-        <section className="relative min-h-[100vh] flex items-center overflow-hidden bg-[#020202] gpu-accel">
+        <section
+            onMouseMove={handleMouseMove}
+            className="relative min-h-[100vh] flex items-center overflow-hidden bg-[#020202] gpu-accel"
+        >
             {/* God Level Parallax BG */}
             <div className="absolute inset-0 pointer-events-none">
                 {!isMobile && (
                     <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] mix-blend-overlay" />
-                )}                {/* Glowing Orbs for Liveliness - Hidden on Mobile */}
-                {!isMobile && (
-                    <>
-                        <motion.div
-                            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-                            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-                            className="absolute top-[-10%] right-[-10%] w-[800px] h-[800px] bg-emerald-500/10 rounded-full blur-[100px]"
-                        />
-                        <motion.div
-                            animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.4, 0.2] }}
-                            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                            className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[100px]"
-                        />
-                    </>
                 )}
             </div>
 
-            {/* ANCIENT ATMOSPHERE OVERLAY - REALISTIC */}
-            <RealisticAncientBackground />
-
             <div className="container max-w-[1800px] mx-auto px-4 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center relative z-20 pt-20">
                 {/* Hero Text */}
-                <motion.div style={{ y: yHero, opacity: opacityHero }} className="order-2 lg:order-1 flex flex-col items-center lg:items-start text-center lg:text-left">
+                <motion.div
+                    style={{
+                        y: yHero,
+                        opacity: opacityHero,
+                        rotateX: textRotateX,
+                        rotateY: textRotateY,
+                        perspective: 1000
+                    }}
+                    className="order-2 lg:order-1 flex flex-col items-center lg:items-start text-center lg:text-left preserve-3d"
+                >
                     <motion.div
                         initial={isMobile ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -1012,20 +1060,9 @@ const HeroSection = ({ shouldRender3D }: { shouldRender3D: boolean }) => {
                     </motion.div>
                 </motion.div>
 
-                {/* 3D Model - SEQUENTIAL LOADING APPLIED HERE */}
-                <div className="relative h-[45vh] lg:h-[80vh] w-full order-1 lg:order-2 flex items-center justify-center perspective-1000">
-                    <AnimatePresence>
-                        {shouldRender3D && (
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ duration: 1 }}
-                                className="w-full h-full relative z-10"
-                            >
-                                <Fest3DModel />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                {/* 3D Model */}
+                <div className="relative h-[45vh] lg:h-[80vh] w-full order-1 lg:order-2 flex items-center justify-center">
+                    <Fest3DModel />
                 </div>
             </div>
 
@@ -1254,6 +1291,9 @@ const timelineData = [
 const HorizontalTimeline = () => {
     const targetRef = useRef<HTMLDivElement>(null)
     const [isMobile, setIsMobile] = useState(false)
+    const { scrollYProgress } = useScroll({
+        target: targetRef
+    })
 
     useEffect(() => {
         setIsMobile(window.innerWidth < 768)
@@ -1262,158 +1302,188 @@ const HorizontalTimeline = () => {
         return () => window.removeEventListener('resize', handleResize)
     }, [])
 
-    return (
-        <section ref={targetRef} className="relative py-20 bg-[#020202] overflow-hidden">
-            {/* Background Image for the whole section */}
-            <div className="absolute inset-0 z-0 pointer-events-none opacity-20">
-                <Image
-                    src="/img/ancient_ruins_bg.png"
-                    alt="Section Background"
-                    fill
-                    className="object-cover"
-                    priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-b from-[#020202] via-transparent to-[#020202]" />
-                <div className="absolute inset-0 bg-gradient-to-r from-[#020202] via-transparent to-[#020202]" />
-            </div>
+    // Calculate horizontal translation based on vertical scroll
+    // On desktop, we want to scroll the cards horizontally
+    // - (total width - viewport width)
+    const xRaw = useTransform(scrollYProgress, [0, 1], ["0%", isMobile ? "0%" : `-${(timelineData.length - 1) * 70}%`])
+    const x = useSpring(xRaw, { stiffness: 60, damping: 30, mass: 1 }) // Softer spring for smoother feel
 
-            <div className="container mx-auto px-4 mb-12">
-                <div className="relative z-40">
+    return (
+        <section ref={targetRef} className={`relative ${isMobile ? 'py-10' : 'h-[300vh]'} bg-[#020202] overflow-visible`}>
+            <div className={`${isMobile ? 'relative' : 'sticky top-0 h-screen'} overflow-hidden flex flex-col justify-center`}>
+                {/* Background Atmosphere */}
+                <div className="absolute inset-0 z-0 pointer-events-none opacity-20">
+                    <Image
+                        src="/img/ancient_ruins_bg.png"
+                        alt="Section Background"
+                        fill
+                        className="object-cover"
+                        priority
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-[#020202] via-transparent to-[#020202]" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#020202] via-transparent to-[#020202]" />
+                </div>
+
+                <div className="container mx-auto px-4 mb-8 md:mb-12 relative z-50">
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         whileInView={{ opacity: 1, x: 0 }}
-                        className="bg-black/95 backdrop-blur-md md:backdrop-blur-2xl px-5 py-4 md:px-6 md:py-5 rounded-xl md:rounded-2xl border border-emerald-500/30 shadow-[0_0_30px_rgba(0,0,0,0.6)] flex flex-col gap-1 md:gap-4"
+                        className="bg-black/80 backdrop-blur-3xl px-6 py-5 rounded-2xl border border-emerald-500/30 shadow-[0_0_50px_rgba(0,0,0,0.8)] inline-flex flex-col gap-2"
                     >
-                        <div className="flex flex-col gap-0 md:gap-1">
-                            <span className="text-emerald-400 text-[9px] md:text-[10px] font-bold tracking-[0.3em] uppercase opacity-80">
-                                4 Days. Infinite Memories.
-                            </span>
-                            <h2 className={`${orbitron.className} text-xl md:text-3xl lg:text-4xl text-white font-black tracking-tight uppercase`}>
-                                College Fest <span className="text-emerald-500">Schedule</span>
-                            </h2>
-                        </div>
-
-                        <div className="h-[1px] w-full bg-emerald-500/20 hidden md:block" />
-
-                        <div className="md:flex items-center gap-4 hidden">
-                            <div className="flex items-center gap-2">
-                                <ArrowRight className="w-5 h-5 text-emerald-400 animate-pulse" />
-                                <ArrowRight className="w-5 h-5 text-emerald-400/50 animate-pulse" />
-                            </div>
-                            <div className="flex flex-col">
-                                <span className={`${orbitron.className} text-[11px] text-white font-bold uppercase tracking-[0.1em]`}>
-                                    Scroll Down
-                                </span>
-                                <span className="text-[9px] text-emerald-500/70 font-bold uppercase tracking-widest">
-                                    To Slide The Saga
-                                </span>
-                            </div>
+                        <span className="text-emerald-400 text-[9px] md:text-[10px] font-black tracking-[0.4em] uppercase opacity-60">
+                            <ScrambleText text="TEMPORAL_SEQUENCE_001" />
+                        </span>
+                        <h2 className={`${orbitron.className} text-xl md:text-5xl lg:text-6xl text-white font-black tracking-tighter uppercase leading-none`}>
+                            THE FEST <span className="text-emerald-500">SCHEDULE</span>
+                        </h2>
+                        <div className="flex items-center gap-3 mt-2">
+                            <div className="h-[2px] w-12 bg-emerald-500" />
+                            <span className="text-[10px] text-white/40 font-mono tracking-widest uppercase">System Operational // Data Loaded</span>
                         </div>
                     </motion.div>
                 </div>
-            </div>
 
-            <div className="relative">
-                {/* Manual Horizontal Scroll Container - "Beast" Mobile Performance */}
-                <div className="flex gap-8 md:gap-16 overflow-x-auto overflow-y-hidden px-4 md:px-[10vw] pb-12 snap-x snap-mandatory custom-scrollbar-hide will-change-scroll items-center pt-8">
-                    {timelineData.map((day, i) => (
-                        <motion.div
-                            key={i}
-                            initial={{ opacity: 0, y: 50 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, delay: i * 0.1 }}
-                            className="relative w-[85vw] md:w-[600px] h-[70vh] md:h-[75vh] flex-shrink-0 snap-center group perspective-1000"
-                        >
-                            {/* 3D Tilt Wrapper */}
+                <div className="relative mt-4 md:mt-0">
+                    <motion.div
+                        style={isMobile ? {} : { x }}
+                        className={`flex gap-4 md:gap-24 ${isMobile ? 'flex-col px-4 items-center' : 'px-[10vw] items-center'} pb-4`}
+                    >
+                        {timelineData.map((day, i) => (
+                            <TimelineCard key={i} day={day} index={i} isMobile={isMobile} />
+                        ))}
+
+                        {/* Final CTA Card - Desktop Only */}
+                        {!isMobile && (
                             <motion.div
-                                className="w-full h-full relative preserve-3d transition-all duration-500 ease-out"
-                                whileHover={{ rotateY: 10, rotateX: -5, scale: 1.02 }}
+                                className="w-[85vw] md:w-[500px] h-[70vh] md:h-[75vh] flex-shrink-0 flex flex-col items-center justify-center p-12 border-2 border-dashed border-emerald-500/20 rounded-[2.5rem] bg-emerald-500/5 group hover:border-emerald-500/50 transition-all duration-700"
                             >
-                                {/* Card Container with Dual Animated Borders */}
-                                <div className="w-full h-full bg-[#050505] rounded-[2.5rem] relative shadow-[0_0_50px_rgba(0,0,0,0.8)] isolate overflow-hidden border border-white/5 group-hover:bg-black transition-colors duration-500">
-
-                                    {/* Layer 1: White Spinning Glow (Slow & Elegant) */}
-                                    <div className="absolute inset-[-6px] -z-20 rounded-[inherit] overflow-hidden opacity-60 group-hover:opacity-100 transition-opacity">
-                                        <div className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent_0_300deg,#ffffff_360deg)] animate-[spin_12s_linear_infinite]"
-                                            style={{ willChange: 'transform' }} />
-                                    </div>
-                                    {/* Layer 2: Emerald Spinning Glow (Disabled on mobile for performance) */}
-                                    {!isMobile && (
-                                        <div className="absolute inset-[-6px] -z-20 rounded-[inherit] overflow-hidden opacity-40 group-hover:opacity-100 transition-opacity">
-                                            <div className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent_0_300deg,#10b981_360deg)] animate-[spin_20s_linear_infinite_reverse]"
-                                                style={{ willChange: 'transform' }} />
-                                        </div>
-                                    )}
-
-                                    {/* Dark Backdrop */}
-                                    <div className="absolute inset-[1px] bg-[#030303] rounded-[2.4rem] -z-10" />
-
-                                    {/* Card Background Image (How it was previously) */}
-                                    <div className="absolute inset-0 z-0 opacity-40 group-hover:opacity-60 transition-opacity duration-1000">
-                                        <Image
-                                            src={day.image}
-                                            alt={day.title}
-                                            fill
-                                            className="object-cover"
-                                            priority
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-b from-[#030303] via-transparent to-[#030303]" />
-                                    </div>
-
-                                    <div className="relative h-full flex flex-col rounded-[2.4rem] overflow-hidden z-20">
-                                        {/* Content Section */}
-                                        <div className="flex-1 pt-12 md:pt-16 px-6 md:px-12 pb-6 md:pb-8 flex flex-col relative">
-                                            <motion.h3
-                                                className="text-3xl md:text-5xl font-[1000] text-white uppercase tracking-tighter mb-4 font-[family-name:var(--font-poppins)] group-hover:text-emerald-400 transition-colors drop-shadow-[0_0_20px_rgba(0,0,0,0.8)]"
-                                            >
-                                                {day.title}
-                                            </motion.h3>
-                                            <div className="flex items-center gap-3 mb-4 md:mb-8">
-                                                <div className="px-4 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] md:text-xs font-bold uppercase tracking-widest group-hover:bg-emerald-500 group-hover:text-black transition-all shadow-[0_0_10px_rgba(16,185,129,0.2)]">
-                                                    {day.date}
-                                                </div>
-                                                <div className="h-[px] flex-1 bg-white/10 group-hover:bg-emerald-500/50 transition-colors" />
-                                            </div>
-
-                                            {/* Timeline Events List */}
-                                            <div className={`flex-1 ${isMobile ? 'overflow-visible' : 'overflow-y-auto custom-scrollbar-hide'} space-y-0 relative pr-2`}>
-                                                <motion.div
-                                                    initial={{ height: 0 }}
-                                                    whileInView={{ height: "100%" }}
-                                                    transition={{ duration: 1.5, ease: "easeOut" }}
-                                                    className="absolute left-[7px] top-2 w-[2px] bg-emerald-500/20 z-0"
-                                                />
-
-                                                {day.events.map((ev, j) => (
-                                                    <motion.div
-                                                        key={j}
-                                                        initial={{ opacity: 0, x: -20 }}
-                                                        whileInView={{ opacity: 1, x: 0 }}
-                                                        transition={{ duration: 0.8, delay: 0.1 * j + 0.5 }}
-                                                        className="relative pl-7 md:pl-8 py-2 md:py-3 group/item transition-colors hover:bg-white/5 rounded-r-xl"
-                                                    >
-                                                        <div className="absolute left-[3px] top-[18px] md:top-[22px] w-2 h-2 md:w-2.5 md:h-2.5 rounded-full border-2 border-[#080808] bg-gray-600 group-hover/item:bg-emerald-500 transition-colors z-10 shadow-[0_0_10px_black] group-hover/item:shadow-[0_0_10px_#10b981]" />
-                                                        <div className="flex justify-between items-center">
-                                                            <div className="min-w-0 pr-2">
-                                                                <div className="text-white font-bold text-sm md:text-lg group-hover/item:text-emerald-400 transition-colors truncate">{ev.name}</div>
-                                                                <div className="text-[9px] md:text-xs font-bold text-gray-500 uppercase tracking-wider mt-0.5">{ev.type}</div>
-                                                            </div>
-                                                            <div className="text-[10px] md:text-xs font-bold text-emerald-500/80 bg-emerald-500/5 px-2 py-1 rounded border border-emerald-500/10 group-hover/item:border-emerald-500 transition-colors shrink-0">
-                                                                {ev.status}
-                                                            </div>
-                                                        </div>
-                                                    </motion.div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
+                                <div className="text-emerald-500/20 group-hover:text-emerald-500 transition-colors duration-700 mb-8">
+                                    <Sparkles className="w-32 h-32" />
                                 </div>
+                                <h3 className={`${orbitron.className} text-3xl text-white font-black text-center mb-6`}>MUCH MORE TO REVEAL</h3>
+                                <p className="text-gray-500 text-center font-mono uppercase tracking-[0.2em] text-xs">Stay tuned for detailed technical workshops and spotlight events</p>
                             </motion.div>
-                        </motion.div>
-                    ))}
+                        )}
+                    </motion.div>
                 </div>
             </div>
         </section>
+    )
+}
+
+const TimelineCard = ({ day, index, isMobile }: { day: any, index: number, isMobile: boolean }) => {
+    const mouseX = useMotionValue(0)
+    const mouseY = useMotionValue(0)
+    const rotateX = useSpring(useTransform(mouseY, [-300, 300], [10, -10]), { stiffness: 100, damping: 30 })
+    const rotateY = useSpring(useTransform(mouseX, [-300, 300], [-10, 10]), { stiffness: 100, damping: 30 })
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (isMobile) return
+        const rect = e.currentTarget.getBoundingClientRect()
+        const centerX = rect.left + rect.width / 2
+        const centerY = rect.top + rect.height / 2
+        mouseX.set(e.clientX - centerX)
+        mouseY.set(e.clientY - centerY)
+    }
+
+    const handleMouseLeave = () => {
+        mouseX.set(0)
+        mouseY.set(0)
+    }
+
+    return (
+        <motion.div
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            initial={{ opacity: 0, y: isMobile ? 50 : 0, scale: isMobile ? 1 : 0.9 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: true, margin: "-10%" }}
+            transition={{ duration: 0.8, delay: index * 0.1, ease: "circOut" }}
+            className="relative w-[92vw] md:w-[700px] h-[65vh] md:h-[75vh] flex-shrink-0 snap-center group perspective-1000 will-change-transform"
+        >
+            <motion.div
+                style={isMobile ? undefined : { rotateX, rotateY }}
+                className="w-full h-full relative preserve-3d"
+            >
+                {/* Dual Border System - Optimized for Mobile */}
+                {!isMobile && (
+                    <>
+                        <div className="absolute inset-[-4px] -z-20 rounded-[2.5rem] overflow-hidden opacity-40 group-hover:opacity-100 transition-opacity">
+                            <div className="absolute inset-[-200%] bg-[conic-gradient(from_0deg,transparent_0_300deg,#10b981_360deg)] animate-[spin_8s_linear_infinite]" />
+                        </div>
+                        <div className="absolute inset-[-4px] -z-21 rounded-[2.5rem] overflow-hidden opacity-0 group-hover:opacity-40 transition-opacity">
+                            <div className="absolute inset-[-200%] bg-[conic-gradient(from_0deg,transparent_0_300deg,#ffffff_360deg)] animate-[spin_12s_linear_infinite_reverse]" />
+                        </div>
+                    </>
+                )}
+                {/* Mobile Static Border */}
+                {isMobile && <div className="absolute inset-[-2px] -z-20 rounded-[2.5rem] bg-emerald-500/30" />}
+
+                <div className="w-full h-full bg-[#050807]/90 rounded-[2.5rem] relative shadow-[0_0_80px_rgba(0,0,0,0.9)] isolate overflow-hidden border border-white/10">
+                    {/* Background Visuals */}
+                    <div className="absolute inset-0 z-0 opacity-30 group-hover:opacity-50 transition-all duration-1000 scale-105 group-hover:scale-100">
+                        <Image src={day.image} alt={day.title} fill className="object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black" />
+                    </div>
+
+                    <div className="relative h-full flex flex-col p-6 md:p-14 z-20">
+                        <div className="flex justify-between items-start mb-6 md:mb-8">
+                            <div>
+                                <span className={`${orbitron.className} text-emerald-500 font-black text-xs md:text-lg tracking-[0.5em] block mb-2`}>{day.day}</span>
+                                <h3 className="text-2xl md:text-6xl font-[1000] text-white uppercase tracking-tighter font-[family-name:var(--font-orbitron)] leading-none drop-shadow-2xl">
+                                    {day.title}
+                                </h3>
+                            </div>
+                            <div className="px-4 py-2 md:px-5 md:py-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl flex flex-col items-center min-w-[80px] md:min-w-[100px]">
+                                <span className="text-[8px] md:text-[10px] text-white/40 uppercase font-black mb-1">MARCH</span>
+                                <span className="text-xl md:text-4xl text-white font-black">{day.date.split(' ')[1]}</span>
+                            </div>
+                        </div>
+
+                        <div className="h-[1px] w-full bg-emerald-500/20 mb-4 md:mb-8" />
+
+                        {/* Event List Container with Scroll Hint */}
+                        <div className="relative flex-1 overflow-hidden flex flex-col">
+                            <div className="flex-1 overflow-y-auto custom-scrollbar-hide space-y-1 relative group/list pb-8">
+                                {day.events.map((ev: any, j: number) => (
+                                    <div
+                                        key={j}
+                                        className="flex items-center justify-between p-3 md:p-4 rounded-xl hover:bg-emerald-500/5 transition-all border border-transparent hover:border-emerald-500/10 group/item"
+                                    >
+                                        <div className="flex items-center gap-3 md:gap-4">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/30 group-hover/item:bg-emerald-500 group-hover/item:scale-150 transition-all" />
+                                            <div>
+                                                <div className="text-white font-bold tracking-wide group-hover/item:text-emerald-400 transition-colors uppercase text-xs md:text-base">{ev.name}</div>
+                                                <div className="text-[9px] md:text-[10px] text-white/30 font-mono tracking-widest flex items-center gap-2">
+                                                    <span className="w-3 h-[1px] bg-white/10" /> {ev.type}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-[8px] md:text-[9px] font-black text-emerald-500/40 bg-emerald-500/5 px-2 py-1 rounded border border-emerald-500/10 group-hover/item:text-emerald-500 group-hover/item:border-emerald-500 transition-all">
+                                                {ev.status}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Scroll Hint Overlay */}
+                            <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none flex items-end justify-center pb-2">
+                                <motion.div
+                                    animate={{ y: [0, 5, 0], opacity: [0.5, 1, 0.5] }}
+                                    transition={{ duration: 1.5, repeat: Infinity }}
+                                    className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-900/30 border border-emerald-500/20 backdrop-blur-md"
+                                >
+                                    <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">Scroll Events</span>
+                                    <ChevronDown className="w-3 h-3 text-emerald-400" />
+                                </motion.div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </motion.div>
+        </motion.div>
     )
 }
 
@@ -1887,7 +1957,7 @@ const ViewportLazy = ({ children }: { children: React.ReactNode }) => {
 }
 
 export default function LandingPage() {
-    const [shouldRender3D, setShouldRender3D] = useState(false);
+    const [shouldRender3D, setShouldRender3D] = useState(true);
     const { setPageTheme } = useApp()
 
     useEffect(() => {
@@ -1896,12 +1966,6 @@ export default function LandingPage() {
             rgb: '16, 185, 129',
             primary: '#10b981'
         })
-
-        // Delay 3D model mounting to avoid stutter during initial page entrance
-        const timer = setTimeout(() => {
-            setShouldRender3D(true);
-        }, 1200);
-        return () => clearTimeout(timer);
     }, []);
 
     return (

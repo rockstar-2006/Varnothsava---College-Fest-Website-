@@ -14,13 +14,16 @@ export function middleware(request: NextRequest) {
         ...(JSON.parse(process.env.NEXT_PUBLIC_APP_URL || '[]') as string[]).filter(Boolean),
         'http://localhost:3000',
         'http://127.0.0.1:3000',
+        // Production domains
+        'https://varnothsava.sode-edu.in',
+        'http://varnothsava.sode-edu.in',
     ];
 
     // Production origins (add your production domains)
     if (process.env.NODE_ENV === 'production') {
         allowedOrigins.push(
-            'https://yourdomain.com',
-            'https://www.yourdomain.com'
+            'https://varnothsava.sode-edu.in',
+            'http://varnothsava.sode-edu.in'
         );
     }
 
