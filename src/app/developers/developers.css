@@ -428,7 +428,7 @@
 /* MOBILE OPTIMIZATIONS */
 @media (max-width: 768px) {
     .slider {
-        align-items: flex-start;
+        align-items: center;
         padding-top: 0;
     }
 
@@ -543,7 +543,8 @@
         position: fixed;
         top: auto;
         bottom: 80px;
-        /* Above ticker and clear of content */
+        left: unset;
+        right: unset;
         transform: none;
         width: 50px;
         height: 50px;
@@ -551,6 +552,18 @@
         border: 1px solid rgba(255, 255, 255, 0.3);
         z-index: 5000;
         box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+    }
+    .left-arrow {
+        left: 20px;
+    }
+    .right-arrow {
+        right: 20px;
+    }
+    .back-btn {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 5000;
     }
 
     .arrow svg {
