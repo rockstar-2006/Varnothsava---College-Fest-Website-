@@ -36,6 +36,40 @@ const inter = Inter({
     variable: '--font-inter'
 })
 
+// --- Scramble Text Component ---
+const ScrambleText = ({ text, className }: { text: string; className?: string }) => {
+    const [display, setDisplay] = useState(text || "");
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&";
+
+    useEffect(() => {
+        if (!text) return;
+        let iteration = 0;
+        const interval = setInterval(() => {
+            setDisplay(
+                text
+                    .split("")
+                    .map((letter, index) => {
+                        if (index < iteration) {
+                            return text[index];
+                        }
+                        return chars[Math.floor(Math.random() * chars.length)];
+                    })
+                    .join("")
+            );
+
+            if (iteration >= text.length) {
+                clearInterval(interval);
+            }
+
+            iteration += 1 / 3;
+        }, 30);
+
+        return () => clearInterval(interval);
+    }, [text]);
+
+    return <span className={className}>{display}</span>;
+};
+
 // --- Council Data ---
 const councilMembers = [
     {
@@ -216,91 +250,81 @@ const ViewportLazy = ({ children }: { children: React.ReactNode }) => {
     )
 }
 
-// --- Continuous Ambient Background ---
+// --- Continuous Ambient Background (Canvas Optimized) ---
 const LivingBackground = () => {
-    const [isMobile, setIsMobile] = useState(false)
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [isMobile, setIsMobile] = useState(false);
+
     useEffect(() => {
-        setIsMobile(window.innerWidth < 768)
-    }, [])
+        setIsMobile(window.innerWidth < 768);
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        let animationFrameId: number;
+        const particles: any[] = [];
+        const particleCount = isMobile ? 40 : 100;
+
+        const resize = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        };
+        window.addEventListener('resize', resize);
+        resize();
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 2 + 0.5,
+                vx: (Math.random() - 0.5) * 0.3,
+                vy: (Math.random() - 0.5) * 0.3,
+                opacity: Math.random() * 0.5 + 0.2
+            });
+        }
+
+        const render = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Grid
+            ctx.strokeStyle = 'rgba(16, 185, 129, 0.05)';
+            ctx.lineWidth = 1;
+            const gridSize = 40;
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += gridSize) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+            }
+
+            // Update & Draw Particles
+            ctx.fillStyle = '#10b981';
+            particles.forEach(p => {
+                p.x = (p.x + p.vx + canvas.width) % canvas.width;
+                p.y = (p.y + p.vy + canvas.height) % canvas.height;
+                ctx.globalAlpha = p.opacity;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+
+            animationFrameId = requestAnimationFrame(render);
+        };
+        render();
+
+        return () => {
+            window.removeEventListener('resize', resize);
+            cancelAnimationFrame(animationFrameId);
+        };
+    }, [isMobile]);
 
     return (
         <div className="fixed inset-0 -z-50 pointer-events-none overflow-hidden bg-[#010202]">
-            {/* Breathing Nebula */}
-            <motion.div
-                animate={{
-                    scale: [1, 1.4, 1],
-                    opacity: [0.3, 0.6, 0.3],
-                    x: [-100, 100, -100],
-                    rotate: [0, 90, 0]
-                }}
-                transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-                className="absolute top-[-20%] left-[-10%] w-[150%] h-[150%] bg-[radial-gradient(circle_at_center,_rgba(16,185,129,0.12)_0%,_transparent_60%)] blur-[150px]"
-            />
-            <motion.div
-                animate={{
-                    scale: [1.2, 1, 1.2],
-                    opacity: [0.2, 0.5, 0.2],
-                    y: [-50, 50, -50],
-                    rotate: [0, -45, 0]
-                }}
-                transition={{ duration: 25, repeat: Infinity, ease: "linear", delay: 5 }}
-                className="absolute bottom-[-10%] right-[-10%] w-[130%] h-[130%] bg-[radial-gradient(circle_at_center,_rgba(59,130,246,0.12)_0%,_transparent_60%)] blur-[130px]"
-            />
-
-            {/* Continuous Floating Data Bits - DISABLED ON MOBILE for scroll performance */}
-            {!isMobile && [...Array(100)].map((_, i) => (
-                <motion.div
-                    key={i}
-                    initial={{
-                        x: Math.random() * 100 + "%",
-                        y: "110%",
-                        scale: Math.random() * 0.5 + 0.2,
-                        opacity: 0
-                    }}
-                    animate={{
-                        y: "-10%",
-                        opacity: [0, 0.8, 0],
-                        rotate: [0, 360]
-                    }}
-                    transition={{
-                        duration: Math.random() * 10 + 10,
-                        repeat: Infinity,
-                        ease: "linear",
-                        delay: Math.random() * 10
-                    }}
-                    className={`absolute w-1 h-1 ${i % 3 === 0 ? 'bg-emerald-500' : 'bg-white'} rounded-full blur-[0.5px] shadow-[0_0_8px_currentColor]`}
-                />
-            ))}
-
-            {/* Premium White Square Grid Pattern */}
-            <div className="absolute inset-0 opacity-[0.15]">
-                <div
-                    className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:40px_40px]"
-                />
-                <div
-                    className="absolute inset-0 bg-[radial-gradient(circle_800px_at_50%_200px,#10b98115,transparent)]"
-                />
-            </div>
-
-            {/* Pulsing Grid Accents - STATIC ON MOBILE */}
-            {!isMobile && (
-                <motion.div
-                    animate={{ opacity: [0.05, 0.15, 0.05] }}
-                    transition={{ duration: 4, repeat: Infinity }}
-                    className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:200px_200px]"
-                />
-            )}
-
-            {/* Digital Rain / Streams - SIGNIFICANTLY REDUCED ON MOBILE */}
-            {[...Array(isMobile ? 2 : 15)].map((_, i) => (
-                <motion.div
-                    key={i}
-                    initial={{ left: `${i * (isMobile ? 45 : 7)}%`, top: "-100%" }}
-                    animate={{ top: "110%" }}
-                    transition={{ duration: Math.random() * 5 + 3, repeat: Infinity, ease: "linear", delay: i * 0.5 }}
-                    className="absolute w-[1px] h-40 bg-gradient-to-b from-transparent via-emerald-500/30 to-transparent z-0"
-                />
-            ))}
+            <canvas ref={canvasRef} className="absolute inset-0 opacity-40" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#010202]/50 to-[#010202]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(16,185,129,0.05)_0%,_transparent_70%)]" />
         </div>
     )
 }
@@ -356,7 +380,7 @@ const HolographicCard = ({ member, index }: { member: any, index: number }) => {
                 zIndex: activeHover ? 50 : 1,
                 willChange: 'transform, opacity'
             }}
-            className={`group relative w-full overflow-hidden rounded-[2.5rem] bg-[#020504]/90 border-2 border-white/10 ${isMobile ? 'h-auto min-h-[600px] flex flex-col' : 'h-[680px] md:h-[720px] perspective-1000'} transform-gpu shadow-xl`}
+            className={`group relative w-full overflow-hidden rounded-[2.5rem] bg-[#020504]/90 border-2 border-white/10 ${isMobile ? 'h-auto min-h-[600px] flex flex-col' : 'h-[720px] md:h-[800px] perspective-1000'} transform-gpu shadow-xl`}
         >
             {/* Pulsing Aura Border - Desktop Only for Performance */}
             {!isMobile && (
@@ -425,7 +449,7 @@ const HolographicCard = ({ member, index }: { member: any, index: number }) => {
                                 </span>
                             </div>
 
-                            <h3 className={`${orbitron.className} text-3xl md:text-5xl font-black text-white leading-tight tracking-tight mt-1`}>
+                            <h3 className={`${orbitron.className} text-3xl md:text-4xl font-black text-white leading-tight tracking-tight mt-1`}>
                                 {member.name}
                             </h3>
                         </div>
@@ -557,12 +581,14 @@ export default function CouncilPage() {
                     className="flex flex-col items-center gap-6 relative z-10 w-full"
                 >
                     <div className="flex flex-col items-center gap-2 px-8 py-4 bg-[#050807]/80 border border-emerald-500/30 rounded-2xl backdrop-blur-2xl shadow-[0_0_50px_rgba(16,185,129,0.1)] text-center w-full max-w-2xl mx-auto">
-                        <span className={`${orbitron.className} text-[7px] md:text-[10px] font-black tracking-[0.2em] md:tracking-[0.5em] text-white/60 uppercase mb-1`}>SHRI MADHWA VADIRAJA INSTITUTE OF TECHNOLOGY & MANAGEMENT</span>
+                        <span className={`${orbitron.className} text-[7px] md:text-[10px] font-black tracking-[0.2em] md:tracking-[0.5em] text-white/60 uppercase mb-1`}>
+                            <ScrambleText text="SHRI MADHWA VADIRAJA INSTITUTE OF TECHNOLOGY & MANAGEMENT" />
+                        </span>
                         <div className="flex items-center justify-center gap-4 w-full">
                             <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
                                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                <span className={`${orbitron.className} text-[8px] md:text-[10px] font-bold text-emerald-400 tracking-widest`}>
-                                    SYSTEM_ONLINE
+                                <span className={`${orbitron.className} text-[8px] md:text-[10px] font-bold text-emerald-400 tracking-widest uppercase`}>
+                                    <ScrambleText text="SYSTEM_ONLINE" />
                                 </span>
                             </div>
                             <DigitalClock />
@@ -571,17 +597,29 @@ export default function CouncilPage() {
 
                     <h1 className={`${orbitron.className} text-4xl md:text-[120px] font-black text-center uppercase leading-none tracking-tighter text-white relative mt-10`}>
                         <motion.span
-                            initial={{ opacity: 0, y: 20 }}
+                            initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8 }}
+                            transition={{ type: "spring", stiffness: 100, damping: 20, delay: 0.1 }}
                             className="text-white/40 block text-2xl md:text-5xl mb-2 tracking-[0.2em]"
                         >
                             CONNECT WITH
                         </motion.span>
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-cyan-400 drop-shadow-[0_0_30px_rgba(16,185,129,0.3)]">VARNOTHSAVA</span>
+                        <motion.span
+                            initial={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
+                            animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                            transition={{ type: "spring", stiffness: 80, damping: 15, delay: 0.3 }}
+                            className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-cyan-400 drop-shadow-[0_0_30px_rgba(16,185,129,0.3)] block"
+                        >
+                            VARNOTHSAVA
+                        </motion.span>
                     </h1>
 
-                    <div className="flex flex-col items-center gap-6 mt-8 w-full max-w-4xl px-6">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.6, duration: 0.8 }}
+                        className="flex flex-col items-center gap-6 mt-8 w-full max-w-4xl px-6"
+                    >
                         <p className={`${inter.className} text-sm md:text-xl font-medium text-white/70 tracking-wide text-center max-w-2xl leading-relaxed`}>
                             For any <span className="text-emerald-400 font-bold uppercase tracking-widest text-xs md:text-base underline decoration-emerald-500/30 underline-offset-8">Clarifications, Queries, or Support</span>, feel free to reach out to our dedicated Student Council members listed below.
                         </p>
@@ -590,11 +628,16 @@ export default function CouncilPage() {
                             <span className={`${orbitron.className} text-[9px] md:text-xs font-black text-emerald-500/60 tracking-[0.5em] uppercase`}>Official Liaison Registry</span>
                             <p className="text-[10px] text-white/30 font-mono italic tracking-tight">Scroll down to view individual contact profiles</p>
                         </div>
-                    </div>
+                    </motion.div>
                 </motion.div>
 
                 {/* Alive Search Console */}
-                <div className="relative w-full max-w-2xl mt-24 group z-10">
+                <motion.div
+                    initial={{ opacity: 0, y: 40 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ type: "spring", stiffness: 100, damping: 25, delay: 0.8 }}
+                    className="relative w-full max-w-2xl mt-24 group z-10"
+                >
                     <motion.div
                         animate={{ opacity: [0.1, 0.3, 0.1] }}
                         transition={{ duration: 4, repeat: Infinity }}
@@ -607,14 +650,14 @@ export default function CouncilPage() {
                             placeholder="SEARCH ENCRYPTED DOSSIER..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full bg-transparent py-8 pl-24 pr-12 uppercase font-black tracking-widest text-sm focus:outline-none placeholder:text-white/10"
+                            className="w-full bg-transparent py-8 pl-24 pr-12 uppercase font-black tracking-widest text-sm focus:outline-none placeholder:text-white/20 text-white"
                         />
                         <div className="absolute right-10 top-1/2 -translate-y-1/2 flex items-center gap-3 opacity-20">
                             <Activity className="w-5 h-5" />
                             <span className="text-[10px] font-mono tracking-tighter">DATA_FETCHING</span>
                         </div>
                     </div>
-                </div>
+                </motion.div>
             </section>
 
             {/* Continuous Animated Grid */}

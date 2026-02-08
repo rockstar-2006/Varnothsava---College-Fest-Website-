@@ -82,7 +82,7 @@ export function InnovativeNavbar() {
     // Dynamic Theme Logic - Use Context
     const themeRgb = pageTheme?.rgb || '16, 185, 129'
 
-    if (pathname === '/rulebook') return null;
+    if (pathname === '/rulebook' || pathname === '/developers') return null;
 
     return (
 

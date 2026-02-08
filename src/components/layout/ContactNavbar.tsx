@@ -29,48 +29,25 @@ export function ContactNavbar() {
     }, [])
 
     // Theme color backup
+    const isDevPage = pathname === '/developers'
     const themeColor = pageTheme?.rgb ? `rgb(${pageTheme.rgb})` : '#10b981'
 
     return (
-        <div className="fixed top-6 right-6 z-[6000] flex items-center justify-end font-mono">
-
-            {/* Attention Text - Cycling Label */}
-            <AnimatePresence mode="wait">
-                {!isOpen && (
-                    <motion.div
-                        key={labels[labelIndex]} // Key change triggers animation
-                        initial={{ opacity: 0, x: 10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -10 }}
-                        transition={{ duration: 0.3 }}
-                        className="mr-4 flex items-center gap-3"
-                    >
-                        <span
-                            className="text-xs font-black tracking-[0.2em] uppercase"
-                            style={{
-                                color: themeColor,
-                                textShadow: `0 0 10px ${themeColor}80`
-                            }}
-                        >
-                            {labels[labelIndex]}
-                        </span>
-                        <div
-                            className="h-[1px] w-8 md:w-12"
-                            style={{ backgroundColor: themeColor, boxShadow: `0 0 5px ${themeColor}` }}
-                        />
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
+        <div className={cn(
+            "fixed top-6 right-6 z-[6000] flex font-mono gap-4",
+            isDevPage ? "flex-col items-center justify-start" : "items-center justify-end"
+        )}>
             <motion.div
                 initial={false}
                 animate={{
                     width: isOpen ? 'auto' : '56px',
+                    height: '56px',
                     backgroundColor: isOpen ? 'rgba(0,0,0,0.9)' : 'rgba(0,0,0,0.6)',
                     borderColor: isOpen ? `${themeColor}80` : 'rgba(255,255,255,0.1)'
                 }}
                 className={cn(
                     "relative h-[56px] rounded-full backdrop-blur-xl border overflow-hidden flex items-center shadow-2xl transition-all duration-300",
+                    isDevPage ? "order-1" : "order-2",
                     isOpen ? "pl-8 pr-2" : "px-0 justify-center"
                 )}
                 style={{
@@ -157,6 +134,56 @@ export function ContactNavbar() {
                     </div>
                 </button>
             </motion.div>
+
+            {/* Attention Text - Cycling Label */}
+            <AnimatePresence mode="wait">
+                {!isOpen && (
+                    <motion.div
+                        key={labels[labelIndex]}
+                        initial={isDevPage ? { opacity: 0, y: -10 } : { opacity: 0, x: 10 }}
+                        animate={isDevPage ? { opacity: 1, y: 0 } : { opacity: 1, x: 0 }}
+                        exit={isDevPage ? { opacity: 0, y: 10 } : { opacity: 0, x: -10 }}
+                        transition={{ duration: 0.3 }}
+                        className={cn(
+                            "flex items-center gap-3",
+                            isDevPage ? "flex-col order-2" : "flex-row order-1 mr-4"
+                        )}
+                    >
+                        {isDevPage && (
+                            <div
+                                className="w-[1px] h-8 md:h-12"
+                                style={{ backgroundColor: themeColor, boxShadow: `0 0 5px ${themeColor}` }}
+                            />
+                        )}
+
+                        <div
+                            className={cn(
+                                "font-black tracking-[0.2em] uppercase",
+                                isDevPage ? "flex flex-col items-center text-[10px] leading-none gap-1" : "text-xs"
+                            )}
+                            style={{
+                                color: themeColor,
+                                textShadow: `0 0 10px ${themeColor}80`
+                            }}
+                        >
+                            {isDevPage ? (
+                                labels[labelIndex].split('').map((char, i) => (
+                                    <span key={i}>{char}</span>
+                                ))
+                            ) : (
+                                labels[labelIndex]
+                            )}
+                        </div>
+
+                        {!isDevPage && (
+                            <div
+                                className="h-[1px] w-8 md:w-12"
+                                style={{ backgroundColor: themeColor, boxShadow: `0 0 5px ${themeColor}` }}
+                            />
+                        )}
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     )
 }
