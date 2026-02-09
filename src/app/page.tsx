@@ -542,52 +542,59 @@ function ParallaxText({ children, baseVelocity = 100 }: ParallaxTextProps) {
     );
 }
 
-const RevealText = ({ text, delay = 0 }: { text: string, delay?: number }) => {
-    return (
-        <span className="inline-block overflow-hidden">
-            <motion.span
-                initial={{ y: "100%", rotate: 10 }}
-                whileInView={{ y: 0, rotate: 0 }}
-                viewport={{ once: true, margin: "-10%" }}
-                transition={{
-                    duration: 1,
-                    ease: [0.2, 0.65, 0.3, 0.9],
-                    delay: delay
-                }}
-                className="inline-block origin-top-left"
-            >
-                {text}
-            </motion.span>
-        </span>
-    )
-}
+const RevealText = ({ text, delay = 0 }: { text: string, delay?: number }) => (
+  <span className="inline-block">
+    <motion.span
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{
+        duration: 0.6,
+        ease: [0.2, 0.65, 0.3, 0.9],
+        delay
+      }}
+      className="inline-block"
+    >
+      {text}
+    </motion.span>
+  </span>
+)
+
 
 const StaggerTitle = ({ title, subtitle }: { title: string, subtitle?: string }) => {
-    return (
-        <div className="mb-10 space-y-2 text-center md:text-left relative z-10">
-            {subtitle && (
-                <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    className="flex items-center gap-3 justify-center md:justify-start"
-                >
-                    <span className="w-12 h-[2px] bg-emerald-500"></span>
-                    <span className="text-emerald-400 font-bold tracking-[0.3em] uppercase text-xs font-[family-name:var(--font-inter)]">
-                        {subtitle}
-                    </span>
-                </motion.div>
-            )}
-            <h2 className="text-4xl md:text-6xl font-[900] text-white uppercase tracking-tighter leading-none font-[family-name:var(--font-poppins)] overflow-hidden">
-                {title.split(" ").map((word, i) => (
-                    <span key={i} className="inline-block mr-4">
-                        <RevealText text={word} delay={i * 0.1} />
-                    </span>
-                ))}
-            </h2>
-        </div>
-    )
+  return (
+    <div
+      className="mb-10 space-y-2 text-center md:text-left relative z-50"
+      style={{
+        transform: "none",
+        perspective: "none",
+      }}
+    >
+      {subtitle && (
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          className="flex items-center gap-3 justify-center md:justify-start"
+        >
+          <span className="w-12 h-[2px] bg-emerald-500" />
+          <span className="text-emerald-400 font-bold tracking-[0.3em] uppercase text-xs">
+            {subtitle}
+          </span>
+        </motion.div>
+      )}
+
+      <h2 className="text-4xl md:text-6xl font-[900] text-white uppercase tracking-tighter leading-none">
+        {title.split(" ").map((word, i) => (
+          <span key={i} className="inline-block mr-4">
+            <RevealText text={word} delay={i * 0.1} />
+          </span>
+        ))}
+      </h2>
+    </div>
+  )
 }
+
 
 // --- UI Components ---
 
@@ -727,12 +734,12 @@ const ScrollProgress = () => {
 
 const RevealOnScroll = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
     <motion.div
-        initial={{ opacity: 0, y: 50, scale: 0.98 }}
-        whileInView={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -50, scale: 0.98 }}
-        viewport={{ once: false, amount: 0.2, margin: "-100px" }} // Smoother trigger margin
+        initial={{ opacity: 0, y: 50}}
+        whileInView={{ opacity: 1, y: 0}}
+       
+        viewport={{ once: true, amount: 0.3 }} // Smoother trigger margin
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className={className}
+        className={`relative overflow-visible ${className}`}
     >
         {children}
     </motion.div>
@@ -1097,12 +1104,12 @@ const WelcomeSection = () => {
             <ParallaxBackground />
 
             <div className="container mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center relative z-10">
-                <RevealOnScroll className="relative group perspective-1000">
+                <RevealOnScroll className="relative group">
                     <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-purple-600 rounded-[3rem] blur-2xl opacity-20 group-hover:opacity-40 transition-opacity duration-700" />
                     <motion.div
                         whileHover={isMobile ? {} : { scale: 1.02, rotateY: 5 }}
                         transition={{ type: "spring", stiffness: 100 }}
-                        className="relative h-[300px] md:h-[500px] rounded-[2.5rem] md:rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl"
+                        className="relative h-[300px] md:h-[500px] rounded-[2.5rem] md:rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl perspective-1000"
                     >
                         <Image
                             src="/img/6.jpg"
@@ -1124,7 +1131,7 @@ const WelcomeSection = () => {
                     </motion.div>
                 </RevealOnScroll>
 
-                <RevealOnScroll className="space-y-8">
+                <RevealOnScroll className="space-y-8 overflow-visible">
                     <StaggerTitle title="The Phenomenon" subtitle="Welcome to Varnothsava" />
                     <p className="text-lg leading-relaxed text-gray-400 font-light">
                         <span className="text-emerald-400 font-bold">Varnothsava</span> is the annual national-level techno-cultural fest of{" "}
@@ -1496,7 +1503,7 @@ const SpecialAttractions = () => (
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-                { title: "Food Fest", icon: Utensils, color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/20", img: "https://media.istockphoto.com/id/2174881887/photo/guests-enjoying-delicious-buffet-meals-during-a-lively-food-festival-celebration-event.webp?a=1&b=1&s=612x612&w=0&k=20&c=Sbcwx_6ofqOsvC6GSfHHkwhOYfi62aBPaZHna9qWILY=" },
+                { title: "Food Fest", icon: Utensils, color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/20", img: "/food-fest.png" },
                 { title: "Gaming Warp", icon: Gamepad2, color: "text-violet-400", bg: "bg-violet-500/10", border: "border-violet-500/20", img: "/gaming-warp.png" },
                 { title: "Inno Bazar", icon: Lightbulb, color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20", img: "/innobazar.png" },
                 { title: "Techno Night", icon: Zap, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", img: "/technical-arena.jpg" }
