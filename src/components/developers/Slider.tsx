@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { FaChevronLeft, FaChevronRight, FaGithub, FaLinkedin, FaInstagram, FaPhone, FaEnvelope, FaCode, FaDownload } from "react-icons/fa";
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from "framer-motion";
 import type { Variants } from "framer-motion";
+import Link from 'next/link';
 import { useRouter } from "next/navigation";
 import { FaArrowLeft } from "react-icons/fa";
 import CyberBackground from "./CyberBackground";
@@ -219,15 +220,15 @@ const Slider = () => {
             {/* Pass theme color to background for dynamic particles */}
             <CyberBackground themeColor={currentTheme} />
 
-            <button
-                className="back-btn"
-                onClick={() => router.back()}
-                style={{ borderColor: `${currentTheme}40`, color: currentTheme }}
+            <Link
+                href="/"
+                className="back-btn cursor-pointer z-[7000]"
+                style={{ borderColor: `${currentTheme}40`, color: currentTheme, position: 'fixed', top: '24px', left: '24px', display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}
                 title="Go Back"
             >
                 <FaArrowLeft size={18} />
                 <span className="back-text">BACK</span>
-            </button>
+            </Link>
 
             <button className="arrow left-arrow" onClick={handlePrev} style={{ borderColor: currentTheme, color: currentTheme }}>
                 <FaChevronLeft size={28} />

@@ -23,8 +23,10 @@ import {
     Terminal,
     Maximize2,
     Activity,
-    Wifi
+    Wifi,
+    ArrowLeft
 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 const orbitron = Orbitron({
     subsets: ['latin'],
@@ -549,6 +551,9 @@ export default function CouncilPage() {
         m.role.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
+
+    const router = useRouter()
+
     return (
         <motion.main
             initial={{ opacity: 0 }}
@@ -564,6 +569,17 @@ export default function CouncilPage() {
             </div>
 
             {/* Header with Continuous Visual Dynamics */}
+            <nav className="fixed top-0 left-0 w-full z-50 px-6 py-6 md:px-12 pointer-events-none">
+                <motion.button
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    onClick={() => router.push('/')}
+                    className="pointer-events-auto cursor-pointer z-[7000] flex items-center gap-2 text-white/60 hover:text-white transition-colors group px-4 py-2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-full"
+                >
+                    <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+                    <span className="text-xs font-black uppercase tracking-widest">BACK_TO_HOME</span>
+                </motion.button>
+            </nav>
             <section className="relative pt-48 pb-24 px-6 max-w-7xl mx-auto flex flex-col items-center">
                 <div className="absolute top-20 left-1/2 -translate-x-1/2 w-full flex justify-center opacity-5 select-none pointer-events-none z-0">
                     <motion.h2

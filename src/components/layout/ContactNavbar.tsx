@@ -36,7 +36,7 @@ export function ContactNavbar() {
     return (
         <div
             className={cn(
-                "fixed z-[6000] flex font-mono gap-4",
+                "fixed z-[6000] flex font-mono gap-4 pointer-events-none",
                 "top-3 right-3 sm:top-6 sm:right-6",
                 "items-center justify-end",
                 "w-full max-w-[100vw] px-2 sm:px-0"
@@ -52,7 +52,7 @@ export function ContactNavbar() {
                     borderColor: isOpen ? `${themeColor}80` : 'rgba(255,255,255,0.1)'
                 }}
                 className={cn(
-                    "relative rounded-full backdrop-blur-xl border flex items-center justify-center shadow-2xl transition-all duration-300",
+                    "relative rounded-full backdrop-blur-xl border flex items-center justify-center shadow-2xl transition-all duration-300 pointer-events-auto",
                     "order-2",
                     "h-[44px] w-[44px] sm:h-[56px] sm:w-[56px]"
                 )}
@@ -118,7 +118,7 @@ export function ContactNavbar() {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.92, y: -8 }}
                         transition={{ duration: 0.22, ease: 'easeOut' }}
-                        className="absolute top-14 right-1 sm:static sm:top-auto sm:right-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5 sm:gap-6 px-4 py-3 sm:px-6 sm:py-3 z-[6100] min-w-[120px] max-w-[92vw]"
+                        className="absolute top-14 right-1 sm:static sm:top-auto sm:right-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5 sm:gap-6 px-4 py-3 sm:px-6 sm:py-3 z-[6100] min-w-[120px] max-w-[92vw] pointer-events-auto"
                         style={{
                             background: `linear-gradient(135deg, rgba(0,0,0,0.82) 60%, rgba(0,0,0,0.68) 100%)`,
                             backdropFilter: 'blur(16px)',
@@ -142,7 +142,7 @@ export function ContactNavbar() {
                             Contact
                         </Link>
 
-                        <div className="w-full h-[1px] bg-white/10 sm:w-1.5 sm:h-1.5 sm:rounded-full sm:bg-white/50 sm:my-0 my-1" style={{boxShadow: `0 0 4px ${themeColor}40`}} />
+                        <div className="w-full h-[1px] bg-white/10 sm:w-1.5 sm:h-1.5 sm:rounded-full sm:bg-white/50 sm:my-0 my-1" style={{ boxShadow: `0 0 4px ${themeColor}40` }} />
 
                         <Link
                             href="/developers"
