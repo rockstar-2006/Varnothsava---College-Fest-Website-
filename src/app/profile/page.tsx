@@ -199,6 +199,18 @@ export default function ProfilePage() {
     const [editUsn, setEditUsn] = useState('')
     const [editPhone, setEditPhone] = useState('')
 
+        // Robust scroll lock for modal
+        useEffect(() => {
+            if (activeModal) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+            return () => {
+                document.body.style.overflow = '';
+            };
+        }, [activeModal])
+
     useEffect(() => {
         if (userData) {
             setEditName(userData.name)
@@ -282,7 +294,7 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#030408] text-white selection:bg-emerald-500/20 overflow-x-hidden font-sans relative no-jank">
+        <div className={`min-h-screen bg-[#030408] text-white selection:bg-emerald-500/20 overflow-x-hidden font-sans relative no-jank ${activeModal ? "overflow-y-hidden max-h-dvh" : ""}`}>
             <motion.div style={{ opacity: backgroundOpacity }} className="fixed inset-0 pointer-events-none z-0">
                 <BackgroundElements />
             </motion.div>
@@ -360,7 +372,7 @@ export default function ProfilePage() {
             <motion.div
                 variants={itemVariants}
                 style={{ y: contentY }}
-                className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-10 items-start"
+                className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-10 items-start -mt-40"
             >
 
                 {/* --- LEFT SIDEBAR --- */}
@@ -376,6 +388,7 @@ export default function ProfilePage() {
                                                     <Image
                                                         src={userData.avatar}
                                                         alt={userData.name}
+                                                        unoptimized
                                                         fill
                                                         sizes="(max-width: 768px) 112px, 144px"
                                                         className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
@@ -431,6 +444,7 @@ export default function ProfilePage() {
                                                         <Image
                                                             src={userData.avatar}
                                                             alt={userData.name}
+                                                            unoptimized
                                                             fill
                                                             sizes="(max-width: 768px) 112px, 144px"
                                                             className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
@@ -438,7 +452,10 @@ export default function ProfilePage() {
                                                     </div>
                                                 </div>
                                                 <button
-                                                    onClick={() => setActiveModal('qr')}
+                                                    onClick={() => {
+                                                        setActiveModal('qr')
+                                                        setActiveModal('qr')
+                                                    }}
                                                     className="absolute -bottom-2 -right-2 w-12 md:w-12 h-12 md:h-12 bg-white rounded-xl flex items-center justify-center text-black shadow-2xl transition-transform hover:scale-110 hover:rotate-12 border-2 md:border-4 border-[#08090f] z-20 min-h-[48px] min-w-[48px]"
                                                 >
                                                     <QrCode size={22} />
@@ -655,7 +672,7 @@ export default function ProfilePage() {
 
             <AnimatePresence>
                 {activeModal && (
-                    <div className="fixed inset-0 z-[20000] flex items-center justify-center p-4 h-[100dvh] w-screen overflow-hidden">
+                    <div className="fixed top-0 inset-0 z-[20000] flex items-center justify-center p-4 h-[100dvh] w-screen overflow-hidden">
                         {/* Stronger Backdrop */}
                         <motion.div
                             initial={{ opacity: 0 }}
@@ -695,7 +712,7 @@ export default function ProfilePage() {
                                 <div className="space-y-6">
                                     {activeModal === 'settings' && (
                                         <div className="text-center space-y-6">
-                                            <div className="relative group/avatar-edit mx-auto">
+                                            <div className="relative group/avatar-edit mx-auto justify-center flex">
                                                 <div className="w-32 h-32 rounded-[2.5rem] overflow-hidden border-2 border-emerald-500/20 shadow-2xl relative bg-[#05060a]">
                                                     {isRegenerating && (
                                                         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-10 flex items-center justify-center">
@@ -705,6 +722,7 @@ export default function ProfilePage() {
                                                     <Image
                                                         src={userData.avatar}
                                                         alt="Avatar"
+                                                        unoptimized
                                                         fill
                                                         sizes="128px"
                                                         className="w-full h-full object-cover"
@@ -738,6 +756,7 @@ export default function ProfilePage() {
                                                             <Image
                                                                 src={avatar.src}
                                                                 alt={avatar.name}
+                                                                unoptimized
                                                                 fill
                                                                 sizes="100px"
                                                                 className="w-full h-full object-cover"
@@ -827,6 +846,7 @@ export default function ProfilePage() {
                                                         <Image
                                                             src={userData.avatar}
                                                             alt="Avatar"
+                                                            unoptimized
                                                             fill
                                                             sizes="96px"
                                                             className="w-full h-full object-cover"

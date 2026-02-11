@@ -11,13 +11,13 @@ export function middleware(request: NextRequest) {
 
     // Define allowed origins based on environment
     const allowedOrigins = [
-        process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+        process.env.NEXT_PUBLIC_APP_URL,
         'http://localhost:3000',
         'http://127.0.0.1:3000',
         // Production domains
         'https://varnothsava.sode-edu.in',
         'http://varnothsava.sode-edu.in',
-    ];
+    ].filter(Boolean) as string[];
 
     // Production origins (add your production domains)
     if (process.env.NODE_ENV === 'production') {

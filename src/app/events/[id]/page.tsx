@@ -224,8 +224,8 @@ export default function EventDetailsPage() {
                 <motion.button
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    onClick={() => router.back()}
-                    className="pointer-events-auto flex items-center gap-2 text-white/60 hover:text-white transition-colors group px-4 py-2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-full"
+                    onClick={() => router.push('/events')}
+                    className="pointer-events-auto cursor-pointer z-[7000] flex items-center gap-2 text-white/60 hover:text-white transition-colors group px-4 py-2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-full"
                 >
                     <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
                     <span className="text-xs font-black uppercase tracking-widest">BACK_TO_EVENTS</span>
