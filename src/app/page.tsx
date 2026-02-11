@@ -543,56 +543,56 @@ function ParallaxText({ children, baseVelocity = 100 }: ParallaxTextProps) {
 }
 
 const RevealText = ({ text, delay = 0 }: { text: string, delay?: number }) => (
-  <span className="inline-block">
-    <motion.span
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{
-        duration: 0.6,
-        ease: [0.2, 0.65, 0.3, 0.9],
-        delay
-      }}
-      className="inline-block"
-    >
-      {text}
-    </motion.span>
-  </span>
+    <span className="inline-block">
+        <motion.span
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{
+                duration: 0.6,
+                ease: [0.2, 0.65, 0.3, 0.9],
+                delay
+            }}
+            className="inline-block"
+        >
+            {text}
+        </motion.span>
+    </span>
 )
 
 
 const StaggerTitle = ({ title, subtitle }: { title: string, subtitle?: string }) => {
-  return (
-    <div
-      className="mb-10 space-y-2 text-center md:text-left relative z-50"
-      style={{
-        transform: "none",
-        perspective: "none",
-      }}
-    >
-      {subtitle && (
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          className="flex items-center gap-3 justify-center md:justify-start"
+    return (
+        <div
+            className="mb-10 space-y-2 text-center md:text-left relative z-50"
+            style={{
+                transform: "none",
+                perspective: "none",
+            }}
         >
-          <span className="w-12 h-[2px] bg-emerald-500" />
-          <span className="text-emerald-400 font-bold tracking-[0.3em] uppercase text-xs">
-            {subtitle}
-          </span>
-        </motion.div>
-      )}
+            {subtitle && (
+                <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    className="flex items-center gap-3 justify-center md:justify-start"
+                >
+                    <span className="w-12 h-[2px] bg-emerald-500" />
+                    <span className="text-emerald-400 font-bold tracking-[0.3em] uppercase text-xs">
+                        {subtitle}
+                    </span>
+                </motion.div>
+            )}
 
-      <h2 className="text-4xl md:text-6xl font-[900] text-white uppercase tracking-tighter leading-none">
-        {title.split(" ").map((word, i) => (
-          <span key={i} className="inline-block mr-4">
-            <RevealText text={word} delay={i * 0.1} />
-          </span>
-        ))}
-      </h2>
-    </div>
-  )
+            <h2 className="text-4xl md:text-6xl font-[900] text-white uppercase tracking-tighter leading-none">
+                {title.split(" ").map((word, i) => (
+                    <span key={i} className="inline-block mr-4">
+                        <RevealText text={word} delay={i * 0.1} />
+                    </span>
+                ))}
+            </h2>
+        </div>
+    )
 }
 
 
@@ -734,9 +734,9 @@ const ScrollProgress = () => {
 
 const RevealOnScroll = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
     <motion.div
-        initial={{ opacity: 0, y: 50}}
-        whileInView={{ opacity: 1, y: 0}}
-       
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+
         viewport={{ once: true, amount: 0.3 }} // Smoother trigger margin
         transition={{ duration: 0.6, ease: "easeOut" }}
         className={`relative overflow-visible ${className}`}
@@ -1054,6 +1054,7 @@ const HeroSection = ({ shouldRender3D }: { shouldRender3D: boolean }) => {
                         transition={{ delay: 0.5, duration: 0.8 }}
                         className="relative z-50 flex flex-wrap gap-4 mt-10 justify-center lg:justify-start pb-24 lg:pb-0"
                     >
+                        <ButtonPrimary onClick={() => router.push('/events')}>Register Now</ButtonPrimary>
                         <ButtonPrimary onClick={() => router.push('/events')}>Explore Events</ButtonPrimary>
                         <ButtonPrimary onClick={() => {
                             const section = document.getElementById('pronite-section');

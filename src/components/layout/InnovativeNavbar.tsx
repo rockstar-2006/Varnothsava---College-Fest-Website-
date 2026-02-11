@@ -126,6 +126,17 @@ export function InnovativeNavbar() {
                                             <Zap size={isMobile ? 28 : 36} className="text-black group-hover:scale-125 transition-transform" />
                                         </motion.div>
                                     </div>
+                                    {/* Added Highlight Text */}
+                                    <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1.5 flex flex-col items-center">
+                                        <div className="w-[1px] h-2 bg-[rgb(var(--theme-rgb))] mb-0.5 opacity-50" />
+                                        <span className={cn(
+                                            "text-[8px] md:text-[9px] font-[900] tracking-[0.2em] uppercase whitespace-nowrap",
+                                            "text-[rgb(var(--theme-rgb))] drop-shadow-[0_0_5px_rgba(var(--theme-rgb),0.8)]",
+                                            "bg-black/80 px-2 py-0.5 rounded-full border border-[rgba(var(--theme-rgb),0.3)]"
+                                        )}>
+                                            Explore Events
+                                        </span>
+                                    </div>
                                 </Link>
                             </div>
                         </div>
