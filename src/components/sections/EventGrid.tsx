@@ -237,6 +237,7 @@ export function EventGrid({ missions }: EventGridProps) {
 
     // --- LENIS SCROLL LISTENER FOR THEME SWITCHING ---
     const lenis = useLenis()
+const businessRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         if (!lenis || !isSiteLoaded) return
@@ -244,7 +245,8 @@ export function EventGrid({ missions }: EventGridProps) {
         const sections = [
             { ref: techRef, theme: 'emerald' },
             { ref: cultRef, theme: 'amber' },
-            { ref: gameRef, theme: 'gaming' }
+            { ref: gameRef, theme: 'gaming' },
+            { ref: businessRef, theme: 'indigo' } 
         ]
 
         const handleScroll = ({ scroll }: { scroll: number }) => {
@@ -327,6 +329,7 @@ export function EventGrid({ missions }: EventGridProps) {
     const getBackgroundTheme = (): 'emerald' | 'amber' | 'cyan' | 'indigo' | 'gaming' => {
         if (filter === 'Cultural') return 'amber'
         if (filter === 'Gaming') return 'gaming'
+        if (filter === 'Business') return 'indigo'  
         if (activeThemeOverride) return activeThemeOverride
         return 'emerald'
     }
@@ -557,7 +560,8 @@ export function EventGrid({ missions }: EventGridProps) {
                                             </div>
                                             <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent via-emerald-500/50 to-emerald-500" />
                                         </motion.div>
-                                        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 lg:gap-10 px-4 md:px-8">
+                                        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-x-14 gap-y-12 px-4 md:px-8
+">
                                             {groupedEvents.technical.map((event, idx) => (
                                                 <MissionCard key={event.id} event={event} idx={idx} theme={getEventTheme(event.type)} complexClip={complexClip} isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)} isLoggedIn={isLoggedIn} onRegister={handleRegisterClick} className="will-change-gpu" priority={idx < 4} />
                                             ))}
@@ -600,6 +604,50 @@ export function EventGrid({ missions }: EventGridProps) {
                                         </motion.div>
                                     </div>
                                 )}
+                                {groupedEvents.business.length > 0 && (
+                                    <div ref={businessRef} className="space-y-16 mt-24">
+
+                                        {/* SECTION HEADER */}
+                                        <motion.div
+                                            className="flex items-center gap-4 px-8 opacity-90 my-16 md:my-24"
+                                        >
+                                            <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-sky-500/50 to-sky-500" />
+
+                                            <div className="flex flex-col items-center">
+                                                <span className="font-bold tracking-[0.3em] uppercase text-xl md:text-3xl text-sky-500 drop-shadow-[0_0_15px_rgba(14,165,233,0.5)]">
+                                                    Business Events
+                                                </span>
+                                                <span className="text-[10px] tracking-[0.5em] text-sky-500/80 uppercase mt-2">
+                                                    Management // Strategy // Marketing
+                                                </span>
+                                                <div className="h-0.5 w-full bg-sky-500 mt-3 shadow-[0_0_10px_rgba(14,165,233,1)]" />
+                                            </div>
+
+                                            <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent via-sky-500/50 to-sky-500" />
+                                        </motion.div>
+
+                                        {/* BUSINESS GRID */}
+                                        <motion.div
+                                            layout
+                                            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10 lg:gap-12 px-4 md:px-10"
+                                        >
+                                            {groupedEvents.business.map((event, idx) => (
+                                                <MissionCard
+                                                    key={event.id}
+                                                    event={event}
+                                                    idx={idx}
+                                                    theme={getEventTheme('Business')}
+                                                    complexClip={complexClip}
+                                                    isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)}
+                                                    isLoggedIn={isLoggedIn}
+                                                    onRegister={handleRegisterClick}
+                                                    className="will-change-gpu"
+                                                />
+                                            ))}
+                                        </motion.div>
+                                    </div>
+                                )}
+
                             </motion.div>
                         ) : (
                             <motion.div layout>

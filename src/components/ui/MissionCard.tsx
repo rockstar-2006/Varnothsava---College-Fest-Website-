@@ -118,7 +118,7 @@ export const MissionCard = memo(({
     }
 
     const cardContent = (
-        <div className="w-full h-full relative cursor-pointer" onClick={handleCardClick}>
+        <div className="w-full h-full relative cursor-pointer " onClick={handleCardClick}>
             {/* GLOW BACKDROP */}
             <div
                 className={`absolute inset-[-20px] transition-all duration-500 opacity-30 group-hover:opacity-100 ${isMobile ? 'blur-[15px]' : 'blur-[40px]'}`}
@@ -300,9 +300,18 @@ export const MissionCard = memo(({
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent " />
                 </div>
 
-                <div className={`px-6 z-10 w-full mt-auto mb-4 ${event.type === 'Technical' ? 'grid grid-cols-3 gap-2 border-y border-white/5 py-3 bg-white/[0.02]' : 'flex justify-between items-center'}`}>
-                    <div className="flex flex-col gap-0.5"><span className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">DATE</span><span className="text-sm font-extrabold text-white tracking-wide">{event.date}</span></div>
-                    <div className="flex flex-col gap-0.5 items-center"><span className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">GROUP</span><span className="text-xs font-extrabold text-white uppercase truncate w-full text-center tracking-tight">{(event.maxTeamSize && event.maxTeamSize > 1) ? `${event.minTeamSize || 1}-${event.maxTeamSize}` : 'SOLO'}</span></div>
+                <div
+                    className={`px-6 z-10 w-full mt-auto mb-4
+  ${event.type === 'Technical'
+                            ? 'grid grid-cols-3 items-center gap-4 border-y border-white/5 py-3 bg-white/[0.02] overflow-hidden'
+                            : 'flex justify-between items-center'
+                        }`}
+                >
+                    <div className="flex flex-col gap-0.5"><span className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">DATE</span><span className="text-sm font-extrabold text-white tracking-wide whitespace-nowrap">
+                        {event.date}
+                    </span>
+                    </div>
+                    <div className="flex flex-col gap-0.5 items-center"><span className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">GROUP</span><span className="text-xs font-extrabold text-white uppercase truncate w-full text-center tracking-tight">{event.teamFormate || 'SOLO'}</span></div>
                     <div className="flex flex-col items-end gap-0.5"><span className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">TIME</span><span className="text-sm text-white font-black italic tracking-tighter">{'TBA'}</span></div>
                 </div>
 
@@ -333,8 +342,10 @@ export const MissionCard = memo(({
                     scale={1.04}
                     perspective={2000}
                     transitionSpeed={2000}
-                    className={`w-full group ${event.type === 'Cultural' ? 'h-[500px]' : 'h-[440px]'} gpu-accel transition-transform active:scale-[0.98]`}
-                >
+                    className={`group gpu-accel transition-transform active:scale-[0.98]
+    ${event.type === 'Technical' ? 'w-[115%] -ml-[7.5%] h-[440px]' : 'w-full h-[440px]'}
+    ${event.type === 'Cultural' ? 'h-[500px]' : ''}
+  `}                >
                     {cardContent}
                 </Tilt>
             )}
