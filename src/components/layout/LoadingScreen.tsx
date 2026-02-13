@@ -664,21 +664,21 @@ function LoadingContent() {
                     {/* Corner HUD Metrics - Sharp & Visible */}
                     <div className="absolute top-8 left-8 md:top-12 md:left-16 flex flex-col gap-2 drop-shadow-lg">
                         <div className="flex items-center gap-3 font-black text-[10px] md:text-xs tracking-[0.3em] uppercase" style={{ color: themeConfig.color }}>
-                            <Terminal className="w-4 h-4" /> SYSTEM // {theme}
+                            <Terminal className="w-4 h-4" /> Hosted by SMVITM
                         </div>
                         <div className="h-[1px] w-24 bg-gradient-to-r from-white/40 to-transparent" />
                         <div className="text-white/60 text-[8px] md:text-[9px] font-mono tracking-widest uppercase">
-                            Signal Str: 100%
+                            Since 2014 
                         </div>
                     </div>
 
                     <div className="absolute top-8 right-8 md:top-12 md:right-16 text-right flex flex-col gap-2 items-end drop-shadow-lg">
                         <div className="flex items-center justify-end gap-3 font-black text-[10px] md:text-xs tracking-[0.3em] uppercase" style={{ color: themeConfig.color }}>
-                            V_ARCHIVE_26 <Star className="w-4 h-4" />
+                            Edition 2026 <Star className="w-4 h-4" />
                         </div>
                         <div className="h-[1px] w-24 bg-gradient-to-l from-white/40 to-transparent" />
                         <div className="text-white/60 text-[8px] md:text-[9px] font-mono tracking-widest uppercase">
-                            Secure Link
+                            National Level
                         </div>
                     </div>
 
@@ -798,6 +798,7 @@ function LoadingContent() {
                                             >
                                                 FESTIVAL
                                             </span>
+                                           
                                         </motion.div>
                                     </div>
 
@@ -877,7 +878,7 @@ function LoadingContent() {
                 {/* Outer HUD Decorative Elements */}
                 <div className="fixed top-8 left-1/2 -translate-x-1/2 flex items-center gap-4 opacity-40 z-[12000]">
                     <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: themeConfig.color }} />
-                    <span className="text-white text-[9px] font-black tracking-[0.5em] uppercase italic">National_Festival // Live_Feed</span>
+                    <span className="text-white text-[10px] font-black tracking-[0.5em] uppercase italic">National-Level College Festival</span>
                 </div>
 
                 <div className="fixed inset-0 pointer-events-none z-[12000] border-[20px] md:border-[40px] border-transparent">

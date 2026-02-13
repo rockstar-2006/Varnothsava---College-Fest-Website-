@@ -1264,14 +1264,16 @@ const timelineData = [
             { name: "Valorant Clash", type: "Gaming", status: "Not Started" },
             { name: "BGMI Battlegrounds", type: "Gaming", status: "Not Started" },
             { name: "Visionary Money", type: "Business", status: "Not Started" },
-            { name: "BHAVA TARANGA", type: "Cultural", status: "Not Started" },
-            { name: "Janapada nada", type: "Cultural", status: "Not Started" },
-            { name: "Thaka Dhimi Tha", type: "Cultural", status: "Not Started" },
             { name: "Groove Gala", type: "Cultural", status: "Not Started" },
             { name: "Speech of Smiles", type: "Cultural", status: "Not Started" },
-            { name: "Who Am I", type: "Cultural", status: "Not Started" },
-            { name: "Hands of Art", type: "Cultural", status: "Not Started" },
-            { name: "Anime Arena", type: "Cultural", status: "Not Started" }
+            { name: "Musical Marathon", type: "Cultural", status: "Not Started" },
+            { name: "Kala Sangama", type: "Cultural", status: "Not Started" },
+            { name: "Silent Symphony", type: "Cultural", status: "Not Started" },
+            { name: "Art of Tune", type: "Cultural", status: "Not Started" },
+            { name: "Sketch Chronicles", type: "Cultural", status: "Not Started" },
+            { name: "JAM", type: "Cultural", status: "Not Started" },
+            { name: "Shutterverse", type: "Cultural", status: "Not Started" },
+            { name: "Cinecapture", type: "Cultural", status: "Not Started" }
         ]
     },
     {
@@ -1282,14 +1284,14 @@ const timelineData = [
         events: [
             { name: "Hack Hunt", type: "Technical", status: "Not Started" },
             { name: "Pitch-a-thon", type: "Technical", status: "Not Started" },
-            { name: "Musical Marathon", type: "Cultural", status: "Not Started" },
-            { name: "Natures Palette", type: "Cultural", status: "Not Started" },
-            { name: "Kala Sangama", type: "Cultural", status: "Not Started" },
-            { name: "Slient Symphony", type: "Cultural", status: "Not Started" },
+            { name: "Bhava Taranga ", type: "Cultural", status: "Not Started" },
+            { name: "Janapada Nada", type: "Cultural", status: "Not Started" },
+            { name: "Thaka Dhimi Tha", type: "Cultural", status: "Not Started" },
+            { name: "Who Am I ", type: "Cultural", status: "Not Started" },
+            { name: "Hands of Art", type: "Cultural", status: "Not Started" },
+            { name: "Anime Arena ", type: "Cultural", status: "Not Started" },
+            { name: "Nature’s Palette", type: "Cultural", status: "Not Started" },
             { name: "Bannada Prapancha", type: "Cultural", status: "Not Started" },
-            { name: "Art of Tune", type: "Cultural", status: "Not Started" },
-            { name: "Sketch Chronicles", type: "Cultural", status: "Not Started" },
-            { name: "JAM", type: "Cultural", status: "Not Started" },
             { name: "Shutterverse", type: "Cultural", status: "Not Started" },
             { name: "Cinecapture", type: "Cultural", status: "Not Started" }
         ]
