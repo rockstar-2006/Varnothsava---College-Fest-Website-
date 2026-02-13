@@ -952,6 +952,7 @@ const RealisticAncientBackground = () => {
 
 const HeroSection = ({ shouldRender3D }: { shouldRender3D: boolean }) => {
     const router = useRouter()
+    const { isLoggedIn } = useApp()
     const { scrollY } = useScroll()
     const [isMobile, setIsMobile] = useState(false)
 
@@ -1054,7 +1055,13 @@ const HeroSection = ({ shouldRender3D }: { shouldRender3D: boolean }) => {
                         transition={{ delay: 0.5, duration: 0.8 }}
                         className="relative z-50 flex flex-wrap gap-4 mt-10 justify-center lg:justify-start pb-24 lg:pb-0"
                     >
-                        <ButtonPrimary onClick={() => router.push('/events')}>Register Now</ButtonPrimary>
+                        <ButtonPrimary onClick={() => {
+                            if (!isLoggedIn) {
+                                router.push('/login');
+                            } else {
+                                router.push('/notify');
+                            }
+                        }}>Register Now</ButtonPrimary>
                         <ButtonPrimary onClick={() => router.push('/events')}>Explore Events</ButtonPrimary>
                         <ButtonPrimary onClick={() => {
                             const section = document.getElementById('pronite-section');

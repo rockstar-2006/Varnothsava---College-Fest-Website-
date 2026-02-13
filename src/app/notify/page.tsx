@@ -92,7 +92,7 @@ export default function RegisterPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#020202] flex items-center justify-center px-4 py-12 relative overflow-hidden">
+        <div className="min-h-screen bg-[#020202] flex items-center justify-center px-2 sm:px-4 py-8 sm:py-12 relative overflow-hidden">
             {/* Animated Background Grid */}
             <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.03)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none" />
 
@@ -106,30 +106,16 @@ export default function RegisterPage() {
                     transition={{ duration: 8, repeat: Infinity }}
                     className="absolute top-20 left-10 w-96 h-96 bg-emerald-500/20 rounded-full blur-[120px]"
                 />
-                <motion.div
-                    animate={{
-                        scale: [1.2, 1, 1.2],
-                        opacity: [0.1, 0.2, 0.1]
-                    }}
-                    transition={{ duration: 10, repeat: Infinity, delay: 1 }}
-                    className="absolute bottom-20 right-10 w-[500px] h-[500px] bg-purple-500/15 rounded-full blur-[120px]"
-                />
             </div>
 
-            <div className="max-w-4xl w-full relative z-10 px-2 sm:px-0">
+            <div className="max-w-4xl w-full relative z-10">
                 {/* Main Card */}
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8 }}
-                    className="relative bg-[#0a0a0a]/95 backdrop-blur-2xl rounded-[1.5rem] md:rounded-[2.5rem] shadow-[0_0_80px_rgba(16,185,129,0.15)] border border-emerald-500/20 overflow-hidden isolate"
+                    className="relative bg-[#0a0a0a]/95 backdrop-blur-2xl rounded-[1.8rem] md:rounded-[2.5rem] shadow-[0_0_80px_rgba(16,185,129,0.15)] border border-emerald-500/20 overflow-hidden isolate"
                 >
-                    {/* Animated Border */}
-                    <div className="absolute inset-[-2px] -z-10 rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden">
-                        <div className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent_0_340deg,#10b981_360deg)] animate-[spin_6s_linear_infinite]" />
-                    </div>
-                    <div className="absolute inset-[1px] bg-[#0a0a0a] rounded-[1.4rem] md:rounded-[2.4rem] -z-5" />
-
                     {/* Header Section */}
                     <div className="relative p-6 sm:p-10 md:p-16 text-center overflow-hidden">
                         {/* Scanline Effect */}
@@ -139,74 +125,56 @@ export default function RegisterPage() {
                             initial={{ scale: 0, rotate: -180 }}
                             animate={{ scale: 1, rotate: 0 }}
                             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                            className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-emerald-500/10 backdrop-blur-md rounded-full mb-6 md:mb-8 relative border-2 border-emerald-500/30"
+                            className="inline-flex items-center justify-center w-16 h-16 sm:w-24 sm:h-24 bg-emerald-500/10 backdrop-blur-md rounded-full mb-6 relative border-2 border-emerald-500/30"
                         >
-                            <CreditCard className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-emerald-400" />
-                            <motion.div
-                                animate={{
-                                    scale: [1, 1.3, 1],
-                                    opacity: [0.5, 0, 0.5]
-                                }}
-                                transition={{ duration: 2, repeat: Infinity }}
-                                className="absolute inset-0 border-4 border-emerald-400 rounded-full"
-                            />
+                            <CreditCard className="w-8 h-8 sm:w-12 sm:h-12 text-emerald-400" />
                         </motion.div>
 
                         <motion.h1
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.3 }}
-                            className={`${orbitron.className} text-4xl sm:text-5xl md:text-7xl font-black text-white mb-4 tracking-tighter leading-[0.9] sm:leading-none`}
+                            className={`${orbitron.className} text-[1.75rem] xs:text-3xl sm:text-5xl md:text-7xl font-black text-white mb-4 tracking-tighter leading-[1.1] sm:leading-[0.9]`}
                         >
-                            <span className="bg-gradient-to-r from-white via-emerald-200 to-white bg-clip-text text-transparent block sm:inline">
+                            <span className="bg-gradient-to-r from-white via-emerald-200 to-white bg-clip-text text-transparent block">
                                 REGISTER NOW
                             </span>
-                            <br className="sm:hidden" />
-                            <span className="text-emerald-400 mt-2 sm:mt-0 block sm:inline"> FOR VARNOTHSAVA</span>
+                            <span className="text-emerald-400 mt-1 sm:mt-0 block"> FOR VARNOTHSAVA</span>
                         </motion.h1>
 
                         <motion.div
                             initial={{ scaleX: 0 }}
                             animate={{ scaleX: 1 }}
                             transition={{ delay: 0.5, duration: 0.8 }}
-                            className="h-1 w-24 sm:w-36 md:w-48 mx-auto bg-gradient-to-r from-transparent via-emerald-500 to-transparent mb-6"
+                            className="h-1 w-24 sm:w-48 mx-auto bg-gradient-to-r from-transparent via-emerald-500 to-transparent mb-6"
                         />
-
-                        <motion.p
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.6 }}
-                            className="text-base sm:text-lg md:text-xl text-gray-400 font-medium max-w-xl mx-auto"
-                        >
-                            Secure your spot at <span className="text-emerald-400 font-bold">Varnothsava 2K26</span>
-                        </motion.p>
                     </div>
 
                     {/* Content Section */}
-                    <div className="p-6 sm:p-10 md:p-12 pt-0">
+                    <div className="p-5 sm:p-10 md:p-12 pt-0">
                         {/* Pricing Info */}
                         {isLoggedIn && userData && (
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.7 }}
-                                className="mb-8 p-6 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 rounded-2xl border border-emerald-500/20"
+                                className="mb-6 sm:mb-8 p-5 sm:p-6 bg-white/[0.03] border border-white/10 rounded-2xl md:rounded-[2rem]"
                             >
-                                <div className="flex items-center justify-between flex-wrap gap-4">
+                                <div className="flex flex-col sm:flex-row items-center sm:items-end justify-between gap-4 text-center sm:text-left">
                                     <div>
-                                        <p className="text-sm text-emerald-400 font-bold uppercase tracking-wider mb-1">
-                                            Registration Fee
+                                        <p className="text-[10px] text-emerald-500 font-black uppercase tracking-[0.2em] mb-2">
+                                            Access Token Fee
                                         </p>
-                                        <p className="text-3xl md:text-4xl font-black text-white">
+                                        <p className="text-4xl sm:text-5xl font-black text-white leading-none">
                                             ₹{getAmount()}
                                         </p>
-                                        <p className="text-xs text-gray-400 mt-1">
-                                            {getStudentType()}
+                                        <p className="text-[10px] text-gray-500 mt-3 font-bold uppercase tracking-widest">
+                                            Verified: {getStudentType()}
                                         </p>
                                     </div>
-                                    <div className="flex items-center gap-2 text-emerald-400">
-                                        <Shield className="w-5 h-5" />
-                                        <span className="text-xs font-bold">Secure Payment</span>
+                                    <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+                                        <Shield className="w-4 h-4 text-emerald-400" />
+                                        <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Secure Node</span>
                                     </div>
                                 </div>
                             </motion.div>
@@ -298,24 +266,24 @@ export default function RegisterPage() {
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0.9, y: 20 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-[#0a0a0a] border border-emerald-500/30 rounded-3xl p-8 max-w-md w-full relative overflow-hidden"
+                            className="bg-[#0a0a0a] border border-emerald-500/30 rounded-3xl p-6 sm:p-10 max-w-md w-full relative overflow-hidden shadow-[0_0_50px_rgba(16,185,129,0.2)]"
                         >
                             {/* Success Icon */}
                             <motion.div
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
                                 transition={{ delay: 0.2, type: "spring" }}
-                                className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-emerald-500/30"
+                                className="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-emerald-500/30"
                             >
-                                <CheckCircle className="w-12 h-12 text-emerald-400" />
+                                <CheckCircle className="w-10 h-10 sm:w-12 sm:h-12 text-emerald-400" />
                             </motion.div>
 
-                            <h2 className={`${orbitron.className} text-3xl font-black text-white text-center mb-4`}>
+                            <h2 className={`${orbitron.className} text-2xl sm:text-3xl font-black text-white text-center mb-4 leading-tight`}>
                                 Successfully Registered!
                             </h2>
 
-                            <p className="text-gray-400 text-center mb-6">
-                                Your payment has been confirmed. Check your profile for the QR code.
+                            <p className="text-gray-400 text-sm text-center mb-8">
+                                Your payment has been confirmed. Your official entry pass is now active in your profile.
                             </p>
 
                             <div className="flex gap-3">

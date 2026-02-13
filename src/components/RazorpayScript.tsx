@@ -7,7 +7,7 @@ export function RazorpayScript() {
         <Script
             id="razorpay-checkout-js"
             src="https://checkout.razorpay.com/v1/checkout.js"
-            strategy="lazyOnload"
+            strategy="afterInteractive"
             onLoad={() => {
                 console.log('✅ Razorpay SDK loaded via Next.js Script')
             }}

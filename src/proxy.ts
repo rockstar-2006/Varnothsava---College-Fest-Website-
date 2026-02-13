@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 /**
- * Security Middleware
+ * Security Proxy
  * Implements CORS, security headers, and basic request validation
  */
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
     const origin = request.headers.get('origin');
     const pathname = request.nextUrl.pathname;
 
@@ -87,33 +87,8 @@ export function middleware(request: NextRequest) {
         );
     }
 
-    // Content Security Policy (adjust based on your needs)
-    const cspHeader = `
-    default-src 'self';
-    script-src 'self' 'unsafe-eval' 'unsafe-inline' 
-      https://www.gstatic.com 
-      https://apis.google.com 
-      https://*.firebaseapp.com 
-      https://*.googleapis.com;
-    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-    img-src 'self' blob: data: https:;
-    font-src 'self' https://fonts.gstatic.com;
-    connect-src 'self' 
-      https://*.firebaseio.com 
-      https://*.googleapis.com 
-      https://api.dicebear.com
-      https://nekos.best
-      https://api.qrserver.com;
-    frame-src 'self' 
-      https://*.firebaseapp.com 
-      https://accounts.google.com;
-    object-src 'none';
-    base-uri 'self';
-    form-action 'self';
-    frame-ancestors 'self';
-  `.replace(/\s{2,}/g, ' ').trim();
-
-    response.headers.set('Content-Security-Policy', cspHeader);
+    // Content Security Policy is now handled in next.config.ts for better reliability
+    // response.headers.set('Content-Security-Policy', cspHeader);
 
     return response;
 }

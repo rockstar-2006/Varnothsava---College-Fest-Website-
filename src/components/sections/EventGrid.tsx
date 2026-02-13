@@ -237,7 +237,7 @@ export function EventGrid({ missions }: EventGridProps) {
 
     // --- LENIS SCROLL LISTENER FOR THEME SWITCHING ---
     const lenis = useLenis()
-const businessRef = useRef<HTMLDivElement>(null)
+    const businessRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         if (!lenis || !isSiteLoaded) return
@@ -246,7 +246,7 @@ const businessRef = useRef<HTMLDivElement>(null)
             { ref: techRef, theme: 'emerald' },
             { ref: cultRef, theme: 'amber' },
             { ref: gameRef, theme: 'gaming' },
-            { ref: businessRef, theme: 'indigo' } 
+            { ref: businessRef, theme: 'indigo' }
         ]
 
         const handleScroll = ({ scroll }: { scroll: number }) => {
@@ -329,7 +329,7 @@ const businessRef = useRef<HTMLDivElement>(null)
     const getBackgroundTheme = (): 'emerald' | 'amber' | 'cyan' | 'indigo' | 'gaming' => {
         if (filter === 'Cultural') return 'amber'
         if (filter === 'Gaming') return 'gaming'
-        if (filter === 'Business') return 'indigo'  
+        if (filter === 'Business') return 'indigo'
         if (activeThemeOverride) return activeThemeOverride
         return 'emerald'
     }
@@ -391,10 +391,13 @@ const businessRef = useRef<HTMLDivElement>(null)
         if (!isLoggedIn) {
             router.push('/login')
             return
-        } else {
+        }
+
+        if (!userData?.hasPaid) {
             router.push('/notify')
             return
         }
+
         setSelectedEvent(event)
         setIsRegModalOpen(true)
     }
@@ -563,7 +566,19 @@ const businessRef = useRef<HTMLDivElement>(null)
                                         <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-x-14 gap-y-12 px-4 md:px-8
 ">
                                             {groupedEvents.technical.map((event, idx) => (
-                                                <MissionCard key={event.id} event={event} idx={idx} theme={getEventTheme(event.type)} complexClip={complexClip} isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)} isLoggedIn={isLoggedIn} onRegister={handleRegisterClick} className="will-change-gpu" priority={idx < 4} />
+                                                <MissionCard
+                                                    key={event.id}
+                                                    event={event}
+                                                    idx={idx}
+                                                    theme={getEventTheme(event.type)}
+                                                    complexClip={complexClip}
+                                                    isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)}
+                                                    isLoggedIn={isLoggedIn}
+                                                    hasPaid={userData?.hasPaid}
+                                                    onRegister={handleRegisterClick}
+                                                    className="will-change-gpu"
+                                                    priority={idx < 4}
+                                                />
                                             ))}
                                         </motion.div>
                                     </div>
@@ -581,7 +596,18 @@ const businessRef = useRef<HTMLDivElement>(null)
                                         </motion.div>
                                         <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-16 xl:gap-24 px-4 md:px-12">
                                             {groupedEvents.cultural.map((event, idx) => (
-                                                <MissionCard key={event.id} event={event} idx={idx} theme={getEventTheme(event.type)} complexClip={complexClip} isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)} isLoggedIn={isLoggedIn} onRegister={handleRegisterClick} className="will-change-gpu" />
+                                                <MissionCard
+                                                    key={event.id}
+                                                    event={event}
+                                                    idx={idx}
+                                                    theme={getEventTheme(event.type)}
+                                                    complexClip={complexClip}
+                                                    isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)}
+                                                    isLoggedIn={isLoggedIn}
+                                                    hasPaid={userData?.hasPaid}
+                                                    onRegister={handleRegisterClick}
+                                                    className="will-change-gpu"
+                                                />
                                             ))}
                                         </motion.div>
                                     </div>
@@ -599,7 +625,18 @@ const businessRef = useRef<HTMLDivElement>(null)
                                         </motion.div>
                                         <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 lg:gap-10 px-4 md:px-8">
                                             {groupedEvents.gaming.map((event, idx) => (
-                                                <MissionCard key={event.id} event={event} idx={idx} theme={getEventTheme(event.type)} complexClip={complexClip} isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)} isLoggedIn={isLoggedIn} onRegister={handleRegisterClick} className="will-change-gpu" />
+                                                <MissionCard
+                                                    key={event.id}
+                                                    event={event}
+                                                    idx={idx}
+                                                    theme={getEventTheme(event.type)}
+                                                    complexClip={complexClip}
+                                                    isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)}
+                                                    isLoggedIn={isLoggedIn}
+                                                    hasPaid={userData?.hasPaid}
+                                                    onRegister={handleRegisterClick}
+                                                    className="will-change-gpu"
+                                                />
                                             ))}
                                         </motion.div>
                                     </div>
@@ -640,6 +677,7 @@ const businessRef = useRef<HTMLDivElement>(null)
                                                     complexClip={complexClip}
                                                     isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)}
                                                     isLoggedIn={isLoggedIn}
+                                                    hasPaid={userData?.hasPaid}
                                                     onRegister={handleRegisterClick}
                                                     className="will-change-gpu"
                                                 />
@@ -760,6 +798,7 @@ const businessRef = useRef<HTMLDivElement>(null)
                                                         complexClip={complexClip}
                                                         isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)}
                                                         isLoggedIn={isLoggedIn}
+                                                        hasPaid={userData?.hasPaid}
                                                         onRegister={handleRegisterClick}
                                                         className="event-card-reveal will-change-gpu"
                                                     />
@@ -784,6 +823,7 @@ const businessRef = useRef<HTMLDivElement>(null)
                                                 complexClip={complexClip}
                                                 isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)}
                                                 isLoggedIn={isLoggedIn}
+                                                hasPaid={userData?.hasPaid}
                                                 onRegister={handleRegisterClick}
                                                 className="will-change-gpu"
                                             />
