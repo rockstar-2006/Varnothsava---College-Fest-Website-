@@ -280,7 +280,14 @@ export const missions: Event[] = [
         // minTeamSize: 2,
         // maxTeamSize: 3,
         teamFormate: "Group",
-        tags: ['Startup', 'Business', 'Idea']
+        tags: ['Startup', 'Business', 'Idea'],
+        themeIdeas: [
+  "Open Innovation",
+  "AI in Healthcare",
+  "Smart Transportation"
+]
+
+
     },
     {
         id: "TECH-007",
@@ -350,8 +357,8 @@ export const missions: Event[] = [
         coordinatorsContact: ["8762840054", "7019267494", "9606721573"],
         fee: 200,
         visual: "https://images.unsplash.com/photo-1561557944-6e7860d1a7eb?w=1200&q=80",
-        date: "12-MARCH",
-        time: "9:00 AM",
+        date: "11-MARCH",
+        time: "10:00 AM",
         // minTeamSize: 2,
         // maxTeamSize: 4,
         teamFormate: "Group",
