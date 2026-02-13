@@ -1,0 +1,303 @@
+/**
+ * API Route: Razorpay Webhook Handler
+ * POST /api/payment/webhook
+ * 
+ * Handles real-time payment notifications from Razorpay
+ * As per HDFC Collect Now Integration Requirements
+ */
+
+import { NextRequest, NextResponse } from 'next/server'
+import crypto from 'crypto'
+import { db, fieldValue as FieldValue } from '@/lib/firebaseAdmin'
+
+/**
+ * Verify webhook signature
+ * As per Razorpay documentation: https://razorpay.com/docs/webhooks/validate-test/
+ */
+function verifyWebhookSignature(
+    webhookBody: string,
+    webhookSignature: string,
+    webhookSecret: string
+): boolean {
+    try {
+        const expectedSignature = crypto
+            .createHmac('sha256', webhookSecret)
+            .update(webhookBody)
+            .digest('hex')
+
+        return crypto.timingSafeEqual(
+            Buffer.from(expectedSignature),
+            Buffer.from(webhookSignature)
+        )
+    } catch (error) {
+        console.error('Webhook signature verification error:', error)
+        return false
+    }
+}
+
+export async function POST(request: NextRequest) {
+    try {
+        // 1. Get webhook signature from headers
+        const webhookSignature = request.headers.get('x-razorpay-signature')
+
+        if (!webhookSignature) {
+            console.error('Missing webhook signature')
+            return NextResponse.json(
+                { error: 'Missing signature' },
+                { status: 400 }
+            )
+        }
+
+        // 2. Get raw body for signature verification
+        const webhookBody = await request.text()
+        const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET
+
+        if (!webhookSecret || webhookSecret === 'your_webhook_secret_here') {
+            console.error('Webhook secret not configured')
+            return NextResponse.json(
+                { error: 'Webhook not configured' },
+                { status: 500 }
+            )
+        }
+
+        // 3. Verify signature
+        const isValid = verifyWebhookSignature(
+            webhookBody,
+            webhookSignature,
+            webhookSecret
+        )
+
+        if (!isValid) {
+            console.error('Invalid webhook signature')
+            return NextResponse.json(
+                { error: 'Invalid signature' },
+                { status: 401 }
+            )
+        }
+
+        // 4. Parse webhook payload
+        const payload = JSON.parse(webhookBody)
+        const event = payload.event
+        const paymentEntity = payload.payload?.payment?.entity
+        const orderEntity = payload.payload?.order?.entity
+
+        console.log(`📥 Webhook received: ${event}`)
+        console.log('Payment Entity:', paymentEntity)
+        console.log('Order Entity:', orderEntity)
+
+        // 5. Handle different webhook events
+        switch (event) {
+            case 'payment.authorized':
+                await handlePaymentAuthorized(paymentEntity)
+                break
+
+            case 'payment.captured':
+                await handlePaymentCaptured(paymentEntity)
+                break
+
+            case 'payment.failed':
+                await handlePaymentFailed(paymentEntity)
+                break
+
+            case 'order.paid':
+                await handleOrderPaid(paymentEntity, orderEntity)
+                break
+
+            case 'payment.dispute.created':
+                await handleDisputeCreated(payload.payload?.dispute?.entity)
+                break
+
+            case 'refund.created':
+                await handleRefundCreated(payload.payload?.refund?.entity)
+                break
+
+            default:
+                console.log(`Unhandled webhook event: ${event}`)
+        }
+
+        // 6. Return 200 OK (CRITICAL: Razorpay requires 2xx response)
+        return NextResponse.json({ status: 'ok' }, { status: 200 })
+
+    } catch (error: any) {
+        console.error('Webhook processing error:', error)
+
+        // Still return 200 to prevent webhook from being disabled
+        // Log error for manual review
+        return NextResponse.json(
+            { status: 'error', message: error.message },
+            { status: 200 }
+        )
+    }
+}
+
+/**
+ * Handle payment.authorized event
+ */
+async function handlePaymentAuthorized(payment: any) {
+    try {
+        const paymentId = payment.id
+        const paymentRef = db.collection('payments').doc(paymentId)
+
+        await paymentRef.set({
+            status: 'authorized',
+            authorized_at: new Date(payment.created_at * 1000).toISOString(),
+            updated_at: FieldValue.serverTimestamp(),
+            webhook_event: 'payment.authorized'
+        }, { merge: true })
+
+        console.log(`✅ Payment authorized: ${paymentId}`)
+    } catch (error) {
+        console.error('Error handling payment.authorized:', error)
+    }
+}
+
+/**
+ * Handle payment.captured event
+ */
+async function handlePaymentCaptured(payment: any) {
+    try {
+        const paymentId = payment.id
+        const userId = payment.notes?.user_id
+
+        // Update payment record
+        const paymentRef = db.collection('payments').doc(paymentId)
+        await paymentRef.set({
+            status: 'captured',
+            captured_at: new Date().toISOString(),
+            updated_at: FieldValue.serverTimestamp(),
+            webhook_event: 'payment.captured'
+        }, { merge: true })
+
+        // Update user status
+        if (userId) {
+            const userRef = db.collection('users').doc(userId)
+            await userRef.update({
+                hasPaid: true,
+                paymentId: paymentId,
+                updatedAt: FieldValue.serverTimestamp()
+            })
+        }
+
+        console.log(`✅ Payment captured: ${paymentId}`)
+    } catch (error) {
+        console.error('Error handling payment.captured:', error)
+    }
+}
+
+/**
+ * Handle payment.failed event
+ */
+async function handlePaymentFailed(payment: any) {
+    try {
+        const paymentId = payment.id
+        const paymentRef = db.collection('payments').doc(paymentId)
+
+        await paymentRef.set({
+            status: 'failed',
+            error_code: payment.error_code,
+            error_description: payment.error_description,
+            failed_at: new Date().toISOString(),
+            updated_at: FieldValue.serverTimestamp(),
+            webhook_event: 'payment.failed'
+        }, { merge: true })
+
+        console.log(`❌ Payment failed: ${paymentId}`)
+    } catch (error) {
+        console.error('Error handling payment.failed:', error)
+    }
+}
+
+/**
+ * Handle order.paid event
+ */
+async function handleOrderPaid(payment: any, order: any) {
+    try {
+        const orderId = order.id
+        const paymentId = payment.id
+
+        // Update order status
+        const orderRef = db.collection('orders').doc(orderId)
+        await orderRef.set({
+            status: 'paid',
+            payment_id: paymentId,
+            paid_at: new Date().toISOString(),
+            updated_at: FieldValue.serverTimestamp(),
+            webhook_event: 'order.paid'
+        }, { merge: true })
+
+        console.log(`✅ Order paid: ${orderId}`)
+    } catch (error) {
+        console.error('Error handling order.paid:', error)
+    }
+}
+
+/**
+ * Handle payment.dispute.created event
+ */
+async function handleDisputeCreated(dispute: any) {
+    try {
+        const disputeId = dispute.id
+        const paymentId = dispute.payment_id
+
+        // Store dispute information
+        const disputeRef = db.collection('disputes').doc(disputeId)
+        await disputeRef.set({
+            dispute_id: disputeId,
+            payment_id: paymentId,
+            amount: dispute.amount,
+            currency: dispute.currency,
+            reason_code: dispute.reason_code,
+            status: dispute.status,
+            phase: dispute.phase,
+            respond_by: new Date(dispute.respond_by * 1000).toISOString(),
+            created_at: new Date(dispute.created_at * 1000).toISOString(),
+            updated_at: FieldValue.serverTimestamp()
+        })
+
+        // Update payment record
+        const paymentRef = db.collection('payments').doc(paymentId)
+        await paymentRef.update({
+            has_dispute: true,
+            dispute_id: disputeId,
+            updated_at: FieldValue.serverTimestamp()
+        })
+
+        console.log(`⚠️ Dispute created: ${disputeId} for payment: ${paymentId}`)
+    } catch (error) {
+        console.error('Error handling dispute.created:', error)
+    }
+}
+
+/**
+ * Handle refund.created event
+ */
+async function handleRefundCreated(refund: any) {
+    try {
+        const refundId = refund.id
+        const paymentId = refund.payment_id
+
+        // Store refund information
+        const refundRef = db.collection('refunds').doc(refundId)
+        await refundRef.set({
+            refund_id: refundId,
+            payment_id: paymentId,
+            amount: refund.amount,
+            currency: refund.currency,
+            status: refund.status,
+            created_at: new Date(refund.created_at * 1000).toISOString(),
+            updated_at: FieldValue.serverTimestamp()
+        })
+
+        // Update payment record
+        const paymentRef = db.collection('payments').doc(paymentId)
+        await paymentRef.update({
+            refund_status: 'partial',
+            amount_refunded: refund.amount,
+            updated_at: FieldValue.serverTimestamp()
+        })
+
+        console.log(`💰 Refund created: ${refundId} for payment: ${paymentId}`)
+    } catch (error) {
+        console.error('Error handling refund.created:', error)
+    }
+}
