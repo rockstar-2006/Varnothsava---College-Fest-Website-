@@ -6,6 +6,7 @@ import { AppProvider } from "@/context/AppContext";
 import { LoadingScreen } from "@/components/layout/LoadingScreen";
 import { CustomCursor } from "@/components/layout/CustomCursor";
 import { SiteContent } from "@/components/layout/SiteContent";
+import { RazorpayScript } from "@/components/RazorpayScript";
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 const poppins = Poppins({
@@ -41,6 +42,7 @@ export default function RootLayout({
                 <link rel="preconnect" href="https://fonts.googleapis.com" />
                 <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
                 <link rel="preconnect" href="https://images.unsplash.com" />
+                <link rel="preconnect" href="https://checkout.razorpay.com" />
                 <meta name="theme-color" content="#050805" />
             </head>
             <body className={`${outfit.variable} ${poppins.variable} ${inter.variable} font-sans bg-[#050805] text-white antialiased selection:bg-emerald-500/30`}>
@@ -49,7 +51,7 @@ export default function RootLayout({
                         <LoadingScreen />
                     </Suspense>
                     <CustomCursor />
-
+                    <RazorpayScript />
 
                     <SiteContent children={children} />
                 </AppProvider>
