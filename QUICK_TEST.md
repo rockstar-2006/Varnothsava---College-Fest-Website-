@@ -7,8 +7,8 @@
 Open `.env.local` and confirm:
 
 ```bash
-✅ RAZORPAY_KEY_SECRET=KCGLAkcbNy10X8lFALtkUnHy
-✅ NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_test_SFcH7NNja6lycM
+✅ RAZORPAY_KEY_SECRET=check env
+✅ NEXT_PUBLIC_RAZORPAY_KEY_ID=check env
 ✅ RAZORPAY_WEBHOOK_SECRET=your_webhook_secret_here
 ```
 

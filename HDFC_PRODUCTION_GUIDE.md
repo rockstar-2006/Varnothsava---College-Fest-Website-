@@ -80,21 +80,17 @@
 
 ### Test Mode (Current)
 ```bash
-Key ID: rzp_test_SFcH7NNja6lycM
-Key Secret: KCGLAkcbNy10X8lFALtkUnHy
+check env
 ```
 
 ### Test Card (HDFC Bank)
 ```
-Card Number: 4111 1111 1111 1111
-Expiry: 03/2026
-CVV: 123
-Name: Test
+check env
 ```
 
 ### Test UPI
 ```
-UPI ID: success@razorpay
+check env
 ```
 
 ---

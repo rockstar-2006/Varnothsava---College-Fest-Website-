@@ -8,7 +8,7 @@
 | Field | Value |
 |-------|-------|
 | **MERCHANT NAME** | Varnothsava 2K26 |
-| **TID / ACCOUNT ID** | rzp_test_SFcH7NNja6lycM |
+| **TID / ACCOUNT ID** | check env |
 | **URL (Home/Login Page)** | https://varnothsava.sode-edu.in |
 | **TRANSACTION URL is publicly accessible** | Yes |
 | **LOGIN ID** | Firebase Authentication (Google/Email) |
@@ -238,7 +238,7 @@ Response:
     "email": "student@sode-edu.in",
     "student_type": "internal"
   },
-  "razorpay_key": "rzp_test_SFcH7NNja6lycM"
+  "razorpay_key": "check env"
 }
 ```
 
@@ -357,21 +357,17 @@ https://varnothsava.sode-edu.in/api/payment/webhook
 
 ### Razorpay Test Keys
 ```
-Key ID: rzp_test_SFcH7NNja6lycM
-Key Secret: KCGLAkcbNy10X8lFALtkUnHy
+check env
 ```
 
 ### Test Card (HDFC Bank Debit Card)
 ```
-Card Number: 4111 1111 1111 1111
-Expiry: 03/2026
-CVV: 123
-Cardholder Name: Test
+check env
 ```
 
 ### Test UPI
 ```
-UPI ID: success@razorpay
+check env
 ```
 
 ---
