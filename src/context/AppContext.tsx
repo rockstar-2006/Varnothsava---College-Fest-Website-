@@ -13,6 +13,7 @@ export interface UserData {
     phone: string
     profileCode: string
     hasPaid: boolean
+    hasRoboSoccer?: boolean
     registeredEvents: { id: string, teamName: string }[]
     avatar: string
     studentType: 'internal' | 'external'

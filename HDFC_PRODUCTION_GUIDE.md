@@ -80,8 +80,8 @@
 
 ### Test Mode (Current)
 ```bash
-Key ID: rzp_test_SFcH7NNja6lycM
-Key Secret: KCGLAkcbNy10X8lFALtkUnHy
+Key ID: YOUR_RAZORPAY_KEY_ID
+Key Secret: YOUR_RAZORPAY_KEY_SECRET
 ```
 
 ### Test Card (HDFC Bank)

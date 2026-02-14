@@ -50,6 +50,7 @@ export async function createRazorpayOrder(
             amount, // amount in paise
             currency,
             receipt,
+            payment_capture: 1, // Explicitly enable auto-capture as per HDFC guide
             notes: notes || {},
         }
 
@@ -57,7 +58,11 @@ export async function createRazorpayOrder(
         return order
     } catch (error: any) {
         console.error('Razorpay Order Creation Error:', error)
-        throw new Error(`Failed to create Razorpay order: ${error.message}`)
+
+        // Extract the most meaningful error message
+        const errorMessage = error.description || error.message || (typeof error === 'string' ? error : 'Unknown Razorpay error')
+
+        throw new Error(`Failed to create Razorpay order: ${errorMessage}`)
     }
 }
 
@@ -110,7 +115,24 @@ export async function fetchPaymentDetails(paymentId: string) {
         return payment
     } catch (error: any) {
         console.error('Fetch Payment Details Error:', error)
-        throw new Error(`Failed to fetch payment details: ${error.message}`)
+        const errorMessage = error.description || error.message || (typeof error === 'string' ? error : 'Unknown error')
+        throw new Error(`Failed to fetch payment details: ${errorMessage}`)
+    }
+}
+
+/**
+ * Fetch order details from Razorpay
+ * Used to retrieve user_id from notes during callback
+ */
+export async function fetchOrderDetails(orderId: string) {
+    try {
+        const razorpay = getRazorpayInstance()
+        const order = await razorpay.orders.fetch(orderId)
+        return order
+    } catch (error: any) {
+        console.error('Fetch Order Details Error:', error)
+        const errorMessage = error.description || error.message || (typeof error === 'string' ? error : 'Unknown error')
+        throw new Error(`Failed to fetch order details: ${errorMessage}`)
     }
 }
 

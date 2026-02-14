@@ -24,8 +24,8 @@ Your Varnothsava 2K26 website now has a **professional, scalable, secure** payme
 ## 🔑 YOUR CREDENTIALS (HDFC Collect Now)
 
 ```bash
-Key ID: rzp_test_SFcH7NNja6lycM
-Key Secret: KCGLAkcbNy10X8lFALtkUnHy
+Key ID: YOUR_RAZORPAY_KEY_ID
+Key Secret: YOUR_RAZORPAY_KEY_SECRET
 ```
 
 **Test Card (HDFC Bank):**
@@ -43,7 +43,7 @@ UPI ID: success@razorpay
 
 ---
 
-## 🔄 PAYMENT FLOW (EXACTLY AS HDFC REQUIRES)
+## 🔄 PAYMENT FLOW (HDFC COLLECTNOW MANDATORY - HOSTED)
 
 ```
 1. User visits /notify
@@ -52,19 +52,17 @@ UPI ID: success@razorpay
    ↓
 3. Backend creates Razorpay Order (Orders API)
    ↓
-4. Razorpay Checkout opens (Standard Checkout)
+4. Frontend creates POST form to https://api.razorpay.com/v1/checkout/embedded (Hosted)
    ↓
-5. User completes payment
+5. User completes payment on Razorpay-hosted page
    ↓
-6. Backend verifies signature (HMAC SHA256)
+6. Razorpay redirects to /api/payment/callback (POST)
    ↓
-7. Payment auto-captured
+7. Backend verifies signature & fetches user_id from order notes
    ↓
-8. Stored in Firestore database
+8. Payment stored in Firestore
    ↓
-9. Webhook updates status (real-time)
-   ↓
-10. User redirected to /events ✅
+9. User redirected to /events with success message ✅
 ```
 
 ---

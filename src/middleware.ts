@@ -5,7 +5,7 @@ import type { NextRequest } from 'next/server';
  * Security Proxy
  * Implements CORS, security headers, and basic request validation
  */
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
     const origin = request.headers.get('origin');
     const pathname = request.nextUrl.pathname;
 
@@ -14,6 +14,7 @@ export function proxy(request: NextRequest) {
         process.env.NEXT_PUBLIC_APP_URL,
         'http://localhost:3000',
         'http://127.0.0.1:3000',
+        'http://localhost:3001',
         // Production domains
         'https://varnothsava.sode-edu.in',
         'http://varnothsava.sode-edu.in',
@@ -42,7 +43,10 @@ export function proxy(request: NextRequest) {
 
     // CORS validation for API routes
     if (pathname.startsWith('/api/')) {
-        if (origin && !allowedOrigins.includes(origin)) {
+        // Exempt Razorpay callbacks and webhooks from strict origin check
+        const isExempt = pathname.includes('/api/payment/callback') || pathname.includes('/api/payment/webhook');
+
+        if (!isExempt && origin && !allowedOrigins.includes(origin)) {
             console.warn(`[Security] Blocked request from unauthorized origin: ${origin}`);
             return new NextResponse(
                 JSON.stringify({ message: 'Forbidden: Invalid origin' }),

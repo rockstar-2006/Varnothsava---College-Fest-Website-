@@ -91,9 +91,9 @@ export function useRazorpayPayment() {
     }, [])
 
     /**
-     * Initiate payment flow
+     * Initiate payment flow (HDFC CollectNow Mandatory Hosted Checkout)
      */
-    const initiatePayment = useCallback(async () => {
+    const initiatePayment = useCallback(async (options?: { includeRoboSoccer?: boolean }) => {
         if (!userData) {
             setError('Please login to continue')
             return
@@ -116,6 +116,9 @@ export function useRazorpayPayment() {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                 },
+                body: JSON.stringify({
+                    includeRoboSoccer: options?.includeRoboSoccer || false
+                }),
             })
 
             if (!orderResponse.ok) {
@@ -126,69 +129,53 @@ export function useRazorpayPayment() {
             const orderData = await orderResponse.json()
             console.log('✅ Order created:', orderData.order.id)
 
-            // 3. Load Razorpay script
-            console.log('📥 Loading Razorpay SDK...')
-            const scriptLoaded = await loadRazorpayScript()
+            /**
+             * 3. MANDATORY HDFC COLLECTNOW FLOW (Embedded/Hosted Checkout)
+             * As per partner requirements, we must use the form-post redirect method.
+             */
+            const callbackUrl = `${window.location.origin}/api/payment/callback`
+            const cancelUrl = `${window.location.origin}/api/payment/cancel`
 
-            if (!scriptLoaded) {
-                console.error('❌ Razorpay SDK failed to load')
-                console.error('Possible reasons:')
-                console.error('1. Internet connection issue')
-                console.error('2. Browser blocking the script')
-                console.error('3. Ad blocker or security extension')
-                console.error('4. Network firewall')
-
-                throw new Error(
-                    'Failed to load Razorpay payment gateway. ' +
-                    'Please check your internet connection and disable any ad blockers, then try again.'
-                )
-            }
-
-            // Verify Razorpay is actually available
-            if (!window.Razorpay) {
-                console.error('❌ Razorpay object not found on window')
-                throw new Error('Payment gateway not initialized. Please refresh the page and try again.')
-            }
-
-            console.log('✅ Razorpay SDK loaded successfully')
-
-            // 4. Configure Razorpay options
-            const options: RazorpayOptions = {
-                key: orderData.razorpay_key,
-                amount: orderData.order.amount,
+            const fields: Record<string, string> = {
+                key_id: orderData.razorpay_key,
+                order_id: orderData.order.id,
+                amount: orderData.order.amount.toString(),
                 currency: orderData.order.currency,
                 name: process.env.NEXT_PUBLIC_APP_NAME || 'Varnothsava 2K26',
-                description: `Registration Fee - ${orderData.user.student_type === 'internal' ? 'SODE Student' : 'External Student'}`,
-                order_id: orderData.order.id,
-                prefill: {
-                    name: userData.name,
-                    email: userData.email,
-                },
-                theme: {
-                    color: '#10b981', // Emerald-500
-                },
-                handler: async (response: any) => {
-                    // Payment successful - verify on backend
-                    await verifyPayment(response)
-                },
-                modal: {
-                    ondismiss: () => {
-                        setIsLoading(false)
-                        setError('Payment cancelled')
-                    },
-                },
+                description: `Official Registration - ${userData.name}${options?.includeRoboSoccer ? ' + Robo Soccer' : ''}`,
+                image: 'https://varnothsava.sode-edu.in/logo.png', // Should be a valid public URL
+                'prefill[name]': userData.name,
+                'prefill[email]': userData.email,
+                'prefill[contact]': userData.phone || '',
+                callback_url: callbackUrl,
+                cancel_url: cancelUrl,
             }
 
-            // 5. Open Razorpay checkout
-            const razorpay = new window.Razorpay(options)
-            razorpay.open()
+            console.log('🚀 Finalizing Audit Requirements: Redirecting to Hosted Checkout');
+            console.log('🔗 Callback URL:', callbackUrl);
+
+            // Create and submit hidden form
+            const form = document.createElement('form')
+            form.method = 'POST'
+            form.action = 'https://api.razorpay.com/v1/checkout/embedded'
+
+            Object.entries(fields).forEach(([key, value]) => {
+                const input = document.createElement('input')
+                input.type = 'hidden'
+                input.name = key
+                input.value = value
+                form.appendChild(input)
+            })
+
+            document.body.appendChild(form)
+            form.submit()
 
         } catch (err: any) {
             console.error('Payment Initiation Error:', err)
             setError(err.message || 'Failed to initiate payment')
             setIsLoading(false)
         }
-    }, [userData, loadRazorpayScript])
+    }, [userData])
 
     /**
      * Verify payment on backend
