@@ -24,21 +24,17 @@ Your Varnothsava 2K26 website now has a **professional, scalable, secure** payme
 ## 🔑 YOUR CREDENTIALS (HDFC Collect Now)
 
 ```bash
-Key ID: rzp_test_SFcH7NNja6lycM
-Key Secret: KCGLAkcbNy10X8lFALtkUnHy
+check env
 ```
 
 **Test Card (HDFC Bank):**
 ```
-Card: 4111 1111 1111 1111
-Expiry: 03/2026
-CVV: 123
-Name: Test
+check env
 ```
 
 **Test UPI:**
 ```
-UPI ID: success@razorpay
+check env
 ```
 
 ---
