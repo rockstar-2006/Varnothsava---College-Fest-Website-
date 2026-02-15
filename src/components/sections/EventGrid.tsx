@@ -409,6 +409,7 @@ export function EventGrid({ missions }: EventGridProps) {
     }
 
     const handleConfirmRegistration = async (data: { teamName: string, members: string[] }) => {
+        return;
         try {
             const success = await registerMission(selectedEvent.id, data.teamName, data.members)
             if (success) {

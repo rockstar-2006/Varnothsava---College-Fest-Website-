@@ -8,15 +8,47 @@ interface SmoothScrollProps {
     children: ReactNode;
 }
 
-const LenisContext = createContext<Lenis | null>(null);
+interface LenisContextType {
+    lenis: Lenis | null;
+    pause: () => void;
+    resume: () => void;
+}
 
-export const useLenis = () => useContext(LenisContext);
+const LenisContext = createContext<LenisContextType | null>(null);
+
+export const useLenis = () => {
+    const context = useContext(LenisContext);
+    return context?.lenis || null;
+};
+
+export const useLenisControl = () => {
+    const context = useContext(LenisContext);
+    return {
+        pause: context?.pause || (() => {}),
+        resume: context?.resume || (() => {}),
+    };
+};
 
 export const SmoothScroll = ({ children }: SmoothScrollProps) => {
     const [lenis, setLenis] = useState<Lenis | null>(null);
     const reqIdRef = useRef<number | null>(null);
+    const isLenisPausedRef = useRef(false);
 
     const pathname = usePathname();
+
+    const pauseLenis = () => {
+        if (lenis && !isLenisPausedRef.current) {
+            lenis.stop();
+            isLenisPausedRef.current = true;
+        }
+    };
+
+    const resumeLenis = () => {
+        if (lenis && isLenisPausedRef.current) {
+            lenis.start();
+            isLenisPausedRef.current = false;
+        }
+    };
 
     useEffect(() => {
         const lenisInstance = new Lenis({
@@ -69,7 +101,7 @@ export const SmoothScroll = ({ children }: SmoothScrollProps) => {
     }, [pathname]);
 
     return (
-        <LenisContext.Provider value={lenis}>
+        <LenisContext.Provider value={{ lenis, pause: pauseLenis, resume: resumeLenis }}>
             {children}
         </LenisContext.Provider>
     );

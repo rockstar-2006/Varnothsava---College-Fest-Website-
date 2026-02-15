@@ -170,8 +170,17 @@ export default function EventDetailsPage() {
         // Placeholder for now - redirect to login if not logged in, else open modal
         if (!userData) {
             router.push('/login')
-        } else {
+            return;
+        }
+
+        if (mission.id === "TECH-008") {
+            if (!userData?.hasRoboSoccer) {
+                router.push('/notify?addon=robo-soccer')
+                return
+            }
+        } else if (!userData?.hasPaid) {
             router.push('/notify')
+            return
         }
     }
     const formatForWhatsApp = (phone: string) => {

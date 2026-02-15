@@ -104,7 +104,7 @@ export function InnovativeNavbar() {
                         damping: 25,
                         mass: 0.8
                     }}
-                    className="fixed z-[5000] bottom-0 left-0 right-0 flex justify-center pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-8 px-4 md:px-8 pointer-events-none translate-gpu"
+                    className="innovative-navbar fixed z-[5000] bottom-0 left-0 right-0 flex justify-center pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-8 px-4 md:px-8 pointer-events-none translate-gpu"
                 >
                     {/* THE CYBER-DOCK [OBSIDIAN NEON] */}
                     <motion.div

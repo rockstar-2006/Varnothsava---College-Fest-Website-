@@ -1,11 +1,13 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Users, ShieldCheck, Zap, AlertCircle, CheckCircle2, Loader2, Plus, Trash2, Hash } from 'lucide-react'
 import Image from 'next/image'
 import { Event } from '@/data/missions'
 import { UserData } from '@/context/AppContext'
+import { useLenisControl } from '@/components/ui/SmoothScroll'
 
 interface RegistrationModalProps {
     isOpen: boolean
@@ -21,13 +23,52 @@ export function RegistrationModal({ isOpen, onClose, event, userData, onConfirm 
     const [newMemberId, setNewMemberId] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [memberDetails, setMemberDetails] = useState<{ [key: string]: any }>({})
+    const [isAddingMember, setIsAddingMember] = useState(false)
+    const lenisControl = useLenisControl()
+    const modalRef = React.useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        if (!isOpen) {
+            lenisControl.resume()
+            return
+        }
+        
+        lenisControl.pause()
+        const prevBodyOverflow = document.body.style.overflow
+        const prevHtmlOverflow = document.documentElement.style.overflow
+        document.body.classList.add('modal-open')
+        document.body.style.overflow = 'hidden'
+        document.documentElement.style.overflow = 'hidden'
+
+        // Prevent scroll propagation on modal
+        const handleWheel = (e: WheelEvent) => {
+            e.stopPropagation()
+        }
+        
+        const handleTouchMove = (e: TouchEvent) => {
+            e.stopPropagation()
+        }
+
+        modalRef.current?.addEventListener('wheel', handleWheel, { passive: true })
+        modalRef.current?.addEventListener('touchmove', handleTouchMove, { passive: true })
+
+        return () => {
+            modalRef.current?.removeEventListener('wheel', handleWheel)
+            modalRef.current?.removeEventListener('touchmove', handleTouchMove)
+            document.body.classList.remove('modal-open')
+            document.body.style.overflow = prevBodyOverflow
+            document.documentElement.style.overflow = prevHtmlOverflow
+            lenisControl.resume()
+        }
+    }, [isOpen, lenisControl])
 
     if (!event) return null
 
     const isTeamEvent = (event.maxTeamSize ?? 1) > 1
     const currentTotalMembers = 1 + memberIds.length // User + extra members
 
-    const handleAddMember = () => {
+    const handleAddMember = async () => {
         if (!newMemberId.trim()) return
         if (memberIds.includes(newMemberId.trim())) {
             setError('This ID is already added.')
@@ -41,6 +82,17 @@ export function RegistrationModal({ isOpen, onClose, event, userData, onConfirm 
             setError(`Maximum team size for this event is ${event.maxTeamSize}.`)
             return
         }
+        let newUser = await fetch(`/api/user-by-code?code=${newMemberId.trim().toUpperCase()}`);
+        if (!newUser.ok) {
+            setError('No user found with this Profile ID.')
+            return
+        }
+        const newUserData = await newUser.json();
+        if (newUserData.user.hasPaid !== true) {
+            setError('This user has not completed payment. Only paid participants can be added.')
+            return
+        }
+        setMemberDetails(prev => ({ ...prev, [newMemberId.trim().toUpperCase()]: newUserData.user }))
         setMemberIds([...memberIds, newMemberId.trim().toUpperCase()])
         setNewMemberId('')
         setError(null)
@@ -48,6 +100,11 @@ export function RegistrationModal({ isOpen, onClose, event, userData, onConfirm 
 
     const handleRemoveMember = (id: string) => {
         setMemberIds(memberIds.filter(m => m !== id))
+        setMemberDetails(prev => {
+            const updated = { ...prev }
+            delete updated[id]
+            return updated
+        })
         setError(null)
     }
 
@@ -68,6 +125,13 @@ export function RegistrationModal({ isOpen, onClose, event, userData, onConfirm 
             return
         }
 
+        console.log('Submitting registration with data:', {
+            teamName: isTeamEvent ? teamName : 'Solo',
+            members: [userData.profileCode, ...memberIds]
+        })
+
+        return;
+
         try {
             await onConfirm({
                 teamName: isTeamEvent ? teamName : 'Solo',
@@ -81,27 +145,30 @@ export function RegistrationModal({ isOpen, onClose, event, userData, onConfirm 
         }
     }
 
-    return (
-        <AnimatePresence>
-            {isOpen && (
-                <div className="fixed inset-0 z-[100] overflow-y-auto custom-scrollbar-hide">
-                    <div className="flex min-h-full items-center justify-center p-4">
-                        {/* Backdrop */}
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={onClose}
-                            className="fixed inset-0 bg-black/80 backdrop-blur-[2px] md:backdrop-blur-md"
-                        />
+    if (!isOpen) return null
 
-                        {/* Modal Content */}
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="relative w-[95vw] md:w-full max-w-lg bg-[#050905] border border-emerald-500/20 rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-[0_0_50px_rgba(16,185,129,0.1)] z-10 mx-auto"
-                        >
+    return createPortal(
+        <AnimatePresence>
+            <div className="fixed inset-0 z-[100] pointer-events-auto">
+                <div className="flex min-h-screen items-center justify-center p-4 pointer-events-none">
+                    {/* Backdrop */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={onClose}
+                        className="fixed inset-0 bg-black/80 backdrop-blur-[2px] md:backdrop-blur-md pointer-events-auto"
+                    />
+
+                    {/* Modal Content */}
+                    <motion.div
+                        ref={modalRef}
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                        className="relative w-[95vw] md:w-full max-w-lg bg-[#050905] border border-emerald-500/20 rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-[0_0_50px_rgba(16,185,129,0.1)] z-10 mx-auto max-h-[90vh] overflow-y-scroll pointer-events-auto"
+                        style={{ overscrollBehavior: 'contain' }}
+                    >
                             {/* Header Image/Banner */}
                             <div className="h-32 relative overflow-hidden">
                                 <Image
@@ -162,7 +229,7 @@ export function RegistrationModal({ isOpen, onClose, event, userData, onConfirm 
                                                 <div className="w-8 h-8 rounded-lg bg-emerald-500 text-black flex items-center justify-center font-black text-xs">01</div>
                                                 <div className="flex-1">
                                                     <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">SQUAD_LEADER</p>
-                                                    <p className="text-sm font-bold text-white">{userData.profileCode} (YOU)</p>
+                                                    <p className="text-sm font-bold text-white">{userData.name} (YOU)</p>
                                                 </div>
                                                 <ShieldCheck size={18} className="text-emerald-400" />
                                             </div>
@@ -179,7 +246,7 @@ export function RegistrationModal({ isOpen, onClose, event, userData, onConfirm 
                                                         <div className="w-8 h-8 rounded-lg bg-white/10 text-white/50 flex items-center justify-center font-black text-xs">{String(idx + 2).padStart(2, '0')}</div>
                                                         <div className="flex-1">
                                                             <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">UNIT_MEMBER</p>
-                                                            <p className="text-sm font-bold text-white">{id}</p>
+                                                            <p className="text-sm font-bold text-white">{memberDetails[id]?.name || 'Loading...'}</p>
                                                         </div>
                                                         <button type="button" onClick={() => handleRemoveMember(id)} className="text-white/20 hover:text-red-400 transition-colors">
                                                             <Trash2 size={16} />
@@ -199,15 +266,26 @@ export function RegistrationModal({ isOpen, onClose, event, userData, onConfirm 
                                                             value={newMemberId}
                                                             onChange={(e) => setNewMemberId(e.target.value)}
                                                             className="w-full bg-white/5 border border-white/10 focus:border-emerald-500/40 rounded-xl py-3 pl-11 pr-4 text-white text-sm font-bold placeholder:text-white/10 outline-none transition-all uppercase"
-                                                            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddMember())}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') {
+                                                                    e.preventDefault();
+                                                                    if (isAddingMember) return
+                                                                    setIsAddingMember(true)
+                                                                    handleAddMember().finally(() => setIsAddingMember(false))
+                                                                }
+                                                            }}
                                                         />
                                                     </div>
                                                     <button
                                                         type="button"
-                                                        onClick={handleAddMember}
+                                                        onClick={() => {
+                                                            if (isAddingMember) return
+                                                            setIsAddingMember(true)
+                                                            handleAddMember().finally(() => setIsAddingMember(false))
+                                                        }}
                                                         className="px-4 bg-emerald-500 text-black rounded-xl hover:bg-emerald-400 transition-all"
                                                     >
-                                                        <Plus size={20} />
+                                                        {isAddingMember ? <Loader2 size={20} className="animate-spin" /> : <Plus size={20} />}
                                                     </button>
                                                 </div>
                                             )}
@@ -258,10 +336,10 @@ export function RegistrationModal({ isOpen, onClose, event, userData, onConfirm 
                                     </button>
                                 </div>
                             </form>
-                        </motion.div>
-                    </div>
+                    </motion.div>
                 </div>
-            )}
-        </AnimatePresence>
+            </div>
+        </AnimatePresence>,
+        document.body
     )
 }
