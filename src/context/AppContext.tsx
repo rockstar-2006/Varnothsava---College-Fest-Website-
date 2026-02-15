@@ -14,7 +14,7 @@ export interface UserData {
     profileCode: string
     hasPaid: boolean
     hasRoboSoccer?: boolean
-    registeredEvents: { id: string, teamName: string }[]
+    registeredEvents: { id: string, eventId: string, teamName: string }[]
     avatar: string
     studentType: 'internal' | 'external'
     // Optional fields
@@ -295,10 +295,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                 const err = await response.json();
                 throw new Error(err.message || 'Mission registration failed');
             }
-            const data = await response.json();
+            const resData = await response.json();
             setUserData({
                 ...userData,
-                registeredEvents: data.registeredEvents
+                registeredEvents: [...(userData.registeredEvents || []), { id: resData.registrationId, eventId, teamName }]
             });
             return true;
         } catch (error: any) {

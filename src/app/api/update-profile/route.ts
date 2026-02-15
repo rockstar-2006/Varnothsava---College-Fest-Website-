@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth, adminDb } from '@/lib/firebaseAdmin';
+import { adminAuth, adminDb, registrationsCollection } from '@/lib/firebaseAdmin';
 
 export async function POST(req: NextRequest) {
     try {
@@ -35,7 +35,16 @@ export async function POST(req: NextRequest) {
         });
 
         const updatedDoc = await userRef.get();
-        const userData = updatedDoc.data();
+        let userData = updatedDoc.data();
+
+        const registrations = await registrationsCollection.where('members', 'array-contains', uid).get();
+        const registeredEvents = registrations.docs.map(doc => ({id: doc.id, data: doc.data()})).map(reg => ({ id: reg.id, eventId: reg.data.eventId, teamName: reg.data.teamName }));
+        userData = {
+            ...userData,
+            hasPaid: userData?.hasPaid === true,
+            hasRoboSoccer: userData?.hasRoboSoccer === true,
+            registeredEvents: registeredEvents
+        };
 
         return NextResponse.json({
             message: 'Profile updated successfully',
