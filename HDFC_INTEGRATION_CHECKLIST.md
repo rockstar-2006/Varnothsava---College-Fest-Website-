@@ -8,17 +8,17 @@
 | Field | Value |
 |-------|-------|
 | **MERCHANT NAME** | Varnothsava 2K26 |
-| **TID / ACCOUNT ID** | check env |
+| **TID / ACCOUNT ID** | [YOUR_RAZORPAY_ACCOUNT_ID] |
 | **URL (Home/Login Page)** | https://varnothsava.sode-edu.in |
 | **TRANSACTION URL is publicly accessible** | Yes |
 | **LOGIN ID** | Firebase Authentication (Google/Email) |
 | **LOGIN PWD** | Firebase Authentication |
-| **RESPONSE URL** | https://varnothsava.sode-edu.in/events |
+| **RESPONSE URL** | https://varnothsava.sode-edu.in/api/payment/callback |
 | **DEVELOPER CONTACT NO** | [Your Contact Number] |
 | **DEVELOPER EMAIL ID** | [Your Email] |
 | **TYPE** | VAS (Value Added Service) |
 | **Programming Language** | TypeScript/Next.js 15 |
-| **Seamless/Non-Seamless Integration** | Non-Seamless Integration (Razorpay Checkout) |
+| **Seamless/Non-Seamless Integration** | Seamless Integration (Razorpay Hosted Embedded) |
 | **Plugin Name and version** | Razorpay Checkout.js (Latest) |
 | **Transaction Flow verified** | Yes |
 | **Multiple Amount Values** | ₹200 (SODE Students), ₹300 (External Students) |
@@ -108,8 +108,8 @@
 - [x] Notes with user details
 
 #### 2. Razorpay Checkout Integration
-- [x] Standard Checkout (checkout.js)
-- [x] Embedded integration
+- [x] Hosted/Embedded Checkout (Mandatory for CollectNow)
+- [x] POST Form-Redirection Implementation
 - [x] All payment methods enabled:
   - UPI
   - Cards (Debit/Credit)
@@ -238,33 +238,21 @@ Response:
     "email": "student@sode-edu.in",
     "student_type": "internal"
   },
-  "razorpay_key": "check env"
+  "razorpay_key": "YOUR_RAZORPAY_KEY_ID"
 }
 ```
 
-### Sample Verify Payment Request
+### Sample Verify Payment Callback (POST Form-Encoded)
 ```bash
-POST /api/payment/verify
-Authorization: Bearer <firebase_token>
-Content-Type: application/json
+POST /api/payment/callback
+Content-Type: application/x-www-form-urlencoded
 
-{
-  "razorpay_order_id": "order_xxxxx",
-  "razorpay_payment_id": "pay_xxxxx",
-  "razorpay_signature": "signature_xxxxx"
-}
+razorpay_order_id=order_xxxxx&
+razorpay_payment_id=pay_xxxxx&
+razorpay_signature=signature_xxxxx
 
 Response:
-{
-  "success": true,
-  "message": "Payment verified successfully",
-  "payment": {
-    "id": "pay_xxxxx",
-    "amount": 200,
-    "currency": "INR",
-    "status": "captured"
-  }
-}
+302 Redirect to /events?payment=success
 ```
 
 ### Sample Status API Request
@@ -357,7 +345,8 @@ https://varnothsava.sode-edu.in/api/payment/webhook
 
 ### Razorpay Test Keys
 ```
-check env
+Key ID: YOUR_RAZORPAY_KEY_ID
+Key Secret: YOUR_RAZORPAY_KEY_SECRET
 ```
 
 ### Test Card (HDFC Bank Debit Card)

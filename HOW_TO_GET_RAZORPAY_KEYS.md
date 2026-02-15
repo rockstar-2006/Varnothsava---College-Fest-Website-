@@ -89,13 +89,13 @@ You'll see TWO keys:
 **1. Key ID** (Public Key)
 ```
 Format: rzp_test_XXXXXXXXXXXX
-Example: rzp_test_1DP5mmOlF5G5ag
+Example: rzp_test_AbC123DeF456
 ```
 
 **2. Key Secret** (Private Key)
 ```
 Format: rzp_test_YYYYYYYYYYYY
-Example: rzp_test_ThisisSecretKey123
+Example: rzp_test_XyZ789GhI012
 ```
 
 **⚠️ IMPORTANT:** 
@@ -128,8 +128,8 @@ NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_test_YOUR_KEY_ID_HERE
 
 **Example:**
 ```bash
-RAZORPAY_KEY_SECRET=rzp_test_ThisisSecretKey123
-NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_test_1DP5mmOlF5G5ag
+RAZORPAY_KEY_SECRET=rzp_test_XyZ789GhI012
+NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_test_AbC123DeF456
 ```
 
 ### 5.4 Make Sure Mock Mode is OFF

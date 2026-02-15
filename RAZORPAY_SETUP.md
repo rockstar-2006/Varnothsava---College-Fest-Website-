@@ -37,8 +37,8 @@ NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_test_YOUR_KEY_ID_HERE
 
 **Example:**
 ```bash
-RAZORPAY_KEY_SECRET=rzp_test_1234567890abcdef
-NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_test_abcdef1234567890
+RAZORPAY_KEY_SECRET=rzp_test_XyZ789GhI012
+NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_test_AbC123DeF456
 ```
 
 ### Step 4: Restart Development Server (30 seconds)

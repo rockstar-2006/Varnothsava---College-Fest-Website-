@@ -14,6 +14,8 @@ import { useApp } from '@/context/AppContext'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Tilt from 'react-parallax-tilt'
+import QRCode from 'qrcode'
+import { QrScanner } from '@/components/ui/QrScanner'
 
 // --- CONSTANTS ---
 const ACCENT_GREEN = '#00ff9d'
@@ -198,24 +200,36 @@ export default function ProfilePage() {
     const [editName, setEditName] = useState('')
     const [editUsn, setEditUsn] = useState('')
     const [editPhone, setEditPhone] = useState('')
+    const [qrDataUrl, setQrDataUrl] = useState<string>('')
 
-        // Robust scroll lock for modal
-        useEffect(() => {
-            if (activeModal) {
-                document.body.style.overflow = 'hidden';
-            } else {
-                document.body.style.overflow = '';
-            }
-            return () => {
-                document.body.style.overflow = '';
-            };
-        }, [activeModal])
+    // Robust scroll lock for modal
+    useEffect(() => {
+        if (activeModal) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [activeModal])
 
     useEffect(() => {
         if (userData) {
             setEditName(userData.name)
             setEditUsn(userData.usn)
             setEditPhone(userData.phone || '')
+
+            // Generate QR Code locally
+            QRCode.toDataURL(userData.profileCode, {
+                width: 400,
+                margin: 2,
+                color: {
+                    dark: '#000000',
+                    light: '#ffffff'
+                }
+            }).then(url => setQrDataUrl(url))
+                .catch(err => console.error('QR Generation Error:', err))
         }
     }, [userData])
 
@@ -367,6 +381,42 @@ export default function ProfilePage() {
                     </div>
                 </motion.div>
 
+                {/* --- PAYMENT PROMPT BANNER --- */}
+                {!userData.hasPaid && (
+                    <motion.div
+                        variants={itemVariants}
+                        className="mb-12 relative group"
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 via-cyan-500/20 to-emerald-500/20 blur-xl opacity-50 group-hover:opacity-100 transition-opacity" />
+                        <div className="relative p-6 md:p-8 bg-black/60 backdrop-blur-2xl border border-emerald-500/30 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden shadow-2xl">
+                            {/* Animated Background Accents */}
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-[60px] animate-pulse" />
+                            <div className="absolute bottom-0 left-0 w-32 h-32 bg-cyan-500/10 blur-[60px] animate-pulse" />
+
+                            <div className="flex items-center gap-6 relative z-10">
+                                <div className="w-14 h-14 md:w-16 md:h-16 bg-emerald-500/10 rounded-2xl md:rounded-3xl flex items-center justify-center text-emerald-400 border border-emerald-500/20 shadow-[0_0_30px_rgba(16,185,129,0.2)]">
+                                    <CreditCard size={32} className="animate-bounce" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg md:text-2xl font-black text-white italic uppercase tracking-tight">REGISTRATION INCOMPLETE</h3>
+                                    <p className="text-slate-400 text-xs md:text-sm font-medium mt-1">
+                                        Your festival pass is not yet active. Complete the payment to access all events.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <motion.button
+                                whileHover={{ scale: 1.05, x: 5 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => router.push('/notify')}
+                                className="w-full md:w-auto px-8 md:px-10 py-4 md:py-5 bg-emerald-500 hover:bg-emerald-400 text-black font-black uppercase text-[10px] md:text-xs tracking-[0.2em] rounded-2xl transition-all shadow-2xl flex items-center justify-center gap-3 active:scale-95 group/btn"
+                            >
+                                START PAYMENT <ArrowRight size={18} className="group-hover/btn:translate-x-2 transition-transform" />
+                            </motion.button>
+                        </div>
+                    </motion.div>
+                )}
+
             </motion.div>
 
             <motion.div
@@ -452,10 +502,7 @@ export default function ProfilePage() {
                                                     </div>
                                                 </div>
                                                 <button
-                                                    onClick={() => {
-                                                        setActiveModal('qr')
-                                                        setActiveModal('qr')
-                                                    }}
+                                                    onClick={() => setActiveModal('qr')}
                                                     className="absolute -bottom-2 -right-2 w-12 md:w-12 h-12 md:h-12 bg-white rounded-xl flex items-center justify-center text-black shadow-2xl transition-transform hover:scale-110 hover:rotate-12 border-2 md:border-4 border-[#08090f] z-20 min-h-[48px] min-w-[48px]"
                                                 >
                                                     <QrCode size={22} />
@@ -516,18 +563,21 @@ export default function ProfilePage() {
                     <motion.div
                         variants={itemVariants}
                         whileHover={{ x: 5, backgroundColor: 'rgba(255,255,255,0.06)' }}
-                        className="p-6 md:p-8 rounded-[1.8rem] md:rounded-[2rem] bg-white/[0.02] border border-white/5 flex items-center justify-between group cursor-pointer transition-all duration-500 shadow-xl min-h-[80px]"
+                        onClick={() => router.push('/notify')}
+                        className={`p-5 md:p-8 rounded-[1.8rem] md:rounded-[2rem] border flex items-center justify-between group cursor-pointer transition-all duration-500 shadow-xl min-h-[80px] ${userData.hasPaid ? 'bg-emerald-500/5 border-emerald-500/10' : 'bg-red-500/5 border-red-500/10'}`}
                     >
-                        <div className="flex items-center gap-4 md:gap-5">
-                            <div className="w-10 md:w-12 h-10 md:h-12 bg-white/5 rounded-2xl flex items-center justify-center text-slate-400 group-hover:text-cyan-400 group-hover:bg-cyan-500/10 transition-all border border-white/5">
-                                <CreditCard size={20} />
+                        <div className="flex items-center gap-3 md:gap-5 flex-1 min-w-0">
+                            <div className={`w-10 md:w-12 h-10 md:h-12 rounded-xl md:rounded-2xl flex-shrink-0 flex items-center justify-center group-hover:scale-110 transition-all border ${userData.hasPaid ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}>
+                                <CreditCard size={18} className="md:w-5 md:h-5" />
                             </div>
-                            <div>
-                                <p className="text-sm md:text-lg font-black text-white leading-none mb-1">Billing Archive</p>
-                                <p className="text-[11px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">Transaction History</p>
+                            <div className="min-w-0">
+                                <p className="text-sm md:text-lg font-black text-white leading-tight mb-1 truncate">Billing Status</p>
+                                <p className={`text-[10px] md:text-xs font-bold uppercase tracking-wider md:tracking-widest ${userData.hasPaid ? 'text-emerald-500' : 'text-red-500'} truncate`}>
+                                    {userData.hasPaid ? 'PAID // ALL ACCESS' : 'PENDING // ACTION'}
+                                </p>
                             </div>
                         </div>
-                        <ChevronRight size={16} className="text-slate-700 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
+                        <ChevronRight size={16} className={`flex-shrink-0 ml-2 group-hover:translate-x-1 transition-all ${userData.hasPaid ? 'text-emerald-500' : 'text-red-500'}`} />
                     </motion.div>
                 </div>
 
@@ -775,42 +825,98 @@ export default function ProfilePage() {
                                     )}
 
                                     {activeModal === 'qr' && (
-                                        <div className="text-center space-y-6">
-                                            <div className="p-4 bg-white rounded-[2rem] inline-block shadow-2xl ring-8 ring-emerald-500/10 relative">
-                                                <Image
-                                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${userData.profileCode}`}
-                                                    alt="Entry Pass QR"
-                                                    width={200}
-                                                    height={200}
-                                                    unoptimized
-                                                    className="w-48 h-48"
-                                                />
+                                        <div className="text-center space-y-6 flex flex-col items-center">
+                                            {/* --- RECEIPT / TICKET STYLE PASS --- */}
+                                            <div className="relative mx-auto w-full max-w-[320px] perspective-1000 animate-in fade-in zoom-in-95 duration-500">
+                                                <div id="printable-receipt" className="bg-white text-black p-8 shadow-2xl relative overflow-hidden flex flex-col items-center"
+                                                    style={{
+                                                        clipPath: 'polygon(0 0, 100% 0, 100% 95%, 98% 97%, 95% 95%, 92% 97%, 89% 95%, 86% 97%, 83% 95%, 80% 97%, 77% 95%, 74% 97%, 71% 95%, 68% 97%, 65% 95%, 62% 97%, 59% 95%, 56% 97%, 53% 95%, 50% 97%, 47% 95%, 43% 97%, 40% 95%, 37% 97%, 34% 95%, 31% 97%, 28% 95%, 25% 97%, 22% 95%, 19% 97%, 16% 95%, 13% 97%, 10% 95%, 7% 97%, 4% 95%, 2% 97%, 0 95%)'
+                                                    }}>
+
+                                                    {/* Internal Watermark */}
+                                                    <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none rotate-[-35deg]">
+                                                        <span className="text-5xl font-black">OFFICIAL PASS</span>
+                                                    </div>
+
+                                                    {/* User Segment */}
+                                                    <div className="w-full border-b-2 border-dashed border-gray-300 pb-5 mb-6 flex flex-col items-center">
+                                                        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-emerald-500 mb-3 shadow-lg ring-4 ring-emerald-500/10">
+                                                            <img src={userData.avatar} alt="" className="w-full h-full object-cover" />
+                                                        </div>
+                                                        <h4 className="text-xl font-black tracking-tighter uppercase leading-none">{userData.name}</h4>
+                                                        <p className="text-[9px] font-bold text-gray-400 tracking-[0.2em] mt-2 italic">DIGITAL ACCESS TOKEN</p>
+                                                    </div>
+
+                                                    {/* QR Code Segment */}
+                                                    <div className="p-4 bg-gray-50 rounded-2xl border-2 border-gray-100 shadow-inner mb-6 relative group">
+                                                        {qrDataUrl ? (
+                                                            <Image
+                                                                src={qrDataUrl}
+                                                                alt="Entry Pass QR"
+                                                                width={200}
+                                                                height={200}
+                                                                unoptimized
+                                                                className="w-40 h-40 group-hover:scale-105 transition-transform duration-500"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-40 h-40 flex items-center justify-center">
+                                                                <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* ID Info */}
+                                                    <div className="w-full space-y-3 mb-6">
+                                                        <div className="flex justify-between items-center text-[10px] font-bold">
+                                                            <span className="text-gray-400 uppercase tracking-widest">Entry Code:</span>
+                                                            <span className="text-emerald-600 font-mono text-xs">{userData.profileCode}</span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center text-[10px] font-bold">
+                                                            <span className="text-gray-400 uppercase tracking-widest">Phone:</span>
+                                                            <span className="text-black">{userData.phone || 'N/A'}</span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center text-[10px] font-bold">
+                                                            <span className="text-gray-400 uppercase tracking-widest">Type:</span>
+                                                            <span className="text-black uppercase">{userData.studentType}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Status Banner */}
+                                                    <div className="w-full py-3 border-t border-dashed border-gray-300 flex flex-col items-center">
+                                                        <div className={`
+                                                            text-[10px] font-black uppercase tracking-[0.3em] px-4 py-1.5 rounded-lg border-2 mb-1
+                                                            ${userData.hasPaid ? 'bg-emerald-50 border-emerald-500 text-emerald-600' : 'bg-red-50 border-red-500 text-red-600'}
+                                                        `}>
+                                                            {userData.hasPaid ? 'PAYMENT VERIFIED' : 'PAYMENT PENDING'}
+                                                        </div>
+                                                        <p className="text-[7px] text-gray-400 uppercase font-black tracking-widest pt-1">
+                                                            Varnothsava 2026 // Secure Node ID {userData.profileCode.split('').reverse().join('')}
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="h-6" /> {/* Edge padding */}
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="text-xl font-bold text-white uppercase italic tracking-tight">{userData.name}</p>
-                                                <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-[0.2em] mt-2">PASS ID: {userData.profileCode}</p>
+
+                                            <div className="flex gap-4 w-full max-w-[320px]">
+                                                <button
+                                                    onClick={() => window.print()}
+                                                    className="flex-1 py-4 bg-white/10 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-white/20 transition-all active:scale-95 border border-white/5"
+                                                >
+                                                    Save Pass
+                                                </button>
+                                                <button
+                                                    onClick={() => setActiveModal(null)}
+                                                    className="flex-1 py-4 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-emerald-400 transition-all active:scale-95 shadow-lg"
+                                                >
+                                                    Done
+                                                </button>
                                             </div>
-                                            <p className="text-xs text-slate-500 leading-relaxed bg-white/5 p-4 rounded-2xl">
-                                                Present this QR code at event checkpoints for instant verification and entry.
-                                            </p>
                                         </div>
                                     )}
 
                                     {activeModal === 'scanner' && (
-                                        <div className="text-center py-8 space-y-6">
-                                            <div className="w-20 h-20 mx-auto rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                                                <QrCode size={40} className="text-emerald-400 animate-pulse" />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <h4 className="text-white font-bold uppercase italic">Scanner Deployment</h4>
-                                                <p className="text-xs text-slate-500 max-w-[250px] mx-auto leading-relaxed">
-                                                    Initialize your device camera to scan event access tokens or coordinator codes.
-                                                </p>
-                                            </div>
-                                            <button className="px-8 py-3 border border-emerald-500/50 text-emerald-400 font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-emerald-500 hover:text-black transition-all">
-                                                Activate Camera
-                                            </button>
-                                        </div>
+                                        <QrScanner onClose={() => setActiveModal(null)} />
                                     )}
 
                                     {activeModal === 'editProfile' && (

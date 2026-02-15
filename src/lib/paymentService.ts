@@ -34,11 +34,20 @@ export async function storePaymentRecord(
 
         // Update user's payment status
         const userRef = db.collection(USERS_COLLECTION).doc(userId)
-        await userRef.update({
+
+        const userUpdate: any = {
             hasPaid: true,
             paymentId: paymentData.razorpay_payment_id,
             updatedAt: now,
-        })
+        }
+
+        // Handle Robo Soccer metadata if present in notes
+        if (paymentData.notes?.include_robo_soccer === 'yes') {
+            userUpdate.hasRoboSoccer = true
+            userUpdate.isRoboSoccerTeamLeader = true
+        }
+
+        await userRef.update(userUpdate)
 
         return paymentRecord
     } catch (error: any) {
@@ -113,18 +122,26 @@ export async function getLatestSuccessfulPayment(userId: string): Promise<Paymen
  */
 export async function checkUserPaymentStatus(userId: string): Promise<{
     hasPaid: boolean
+    hasRoboSoccer: boolean
     payment: PaymentRecord | null
 }> {
     try {
         const payment = await getLatestSuccessfulPayment(userId)
+
+        // Check if ANY successful payment has robo soccer
+        const payments = await getUserPayments(userId)
+        const hasRoboSoccer = payments.some(p => p.notes?.include_robo_soccer === 'yes' && (p.status === 'captured' || p.status === 'authorized'))
+
         return {
             hasPaid: payment !== null,
+            hasRoboSoccer,
             payment,
         }
     } catch (error: any) {
         console.error('Check Payment Status Error:', error)
         return {
             hasPaid: false,
+            hasRoboSoccer: false,
             payment: null,
         }
     }

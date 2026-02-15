@@ -703,3 +703,88 @@ body {
 .animate-pulse-slow {
     animation: animate-pulse-slow 4s ease-in-out infinite;
 }
+
+/* --- QR SCANNER CUSTOM STYLES --- */
+#reader {
+    border: none !important;
+    background: transparent !important;
+    width: 100% !important;
+}
+
+#reader__scan_region {
+    background: #000 !important;
+    border-radius: 1rem !important;
+    overflow: hidden !important;
+}
+
+#reader__scan_region video {
+    border-radius: 1rem !important;
+}
+
+#reader__dashboard {
+    padding: 1rem !important;
+    background: transparent !important;
+    color: white !important;
+}
+
+#reader__dashboard_section_csr_button {
+    background: #10b981 !important;
+    color: black !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 0.5rem !important;
+    font-size: 10px !important;
+    letter-spacing: 0.1em !important;
+    border: none !important;
+}
+
+#reader__status_span {
+    color: #10b981 !important;
+    font-size: 10px !important;
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+}
+
+.qr-reader img {
+    display: none !important;
+}
+
+/* --- PRINT STYLES FOR TICKETS --- */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    #printable-receipt,
+    #printable-receipt * {
+        visibility: visible;
+    }
+
+    #printable-receipt {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: auto;
+        padding: 0;
+        margin: 0;
+        box-shadow: none !important;
+        clip-path: none !important;
+        /* Allow natural print edges */
+    }
+
+    /* Force black text and white bg for thermal/home printers */
+    #printable-receipt .bg-white {
+        background: white !important;
+        color: black !important;
+    }
+
+    #printable-receipt .border-dashed {
+        border-color: #ccc !important;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+}

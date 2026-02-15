@@ -67,7 +67,7 @@ export const missions: Event[] = [
         fee: 200,
         visual: "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=1200&q=80",
         date: "11-MARCH ",
-        time: "10:30 am",
+        time: "10:00 AM",
         // minTeamSize: 2,
         // maxTeamSize: 3,
         teamFormate: "Group",
@@ -109,7 +109,7 @@ export const missions: Event[] = [
         fee: 200,
         visual: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&q=80",
         date: "11-MARCH",
-        time: "1:30 pm",
+        time: "1:00 PM",
         // minTeamSize: 1,
         // maxTeamSize: 2,
         teamFormate: "Group",
@@ -280,7 +280,14 @@ export const missions: Event[] = [
         // minTeamSize: 2,
         // maxTeamSize: 3,
         teamFormate: "Group",
-        tags: ['Startup', 'Business', 'Idea']
+        tags: ['Startup', 'Business', 'Idea'],
+        themeIdeas: [
+  "Open Innovation",
+  "AI in Healthcare",
+  "Smart Transportation"
+]
+
+
     },
     {
         id: "TECH-007",
@@ -350,8 +357,8 @@ export const missions: Event[] = [
         coordinatorsContact: ["8762840054", "7019267494", "9606721573"],
         fee: 200,
         visual: "https://images.unsplash.com/photo-1561557944-6e7860d1a7eb?w=1200&q=80",
-        date: "12-MARCH",
-        time: "9:00 AM",
+        date: "11-MARCH",
+        time: "10:00 AM",
         // minTeamSize: 2,
         // maxTeamSize: 4,
         teamFormate: "Group",

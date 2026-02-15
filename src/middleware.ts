@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 /**
- * Security Middleware
+ * Security Proxy
  * Implements CORS, security headers, and basic request validation
  */
 export function middleware(request: NextRequest) {
@@ -14,6 +14,7 @@ export function middleware(request: NextRequest) {
         process.env.NEXT_PUBLIC_APP_URL,
         'http://localhost:3000',
         'http://127.0.0.1:3000',
+        'http://localhost:3001',
         // Production domains
         'https://varnothsava.sode-edu.in',
         'http://varnothsava.sode-edu.in',
@@ -42,7 +43,10 @@ export function middleware(request: NextRequest) {
 
     // CORS validation for API routes
     if (pathname.startsWith('/api/')) {
-        if (origin && !allowedOrigins.includes(origin)) {
+        // Exempt Razorpay callbacks and webhooks from strict origin check
+        const isExempt = pathname.includes('/api/payment/callback') || pathname.includes('/api/payment/webhook');
+
+        if (!isExempt && origin && !allowedOrigins.includes(origin)) {
             console.warn(`[Security] Blocked request from unauthorized origin: ${origin}`);
             return new NextResponse(
                 JSON.stringify({ message: 'Forbidden: Invalid origin' }),
@@ -87,33 +91,8 @@ export function middleware(request: NextRequest) {
         );
     }
 
-    // Content Security Policy (adjust based on your needs)
-    const cspHeader = `
-    default-src 'self';
-    script-src 'self' 'unsafe-eval' 'unsafe-inline' 
-      https://www.gstatic.com 
-      https://apis.google.com 
-      https://*.firebaseapp.com 
-      https://*.googleapis.com;
-    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-    img-src 'self' blob: data: https:;
-    font-src 'self' https://fonts.gstatic.com;
-    connect-src 'self' 
-      https://*.firebaseio.com 
-      https://*.googleapis.com 
-      https://api.dicebear.com
-      https://nekos.best
-      https://api.qrserver.com;
-    frame-src 'self' 
-      https://*.firebaseapp.com 
-      https://accounts.google.com;
-    object-src 'none';
-    base-uri 'self';
-    form-action 'self';
-    frame-ancestors 'self';
-  `.replace(/\s{2,}/g, ' ').trim();
-
-    response.headers.set('Content-Security-Policy', cspHeader);
+    // Content Security Policy is now handled in next.config.ts for better reliability
+    // response.headers.set('Content-Security-Policy', cspHeader);
 
     return response;
 }

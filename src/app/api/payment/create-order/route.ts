@@ -35,28 +35,60 @@ export async function POST(request: NextRequest) {
         const userId = decodedToken.uid
         const userEmail = decodedToken.email || ''
 
-        // 2. Check if user has already paid
-        const { hasPaid, payment } = await checkUserPaymentStatus(userId)
+        // 2. Extract options from request body
+        let includeRoboSoccer = false
+        try {
+            const body = await request.json()
+            includeRoboSoccer = !!body.includeRoboSoccer
+        } catch (e) {
+            // No body or invalid body, default to false
+        }
 
-        if (hasPaid) {
+        // 3. Check if user has already paid
+        const { hasPaid, hasRoboSoccer, payment } = await checkUserPaymentStatus(userId)
+
+        // Case 1: Already paid everything (Base + Robo)
+        if (hasPaid && (!includeRoboSoccer || hasRoboSoccer)) {
             return NextResponse.json(
                 {
-                    error: 'Already Paid',
-                    message: 'You have already completed the payment',
+                    error: 'Already Registered',
+                    message: hasRoboSoccer ? 'You are already registered for everything' : 'You have already completed the individual registration',
                     payment,
                 },
                 { status: 400 }
             )
         }
 
-        // 3. Determine amount based on email domain
-        // sode-edu.in = ₹200 (20000 paise)
-        // others = ₹300 (30000 paise)
+        // 4. Determine amount based on email domain and Robo Soccer selection
+        // Base Fee: sode-edu.in = ₹200 (20000 paise), others = ₹300 (30000 paise)
+        // Robo Soccer Fee: + ₹300 (30000 paise)
         const isSodeStudent = userEmail.toLowerCase().endsWith('@sode-edu.in')
-        const amountInRupees = isSodeStudent ? 200 : 300
+
+        let amountInRupees = 0
+
+        // If they already paid the base fee, only charge for Robo Soccer
+        if (hasPaid) {
+            if (includeRoboSoccer && !hasRoboSoccer) {
+                amountInRupees = 300 // Only the Robo Soccer fee
+            }
+        } else {
+            // New registration
+            amountInRupees = isSodeStudent ? 200 : 300
+            if (includeRoboSoccer) {
+                amountInRupees += 300
+            }
+        }
+
+        if (amountInRupees === 0) {
+            return NextResponse.json(
+                { error: 'Invalid Request', message: 'No payment required for this selection' },
+                { status: 400 }
+            )
+        }
+
         const amountInPaise = amountInRupees * 100
 
-        // 4. Create Razorpay order
+        // 5. Create Razorpay order
         // Check if Razorpay credentials are configured
         const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
         const keySecret = process.env.RAZORPAY_KEY_SECRET
@@ -82,7 +114,13 @@ export async function POST(request: NextRequest) {
             user_email: userEmail,
             student_type: isSodeStudent ? 'internal' : 'external',
             amount_rupees: amountInRupees.toString(),
+            include_robo_soccer: includeRoboSoccer ? 'yes' : 'no',
+            event_type: includeRoboSoccer ? 'registration_with_robo_soccer' : 'registration_only'
         }
+
+        // AUDIT LOG: Request (Step 2.1)
+        console.log('--- RAZORPAY ORDER REQUEST (AUDIT LOG) ---');
+        console.log(JSON.stringify({ amount: amountInPaise, currency: 'INR', receipt, payment_capture: 1, notes }, null, 2));
 
         const order = await createRazorpayOrder(
             amountInPaise,
@@ -90,6 +128,10 @@ export async function POST(request: NextRequest) {
             receipt,
             notes
         )
+
+        // AUDIT LOG: Response (Step 2.2)
+        console.log('--- RAZORPAY ORDER RESPONSE (AUDIT LOG) ---');
+        console.log(JSON.stringify(order, null, 2));
 
         // 5. Return order details to frontend
         return NextResponse.json({

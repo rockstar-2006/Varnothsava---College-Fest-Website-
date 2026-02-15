@@ -80,7 +80,8 @@
 
 ### Test Mode (Current)
 ```bash
-check env
+Key ID: YOUR_RAZORPAY_KEY_ID
+Key Secret: YOUR_RAZORPAY_KEY_SECRET
 ```
 
 ### Test Card (HDFC Bank)

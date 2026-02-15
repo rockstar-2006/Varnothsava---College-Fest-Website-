@@ -662,7 +662,7 @@ function LoadingContent() {
                     </div>
 
                     {/* Corner HUD Metrics - Sharp & Visible */}
-                    <div className="absolute top-8 left-8 md:top-12 md:left-16 flex flex-col gap-2 drop-shadow-lg">
+<div className="absolute top-8 left-8 md:top-12 md:left-16 hidden md:flex flex-col gap-2 drop-shadow-lg">
                         <div className="flex items-center gap-3 font-black text-[10px] md:text-xs tracking-[0.3em] uppercase" style={{ color: themeConfig.color }}>
                             <Terminal className="w-4 h-4" /> Hosted by SMVITM
                         </div>
@@ -672,7 +672,7 @@ function LoadingContent() {
                         </div>
                     </div>
 
-                    <div className="absolute top-8 right-8 md:top-12 md:right-16 text-right flex flex-col gap-2 items-end drop-shadow-lg">
+<div className="absolute top-8 right-8 md:top-12 md:right-16 hidden md:flex text-right flex-col gap-2 items-end drop-shadow-lg">
                         <div className="flex items-center justify-end gap-3 font-black text-[10px] md:text-xs tracking-[0.3em] uppercase" style={{ color: themeConfig.color }}>
                             Edition 2026 <Star className="w-4 h-4" />
                         </div>
@@ -750,7 +750,7 @@ function LoadingContent() {
                                     initial={{ opacity: 0, scale: 0.95 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 1.1 }}
-                                    className="flex flex-col items-center gap-8 z-20"
+                                    className="flex flex-col items-center gap-4 md:gap-8"
                                 >
                                     {/* Icon Container - Glowing & Distinct - Optimized for mobile */}
                                     <motion.div
@@ -812,7 +812,7 @@ function LoadingContent() {
                                         whileHover={{ scale: 1.05 }}
                                         whileTap={{ scale: 0.95 }}
                                         onClick={startExperience}
-                                        className="relative group mt-8 md:mt-12 cursor-pointer outline-none focus:outline-none w-[85vw] max-w-[380px]"
+                                        className="relative group mt-4 md:mt-12 cursor-pointer outline-none focus:outline-none w-[85vw] max-w-[380px]"
                                     >
                                         {/* Outer Glow (The Aura) */}
                                         <div className="absolute -inset-1 bg-emerald-500/30 rounded-lg blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -867,7 +867,7 @@ function LoadingContent() {
                     </div>
 
                     {/* Bottom HUD metrics - Cleaner */}
-                    <div className="absolute bottom-10 inset-x-0 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-24 opacity-80 z-20">
+                    <div className="hidden md:flex absolute bottom-10 inset-x-0 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-24 opacity-80 z-20">
                         <div className="flex items-center gap-3 drop-shadow-md">
                             <Activity className="w-3 h-3" style={{ color: themeConfig.color }} />
                             <span className="text-[10px] font-bold text-white/50 tracking-widest uppercase">System Online</span>
@@ -876,9 +876,9 @@ function LoadingContent() {
                 </motion.div>
 
                 {/* Outer HUD Decorative Elements */}
-                <div className="fixed top-8 left-1/2 -translate-x-1/2 flex items-center gap-4 opacity-40 z-[12000]">
+                <div className=" md:flex fixed top-8 left-1/2 -translate-x-1/2 flex items-center gap-4 opacity-40 z-[12000]">
                     <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: themeConfig.color }} />
-                    <span className="text-white text-[10px] font-black tracking-[0.5em] uppercase italic">National-Level College Festival</span>
+                    <span className="text-white text-[10px] font-black tracking-[0.4em] uppercase italic">National-Level College Festival</span>
                 </div>
 
                 <div className="fixed inset-0 pointer-events-none z-[12000] border-[20px] md:border-[40px] border-transparent">
