@@ -8,14 +8,16 @@ import {
     Edit3, Award, Trophy, GraduationCap, CheckCircle,
     Settings, Globe, Calendar, Clock, CreditCard,
     BookOpen, Sparkles, ChevronRight, LayoutDashboard,
-    ArrowRight, MapPin, Link2, X, Fingerprint
+    ArrowRight, MapPin, Link2, X, Fingerprint, Eye, Users
 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
+import { getAuthToken } from '@/lib/firebaseClient'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Tilt from 'react-parallax-tilt'
 import QRCode from 'qrcode'
 import { QrScanner } from '@/components/ui/QrScanner'
+import { missions } from '@/data/missions'
 
 // --- CONSTANTS ---
 const ACCENT_GREEN = '#00ff9d'
@@ -192,7 +194,7 @@ export default function ProfilePage() {
     const { userData, logout, isLoggedIn, needsOnboarding, mountUser, updateAvatar, updateProfile } = useApp()
     const router = useRouter()
     const [mounted, setMounted] = useState(false)
-    const [activeModal, setActiveModal] = useState<'settings' | 'qr' | 'scanner' | 'editProfile' | null>(null)
+    const [activeModal, setActiveModal] = useState<'settings' | 'qr' | 'scanner' | 'editProfile' | 'registrationDetails' | null>(null)
     const [isRegenerating, setIsRegenerating] = useState(false)
     const [isUpdating, setIsUpdating] = useState(false)
 
@@ -202,15 +204,44 @@ export default function ProfilePage() {
     const [editPhone, setEditPhone] = useState('')
     const [qrDataUrl, setQrDataUrl] = useState<string>('')
 
-    // Robust scroll lock for modal
+    // Registration Details State
+    const [selectedRegistration, setSelectedRegistration] = useState<any>(null)
+    const [isLoadingDetails, setIsLoadingDetails] = useState(false)
+
+    const fetchRegistrationDetails = async (registrationId: string) => {
+        setIsLoadingDetails(true)
+        try {
+            const token = await getAuthToken()
+            const response = await fetch(`/api/registration/${registrationId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            if (!response.ok) {
+                throw new Error('Failed to fetch registration details')
+            }
+            const data = await response.json()
+            setSelectedRegistration(data.registration)
+            setActiveModal('registrationDetails')
+        } catch (error) {
+            console.error('Error fetching registration details:', error)
+        } finally {
+            setIsLoadingDetails(false)
+        }
+    }
+
+    // Robust scroll lock for modal and hide bottom nav
     useEffect(() => {
         if (activeModal) {
             document.body.style.overflow = 'hidden';
+            document.body.classList.add('modal-open');
         } else {
             document.body.style.overflow = '';
+            document.body.classList.remove('modal-open');
         }
         return () => {
             document.body.style.overflow = '';
+            document.body.classList.remove('modal-open');
         };
     }, [activeModal])
 
@@ -422,7 +453,7 @@ export default function ProfilePage() {
             <motion.div
                 variants={itemVariants}
                 style={{ y: contentY }}
-                className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-10 items-start -mt-40"
+                className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-10 items-start -mt-40 relative z-20"
             >
 
                 {/* --- LEFT SIDEBAR --- */}
@@ -447,7 +478,7 @@ export default function ProfilePage() {
                                             </div>
                                             <button
                                                 onClick={() => setActiveModal('qr')}
-                                                className="absolute -bottom-2 -right-2 w-12 md:w-12 h-12 md:h-12 bg-white rounded-xl flex items-center justify-center text-black shadow-2xl transition-transform hover:scale-110 hover:rotate-12 border-2 md:border-4 border-[#08090f] z-20 min-h-[48px] min-w-[48px]"
+                                                className="absolute -bottom-2 -right-2 w-12 md:w-12 h-12 md:h-12 bg-white rounded-xl flex items-center justify-center text-black shadow-2xl transition-transform hover:scale-110 hover:rotate-12 border-2 md:border-4 border-[#08090f] z-50 min-h-[48px] min-w-[48px] pointer-events-auto cursor-pointer"
                                             >
                                                 <QrCode size={22} />
                                             </button>
@@ -503,7 +534,7 @@ export default function ProfilePage() {
                                                 </div>
                                                 <button
                                                     onClick={() => setActiveModal('qr')}
-                                                    className="absolute -bottom-2 -right-2 w-12 md:w-12 h-12 md:h-12 bg-white rounded-xl flex items-center justify-center text-black shadow-2xl transition-transform hover:scale-110 hover:rotate-12 border-2 md:border-4 border-[#08090f] z-20 min-h-[48px] min-w-[48px]"
+                                                    className="absolute -bottom-2 -right-2 w-12 md:w-12 h-12 md:h-12 bg-white rounded-xl flex items-center justify-center text-black shadow-2xl transition-transform hover:scale-110 hover:rotate-12 border-2 md:border-4 border-[#08090f] z-50 min-h-[48px] min-w-[48px] pointer-events-auto cursor-pointer"
                                                 >
                                                     <QrCode size={22} />
                                                 </button>
@@ -651,7 +682,7 @@ export default function ProfilePage() {
 
                     <motion.div variants={itemVariants}>
                         <AnimatedBorderCard className="!rounded-[2rem] md:rounded-[3rem]">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12 md:mb-16">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-6 md:mb-16">
                                 <div className="flex items-center gap-6 md:gap-8">
                                     <div className="w-16 h-16 bg-white/[0.03] border border-white/10 rounded-[1.8rem] flex items-center justify-center text-emerald-400 shadow-xl relative overflow-hidden group/icon">
                                         <div className="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover/icon:opacity-100 transition-opacity" />
@@ -663,7 +694,7 @@ export default function ProfilePage() {
                                     </div>
                                 </div>
 
-                                <div className="px-5 md:px-7 py-2 md:py-4 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-xl md:rounded-2xl flex items-center gap-6 md:gap-8">
+                                <div className="px-5 md:px-7 py-4 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-xl md:rounded-2xl flex items-center gap-6 md:gap-8">
                                     <p className="text-3xl md:text-5xl font-bold text-white leading-none bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
                                         <CountUp end={userData.registeredEvents?.length || 0} />
                                     </p>
@@ -673,7 +704,7 @@ export default function ProfilePage() {
                             </div>
 
                             {!userData.registeredEvents?.length ? (
-                                <div className="py-20 md:py-28 flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-[2.5rem] md:rounded-[4rem] bg-white/[0.01] transition-all duration-700 hover:border-emerald-500/20 group/empty">
+                                <div className="py-20 md:py-28 flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-2xl md:rounded-3xl bg-white/[0.01] transition-all duration-700 hover:border-emerald-500/20 group/empty">
                                     <Trophy size={80} strokeWidth={1} className="text-white/5 mb-8 group-hover/empty:scale-110 transition-transform" />
                                     <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px] md:text-xs mb-10 text-center italic opacity-60">No active registrations found.</p>
                                     <motion.button
@@ -687,11 +718,11 @@ export default function ProfilePage() {
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                                    {userData.registeredEvents.map((event, idx) => (
+                                    {userData.registeredEvents.map((registration, idx) => (
                                         <motion.div
                                             whileHover={{ y: -5, scale: 1.01 }}
                                             key={idx}
-                                            className="p-8 md:p-10 bg-[#0c101a] border border-white/10 rounded-[2.5rem] md:rounded-[3.5rem] transition-all duration-500 relative overflow-hidden group/event shadow-2xl"
+                                            className="p-8 md:p-10 bg-[#0c101a] border border-white/10 rounded-2xl md:rounded-3xl transition-all duration-500 relative overflow-hidden group/event shadow-2xl"
                                         >
                                             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-[80px] opacity-0 group-hover/event:opacity-100 transition-opacity" />
                                             <div className="flex items-center justify-between mb-8 relative z-10">
@@ -701,11 +732,21 @@ export default function ProfilePage() {
                                                 <span className="px-4 py-1.5 bg-cyan-400/10 text-cyan-400 text-[10px] font-black rounded-full uppercase tracking-widest border border-cyan-500/20 italic">LIVE</span>
                                             </div>
                                             <h4 className="text-lg md:text-2xl font-bold text-white uppercase mb-8 leading-tight tracking-tight pr-4">
-                                                {event.id.replace(/-/g, ' ')}
+                                                {missions.find((mission) => mission.id === registration.eventId)?.title || 'Unknown Event'}
                                             </h4>
-                                            <div className="pt-6 md:pt-8 border-t border-white/5 flex items-center justify-between relative z-10 mt-4">
-                                                <span className="text-[9px] md:text-[10px] font-bold text-slate-600 uppercase tracking-widest">Team Unit</span>
-                                                <span className="text-[10px] md:text-xs font-bold text-white hover:text-emerald-400 transition-colors uppercase">{event.teamName}</span>
+                                            <div className="pt-6 md:pt-8 border-t border-white/5 space-y-4 relative z-10 mt-4">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-[9px] md:text-[10px] font-bold text-slate-600 uppercase tracking-widest">Team Unit</span>
+                                                    <span className="text-[10px] md:text-xs font-bold text-white hover:text-emerald-400 transition-colors uppercase">{registration.teamName}</span>
+                                                </div>
+                                                <button
+                                                    onClick={() => fetchRegistrationDetails(registration.id)}
+                                                    disabled={isLoadingDetails}
+                                                    className="w-full py-4 mt-8 bg-emerald-500 text-black font-black uppercase text-[10px] md:text-xs tracking-widest rounded-xl hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-50"
+                                                >
+                                                    <Eye size={16} />
+                                                    {isLoadingDetails ? 'Loading...' : 'View Details'}
+                                                </button>
                                             </div>
                                         </motion.div>
                                     ))}
@@ -738,18 +779,19 @@ export default function ProfilePage() {
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
                             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                            className="relative w-full max-w-lg max-h-[85dvh] overflow-y-auto custom-scrollbar p-[1px] rounded-[1.5rem] md:rounded-[2rem] mx-auto z-10 shadow-2xl"
+                            className="relative w-full max-w-lg p-[1px] rounded-[1.5rem] md:rounded-[2rem] mx-auto z-10 shadow-2xl flex flex-col max-h-[min(85dvh,calc(100vh-3rem))] overflow-hidden"
                         >
                             {/* Mobile Modal Glass Wrapper */}
-                            <div className="relative glass-modal rounded-[1.45rem] p-4 md:p-6 shadow-2xl overflow-hidden min-h-[300px]">
+                            <div className="relative glass-modal rounded-[1.45rem] shadow-2xl flex flex-col overflow-hidden h-full">
                                 <div className="absolute -top-24 -right-24 w-64 h-64 bg-emerald-500/10 blur-[80px] pointer-events-none" />
 
-                                <div className="flex justify-between items-center mb-8 relative z-10">
+                                <div className="flex justify-between items-center p-4 md:p-6 pb-4 relative z-10 flex-shrink-0">
                                     <h3 className="text-lg md:text-xl font-black uppercase italic text-white flex items-center gap-3">
                                         {activeModal === 'settings' && <><Settings size={18} className="text-emerald-400" /> Personalization</>}
                                         {activeModal === 'qr' && <><QrCode size={18} className="text-emerald-400" /> Digital Pass</>}
                                         {activeModal === 'scanner' && <><LayoutDashboard size={18} className="text-emerald-400" /> Scanner</>}
                                         {activeModal === 'editProfile' && <><Edit3 size={18} className="text-emerald-400" /> Update Hub</>}
+                                        {activeModal === 'registrationDetails' && <><Award size={18} className="text-emerald-400" /> Registration Details</>}
                                     </h3>
                                     <button
                                         onClick={() => setActiveModal(null)}
@@ -759,7 +801,13 @@ export default function ProfilePage() {
                                     </button>
                                 </div>
 
-                                <div className="space-y-6">
+                                <div
+                                    className="space-y-6 overflow-y-scroll custom-scrollbar p-4 md:p-6 pt-0 flex-1"
+                                    style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}
+                                    data-lenis-prevent
+                                    data-lenis-prevent-wheel
+                                    data-lenis-prevent-touch
+                                >
                                     {activeModal === 'settings' && (
                                         <div className="text-center space-y-6">
                                             <div className="relative group/avatar-edit mx-auto justify-center flex">
@@ -1029,6 +1077,103 @@ export default function ProfilePage() {
                                             </button>
                                         </form>
                                     )}
+
+                                    {activeModal === 'registrationDetails' && selectedRegistration && (
+                                        <div className="space-y-6">
+                                            {/* Event Banner */}
+                                            <div className="relative h-32 rounded-2xl overflow-hidden">
+                                                <Image
+                                                    src={selectedRegistration.eventVisual}
+                                                    alt={selectedRegistration.eventName}
+                                                    fill
+                                                    className="object-cover opacity-40"
+                                                    unoptimized
+                                                />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-[#08090f] via-[#08090f]/80 to-transparent" />
+                                                <div className="absolute bottom-4 left-4 right-4">
+                                                    <h4 className="text-xl font-black text-white uppercase tracking-tight">
+                                                        {selectedRegistration.eventName}
+                                                    </h4>
+                                                    <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest mt-1">
+                                                        {selectedRegistration.eventCategory}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* Registration Info */}
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
+                                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2">Team Name</p>
+                                                    <p className="text-sm font-bold text-white truncate">{selectedRegistration.teamName}</p>
+                                                </div>
+                                                <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
+                                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2">Team Type</p>
+                                                    <p className="text-sm font-bold text-emerald-400">{selectedRegistration.teamType}</p>
+                                                </div>
+                                                <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
+                                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2">Members</p>
+                                                    <p className="text-sm font-bold text-white">{selectedRegistration.memberCount}</p>
+                                                </div>
+                                                <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
+                                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2">Registered</p>
+                                                    <p className="text-sm font-bold text-white">
+                                                        {new Date(selectedRegistration.registeredAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* Team Members */}
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-4">
+                                                    <Users size={16} className="text-emerald-400" />
+                                                    <h5 className="text-sm font-black uppercase text-white tracking-widest">Team Members</h5>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    {selectedRegistration.members.map((member: any, idx: number) => (
+                                                        <div key={idx} className="flex items-center gap-4 p-4 bg-white/5 border border-white/10 rounded-xl hover:border-emerald-500/20 transition-all">
+                                                            <div className="w-12 h-12 rounded-xl overflow-hidden border border-white/10 flex-shrink-0">
+                                                                <Image
+                                                                    src={member.avatar}
+                                                                    alt={member.name}
+                                                                    width={48}
+                                                                    height={48}
+                                                                    className="object-cover"
+                                                                    unoptimized
+                                                                />
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-sm font-bold text-white truncate">{member.name}</p>
+                                                                <p className="text-[10px] text-slate-500 font-medium">{member.profileCode}</p>
+                                                            </div>
+                                                            {member.isLeader && (
+                                                                <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[9px] font-black text-emerald-400 uppercase tracking-widest">
+                                                                    Leader
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <button
+                                                    onClick={() => {
+                                                        setActiveModal(null)
+                                                        router.push(`/events/${selectedRegistration.eventId}`)
+                                                    }}
+                                                    className="w-full py-4 bg-emerald-500 text-black font-black uppercase text-xs tracking-widest rounded-xl hover:bg-emerald-400 transition-all active:scale-95 shadow-lg"
+                                                >
+                                                    View Event
+                                                </button>
+                                                <button
+                                                    onClick={() => setActiveModal(null)}
+                                                    className="w-full py-4 bg-white/10 hover:bg-white/20 border border-white/10 text-white font-black uppercase text-xs tracking-widest rounded-xl transition-all active:scale-95"
+                                                >
+                                                    Close
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </motion.div>
@@ -1042,6 +1187,32 @@ export default function ProfilePage() {
                 body {
                     scrollbar-width: thin;
                     scrollbar-color: rgba(16, 185, 129, 0.2) transparent;
+                }
+                
+                /* Hide bottom navbar when modal is open */
+                body.modal-open .innovative-navbar {
+                    opacity: 0;
+                    pointer-events: none;
+                    transform: translateY(100px);
+                }
+                
+                /* Custom scrollbar for modal */
+                .custom-scrollbar::-webkit-scrollbar {
+                    width: 6px;
+                }
+                
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: rgba(255, 255, 255, 0.05);
+                    border-radius: 10px;
+                }
+                
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: rgba(16, 185, 129, 0.3);
+                    border-radius: 10px;
+                }
+                
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: rgba(16, 185, 129, 0.5);
                 }
             `}</style>
         </div >

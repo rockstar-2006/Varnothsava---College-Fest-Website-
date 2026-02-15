@@ -118,7 +118,7 @@ export default function BusinessCarnivalPage() {
                                 theme={businessTheme}
                                 complexClip={complexClip}
                                 isLoggedIn={isLoggedIn}
-                                isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)}
+                                isRegistered={userData?.registeredEvents?.some(re => re.eventId === event.id)}
                                 onRegister={() => router.push(isLoggedIn ? '/notify' : '/login')}
                                 priority={true}
                             />

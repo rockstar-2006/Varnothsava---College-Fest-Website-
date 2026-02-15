@@ -1,4 +1,4 @@
-import { usersCollection, verifyAuthToken } from "@/lib/firebaseAdmin";
+import { registrationsCollection, usersCollection, verifyAuthToken } from "@/lib/firebaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 import { checkApiRateLimit, getClientIdentifier } from "@/lib/ratelimit";
 
@@ -44,7 +44,18 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ message: "User not found." }, { status: 404 });
         }
 
-        return NextResponse.json({ user: userDoc.data() }, {
+        let userData = userDoc.data();
+
+        const registrations = await registrationsCollection.where('members', 'array-contains', verified.uid).get();
+        const registeredEvents = registrations.docs.map(doc => ({id: doc.id, data: doc.data()})).map(reg => ({ id: reg.id, eventId: reg.data.eventId, teamName: reg.data.teamName }));
+        userData = {
+            ...userData,
+            hasPaid: userData?.hasPaid === true,
+            hasRoboSoccer: userData?.hasRoboSoccer === true,
+            registeredEvents: registeredEvents
+        };
+
+        return NextResponse.json({ user: userData }, {
             status: 200,
             headers: {
                 'X-RateLimit-Remaining': rateLimitResult.remaining.toString()

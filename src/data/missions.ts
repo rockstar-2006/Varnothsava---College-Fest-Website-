@@ -17,8 +17,8 @@ export interface Event {
     tags?: string[]
     videoUrl?: string
     brochureUrl?: string
-    minTeamSize?: number
-    maxTeamSize?: number
+    minTeamSize: number
+    maxTeamSize: number
     rounds?: {
         round1?: string[]
         round2?: string[]

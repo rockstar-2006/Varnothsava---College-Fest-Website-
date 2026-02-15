@@ -82,5 +82,6 @@ export const adminAuth = {
 };
 
 export const usersCollection = adminDb.collection('users');
+export const registrationsCollection = adminDb.collection('registrations');
 export const db = adminDb;
 export const fieldValue = FieldValue;

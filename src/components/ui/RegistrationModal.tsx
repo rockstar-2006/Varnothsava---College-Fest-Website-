@@ -125,16 +125,9 @@ export function RegistrationModal({ isOpen, onClose, event, userData, onConfirm 
             return
         }
 
-        console.log('Submitting registration with data:', {
-            teamName: isTeamEvent ? teamName : 'Solo',
-            members: [userData.profileCode, ...memberIds]
-        })
-
-        return;
-
         try {
             await onConfirm({
-                teamName: isTeamEvent ? teamName : 'Solo',
+                teamName: isTeamEvent ? teamName : userData.name,
                 members: [userData.profileCode, ...memberIds]
             })
             onClose()
