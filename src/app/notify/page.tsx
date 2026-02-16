@@ -81,7 +81,7 @@ function RegisterContent() {
     const [checkingStatus, setCheckingStatus] = useState(true)
     const [includeRoboSoccer, setIncludeRoboSoccer] = useState(false)
     // test
-    const [amount, setAmount] = useState(300);
+    const [amount, setAmount] = useState(0);
 
     // Handle query params
     useEffect(() => {
