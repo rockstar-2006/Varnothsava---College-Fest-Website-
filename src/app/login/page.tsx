@@ -192,7 +192,11 @@ function LoginContent() {
         } else {
             try {
                 await login(email, password)
-                router.push('/profile')
+                if(isLoggedIn) {
+                    router.push('/profile')
+                } else {
+                    setIsLoading(false)
+                }
             } catch (error: any) {
                 console.error("Login failed:", error)
                 setIsLoading(false)
@@ -210,7 +214,11 @@ function LoginContent() {
                 setEmail(user.email || '')
                 setName(user.displayName || '')
             } else {
-                router.push('/profile')
+                if(isLoggedIn) {
+                    router.push('/profile')
+                } else {
+                    setIsLoading(false)
+                }
             }
         } catch (error: any) {
             console.error("Google login failed:", error)
@@ -248,7 +256,11 @@ function LoginContent() {
                 collegeName: finalCollege,
                 phone,
             })
-            router.push('/profile')
+            if(isLoggedIn && !needsOnboarding) {
+                router.push('/profile')
+            } else {
+                setIsLoading(false)
+            }
         } catch (error: any) {
             console.error("Registration failed:", error)
         } finally {
