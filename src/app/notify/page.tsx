@@ -26,7 +26,21 @@ function RegisterContent() {
 
     const allowedEmails:string[] = [
         "test-razorpay1@gmail.com",
-        "test-razorpay2@sode-edu.in"
+        "test-razorpay2@sode-edu.in",
+        "test-razor3@gmail.com",
+        "test-razor4@gmail.com",
+        "test-razor5@gmail.com",
+        "test-razor6@gmail.com",
+        "test-razor7@gmail.com",
+        "test-razor8@gmail.com",
+        "test-razor9@gmail.com",
+        "test-razor10@gmail.com",
+        "test-razor11@gmail.com",
+        "test-razor12@gmail.com",
+        "test-razor13@gmail.com",
+        "test-razor14@gmail.com",
+        "test-razor15@gmail.com",
+        "test-razor16@gmail.com",
     ];
 
     if(!userData?.email) {
