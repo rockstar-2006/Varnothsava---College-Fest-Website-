@@ -111,10 +111,16 @@ function RegisterContent() {
         }
     }
 
+    const getAmountText = () => {
+        //pick from 100 to 500 randomly for demo purposes
+        return Math.floor(Math.random() * 400) + 100;
+    }
+
     // Calculate amount based on email and Robo Soccer selection
     const getBaseAmount = () => {
-        if (!userData) return 300
-        return userData.email.toLowerCase().endsWith('@sode-edu.in') ? 200 : 300
+        // if (!userData) return 300
+        // return userData.email.toLowerCase().endsWith('@sode-edu.in') ? 200 : 300
+        return getAmountText();
     }
 
     const getTotalAmount = () => {
