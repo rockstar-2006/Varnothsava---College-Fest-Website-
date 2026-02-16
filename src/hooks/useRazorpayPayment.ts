@@ -93,7 +93,7 @@ export function useRazorpayPayment() {
     /**
      * Initiate payment flow (HDFC CollectNow Mandatory Hosted Checkout)
      */
-    const initiatePayment = useCallback(async (options?: { includeRoboSoccer?: boolean }) => {
+    const initiatePayment = useCallback(async (options?: { includeRoboSoccer?: boolean, amount?: number }) => {
         if (!userData) {
             setError('Please login to continue')
             return
@@ -117,7 +117,8 @@ export function useRazorpayPayment() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    includeRoboSoccer: options?.includeRoboSoccer || false
+                    includeRoboSoccer: options?.includeRoboSoccer || false,
+                    amount: options?.amount || undefined, // Pass amount if provided (for testing/demo purposes)
                 }),
             })
 
