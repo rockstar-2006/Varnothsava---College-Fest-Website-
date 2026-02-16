@@ -321,7 +321,7 @@ export default function ProfilePage() {
     }
 
     useEffect(() => {
-        if (mounted && needsOnboarding) {
+        if (mounted && (needsOnboarding || !isLoggedIn)) {
             router.push('/login')
         }
     }, [mounted, needsOnboarding, router])
