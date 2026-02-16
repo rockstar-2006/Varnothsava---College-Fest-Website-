@@ -163,7 +163,7 @@ function RegisterContent() {
         }
 
         // Initiate payment
-        await initiatePayment({ includeRoboSoccer })
+        await initiatePayment({ includeRoboSoccer, amount: total })
 
         // Recheck status after payment attempt
         setTimeout(() => {

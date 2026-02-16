@@ -37,9 +37,11 @@ export async function POST(request: NextRequest) {
 
         // 2. Extract options from request body
         let includeRoboSoccer = false
+        let finalAmount = 0
         try {
             const body = await request.json()
             includeRoboSoccer = !!body.includeRoboSoccer
+            finalAmount = body.amount ? parseInt(body.amount) : 0
         } catch (e) {
             // No body or invalid body, default to false
         }
@@ -67,17 +69,19 @@ export async function POST(request: NextRequest) {
         let amountInRupees = 0
 
         // If they already paid the base fee, only charge for Robo Soccer
-        if (hasPaid) {
-            if (includeRoboSoccer && !hasRoboSoccer) {
-                amountInRupees = 300 // Only the Robo Soccer fee
-            }
-        } else {
-            // New registration
-            amountInRupees = isSodeStudent ? 200 : 300
-            if (includeRoboSoccer) {
-                amountInRupees += 300
-            }
-        }
+        // if (hasPaid) {
+        //     if (includeRoboSoccer && !hasRoboSoccer) {
+        //         amountInRupees = 300 // Only the Robo Soccer fee
+        //     }
+        // } else {
+        //     // New registration
+        //     amountInRupees = isSodeStudent ? 200 : 300
+        //     if (includeRoboSoccer) {
+        //         amountInRupees += 300
+        //     }
+        // }
+
+        amountInRupees = finalAmount || (isSodeStudent ? 200 : 300) + (includeRoboSoccer ? 300 : 0)
 
         if (amountInRupees === 0) {
             return NextResponse.json(
