@@ -43,6 +43,16 @@ function RegisterContent() {
         "test-razor16@gmail.com",
         "test-razor17@sode-edu.in",
         "test-razor18@sode-edu.in",
+        "razor1@gmail.com",
+        "razor2@gmail.com",
+        "razor3@gmail.com",
+        "razor4@gmail.com",
+        "razor5@gmail.com",
+        "razor6@sode-edu.in",
+        "razor7@sode-edu.in",
+        "razor8@sode-edu.in",
+        "razor9@sode-edu.in",
+        "razor10@sode-edu.in",
     ];
 
     const [paymentStatus, setPaymentStatus] = useState<{
