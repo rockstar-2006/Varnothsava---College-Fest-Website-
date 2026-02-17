@@ -41,6 +41,18 @@ function RegisterContent() {
         "test-razor14@gmail.com",
         "test-razor15@gmail.com",
         "test-razor16@gmail.com",
+        "test-razor17@sode-edu.in",
+        "test-razor18@sode-edu.in",
+        "razor1@gmail.com",
+        "razor2@gmail.com",
+        "razor3@gmail.com",
+        "razor4@gmail.com",
+        "razor5@gmail.com",
+        "razor6@sode-edu.in",
+        "razor7@sode-edu.in",
+        "razor8@sode-edu.in",
+        "razor9@sode-edu.in",
+        "razor10@sode-edu.in",
     ];
 
     const [paymentStatus, setPaymentStatus] = useState<{
@@ -51,8 +63,6 @@ function RegisterContent() {
     const [showSuccessModal, setShowSuccessModal] = useState(false)
     const [checkingStatus, setCheckingStatus] = useState(true)
     const [includeRoboSoccer, setIncludeRoboSoccer] = useState(false)
-    // test
-    const [amount] = useState(() => Math.floor(Math.random() * 400) + 100);
 
     // Handle query params
     useEffect(() => {
@@ -86,7 +96,8 @@ function RegisterContent() {
 
     // Calculate amount based on email and Robo Soccer selection
     const getBaseAmount = () => {
-        return amount;
+        if (!userData) return 300
+        return userData.email.toLowerCase().endsWith('@sode-edu.in') ? 200 : 300
     }
 
     const getTotalAmount = () => {
@@ -123,7 +134,7 @@ function RegisterContent() {
         }
 
         // Initiate payment
-        await initiatePayment({ includeRoboSoccer, amount: total })
+        await initiatePayment({ includeRoboSoccer })
 
         // Recheck status after payment attempt
         setTimeout(() => {
