@@ -51,8 +51,6 @@ function RegisterContent() {
     const [showSuccessModal, setShowSuccessModal] = useState(false)
     const [checkingStatus, setCheckingStatus] = useState(true)
     const [includeRoboSoccer, setIncludeRoboSoccer] = useState(false)
-    // test
-    const [amount] = useState(() => Math.floor(Math.random() * 400) + 100);
 
     // Handle query params
     useEffect(() => {
@@ -86,7 +84,8 @@ function RegisterContent() {
 
     // Calculate amount based on email and Robo Soccer selection
     const getBaseAmount = () => {
-        return amount;
+        if (!userData) return 300
+        return userData.email.toLowerCase().endsWith('@sode-edu.in') ? 200 : 300
     }
 
     const getTotalAmount = () => {
@@ -123,7 +122,7 @@ function RegisterContent() {
         }
 
         // Initiate payment
-        await initiatePayment({ includeRoboSoccer, amount: total })
+        await initiatePayment({ includeRoboSoccer })
 
         // Recheck status after payment attempt
         setTimeout(() => {
