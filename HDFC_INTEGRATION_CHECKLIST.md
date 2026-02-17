@@ -351,15 +351,12 @@ Key Secret: YOUR_RAZORPAY_KEY_SECRET
 
 ### Test Card (HDFC Bank Debit Card)
 ```
-Card Number: 4111 1111 1111 1111
-Expiry: 03/2026
-CVV: 123
-Cardholder Name: Test
+check env
 ```
 
 ### Test UPI
 ```
-UPI ID: success@razorpay
+check env
 ```
 
 ---

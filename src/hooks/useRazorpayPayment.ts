@@ -117,7 +117,7 @@ export function useRazorpayPayment() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    includeRoboSoccer: options?.includeRoboSoccer || false
+                    includeRoboSoccer: options?.includeRoboSoccer || false,
                 }),
             })
 

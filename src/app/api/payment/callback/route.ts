@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
             console.error('❌ Missing verification parameters');
             const host = request.headers.get('host') || 'localhost:3000';
             const protocol = host.includes('localhost') ? 'http' : 'https';
-            return NextResponse.redirect(`${protocol}://${host}/notify?payment=failed&reason=missing_params`)
+            return NextResponse.redirect(`${protocol}://${host}/notify?payment=failed&reason=missing_params`, 303)
         }
 
         // 2. Verify Signature
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
             console.error('❌ Invalid signature detected');
             const host = request.headers.get('host') || 'localhost:3000';
             const protocol = host.includes('localhost') ? 'http' : 'https';
-            return NextResponse.redirect(`${protocol}://${host}/notify?payment=failed&reason=invalid_signature`)
+            return NextResponse.redirect(`${protocol}://${host}/notify?payment=failed&reason=invalid_signature`, 303)
         }
 
         // 3. Fetch Order to get metadata (user_id)
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
             console.error('❌ User ID missing in order notes');
             const host = request.headers.get('host') || 'localhost:3000';
             const protocol = host.includes('localhost') ? 'http' : 'https';
-            return NextResponse.redirect(`${protocol}://${host}/notify?payment=failed&reason=user_context_lost`)
+            return NextResponse.redirect(`${protocol}://${host}/notify?payment=failed&reason=user_context_lost`, 303)
         }
 
         // 4. Check for duplicate payment
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
             console.log('⚠️ Duplicate payment detected, skipping storage');
             const host = request.headers.get('host') || 'localhost:3000';
             const protocol = host.includes('localhost') ? 'http' : 'https';
-            return NextResponse.redirect(`${protocol}://${host}/events?payment=already_processed`)
+            return NextResponse.redirect(`${protocol}://${host}/events?payment=already_processed`, 303)
         }
 
         // 5. Fetch payment details for storage
@@ -111,12 +111,12 @@ export async function POST(request: NextRequest) {
         // 8. Redirect to success page
         const host = request.headers.get('host') || 'localhost:3000';
         const protocol = host.includes('localhost') ? 'http' : 'https';
-        return NextResponse.redirect(`${protocol}://${host}/events?payment=success`)
+        return NextResponse.redirect(`${protocol}://${host}/events?payment=success`, 303)
 
     } catch (error: any) {
         console.error('🛑 Callback Handler Error:', error)
         const host = request.headers.get('host') || 'localhost:3000';
         const protocol = host.includes('localhost') ? 'http' : 'https';
-        return NextResponse.redirect(`${protocol}://${host}/notify?payment=failed&reason=internal_error`)
+        return NextResponse.redirect(`${protocol}://${host}/notify?payment=failed&reason=internal_error`, 303)
     }
 }

@@ -4,9 +4,9 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValueEvent } from 'framer-motion'
 import { Search, Zap, ChevronDown, Trophy, X, CheckCircle2, Loader2, ShieldCheck, Mail, Grid, Filter } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useApp } from '@/context/AppContext'
-import { useLenis } from '@/components/ui/SmoothScroll'
+import { useLenis, useLenisControl } from '@/components/ui/SmoothScroll'
 import ProEventBackground from '@/components/ui/ProEventBackground'
 import DynamicEventBackground from '@/components/ui/DynamicEventBackground'
 import gsap from 'gsap'
@@ -24,12 +24,15 @@ interface EventGridProps {
 export function EventGrid({ missions }: EventGridProps) {
     const { userData, registerMission, isLoggedIn, isSiteLoaded, setPageTheme } = useApp()
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const { pause: pauseLenis, resume: resumeLenis } = useLenisControl()
     const [filter, setFilter] = useState<'All' | 'Technical' | 'Cultural' | 'Gaming' | 'Business'>('All')
     const [subFilter, setSubFilter] = useState<'All' | 'Hobby Club' | 'General' | 'Promotional'>('All')
     const [searchQuery, setSearchQuery] = useState('')
     const [activeThemeOverride, setActiveThemeOverride] = useState<'emerald' | 'amber' | 'cyan' | 'gaming' | null>(null)
     const [isRegModalOpen, setIsRegModalOpen] = useState(false)
     const [selectedEvent, setSelectedEvent] = useState<any>(null)
+    const [showPaymentSuccess, setShowPaymentSuccess] = useState(false)
 
     const gridRef = useRef<HTMLDivElement>(null)
     const techRef = useRef<HTMLDivElement>(null)
@@ -61,6 +64,35 @@ export function EventGrid({ missions }: EventGridProps) {
         window.addEventListener('scroll', handleScroll, { passive: true })
         return () => window.removeEventListener('scroll', handleScroll)
     }, [])
+
+    // Handle payment success query parameter
+    useEffect(() => {
+        const paymentStatus = searchParams?.get('payment')
+        if (paymentStatus === 'success') {
+            setShowPaymentSuccess(true)
+            // Remove the query parameter from URL
+            const newUrl = window.location.pathname
+            window.history.replaceState({}, '', newUrl)
+        }
+    }, [searchParams])
+
+    // Prevent scroll when modal is open
+    useEffect(() => {
+        if (showPaymentSuccess) {
+            document.documentElement.style.overflow = 'hidden'
+            document.body.style.overflow = 'hidden'
+            pauseLenis()
+        } else {
+            document.documentElement.style.overflow = ''
+            document.body.style.overflow = ''
+            resumeLenis()
+        }
+        return () => {
+            document.documentElement.style.overflow = ''
+            document.body.style.overflow = ''
+            resumeLenis()
+        }
+    }, [showPaymentSuccess, pauseLenis, resumeLenis])
 
     const filtered = useMemo(() => {
         const base = missions.filter(m => {
@@ -578,7 +610,7 @@ export function EventGrid({ missions }: EventGridProps) {
                                                     idx={idx}
                                                     theme={getEventTheme(event.type)}
                                                     complexClip={complexClip}
-                                                    isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)}
+                                                    isRegistered={userData?.registeredEvents?.some(re => re.eventId === event.id)}
                                                     isLoggedIn={isLoggedIn}
                                                     hasPaid={userData?.hasPaid}
                                                     onRegister={handleRegisterClick}
@@ -608,7 +640,7 @@ export function EventGrid({ missions }: EventGridProps) {
                                                     idx={idx}
                                                     theme={getEventTheme(event.type)}
                                                     complexClip={complexClip}
-                                                    isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)}
+                                                    isRegistered={userData?.registeredEvents?.some(re => re.eventId === event.id)}
                                                     isLoggedIn={isLoggedIn}
                                                     hasPaid={userData?.hasPaid}
                                                     onRegister={handleRegisterClick}
@@ -637,7 +669,7 @@ export function EventGrid({ missions }: EventGridProps) {
                                                     idx={idx}
                                                     theme={getEventTheme(event.type)}
                                                     complexClip={complexClip}
-                                                    isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)}
+                                                    isRegistered={userData?.registeredEvents?.some(re => re.eventId === event.id)}
                                                     isLoggedIn={isLoggedIn}
                                                     hasPaid={userData?.hasPaid}
                                                     onRegister={handleRegisterClick}
@@ -681,7 +713,7 @@ export function EventGrid({ missions }: EventGridProps) {
                                                     idx={idx}
                                                     theme={getEventTheme('Business')}
                                                     complexClip={complexClip}
-                                                    isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)}
+                                                    isRegistered={userData?.registeredEvents?.some(re => re.eventId === event.id)}
                                                     isLoggedIn={isLoggedIn}
                                                     hasPaid={userData?.hasPaid}
                                                     onRegister={handleRegisterClick}
@@ -802,7 +834,7 @@ export function EventGrid({ missions }: EventGridProps) {
                                                         idx={idx}
                                                         theme={getEventTheme(event.type)}
                                                         complexClip={complexClip}
-                                                        isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)}
+                                                        isRegistered={userData?.registeredEvents?.some(re => re.eventId === event.id)}
                                                         isLoggedIn={isLoggedIn}
                                                         hasPaid={userData?.hasPaid}
                                                         onRegister={handleRegisterClick}
@@ -827,7 +859,7 @@ export function EventGrid({ missions }: EventGridProps) {
                                                 idx={idx}
                                                 theme={getEventTheme(event.type)}
                                                 complexClip={complexClip}
-                                                isRegistered={userData?.registeredEvents?.some(re => re.id === event.id)}
+                                                isRegistered={userData?.registeredEvents?.some(re => re.eventId === event.id)}
                                                 isLoggedIn={isLoggedIn}
                                                 hasPaid={userData?.hasPaid}
                                                 onRegister={handleRegisterClick}
@@ -851,6 +883,72 @@ export function EventGrid({ missions }: EventGridProps) {
                         userData={userData}
                         onConfirm={handleConfirmRegistration}
                     />
+                )}
+
+                {/* Payment Success Modal */}
+                {showPaymentSuccess && createPortal(
+                    <AnimatePresence>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 h-[100dvh] bg-black/75 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
+                            onClick={() => setShowPaymentSuccess(false)}
+                        >
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                                className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-emerald-500/30 rounded-2xl p-8 md:p-12 max-w-md shadow-2xl"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className="flex flex-col items-center text-center">
+                                    <motion.div
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        transition={{ delay: 0.2, type: 'spring', damping: 20, stiffness: 300 }}
+                                        className="mb-4"
+                                    >
+                                        <CheckCircle2 className="w-16 h-16 text-emerald-500" strokeWidth={1.5} />
+                                    </motion.div>
+
+                                    <motion.h2
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.3 }}
+                                        className="text-2xl md:text-3xl font-black mb-2 text-emerald-400"
+                                    >
+                                        Payment Successful!
+                                    </motion.h2>
+
+                                    <motion.p
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.4 }}
+                                        className="text-slate-300 mb-6 text-sm md:text-base"
+                                    >
+                                        Your payment has been processed successfully. You can now register for events.
+                                    </motion.p>
+
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.5 }}
+                                        className="flex gap-4 w-full"
+                                    >
+                                        <button
+                                            onClick={() => setShowPaymentSuccess(false)}
+                                            className="flex-1 py-3 px-4 bg-emerald-500 hover:bg-emerald-400 text-black font-black rounded-lg transition-all hover:shadow-lg hover:shadow-emerald-500/50"
+                                        >
+                                            Explore Events
+                                        </button>
+                                    </motion.div>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    </AnimatePresence>,
+                    document.body
                 )}
             </section>
         </>
