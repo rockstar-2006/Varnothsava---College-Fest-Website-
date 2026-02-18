@@ -195,7 +195,7 @@ const sections = [
         icon: FileText,
         content: [
             "These Terms shall be governed by and construed in accordance with the laws of India.",
-            "Any disputes shall fall under the jurisdiction of courts located in Karkala, Karnataka."
+            "Any disputes shall fall under the jurisdiction of courts located in Udupi, Karnataka."
         ]
     },
     {

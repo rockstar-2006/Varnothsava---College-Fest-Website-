@@ -118,7 +118,7 @@ function QRPaymentContent() {
             setSuccess(true)
             setTimeout(() => {
                 router.push('/profile')
-            }, 2000)
+            }, 5000)
         } catch (err: any) {
             setError(err.message || 'Verification failed. Please try again.')
         } finally {
@@ -403,7 +403,7 @@ function QRPaymentContent() {
                             </h2>
 
                             <p className="text-gray-400 text-sm text-center">
-                                Your payment is being verified. Once confirmed, you'll be able to register for events!
+                                Your payment has been submitted successfully. You can now register for events. Redirecting to profile in a moment...
                             </p>
                         </motion.div>
                     </motion.div>

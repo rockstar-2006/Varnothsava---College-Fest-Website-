@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyAuthToken, db } from '@/lib/firebaseAdmin'
 import { PaymentRecord } from '@/types/payment'
+import { storePaymentRecord } from '@/lib/paymentService'
 
 export async function POST(request: NextRequest) {
     try {
@@ -132,25 +133,15 @@ export async function POST(request: NextRequest) {
             },
         }
 
-        // 7. Store payment record (DO NOT update user.hasPaid - pending admin verification)
-        const now = new Date().toISOString()
-        const finalPaymentRecord: PaymentRecord = {
-            ...paymentRecord,
-            user_id: userId,
-            created_at: now,
-            updated_at: now,
-        }
+        await storePaymentRecord(userId, paymentRecord);
 
-        const paymentRef = db.collection('payments').doc(qrPaymentId)
-        await paymentRef.set(finalPaymentRecord, { merge: true })
-
-        console.log(`✅ QR Payment Record Created: ${qrPaymentId} (Pending Verification)`);
+        console.log(`✅ QR Payment Record Created: ${qrPaymentId}`);
 
         // 8. Return success response
         return NextResponse.json(
             {
                 success: true,
-                message: 'Payment submitted successfully. Your registration will be activated after verification.',
+                message: 'QR Payment submitted successfully. You can register for events now.',
                 payment: {
                     id: qrPaymentId,
                     utr: sanitizedUTR,
