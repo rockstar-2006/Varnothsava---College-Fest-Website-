@@ -19,7 +19,7 @@ const orbitron = Orbitron({
 })
 
 // Single QR Code for all payments
-const QR_CODE_IMAGE = '/img/qr-payment.png'
+const QR_CODE_IMAGE = '/scanner-pay.jpeg'
 
 function QRPaymentContent() {
     const { userData, isLoggedIn, isInitializing } = useApp()
@@ -29,6 +29,25 @@ function QRPaymentContent() {
     const [isVerifying, setIsVerifying] = useState(false)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState(false)
+    const [includeRoboSoccer, setIncludeRoboSoccer] = useState(false)
+
+    // Calculate payment amount
+    const calculateAmount = () => {
+        if (!userData?.email) return 0
+        
+        // Base fee: 200 for SODE emails, 300 for others
+        const isSodeEmail = userData.email.toLowerCase().includes('@sode')
+        let amount = isSodeEmail ? 200 : 300
+        
+        // Add 300 if user wants RoboSoccer
+        if (includeRoboSoccer) {
+            amount += 300
+        }
+        
+        return amount
+    }
+
+    const totalAmount = calculateAmount()
 
     if (!userData?.email) {
         return (
@@ -84,6 +103,8 @@ function QRPaymentContent() {
                 },
                 body: JSON.stringify({
                     utrNumber: utrNumber.toUpperCase(),
+                    includeRoboSoccer: includeRoboSoccer,
+                    amount: totalAmount
                 })
             })
 
@@ -157,6 +178,84 @@ function QRPaymentContent() {
 
                     {/* Content */}
                     <div className="p-5 sm:p-10 md:p-12 pt-0 space-y-8">
+                        {/* RoboSoccer Toggle */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.4 }}
+                            className="bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-emerald-500/30 transition-colors cursor-pointer"
+                            onClick={() => setIncludeRoboSoccer(!includeRoboSoccer)}
+                        >
+                            <div className="flex items-start gap-4">
+                                {/* Checkbox */}
+                                <div className={`relative w-6 h-6 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                                    includeRoboSoccer 
+                                        ? 'bg-emerald-500 border-emerald-500' 
+                                        : 'bg-transparent border-white/30'
+                                }`}>
+                                    {includeRoboSoccer && (
+                                        <CheckCircle className="w-4 h-4 text-black" />
+                                    )}
+                                </div>
+                                
+                                {/* Text */}
+                                <div className="flex-1">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <h3 className="text-white font-bold text-base">Enable RoboSoccer Access</h3>
+                                        <span className="text-emerald-400 font-bold text-lg whitespace-nowrap">+₹300</span>
+                                    </div>
+                                    <p className="text-gray-400 text-xs">
+                                        Pay extra ₹300 to unlock eligibility for RoboSoccer event registration.
+                                    </p>
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        {/* Payment Amount Display */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.45 }}
+                            className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/30 rounded-2xl p-6 space-y-4"
+                        >
+                            <p className="text-xs font-black text-emerald-500 uppercase tracking-[0.2em]">
+                                Payment Amount
+                            </p>
+                            
+                            <div className="space-y-3">
+                                {/* Base Fee */}
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-400">
+                                        Base Fee {userData?.email?.toLowerCase().includes('@sode') ? '(SODE)' : ''}
+                                    </span>
+                                    <span className="text-white font-bold">
+                                        ₹{userData?.email?.toLowerCase().includes('@sode') ? '200' : '300'}
+                                    </span>
+                                </div>
+                                
+                                {/* RoboSoccer Fee */}
+                                {includeRoboSoccer && (
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-gray-400">RoboSoccer Access</span>
+                                        <span className="text-white font-bold">₹300</span>
+                                    </div>
+                                )}
+                                
+                                {/* Divider */}
+                                <div className="border-t border-emerald-500/20 my-3"></div>
+                                
+                                {/* Total */}
+                                <div className="flex justify-between items-center">
+                                    <span className="text-emerald-400 font-bold text-lg uppercase tracking-wide">
+                                        Total Amount
+                                    </span>
+                                    <span className={`${orbitron.className} text-3xl font-black text-white`}>
+                                        ₹{totalAmount}
+                                    </span>
+                                </div>
+                            </div>
+                        </motion.div>
+
                         {/* QR Code Display */}
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
@@ -167,15 +266,15 @@ function QRPaymentContent() {
                             <p className="text-xs font-black text-emerald-500 uppercase tracking-[0.2em]">
                                 Scan This QR
                             </p>
-                            <div className="flex justify-center bg-white/5 border border-emerald-500/20 rounded-2xl p-6">
-                                <div className="bg-white p-4 rounded-xl">
+                            <div className="flex justify-center bg-white/5 border border-emerald-500/20 rounded-2xl">
+                                <div className="flex justify-center items-center p-0 rounded-xl overflow-hidden w-full">
                                     <Image
                                         src={QR_CODE_IMAGE}
                                         alt="UPI Payment QR Code"
-                                        width={200}
-                                        height={200}
+                                        width={400}
+                                        height={400}
                                         unoptimized
-                                        className="w-48 h-48 object-contain"
+                                        className="w-full sm:w-72 md:w-80 object-contain"
                                     />
                                 </div>
                             </div>
@@ -185,7 +284,7 @@ function QRPaymentContent() {
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.5 }}
+                            transition={{ delay: 0.6 }}
                             className="space-y-3"
                         >
                             <label className="text-xs font-black text-emerald-500 uppercase tracking-[0.2em]">
@@ -283,11 +382,11 @@ function QRPaymentContent() {
                             </motion.div>
 
                             <h2 className={`${orbitron.className} text-2xl sm:text-3xl font-black text-white text-center mb-4`}>
-                                UTR Submitted!
+                                Payment Submitted!
                             </h2>
 
                             <p className="text-gray-400 text-sm text-center">
-                                Your payment details have been submitted. We'll verify and activate your registration shortly.
+                                Your payment is being verified. Once confirmed, you'll be able to register for events!
                             </p>
                         </motion.div>
                     </motion.div>

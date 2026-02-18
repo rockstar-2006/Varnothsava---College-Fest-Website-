@@ -36,11 +36,18 @@ export async function POST(request: NextRequest) {
 
         // 2. Parse and validate request body
         const body = await request.json()
-        const { utrNumber } = body
+        const { utrNumber, amount, includeRoboSoccer } = body
 
         if (!utrNumber || typeof utrNumber !== 'string') {
             return NextResponse.json(
                 { error: 'Validation Error', message: 'UTR number is required' },
+                { status: 400 }
+            )
+        }
+
+        if (!amount || typeof amount !== 'number' || amount <= 0) {
+            return NextResponse.json(
+                { error: 'Validation Error', message: 'Valid payment amount is required' },
                 { status: 400 }
             )
         }
@@ -54,7 +61,7 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        console.log(`📥 QR Payment Verification: User=${userId}, UTR=${sanitizedUTR}`);
+        console.log(`📥 QR Payment Verification: User=${userId}, UTR=${sanitizedUTR}, Amount=₹${amount}, RoboSoccer=${includeRoboSoccer || false}`);
 
         // 3. Check for duplicate UTR
         const duplicateCheck = await db
@@ -105,7 +112,7 @@ export async function POST(request: NextRequest) {
             razorpay_payment_id: qrPaymentId,
             razorpay_order_id: `qr_order_${timestamp}`,
             razorpay_signature: 'manual_qr_payment',
-            amount: 0, // Amount not tracked for single QR payment
+            amount: amount * 100, // Convert to paise (Razorpay format)
             currency: 'INR',
             status: 'captured',
             user_email: userEmail,
@@ -119,7 +126,9 @@ export async function POST(request: NextRequest) {
             notes: {
                 payment_type: 'qr_code',
                 verification_status: 'pending_admin_verification',
-                submitted_by_user: 'yes'
+                submitted_by_user: 'yes',
+                include_robosoccer: includeRoboSoccer ? 'yes' : 'no',
+                amount: amount.toString()
             },
         }
 
@@ -145,6 +154,8 @@ export async function POST(request: NextRequest) {
                 payment: {
                     id: qrPaymentId,
                     utr: sanitizedUTR,
+                    amount: amount,
+                    includeRoboSoccer: includeRoboSoccer || false,
                     status: 'captured',
                     submittedAt: new Date().toISOString()
                 }

@@ -26,8 +26,8 @@ const sections = [
         title: "Section 1 – Participation Eligibility",
         icon: Shield,
         content: [
-            "Participation in Varnothsava is strictly limited to students from engineering colleges.",
-            "Registrations found to be fraudulent, misleading, or from non-engineering institutions will be cancelled.",
+            "Participation in Varnothsava is strictly limited to students from Engineering and Management colleges.",
+            "Registrations found to be fraudulent, misleading, or from non-engineering or non-management institutions will be cancelled.",
             "In such cases, the organizers reserve the right to deny refunds.",
             "Participants must comply with all event rules and college regulations."
         ]
@@ -306,8 +306,8 @@ export default function TermsPage() {
                         <div className="space-y-3 pl-4">
                             <div className="flex items-center gap-3">
                                 <Mail className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                                <a href="mailto:raghugs.cs@sode-edu.in" className="text-emerald-400 hover:text-emerald-300 transition-colors">
-                                    raghugs.cs@sode-edu.in
+                                <a href="mailto:webmaster@sode-edu.in" className="text-emerald-400 hover:text-emerald-300 transition-colors">
+                                    webmaster@sode-edu.in
                                 </a>
                             </div>
                             <div className="flex items-center gap-3">

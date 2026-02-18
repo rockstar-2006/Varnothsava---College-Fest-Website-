@@ -71,11 +71,11 @@ const sections = [
         title: "5. Fraudulent or Ineligible Registrations",
         icon: ShieldCheck,
         content: [
-            "Participation in Varnothsava is strictly limited to engineering college students.",
+            "Participation in Varnothsava is strictly limited to engineering and management college students.",
             "",
             "If:",
             "• A participant provides false information",
-            "• A registration is made from a non-engineering institution",
+            "• A registration is made from a non-engineering or non-management institution",
             "• Any fraudulent activity is detected",
             "",
             "The organizing committee reserves the right to:",
@@ -229,8 +229,8 @@ export default function RefundPolicyPage() {
                         <div className="space-y-3 pl-4">
                             <div className="flex items-center gap-3">
                                 <Mail className="w-5 h-5 text-emerald-400 shrink-0" />
-                                <a href="mailto:raghugs.cs@sode-edu.in" className="text-emerald-400 hover:text-emerald-300 transition-colors">
-                                    raghugs.cs@sode-edu.in
+                                <a href="mailto:webmaster@sode-edu.in" className="text-emerald-400 hover:text-emerald-300 transition-colors">
+                                    webmaster@sode-edu.in
                                 </a>
                             </div>
                             <div className="flex items-center gap-3">

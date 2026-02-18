@@ -266,8 +266,8 @@ export default function PrivacyPage() {
                         <div className="space-y-3 pl-4">
                             <div className="flex items-center gap-3">
                                 <Mail className="w-5 h-5 text-emerald-400 shrink-0" />
-                                <a href="mailto:raghugs.cs@sode-edu.in" className="text-emerald-400 hover:text-emerald-300 transition-colors">
-                                    raghugs.cs@sode-edu.in
+                                <a href="mailto:webmaster@sode-edu.in" className="text-emerald-400 hover:text-emerald-300 transition-colors">
+                                    webmaster@sode-edu.in
                                 </a>
                             </div>
                             <div className="flex items-center gap-3">
