@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
                 payment_type: 'qr_code',
                 verification_status: 'pending_admin_verification',
                 submitted_by_user: 'yes',
-                include_robosoccer: includeRoboSoccer ? 'yes' : 'no',
+                include_robo_soccer: includeRoboSoccer ? 'yes' : 'no',
                 amount_rupees: amount.toString()
             },
         }
