@@ -1908,9 +1908,12 @@ const Footer = () => (
             <div>
                 <h4 className="text-white font-bold uppercase tracking-widest mb-8 text-xs font-[family-name:var(--font-inter)]">Legal</h4>
                 <ul className="space-y-4 text-sm text-gray-400 font-medium">
-                    {['Privacy Policy', 'Terms', 'Code of Conduct'].map((link) => (
+                    {/* {['Privacy Policy', 'Terms', 'Refund Policy'].map((link) => (
                         <li key={link}><a href="#" className="hover:text-white transition-colors">{link}</a></li>
-                    ))}
+                    ))} */}
+                    <li><a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a></li>
+                    <li><a href="/terms" className="hover:text-white transition-colors">Terms of Service</a></li>
+                    <li><a href="/refund-policy" className="hover:text-white transition-colors">Refund Policy</a></li>
                 </ul>
             </div>
 

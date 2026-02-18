@@ -53,6 +53,9 @@ function RegisterContent() {
         "razor8@sode-edu.in",
         "razor9@sode-edu.in",
         "razor10@sode-edu.in",
+
+        //test
+        "razor11@sode-edu.in",
     ];
 
     const [paymentStatus, setPaymentStatus] = useState<{
