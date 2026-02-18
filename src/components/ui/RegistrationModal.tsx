@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Users, ShieldCheck, Zap, AlertCircle, CheckCircle2, Loader2, Plus, Trash2, Hash } from 'lucide-react'
+import { X, Users, ShieldCheck, Zap, AlertCircle, CheckCircle2, Loader2, Plus, Trash2, Hash, MessageCircle, Calendar } from 'lucide-react'
+import * as QRCode from 'qrcode'
 import Image from 'next/image'
 import { Event } from '@/data/missions'
 import { UserData } from '@/context/AppContext'
@@ -14,7 +15,7 @@ interface RegistrationModalProps {
     onClose: () => void
     event: Event | null
     userData: UserData
-    onConfirm: (data: { teamName: string, members: string[] }) => Promise<void>
+    onConfirm: (data: { teamName: string, members: string[] }) => Promise<{ success: boolean, registrationId?: string } | void>
 }
 
 export function RegistrationModal({ isOpen, onClose, event, userData, onConfirm }: RegistrationModalProps) {
@@ -25,6 +26,9 @@ export function RegistrationModal({ isOpen, onClose, event, userData, onConfirm 
     const [error, setError] = useState<string | null>(null)
     const [memberDetails, setMemberDetails] = useState<{ [key: string]: any }>({})
     const [isAddingMember, setIsAddingMember] = useState(false)
+    const [isSuccess, setIsSuccess] = useState(false)
+    const [regId, setRegId] = useState<string | null>(null)
+    const [qrDataUrl, setQrDataUrl] = useState<string>('')
     const lenisControl = useLenisControl()
     const modalRef = React.useRef<HTMLDivElement>(null)
 
@@ -33,7 +37,7 @@ export function RegistrationModal({ isOpen, onClose, event, userData, onConfirm 
             lenisControl.resume()
             return
         }
-        
+
         lenisControl.pause()
         const prevBodyOverflow = document.body.style.overflow
         const prevHtmlOverflow = document.documentElement.style.overflow
@@ -45,7 +49,7 @@ export function RegistrationModal({ isOpen, onClose, event, userData, onConfirm 
         const handleWheel = (e: WheelEvent) => {
             e.stopPropagation()
         }
-        
+
         const handleTouchMove = (e: TouchEvent) => {
             e.stopPropagation()
         }
@@ -126,11 +130,30 @@ export function RegistrationModal({ isOpen, onClose, event, userData, onConfirm 
         }
 
         try {
-            await onConfirm({
+            const result = await onConfirm({
                 teamName: isTeamEvent ? teamName : userData.name,
                 members: [userData.profileCode, ...memberIds]
             })
-            onClose()
+
+            if (result && result.success && result.registrationId) {
+                setRegId(result.registrationId)
+                setIsSuccess(true)
+
+                // Generate QR Code
+                const whatsappLink = `https://chat.whatsapp.com/GExfV7X6Uv6H6b2vR8QWpB` // Example placeholder link
+                QRCode.toDataURL(whatsappLink, {
+                    width: 300,
+                    margin: 2,
+                    color: {
+                        dark: '#10b981',
+                        light: '#ffffff'
+                    }
+                }).then(setQrDataUrl)
+            } else if (!result || result.success === false) {
+                // If it didn't return success object, we assume handled by catch or grid
+            } else {
+                onClose()
+            }
         } catch (err: any) {
             setError(err.message || 'Registration failed. Please try again.')
         } finally {
@@ -162,29 +185,30 @@ export function RegistrationModal({ isOpen, onClose, event, userData, onConfirm 
                         className="relative w-[95vw] md:w-full max-w-lg bg-[#050905] border border-emerald-500/20 rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-[0_0_50px_rgba(16,185,129,0.1)] z-10 mx-auto max-h-[90vh] overflow-y-scroll pointer-events-auto"
                         style={{ overscrollBehavior: 'contain' }}
                     >
-                            {/* Header Image/Banner */}
-                            <div className="h-32 relative overflow-hidden">
-                                <Image
-                                    src={event.visual}
-                                    alt={event.title}
-                                    fill
-                                    className="w-full h-full object-cover opacity-40"
-                                    loading="lazy"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-[#050905] to-transparent" />
-                                <div className="absolute top-4 right-4">
-                                    <button onClick={onClose} className="p-2 bg-black/50 hover:bg-black/80 text-white/50 hover:text-white rounded-full transition-all">
-                                        <X size={20} />
-                                    </button>
-                                </div>
-                                <div className="absolute bottom-4 left-6 md:left-8 pr-4">
-                                    <div className="flex items-center gap-2 text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">
-                                        <Zap size={12} /> Mission_Initialization
-                                    </div>
-                                    <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight truncate max-w-full">{event.title}</h3>
-                                </div>
+                        {/* Header Image/Banner */}
+                        <div className="h-32 relative overflow-hidden">
+                            <Image
+                                src={event.visual}
+                                alt={event.title}
+                                fill
+                                className="w-full h-full object-cover opacity-40"
+                                loading="lazy"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#050905] to-transparent" />
+                            <div className="absolute top-4 right-4">
+                                <button onClick={onClose} className="p-2 bg-black/50 hover:bg-black/80 text-white/50 hover:text-white rounded-full transition-all">
+                                    <X size={20} />
+                                </button>
                             </div>
+                            <div className="absolute bottom-4 left-6 md:left-8 pr-4">
+                                <div className="flex items-center gap-2 text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">
+                                    <Zap size={12} /> Mission_Initialization
+                                </div>
+                                <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight truncate max-w-full">{event.title}</h3>
+                            </div>
+                        </div>
 
+                        {!isSuccess ? (
                             <form onSubmit={handleSubmit} className="p-4 md:p-8 space-y-4 md:space-y-6">
 
                                 {/* Mission Config */}
@@ -329,6 +353,53 @@ export function RegistrationModal({ isOpen, onClose, event, userData, onConfirm 
                                     </button>
                                 </div>
                             </form>
+                        ) : (
+                            <div className="flex flex-col items-center p-8 text-center">
+                                <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mb-6">
+                                    <CheckCircle2 size={40} className="text-emerald-500 animate-bounce" />
+                                </div>
+
+                                <h2 className="text-2xl font-black uppercase tracking-tight mb-2 text-white">Registration Successful</h2>
+                                <p className="text-emerald-500/60 text-sm font-bold uppercase mb-8">Mission_ID: {regId}</p>
+
+                                {/* QR Code Section */}
+                                <div className="bg-white p-4 rounded-2xl mb-6 shadow-[0_0_30px_rgba(16,185,129,0.2)]">
+                                    {qrDataUrl ? (
+                                        <img src={qrDataUrl} alt="WhatsApp QR Code" className="w-48 h-48" />
+                                    ) : (
+                                        <div className="w-48 h-48 flex items-center justify-center bg-black/5">
+                                            <Loader2 size={24} className="text-emerald-500 animate-spin" />
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2 mb-8">
+                                    <p className="text-white font-bold uppercase tracking-wide">Scan to join WhatsApp Community</p>
+                                    <p className="text-white/40 text-[10px] px-4 font-bold uppercase">Instant access to rules, timings, and peer communications.</p>
+                                </div>
+
+                                <div className="flex flex-col w-full gap-3">
+                                    <a
+                                        href={`https://chat.whatsapp.com/GExfV7X6Uv6H6b2vR8QWpB`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-center gap-2 py-4 bg-[#25D366] text-white rounded-2xl font-black uppercase text-xs transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                                    >
+                                        <MessageCircle size={18} /> Join via Link
+                                    </a>
+                                    <button
+                                        onClick={onClose}
+                                        className="flex items-center justify-center gap-2 py-4 border border-white/10 text-white/60 rounded-2xl font-black uppercase text-xs hover:bg-white/5 transition-all"
+                                    >
+                                        Return to Base
+                                    </button>
+                                </div>
+
+                                <p className="mt-8 text-[9px] text-white/20 font-black uppercase tracking-[0.2em]">
+                                    Logistical data sent to registered email address.
+                                </p>
+                            </div>
+                        )}
                     </motion.div>
                 </div>
             </div>
