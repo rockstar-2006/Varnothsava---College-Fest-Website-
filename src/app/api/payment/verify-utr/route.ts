@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
                 verification_status: 'pending_admin_verification',
                 submitted_by_user: 'yes',
                 include_robosoccer: includeRoboSoccer ? 'yes' : 'no',
-                amount: amount.toString()
+                amount_rupees: amount.toString()
             },
         }
 

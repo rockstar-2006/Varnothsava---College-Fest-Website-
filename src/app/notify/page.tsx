@@ -428,6 +428,23 @@ function RegisterContent() {
                                 Back to Home
                             </Link>
                         </div>
+
+                        {/* Footer Links */}
+                        <div className="pt-6 mt-6 border-t border-white/5">
+                            <div className="flex flex-wrap justify-center gap-4 text-xs text-gray-500">
+                                <Link href="/terms" className="hover:text-emerald-400 transition-colors">
+                                    Terms of Service
+                                </Link>
+                                <span className="text-gray-700">•</span>
+                                <Link href="/privacy" className="hover:text-emerald-400 transition-colors">
+                                    Privacy Policy
+                                </Link>
+                                <span className="text-gray-700">•</span>
+                                <Link href="/refund-policy" className="hover:text-emerald-400 transition-colors">
+                                    Refund Policy
+                                </Link>
+                            </div>
+                        </div>
                     </div>
                 </motion.div>
             </div>
