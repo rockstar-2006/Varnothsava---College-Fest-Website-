@@ -757,7 +757,7 @@ export const missions: Event[] = [
     },
 
     {
-        id: 'Flower arrangement & vegetable carving',
+        id: 'Flower-arrangement-vegetable-carving',
         title: 'Natures Palette',
         type: 'Cultural',
         category: 'General',
@@ -908,14 +908,18 @@ export const missions: Event[] = [
         type: 'Cultural',
         category: 'Hobby Club',
         description: 'A drawing competition where imagination meets artistic technique.Participants express ideas visually using pencils, colors, and creativity.',
-        rules: [
-            "Each participant will get 90 Minutes",
-            "Drawing sheets of size A3 will be provided",
-            "Printed pictures, stamps, or stickers are not permitted",
-            "Use of mobile phones or any electronic devices during the drawing activity is strictly prohibited",
-            "Participants must work individually without any external assistance",
-            "Discussion or sharing of ideas and concepts during the activity is not allowed"
-        ]
+      rules: [
+    "Each participant will get a total of 90 minutes(15 minutes for idea planning + 75 minutes for drawing).",
+    "The competition involves representing a song in the form of art. The song will be played only once (approximately 1 minute), and participants must listen carefully to understand the theme.",
+    "Mobile phones are allowed only during the 15-minute planning session.",
+    "Mobile phones and electronic devices are strictly prohibited during the 75-minute drawing session.",
+    "Drawing sheets of size A3 will be provided after the 15-minute planning period.",
+    "Colors, pencil shades, and other drawing materials are allowed.",
+    "Printed pictures, stamps, or stickers are not permitted.",
+    "Participants must work individually without any external assistance.",
+    "Discussion or sharing of ideas and concepts during the activity is not allowed."
+]
+
 
 
         ,
