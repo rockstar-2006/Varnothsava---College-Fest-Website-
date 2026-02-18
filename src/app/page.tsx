@@ -1059,7 +1059,8 @@ const HeroSection = ({ shouldRender3D }: { shouldRender3D: boolean }) => {
                             if (!isLoggedIn) {
                                 router.push('/login');
                             } else {
-                                router.push('/notify');
+                                // temp
+                                router.push('/profile');
                             }
                         }}>Register Now</ButtonPrimary>
                         <ButtonPrimary onClick={() => router.push('/events')}>Explore Events</ButtonPrimary>

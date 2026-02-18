@@ -325,7 +325,9 @@ export const MissionCard = memo(({
                                 if (!isLoggedIn) {
                                     router.push('/login');
                                 } else if (!hasPaid) {
-                                    router.push('/notify');
+                                    // router.push('/notify');
+                                    // temp
+                                    router.push('/profile');
                                 } else {
                                     onRegister(event);
                                 }
