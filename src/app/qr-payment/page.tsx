@@ -26,6 +26,7 @@ function QRPaymentContent() {
     const router = useRouter()
 
     const [utrNumber, setUtrNumber] = useState('')
+    const [confirmUtrNumber, setConfirmUtrNumber] = useState('')
     const [isVerifying, setIsVerifying] = useState(false)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState(false)
@@ -90,11 +91,21 @@ function QRPaymentContent() {
             return
         }
 
+        if (!confirmUtrNumber.trim()) {
+            setError('Please confirm UTR number')
+            return
+        }
+
+        if (utrNumber.toUpperCase() !== confirmUtrNumber.toUpperCase()) {
+            setError('UTR numbers do not match')
+            return
+        }
+
         setIsVerifying(true)
 
         try {
             const token = await auth.currentUser?.getIdToken()
-            
+
             const response = await fetch('/api/payment/verify-utr', {
                 method: 'POST',
                 headers: { 
@@ -306,6 +317,32 @@ function QRPaymentContent() {
                             </p>
                         </motion.div>
 
+                        {/* Confirm UTR Number Input */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.65 }}
+                            className="space-y-3"
+                        >
+                            <label className="text-xs font-black text-emerald-500 uppercase tracking-[0.2em]">
+                                Confirm UTR Number
+                            </label>
+                            <input
+                                type="text"
+                                value={confirmUtrNumber}
+                                onChange={(e) => {
+                                    setConfirmUtrNumber(e.target.value.toUpperCase())
+                                    setError('')
+                                }}
+                                placeholder="Re-enter UTR number"
+                                maxLength={30}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-white placeholder-gray-500 focus:border-emerald-500 focus:outline-none transition-colors text-lg font-mono font-bold tracking-widest"
+                            />
+                            <p className="text-[10px] text-gray-500 font-medium">
+                                Please re-enter your UTR number for confirmation
+                            </p>
+                        </motion.div>
+
                         {/* Error Display */}
                         <AnimatePresence>
                             {error && (
@@ -324,7 +361,7 @@ function QRPaymentContent() {
                         {/* Verify Button */}
                         <motion.button
                             onClick={handleVerifyPayment}
-                            disabled={isVerifying || !utrNumber.trim()}
+                            disabled={isVerifying || !utrNumber.trim() || !confirmUtrNumber.trim()}
                             whileHover={{ scale: isVerifying ? 1 : 1.01 }}
                             whileTap={{ scale: isVerifying ? 1 : 0.99 }}
                             className="relative w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-black font-bold py-5 sm:py-6 px-6 rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:shadow-[0_0_50px_rgba(16,185,129,0.5)] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden group isolate"
