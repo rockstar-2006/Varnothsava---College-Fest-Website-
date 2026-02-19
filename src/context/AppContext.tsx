@@ -51,7 +51,7 @@ interface AppContextType {
     logout: () => void
     registerUser: (data: Omit<UserData, 'id' | 'email' | 'profileCode' | 'hasPaid' | 'registeredEvents' | 'avatar' | 'studentType'>) => void
     markAsPaid: () => void
-    registerMission: (eventId: string, teamName: string, members: string[]) => Promise<boolean>
+    registerMission: (eventId: string, teamName: string, members: string[]) => Promise<{ success: boolean, registrationId?: string }>
     updateAvatar: (avatarUrl: string) => void,
     updateProfile: (data: { name: string, usn: string, phone: string, collegeName: string }) => Promise<boolean>,
     mountUser: () => Promise<void>,
@@ -280,7 +280,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
 
     const registerMission = async (eventId: string, teamName: string, members: string[]) => {
-        if (!userData) return false;
+        if (!userData) return { success: false };
         try {
             const token = await getAuthToken();
             const response = await fetch('/api/register-mission', {
@@ -300,7 +300,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                 ...userData,
                 registeredEvents: [...(userData.registeredEvents || []), { id: resData.registrationId, eventId, teamName }]
             });
-            return true;
+            return { success: true, registrationId: resData.registrationId };
         } catch (error: any) {
             console.error('Mission Registration Error:', error);
             throw error;

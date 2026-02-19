@@ -1,4 +1,4 @@
-import { registrationsCollection, usersCollection, verifyAuthToken } from "@/lib/firebaseAdmin";
+import { registrationsCollection, usersCollection, verifyAuthToken, adminDb } from "@/lib/firebaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 import { checkApiRateLimit, getClientIdentifier } from "@/lib/ratelimit";
 import { missions } from "@/data/missions";
@@ -28,8 +28,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ message: "Missing registration details." }, { status: 400 });
         }
 
-        if(!teamName.trim() || teamName.trim().length < 2 || teamName.trim().length > 50) {
-            return NextResponse.json({message: "Team name must be 2-50 characters"}, {status: 400});
+        if (!teamName.trim() || teamName.trim().length < 2 || teamName.trim().length > 50) {
+            return NextResponse.json({ message: "Team name must be 2-50 characters" }, { status: 400 });
         }
 
         if (!usersCollection) {
@@ -41,10 +41,12 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ message: "Invalid mission ID." }, { status: 400 });
         }
 
-        const isTeamEvent = mission.maxTeamSize > 1;
+        const isTeamEvent = (mission.maxTeamSize ?? 1) > 1;
+        const minSize = mission.minTeamSize ?? 1;
+        const maxSize = mission.maxTeamSize ?? 1;
 
-        if(!members || !Array.isArray(members) || members.length < mission.minTeamSize || members.length > mission.maxTeamSize) {
-            return NextResponse.json({ message: `Invalid number of members for this event. Required: ${mission.minTeamSize} - ${mission.maxTeamSize}.` }, { status: 400 });
+        if (!members || !Array.isArray(members) || members.length < minSize || members.length > maxSize) {
+            return NextResponse.json({ message: `Invalid number of members for this event. Required: ${minSize} - ${maxSize}.` }, { status: 400 });
         }
 
         let memberIds: string[] = [];
@@ -54,11 +56,11 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ message: `Member with profile code ${memberCode} not found.` }, { status: 400 });
             }
             const memberData = memberDoc.docs[0].data();
-            if(memberData.hasPaid !== true) {
+            if (memberData.hasPaid !== true) {
                 return NextResponse.json({ message: `Member with profile code ${memberCode} has not completed payment.` }, { status: 400 });
             }
-            if(memberData.id === verified.uid) {
-                if(eventId === "TECH-008" && memberData.hasRoboSoccer !== true) {
+            if (memberData.id === verified.uid) {
+                if (eventId === "TECH-008" && memberData.hasRoboSoccer !== true) {
                     return NextResponse.json({ message: `Team leader with profile code ${memberCode} has not paid for Robo Soccer registration.` }, { status: 400 });
                 }
             }
@@ -84,6 +86,60 @@ export async function POST(request: NextRequest) {
         };
 
         const registrationDoc = await registrationsCollection.add(registrationData);
+
+        // Phase 2: Post-Registration Communication (Email)
+        const emailHtmlBody = `
+            <!DOCTYPE html>
+            <html>
+                <head>
+                    <style>
+                        .email-container { background-color: #050905; color: #ffffff; font-family: 'sans-serif'; padding: 40px; border: 1px solid #10b98133; border-radius: 24px; max-width: 600px; margin: auto; }
+                        .header { text-align: center; margin-bottom: 30px; }
+                        .emerald { color: #10b981; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; }
+                        .details-box { background: rgba(16, 185, 129, 0.05); border: 1px solid #10b98122; border-radius: 16px; padding: 20px; margin: 20px 0; }
+                        .cta-button { background: #10b981; color: #000000; padding: 14px 28px; border-radius: 12px; text-decoration: none; font-weight: 900; display: inline-block; margin: 20px 0; text-transform: uppercase; }
+                        .footer { font-size: 12px; color: #666; text-align: center; margin-top: 40px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="email-container">
+                        <div class="header">
+                            <div class="emerald">Mission_Initialized</div>
+                            <h1 style="font-size: 32px; margin-top: 10px; color: #ffffff;">REGISTRATION CONFIRMED</h1>
+                        </div>
+                        <p>Greetings, <strong>${verified.name || 'Participant'}</strong>,</p>
+                        <p>Your deployment for <strong>${mission.title}</strong> has been successfully initialized. You are now part of the Varnothsava 2k26 elite squad.</p>
+                        <div class="details-box">
+                            <h3 class="emerald" style="font-size: 14px; margin-bottom: 15px;">EVENT_DATA_STREAM</h3>
+                            <p>📅 <strong>Date:</strong> ${mission.date || 'To be announced'}</p>
+                            <p>⏰ <strong>Time:</strong> ${mission.time || 'Check schedule'}</p>
+                            <p>📍 <strong>Location:</strong> ${mission.location || 'College Campus'}</p>
+                            <p>📂 <strong>Team Name:</strong> ${teamName}</p>
+                        </div>
+                        <center>
+                            <a href="https://chat.whatsapp.com/GExfV7X6Uv6H6b2vR8QWpB" class="cta-button">JOIN EVENT COMMUNITY</a>
+                        </center>
+                        <div class="footer">
+                            <p>© 2026 Varnothsava. All signals authenticated.<br>Shri Madhwa Vadiraja Institute of Technology and Management.</p>
+                        </div>
+                    </div>
+                </body>
+            </html>
+        `;
+
+        // Queue email for sending
+        try {
+            await adminDb.collection("mail").add({
+                to: [verified.email],
+                message: {
+                    subject: `[Varnothsava 2026] Registration Confirmed: ${mission.title}`,
+                    html: emailHtmlBody,
+                },
+                createdAt: new Date().toISOString()
+            });
+        } catch (emailError) {
+            console.error("Failed to queue confirmation email:", emailError);
+        }
 
         return NextResponse.json({
             message: "Mission registration successful.",

@@ -446,9 +446,11 @@ export function EventGrid({ missions }: EventGridProps) {
 
     const handleConfirmRegistration = async (data: { teamName: string, members: string[] }) => {
         try {
-            const success = await registerMission(selectedEvent.id, data.teamName, data.members)
+            const { success, registrationId } = await registerMission(selectedEvent.id, data.teamName, data.members)
             if (success) {
-                alert(`Successfully registered team '${data.teamName}' for ${selectedEvent.title}!`)
+                // Actually, the modal will handle the success state now, 
+                // but we keep this here for logging or just in case.
+                console.log(`Successfully registered: ${registrationId}`)
             }
         } catch (error: any) {
             alert(`Registration failed: ${error.message}`)

@@ -14,6 +14,10 @@ let serviceAccount: any = null;
 try {
     if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
         serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+        // Fix for private key decoding error in some environments
+        if (serviceAccount && serviceAccount.private_key) {
+            serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+        }
     } else {
         const fullPath = path.join(process.cwd(), 'src/lib/service-account.json');
         if (fs.existsSync(fullPath)) {
