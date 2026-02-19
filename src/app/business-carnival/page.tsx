@@ -119,7 +119,8 @@ export default function BusinessCarnivalPage() {
                                 complexClip={complexClip}
                                 isLoggedIn={isLoggedIn}
                                 isRegistered={userData?.registeredEvents?.some(re => re.eventId === event.id)}
-                                onRegister={() => router.push(isLoggedIn ? '/notify' : '/login')}
+                                // onRegister={() => router.push(isLoggedIn ? '/notify' : '/login')}
+                                onRegister={() => router.push(isLoggedIn ? '/profile' : '/login')}
                                 priority={true}
                             />
                         </motion.div>
