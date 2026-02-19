@@ -19,6 +19,7 @@ export interface Event {
     brochureUrl?: string
     minTeamSize: number
     maxTeamSize: number
+    note?:string[]
     rounds?: {
         round1?: string[]
         round2?: string[]
@@ -75,7 +76,7 @@ export const missions: Event[] = [
         teamFormate: "Group",
         tags: ['ML', 'Coding', 'Python'],
         team: 'Group',
-        whatsappLink: 'https://chat.whatsapp.com/example-link-1'
+        whatsappLink: 'https://chat.whatsapp.com/DrvB6MhNad7HOWq5cAVypu?mode=gi_t'
 
     },
     {
@@ -118,7 +119,8 @@ export const missions: Event[] = [
         maxTeamSize: 2,
         teamFormate: "Group",
         tags: ['AI', 'Product', 'Gen-AI'],
-        team: 'Group'
+        team: 'Group',
+        whatsappLink:"https://chat.whatsapp.com/KkqtB4iUxlh20khnW9NM6o?mode=gi_t"
     },
     {
         id: "TECH-003",
@@ -153,7 +155,8 @@ export const missions: Event[] = [
         maxTeamSize: 2,
         teamFormate: "Group",
         tags: ['Electronics', 'Circuit', 'Logic'],
-        team: 'Group'
+        team: 'Group',
+        whatsappLink:"https://chat.whatsapp.com/GqXLxK72ltt1KochD4n89I?mode=gi_t"
     },
     {
         id: "TECH-004",
@@ -191,7 +194,8 @@ export const missions: Event[] = [
         maxTeamSize: 4,
         teamFormate: "Group",
         tags: ['Robotics', 'Hardware', 'Sensors'],
-        team: 'Group'
+        team: 'Group',
+        whatsappLink:"https://chat.whatsapp.com/GQpfde9AYbM13EYof2IkMw?mode=gi_t"
     },
     {
         id: "GAME-001",
@@ -219,30 +223,68 @@ export const missions: Event[] = [
         maxTeamSize: 6,
         teamFormate: "Group",
         tags: ['5v5', 'FPS', 'Valorant'],
-        team: 'Group'
+        team: 'Group',
+        whatsappLink:"https://chat.whatsapp.com/KsswM38wb5r7hy4aTjvdfy?mode=gi_t"
     },
     {
         id: "TECH-005",
         title: "HACKHUNT",
         type: "Technical",
         category: "Coding",
-        description: "Exciting coding competition where teams uncover hidden flags in code, files, and programs through logic puzzles and code analysis.",
+        description: "PC-based technical challenge designed to test your logical thinking, debugging skills, and problem-solving ability.This event rewards observation and reasoning, not memorization or speed alone.",
         rules: [
-            "Team of 2 - 3 Members",
-            "Search for hidden flags embedded in code, files, and programs.",
-            "Teams may request hints at a penalty cost.",
-            "Submit all found flags and explanations for discovery.",
-            "Internet access is not allowed unless specified for specific tasks."
-        ],
+    "Team of 2 - 4 Members",
+    "Each team must use one system only.",
+    "Search for hidden flags embedded in code, files, and programs.",
+    "Challenges may involve code, logic, and analysis.",
+    "Teams may request hints at a penalty cost.",
+    "Submit all found flags and explanations for discovery.",
+    "Teams must submit required outputs in the specified format.",
+    "Internet access is allowed unless stated otherwise during the event.",
+    "External tools/websites may be used where permitted.",
+    "Inter-team communication is strictly prohibited.",
+    "Internet access is not allowed unless specified for specific tasks (if applicable to certain rounds).",
+    "Any form of copying or unfair collaboration will lead to disqualification.",
+    "Attempting to bypass the system or exploit unintended loopholes may result in disqualification.",
+    "Judges’ decisions will be final."
+]
+,
         rounds: {
-            round1: ["The Code Puzzle Rush: Solve code snippets and logic puzzles containing hidden flags (90 mins)."],
-            round2: ["The Code Quest Challenge: Analyze a broken or obfuscated codebase to identify hidden flags (2 hours)."]
-        },
+    round1: [
+        "Elimination Round (90 minutes).",
+        "This round consists of multiple technical and logical challenges.",
+        "Tasks may include coding, debugging, and analytical problem-solving.",
+        "Only a limited number of teams will qualify for the next round.",
+        "Hint Policy (Round 1 Only):",
+        "Teams may request hints if they are stuck.",
+        "Each hint carries a 5-minute time penalty.",
+        "Penalties are cumulative.",
+        "Hints must be requested through event coordinators only."
+    ],
+    round2: [
+        "Final Round (2 hours).",
+        "Only teams qualified from Round 1 will participate.",
+        "This round focuses on advanced reasoning and abstraction.",
+        "Difficulty level is significantly higher.",
+        "No hints will be provided in this round."
+    ]
+}
+,
         evaluation: [
-            "Number of flags discovered.",
-            "Creativity and efficiency in solving challenges.",
-            "Explanations provided for each flag found."
-        ],
+    "Number of challenges solved.",
+    "Accuracy of solutions.",
+    "Quality of reasoning and explanations.",
+    "Time taken (including penalties, if any).",
+    "Top 3 teams will be declared winners."
+]
+,
+note: [
+    "Guessing without reasoning may not help.",
+    "Solving even part of the challenge is considered a strong performance.",
+    "Think carefully before requesting hints.",
+    "This event emphasizes thinking deeply over rushing."
+],
+
         prizePool: "₹15,000+",
         coordinators: ["Ms. Ashwitha", "SUMEDH NAVADA", "Tejas Nayak"],
         coordinatorsContact: ["9900656796", "8217534845", "8296151023"],
@@ -254,7 +296,8 @@ export const missions: Event[] = [
         maxTeamSize: 3,
         teamFormate: "Group",
         tags: ['Cyber', 'Logic', 'Coding'],
-        team: 'Group'
+        team: 'Group',
+        whatsappLink:"https://chat.whatsapp.com/GW3UgzaaoGjKRgXtZv1cfL?mode=gi_t"
     },
     {
         id: "TECH-006",
@@ -295,7 +338,8 @@ export const missions: Event[] = [
             "AI in Healthcare",
             "Smart Transportation"
         ],
-        team: 'Group'
+        team: 'Group',
+        whatsappLink:"https://chat.whatsapp.com/KoZFHTf8i4PINJ3ZwqhagI?mode=hqctswa"
 
 
     },
@@ -374,7 +418,8 @@ export const missions: Event[] = [
         maxTeamSize: 4,
         teamFormate: "Group",
         tags: ['Robotics', 'Sports', 'Mechanics'],
-        team: 'Group'
+        team: 'Group',
+        whatsappLink:"https://chat.whatsapp.com/KidSfxcStJS2mBtawXhM97?mode=gi_t"
     },
     {
         id: "GAME-002",
@@ -404,7 +449,8 @@ export const missions: Event[] = [
         maxTeamSize: 4,
         teamFormate: "Group",
         tags: ['Squad', 'Mobile', 'BGMI'],
-        team: 'Group'
+        team: 'Group',
+        whatsappLink:"https://chat.whatsapp.com/Gvgtq2CsGFDC6vHEAbMX5I?mode=gi_c"
     },
     {
         id: "MBA-001",
@@ -433,7 +479,8 @@ export const missions: Event[] = [
         minTeamSize: 2,
         maxTeamSize: 2,
         teamFormate: "Group",
-        team: 'Group'
+        team: 'Group',
+        whatsappLink:"https://chat.whatsapp.com/IJ526vnuh8o7by4eBY7Ets"
     },
     {
         id: "MBA-002",
@@ -462,7 +509,8 @@ export const missions: Event[] = [
         minTeamSize: 3,
         maxTeamSize: 3,
         teamFormate: "Group",
-        team: 'Group'
+        team: 'Group',
+        whatsappLink:"https://chat.whatsapp.com/J4m8JwBiU0hIXcDXNX5Rf3?mode=gi_t"
     },
     {
         id: "MBA-003",
@@ -491,7 +539,8 @@ export const missions: Event[] = [
         minTeamSize: 3,
         maxTeamSize: 3,
         teamFormate: "Group",
-        team: 'Group'
+        team: 'Group',
+        whatsappLink:"https://chat.whatsapp.com/IohwECqGg6pCGaH5kqsGqW"
     },
     // --- CULTURAL EVENTS ---
 
@@ -521,7 +570,8 @@ export const missions: Event[] = [
         teamFormate: 'Solo',
         time: '9:00 AM',
         coordinatorsContact: ["9900656796", "9844101520", "7625093587"],
-        team: 'Solo'
+        team: 'Solo',
+        whatsappLink:'https://chat.whatsapp.com/LUrBSSlfDhX84z3U5Hr9H3?mode=gi_t'
     },
     {
         id: 'Group-Singing',
@@ -551,7 +601,8 @@ export const missions: Event[] = [
         teamFormate: 'Group',
         time: "10:30 AM",
         coordinatorsContact: ['9741709922', '6363553296', '9591051497'],
-        team: 'Group'
+        team: 'Group',
+        whatsappLink:"https://chat.whatsapp.com/HoO4nw0jx1QJGIhoAuWl2Y?mode=gi_t"
     },
     {
         id: 'Solo-Classical-Dance',
@@ -583,7 +634,8 @@ export const missions: Event[] = [
         teamFormate: 'Solo',
         time: '9:30 AM',
         coordinatorsContact: ['7483491283', '7022433574', '8073972157'],
-        team: "Solo"
+        team: "Solo",
+        whatsappLink:"https://chat.whatsapp.com/GbNsbZQbt4nHdnw81N5mYJ?mode=gi_t"
     },
     {
         id: 'Group-Western-Dance',
@@ -615,7 +667,8 @@ export const missions: Event[] = [
         teamFormate: 'Group',
         time: '11:30 AM',
         coordinatorsContact: ['9945683675', '6361745283', '9036815985'],
-        team: "Group"
+        team: "Group",
+        whatsappLink:"https://chat.whatsapp.com/HxQGp0E6z4I6Yq0whtFY25?mode=gi_t"
     },
     {
         id: 'Stand-Up-Comedy',
@@ -643,7 +696,8 @@ export const missions: Event[] = [
         location: "Admin Block Seminar Hall",
         time: "12:00 PM",
         coordinatorsContact: ['8762840054', '8618231007', '6362786915'],
-        team: "Solo"
+        team: "Solo",
+        whatsappLink:"https://chat.whatsapp.com/IjVXXJyNN5V6t4Qi3LU6BK"
     },
     {
         id: 'Face-Painting',
@@ -670,7 +724,8 @@ export const missions: Event[] = [
         location: 'Admin Block First Floor Lobby',
         time: "9:30 AM",
         coordinatorsContact: ['9606611417', '9108717638', '9108007378'],
-        team: "Solo"
+        team: "Solo",
+        whatsappLink:"https://chat.whatsapp.com/G6TMEYqzS5m06RKp7OY1XR?mode=gi_t"
     },
     {
         id: 'Mehandi',
@@ -698,7 +753,8 @@ export const missions: Event[] = [
         location: 'A106',
         coordinatorsContact: ['6360980426', '6361126213', '8310780821'],
         time: '10:30 AM',
-        team: "Solo"
+        team: "Solo",
+        whatsappLink:"https://chat.whatsapp.com/Bdf9iuLx82TBGxsYmFgtLP?mode=gi_t"
     },
     {
         id: 'Anime-Quiz',
@@ -726,7 +782,8 @@ export const missions: Event[] = [
         location: 'F103 (workshop) & Open Air Auditorium',
         time: '9:00 AM',
         coordinatorsContact: ['9686143861', '9483480040', '6366021926'],
-        team: "Group"
+        team: "Group",
+        whatsappLink:"https://chat.whatsapp.com/LNdHlSYnUyu9DhK8W6XelZ?mode=gi_t"
     },
     {
         id: 'Antakshari',
@@ -754,7 +811,8 @@ export const missions: Event[] = [
         location: 'Library Block Seminar hall',
         time: '11:00 AM',
         coordinatorsContact: [' 9964379957', '6360258731', '8105052692'],
-        team: "Group"
+        team: "Group",
+        whatsappLink:"https://chat.whatsapp.com/Jj3pDST2vVM59sKNnKXp54?mode=gi_t"
 
     },
 
@@ -792,7 +850,8 @@ export const missions: Event[] = [
         location: 'Admin Block Seminar hall',
         time: "9:30 AM",
         coordinatorsContact: ['9964819895', '7619303486', '9148249921'],
-        team: "Group"
+        team: "Group",
+        whatsappLink:"https://chat.whatsapp.com/HqfF3H17JeK1o5aBBBTijB?mode=gi_t"
     },
     {
         id: 'Variety-Act',
@@ -839,7 +898,8 @@ export const missions: Event[] = [
         location: 'Open Air Auditorium ',
         time: "2:00 PM",
         coordinatorsContact: ['9945683675', '8867469704', '6364100730'],
-        team: "Group"
+        team: "Group",
+        whatsappLink:"https://chat.whatsapp.com/CwDIYq8j85BDnkgmcuWWgo?mode=gi_t"
 
     }
     ,
@@ -870,7 +930,8 @@ export const missions: Event[] = [
         location: 'Open Air Auditorium ',
         time: "10:30 AM",
         coordinatorsContact: ['9900977963', '7829690950', '9845855804'],
-        team: "Group"
+        team: "Group",
+        whatsappLink:"https://chat.whatsapp.com/FmEDTrP8XPM5KsGZIjnKcu?mode=gi_c"
     },
     {
         id: 'Rangoli',
@@ -901,7 +962,8 @@ export const missions: Event[] = [
         location: 'A102, A103',
         time: '9:00 AM',
         coordinatorsContact: ['9741709922', '6361774398', '8431738571'],
-        team: "Group"
+        team: "Group",
+        whatsappLink:"https://chat.whatsapp.com/GxoxXHE1uiR8cmEydYOM9Q?mode=gi_t"
     }
     ,
     {
@@ -938,6 +1000,7 @@ export const missions: Event[] = [
         time: '10:30 AM',
         coordinatorsContact: ['9686143861', '6361473453', '8310575239'],
         team: "Solo",
+        whatsappLink:"https://chat.whatsapp.com/CyrbFtXevJdJHB5WITDmmN?mode=gi_t"
     }
     ,
     {
@@ -968,7 +1031,8 @@ export const missions: Event[] = [
         location: 'A106',
         time: "2:00 PM",
         coordinatorsContact: ['6360980426', '8073093293', '8762463944'],
-        team: "Solo"
+        team: "Solo",
+        whatsappLink:"https://chat.whatsapp.com/GlIirINqyXNA4xDczVle0E?mode=gi_t"
     }
     ,
     {
@@ -1002,7 +1066,9 @@ export const missions: Event[] = [
         location: 'Admin BlockSeminar Hall',
         time: "10:30 AM",
         coordinatorsContact: ['9900977963', '9448186715', '6363581583'],
-        team: "Solo"
+        team: "Solo",
+        whatsappLink:"https://chat.whatsapp.com/KW5tqbt1FL12eVVIimkeLw?mode=gi_t"
+
 
 
 
@@ -1039,7 +1105,8 @@ export const missions: Event[] = [
         teamFormate: 'Promotional',
         location: 'Admin Block,Seminar Hall',
         coordinatorsContact: ['9535626843', '9880668999', '8123936830'],
-        team: "Solo"
+        team: "Solo",
+        whatsappLink:"https://chat.whatsapp.com/BtbvmabgPm41ib6sl6LpX9?mode=gi_t"
 
     }
     ,
@@ -1077,7 +1144,8 @@ export const missions: Event[] = [
         teamFormate: 'Promotional',
         location: 'Admin Block,Seminar Hall',
         coordinatorsContact: ['9480390687', '9741487028', '8123936830'],
-        team: "Group"
+        team: "Group",
+        whatsappLink:"https://chat.whatsapp.com/IBnHFInfnWBCZOmXGgKHhW?mode=gi_t"
 
     }
 
