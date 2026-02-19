@@ -194,7 +194,7 @@ export default function ProfilePage() {
     const { userData, logout, isLoggedIn, needsOnboarding, mountUser, updateAvatar, updateProfile } = useApp()
     const router = useRouter()
     const [mounted, setMounted] = useState(false)
-    const [activeModal, setActiveModal] = useState<'settings' | 'qr' | 'scanner' | 'editProfile' | 'registrationDetails' | null>(null)
+    const [activeModal, setActiveModal] = useState<'settings' | 'qr' | 'scanner' | 'editProfile' | 'registrationDetails' | 'payment' | null>(null)
     const [isRegenerating, setIsRegenerating] = useState(false)
     const [isUpdating, setIsUpdating] = useState(false)
 
@@ -439,7 +439,7 @@ export default function ProfilePage() {
                             <motion.button
                                 whileHover={{ scale: 1.05, x: 5 }}
                                 whileTap={{ scale: 0.95 }}
-                                onClick={() => router.push('/notify')}
+                                onClick={() => setActiveModal('payment')}
                                 className="w-full md:w-auto px-8 md:px-10 py-4 md:py-5 bg-emerald-500 hover:bg-emerald-400 text-black font-black uppercase text-[10px] md:text-xs tracking-[0.2em] rounded-2xl transition-all shadow-2xl flex items-center justify-center gap-3 active:scale-95 group/btn"
                             >
                                 START PAYMENT <ArrowRight size={18} className="group-hover/btn:translate-x-2 transition-transform" />
@@ -594,7 +594,7 @@ export default function ProfilePage() {
                     <motion.div
                         variants={itemVariants}
                         whileHover={{ x: 5, backgroundColor: 'rgba(255,255,255,0.06)' }}
-                        onClick={() => router.push('/notify')}
+                        onClick={() => !userData.hasPaid && setActiveModal('payment')}
                         className={`p-5 md:p-8 rounded-[1.8rem] md:rounded-[2rem] border flex items-center justify-between group cursor-pointer transition-all duration-500 shadow-xl min-h-[80px] ${userData.hasPaid ? 'bg-emerald-500/5 border-emerald-500/10' : 'bg-red-500/5 border-red-500/10'}`}
                     >
                         <div className="flex items-center gap-3 md:gap-5 flex-1 min-w-0">
@@ -792,6 +792,7 @@ export default function ProfilePage() {
                                         {activeModal === 'scanner' && <><LayoutDashboard size={18} className="text-emerald-400" /> Scanner</>}
                                         {activeModal === 'editProfile' && <><Edit3 size={18} className="text-emerald-400" /> Update Hub</>}
                                         {activeModal === 'registrationDetails' && <><Award size={18} className="text-emerald-400" /> Registration Details</>}
+                                        {activeModal === 'payment' && <><CreditCard size={18} className="text-emerald-400" /> Payment Options</​>}
                                     </h3>
                                     <button
                                         onClick={() => setActiveModal(null)}
@@ -1172,6 +1173,66 @@ export default function ProfilePage() {
                                                     Close
                                                 </button>
                                             </div>
+                                        </div>
+                                    )}
+
+                                    {activeModal === 'payment' && (
+                                        <div className="space-y-6">
+                                            <div className="text-center space-y-4">
+                                                <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 text-emerald-400">
+                                                    <CreditCard size={32} />
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-xl font-black text-white uppercase italic">Choose Payment Method</h4>
+                                                    <p className="text-xs text-slate-400 font-medium mt-2">Select how you'd like to complete your registration</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                {/* Pay Using QR Option */}
+                                                <motion.button
+                                                    whileHover={{ scale: 1.02, backgroundColor: 'rgba(0, 242, 255, 0.1)' }}
+                                                    whileTap={{ scale: 0.98 }}
+                                                    onClick={() => router.push('/qr-payment')}
+                                                    className="w-full p-6 bg-white/5 border border-cyan-500/20 rounded-2xl hover:border-cyan-500/40 transition-all flex items-center gap-4 group/payment active:scale-95"
+                                                >
+                                                    <div className="w-12 h-12 bg-cyan-500/10 rounded-xl flex items-center justify-center text-cyan-400 group-hover/payment:bg-cyan-500/20 transition-all">
+                                                        <QrCode size={24} />
+                                                    </div>
+                                                    <div className="text-left flex-1">
+                                                        <p className="text-sm md:text-base font-black text-white uppercase tracking-tight">Pay Using QR</p>
+                                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Scan Payment Code</p>
+                                                    </div>
+                                                    <ChevronRight size={18} className="text-cyan-500 group-hover/payment:translate-x-1 transition-transform" />
+                                                </motion.button>
+
+                                                {/* Payment Gateway Option */}
+                                                <motion.button
+                                                    whileHover={{ scale: 1.02, backgroundColor: 'rgba(16, 185, 129, 0.1)' }}
+                                                    whileTap={{ scale: 0.98 }}
+                                                    onClick={() => {
+                                                        setActiveModal(null)
+                                                        router.push('/notify')
+                                                    }}
+                                                    className="w-full p-6 bg-white/5 border border-emerald-500/20 rounded-2xl hover:border-emerald-500/40 transition-all flex items-center gap-4 group/payment active:scale-95"
+                                                >
+                                                    <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400 group-hover/payment:bg-emerald-500/20 transition-all">
+                                                        <Globe size={24} />
+                                                    </div>
+                                                    <div className="text-left flex-1">
+                                                        <p className="text-sm md:text-base font-black text-white uppercase tracking-tight">Payment Gateway</p>
+                                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Coming Soon • Secure Online</p>
+                                                    </div>
+                                                    <ChevronRight size={18} className="text-emerald-500 group-hover/payment:translate-x-1 transition-transform" />
+                                                </motion.button>
+                                            </div>
+
+                                            <button
+                                                onClick={() => setActiveModal(null)}
+                                                className="w-full py-3 bg-white/5 text-white font-bold uppercase text-xs tracking-widest rounded-xl hover:bg-white/10 transition-all border border-white/10"
+                                            >
+                                                Cancel
+                                            </button>
                                         </div>
                                     )}
                                 </div>
