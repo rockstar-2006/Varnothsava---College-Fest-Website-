@@ -14,6 +14,8 @@ interface EventCardProps {
     theme: "bgmi" | "valorant";
     onRegister?: () => void;
     onDetail?: () => void;
+    isRegistered?: boolean;
+    whatsappLink?: string;
 }
 
 export default function EventCard({
@@ -26,6 +28,8 @@ export default function EventCard({
     theme,
     onRegister,
     onDetail,
+    isRegistered,
+    whatsappLink,
 }: EventCardProps) {
     const [isHovered, setIsHovered] = useState(false);
 
@@ -141,7 +145,9 @@ export default function EventCard({
                         <div className="btn-bg" />
                         <div className="btn-edge left" />
                         <div className="btn-edge right" />
-                        <span className="btn-text font-display font-black tracking-widest group-hover:tracking-[0.2em] transition-all">REGISTER</span>
+                        <span className="btn-text font-display font-black tracking-widest group-hover:tracking-[0.2em] transition-all">
+                            {isRegistered ? (whatsappLink ? 'WHATSAPP' : 'REGISTERED') : 'REGISTER'}
+                        </span>
                         <div className="btn-shine" />
                     </button>
                 </div>

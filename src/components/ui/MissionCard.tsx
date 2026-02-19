@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Tilt from 'react-parallax-tilt'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { CheckCircle2, UserPlus, Loader2 } from 'lucide-react'
+import { CheckCircle2, UserPlus, Loader2, MessageCircle } from 'lucide-react'
 import { Event } from '@/data/missions'
 
 export interface ThemeConfig {
@@ -81,6 +81,8 @@ export const MissionCard = memo(({
                     theme={event.title.toLowerCase().includes('valorant') ? 'valorant' : 'bgmi'}
                     onRegister={() => onRegister(event)}
                     onDetail={handleCardClick}
+                    isRegistered={isRegistered}
+                    whatsappLink={event.whatsappLink}
                 />
                 <AnimatePresence>
                     {isNavigating && (
@@ -326,6 +328,8 @@ export const MissionCard = memo(({
                                     router.push('/login');
                                 } else if (!hasPaid) {
                                     router.push('/notify');
+                                } else if (isRegistered && event.whatsappLink) {
+                                    window.open(event.whatsappLink, '_blank');
                                 } else {
                                     onRegister(event);
                                 }
@@ -333,8 +337,8 @@ export const MissionCard = memo(({
                             className={`relative py-4 md:py-3 text-xs font-black uppercase tracking-widest transition-all duration-300 overflow-hidden group/btn border-2 ${event.type === 'Cultural' ? 'border-amber-500 bg-amber-500 text-black' : event.type === 'Business' ? 'border-sky-500 bg-sky-500 text-white' : 'border-emerald-500 bg-emerald-500 text-black'} shadow-[0_0_20px_rgba(0,0,0,0.4)] active:scale-95 flex items-center justify-center gap-2 touch-manipulation min-h-[48px]`}
                             style={{ clipPath: 'polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px)' }}
                         >
-                            <UserPlus className="w-4 h-4" />
-                            {!isLoggedIn ? 'LOGIN' : (!hasPaid ? 'PAY FOR PASS' : (isRegistered ? 'REGISTERED' : 'REGISTER'))}
+                            {isRegistered && event.whatsappLink ? <MessageCircle className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                            {!isLoggedIn ? 'LOGIN' : (!hasPaid ? 'PAY FOR PASS' : (isRegistered ? (event.whatsappLink ? 'WHATSAPP' : 'REGISTERED') : 'REGISTER'))}
                         </button>
                         <button onClick={(e) => { e.stopPropagation(); router.push(`/events/${event.id}`); }} className={`relative py-4 md:py-3 text-xs font-black uppercase tracking-widest transition-all duration-300 overflow-hidden group/btn border-2 ${event.type === 'Cultural' ? 'border-amber-500 text-amber-500' : event.type === 'Business' ? 'border-sky-500 text-sky-500' : 'border-emerald-500 text-emerald-500'} bg-black/40 active:scale-95 flex items-center justify-center gap-2 touch-manipulation min-h-[48px]`} style={{ clipPath: 'polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px)' }}>
                             DETAILS

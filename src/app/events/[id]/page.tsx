@@ -158,7 +158,7 @@ export default function EventDetailsPage() {
         }
     }, [id])
 
-    const isAdded = false
+    const isAdded = userData?.registeredEvents?.some(re => re.eventId === mission?.id) || false
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'instant' })
@@ -326,6 +326,21 @@ export default function EventDetailsPage() {
                                 <ShoppingCart size={18} />
                                 {isAdded ? 'REGISTERED' : 'REGISTER NOW'}
                             </motion.button>
+                            {isAdded && mission.whatsappLink && (
+                                <motion.a
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    href={mission.whatsappLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`col-span-2 py-4 md:py-5 rounded-xl flex items-center justify-center gap-3 transition-all duration-300 font-black uppercase tracking-widest border text-sm md:text-base bg-green-600 border-green-500 text-white hover:bg-green-500`}
+                                >
+                                    <MessageCircle size={18} />
+                                    JOIN WHATSAPP GROUP
+                                </motion.a>
+                            )}
                             {/* ... buttons ... */}
                             <motion.button
                                 whileHover={{ scale: 1.05 }}

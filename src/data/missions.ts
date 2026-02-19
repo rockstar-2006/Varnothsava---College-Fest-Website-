@@ -28,6 +28,7 @@ export interface Event {
     teamFormate?: string
     themeIdeas?: string[]
     team: string
+    whatsappLink?: string
 }
 
 export const missions: Event[] = [
@@ -73,8 +74,9 @@ export const missions: Event[] = [
         maxTeamSize: 3,
         teamFormate: "Group",
         tags: ['ML', 'Coding', 'Python'],
-        team: 'Group'
-       
+        team: 'Group',
+        whatsappLink: 'https://chat.whatsapp.com/example-link-1'
+
     },
     {
         id: "TECH-002",
@@ -289,10 +291,10 @@ export const missions: Event[] = [
         teamFormate: "Group",
         tags: ['Startup', 'Business', 'Idea'],
         themeIdeas: [
-  "Open Innovation",
-  "AI in Healthcare",
-  "Smart Transportation"
-],
+            "Open Innovation",
+            "AI in Healthcare",
+            "Smart Transportation"
+        ],
         team: 'Group'
 
 
@@ -668,7 +670,7 @@ export const missions: Event[] = [
         location: 'Admin Block First Floor Lobby',
         time: "9:30 AM",
         coordinatorsContact: ['9606611417', '9108717638', '9108007378'],
-        team:"Solo"
+        team: "Solo"
     },
     {
         id: 'Mehandi',
@@ -696,7 +698,7 @@ export const missions: Event[] = [
         location: 'A106',
         coordinatorsContact: ['6360980426', '6361126213', '8310780821'],
         time: '10:30 AM',
-        team:"Solo"
+        team: "Solo"
     },
     {
         id: 'Anime-Quiz',
@@ -724,7 +726,7 @@ export const missions: Event[] = [
         location: 'F103 (workshop) & Open Air Auditorium',
         time: '9:00 AM',
         coordinatorsContact: ['9686143861', '9483480040', '6366021926'],
-        team:"Group"
+        team: "Group"
     },
     {
         id: 'Antakshari',
@@ -752,7 +754,7 @@ export const missions: Event[] = [
         location: 'Library Block Seminar hall',
         time: '11:00 AM',
         coordinatorsContact: [' 9964379957', '6360258731', '8105052692'],
-        team:"Group"
+        team: "Group"
 
     },
 
@@ -790,7 +792,7 @@ export const missions: Event[] = [
         location: 'Admin Block Seminar hall',
         time: "9:30 AM",
         coordinatorsContact: ['9964819895', '7619303486', '9148249921'],
-        team:"Group"
+        team: "Group"
     },
     {
         id: 'Variety-Act',
@@ -837,7 +839,7 @@ export const missions: Event[] = [
         location: 'Open Air Auditorium ',
         time: "2:00 PM",
         coordinatorsContact: ['9945683675', '8867469704', '6364100730'],
-        team:"Group"
+        team: "Group"
 
     }
     ,
@@ -868,7 +870,7 @@ export const missions: Event[] = [
         location: 'Open Air Auditorium ',
         time: "10:30 AM",
         coordinatorsContact: ['9900977963', '7829690950', '9845855804'],
-        team:"Group"
+        team: "Group"
     },
     {
         id: 'Rangoli',
@@ -899,7 +901,7 @@ export const missions: Event[] = [
         location: 'A102, A103',
         time: '9:00 AM',
         coordinatorsContact: ['9741709922', '6361774398', '8431738571'],
-        team:"Group"
+        team: "Group"
     }
     ,
     {
@@ -908,17 +910,17 @@ export const missions: Event[] = [
         type: 'Cultural',
         category: 'Hobby Club',
         description: 'A drawing competition where imagination meets artistic technique.Participants express ideas visually using pencils, colors, and creativity.',
-      rules: [
-    "Each participant will get a total of 90 minutes(15 minutes for idea planning + 75 minutes for drawing).",
-    "The competition involves representing a song in the form of art. The song will be played only once (approximately 1 minute), and participants must listen carefully to understand the theme.",
-    "Mobile phones are allowed only during the 15-minute planning session.",
-    "Mobile phones and electronic devices are strictly prohibited during the 75-minute drawing session.",
-    "Drawing sheets of size A3 will be provided after the 15-minute planning period.",
-    "Colors, pencil shades, and other drawing materials are allowed.",
-    "Printed pictures, stamps, or stickers are not permitted.",
-    "Participants must work individually without any external assistance.",
-    "Discussion or sharing of ideas and concepts during the activity is not allowed."
-]
+        rules: [
+            "Each participant will get a total of 90 minutes(15 minutes for idea planning + 75 minutes for drawing).",
+            "The competition involves representing a song in the form of art. The song will be played only once (approximately 1 minute), and participants must listen carefully to understand the theme.",
+            "Mobile phones are allowed only during the 15-minute planning session.",
+            "Mobile phones and electronic devices are strictly prohibited during the 75-minute drawing session.",
+            "Drawing sheets of size A3 will be provided after the 15-minute planning period.",
+            "Colors, pencil shades, and other drawing materials are allowed.",
+            "Printed pictures, stamps, or stickers are not permitted.",
+            "Participants must work individually without any external assistance.",
+            "Discussion or sharing of ideas and concepts during the activity is not allowed."
+        ]
 
 
 
@@ -935,7 +937,7 @@ export const missions: Event[] = [
         location: 'A206',
         time: '10:30 AM',
         coordinatorsContact: ['9686143861', '6361473453', '8310575239'],
-        team:"Solo",
+        team: "Solo",
     }
     ,
     {
@@ -966,7 +968,7 @@ export const missions: Event[] = [
         location: 'A106',
         time: "2:00 PM",
         coordinatorsContact: ['6360980426', '8073093293', '8762463944'],
-        team:"Solo"
+        team: "Solo"
     }
     ,
     {
@@ -1000,7 +1002,7 @@ export const missions: Event[] = [
         location: 'Admin BlockSeminar Hall',
         time: "10:30 AM",
         coordinatorsContact: ['9900977963', '9448186715', '6363581583'],
-        team:"Solo"
+        team: "Solo"
 
 
 

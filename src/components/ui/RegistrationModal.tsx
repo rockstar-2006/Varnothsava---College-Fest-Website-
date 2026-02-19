@@ -140,7 +140,7 @@ export function RegistrationModal({ isOpen, onClose, event, userData, onConfirm 
                 setIsSuccess(true)
 
                 // Generate QR Code
-                const whatsappLink = `https://chat.whatsapp.com/GExfV7X6Uv6H6b2vR8QWpB` // Example placeholder link
+                const whatsappLink = event.whatsappLink || `https://chat.whatsapp.com/community-link`
                 QRCode.toDataURL(whatsappLink, {
                     width: 300,
                     margin: 2,
@@ -380,7 +380,7 @@ export function RegistrationModal({ isOpen, onClose, event, userData, onConfirm 
 
                                 <div className="flex flex-col w-full gap-3">
                                     <a
-                                        href={`https://chat.whatsapp.com/GExfV7X6Uv6H6b2vR8QWpB`}
+                                        href={event.whatsappLink || `https://chat.whatsapp.com/community-link`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center justify-center gap-2 py-4 bg-[#25D366] text-white rounded-2xl font-black uppercase text-xs transition-transform hover:scale-[1.02] active:scale-[0.98]"
