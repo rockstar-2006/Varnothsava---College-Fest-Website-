@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValueEvent } from 'framer-motion'
-import { Search, Zap, ChevronDown, Trophy, X, CheckCircle2, Loader2, ShieldCheck, Mail, Grid, Filter } from 'lucide-react'
+import { Search, Zap, ChevronDown, Trophy, X, CheckCircle2, Loader2, ShieldCheck, Mail, Grid, Filter, Info, AlertTriangle, Activity } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useApp } from '@/context/AppContext'
 import { useLenis, useLenisControl } from '@/components/ui/SmoothScroll'
@@ -569,6 +569,20 @@ export function EventGrid({ missions }: EventGridProps) {
                             </div>
                         </div>
                     </div>
+
+                    {/* Standard Team Event Note */}
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="header-reveal w-full mb-8 relative cursor-default"
+                    >
+                        <div className="bg-red-500/10 border border-red-500/20 backdrop-blur-md rounded-xl py-4 px-6 flex flex-col md:flex-row items-center justify-center gap-4">
+                            <Info className="w-5 h-5 text-red-500 shrink-0" />
+                            <p className="text-xs md:text-sm font-bold text-red-500 uppercase tracking-wider text-center">
+                                For team events, only the team leader should put the profile codes of their team mates and form a team.
+                            </p>
+                        </div>
+                    </motion.div>
 
                     <AnimatePresence>
                         {filter === 'Cultural' && (

@@ -379,7 +379,8 @@ note: [
         maxTeamSize: 3,
         teamFormate: "Group",
         tags: ['Aero', 'Design', 'Physics'],
-        team: 'Group'
+        team: 'Group',
+        whatsappLink:"https://chat.whatsapp.com/EX4UXPyxREQ8P6fOgwGRjd?mode=gi_t"
     },
     {
         id: "TECH-008",
