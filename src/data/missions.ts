@@ -188,7 +188,7 @@ export const missions: Event[] = [
         coordinatorsContact: ["8762840054", "7406500325", "7899417146"],
         fee: 200,
         visual: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=1200&q=80",
-        date: "11-MARCH",
+        date: "12-MARCH",
         time: "10:00 AM",
         minTeamSize: 2,
         maxTeamSize: 4,
