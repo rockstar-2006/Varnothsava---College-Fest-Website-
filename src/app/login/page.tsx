@@ -315,8 +315,8 @@ function LoginContent() {
                         transition={{ duration: 0.8 }}
                     >
                         {/* 3D Visual - Softer Sphere */}
-                        <div className="w-[240px] h-[240px] lg:w-[280px] lg:h-[280px] xl:w-[340px] xl:h-[340px] relative mb-6 lg:mb-8">
-                            <Canvas camera={{ position: [0, 0, 10], fov: 45 }}>
+                        <div className="w-60 h-60 lg:w-72 lg:h-72 xl:w-80 xl:h-80 relative mb-6 lg:mb-8">
+                            <Canvas camera={{ position: [0, 0, 12], fov: 52 }}>
                                 <ambientLight intensity={1.5} />
                                 <pointLight position={[10, 10, 10]} intensity={2} color="#10b981" />
                                 <StudentPortalSphere />
