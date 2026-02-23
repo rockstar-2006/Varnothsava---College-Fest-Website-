@@ -45,7 +45,7 @@ export function useRazorpayPayment() {
         return new Promise((resolve) => {
             // Check if already loaded
             if (window.Razorpay) {
-                console.log('✅ Razorpay SDK already loaded')
+                console.log(' Razorpay SDK already loaded')
                 resolve(true)
                 return
             }
@@ -53,7 +53,7 @@ export function useRazorpayPayment() {
             // Check if script tag already exists
             const existingScript = document.querySelector('script[src*="checkout.razorpay.com"]')
             if (existingScript) {
-                console.log('⏳ Razorpay SDK script tag exists, waiting for load...')
+                console.log(' Razorpay SDK script tag exists, waiting for load...')
                 // Wait a bit for it to load
                 setTimeout(() => {
                     resolve(!!window.Razorpay)
@@ -61,7 +61,7 @@ export function useRazorpayPayment() {
                 return
             }
 
-            console.log('📥 Loading Razorpay SDK...')
+            console.log(' Loading Razorpay SDK...')
             const script = document.createElement('script')
             script.src = 'https://checkout.razorpay.com/v1/checkout.js'
             script.async = true
@@ -70,19 +70,19 @@ export function useRazorpayPayment() {
 
             script.onload = () => {
                 clearTimeout(timeoutId)
-                console.log('✅ Razorpay SDK loaded successfully')
+                console.log(' Razorpay SDK loaded successfully')
                 resolve(true)
             }
 
             script.onerror = (error) => {
                 clearTimeout(timeoutId)
-                console.error('❌ Failed to load Razorpay SDK:', error)
+                console.error(' Failed to load Razorpay SDK:', error)
                 resolve(false)
             }
 
             // Timeout after 10 seconds
             timeoutId = setTimeout(() => {
-                console.error('❌ Razorpay SDK loading timeout')
+                console.error(' Razorpay SDK loading timeout')
                 resolve(false)
             }, 10000)
 
@@ -130,8 +130,9 @@ export function useRazorpayPayment() {
             console.log('✅ Order created:', orderData.order.id)
 
             /**
-             * 3. MANDATORY HDFC COLLECTNOW FLOW (Embedded/Hosted Checkout)
-             * As per partner requirements, we must use the form-post redirect method.
+             * 3. MANDATORY HDFC COLLECTNOW FLOW (EMBEDDED REDIRECT)
+             * Reverted to the Redirect method as requested.
+             * This uses the full-page HDFC/Razorpay hosted checkout.
              */
             const callbackUrl = `${window.location.origin}/api/payment/callback`
             const cancelUrl = `${window.location.origin}/api/payment/cancel`
@@ -143,16 +144,17 @@ export function useRazorpayPayment() {
                 currency: orderData.order.currency,
                 name: process.env.NEXT_PUBLIC_APP_NAME || 'Varnothsava 2K26',
                 description: `Official Registration - ${userData.name}${options?.includeRoboSoccer ? ' + Robo Soccer' : ''}`,
-                image: 'https://varnothsava.sode-edu.in/logo.png', // Should be a valid public URL
+                image: 'https://varnothsava.sode-edu.in/logo.png',
                 'prefill[name]': userData.name,
                 'prefill[email]': userData.email,
                 'prefill[contact]': userData.phone || '',
+                'notes[user_id]': userData.id || '',
+                'notes[include_robo_soccer]': options?.includeRoboSoccer ? 'yes' : 'no',
                 callback_url: callbackUrl,
                 cancel_url: cancelUrl,
             }
 
-            console.log('🚀 Finalizing Audit Requirements: Redirecting to Hosted Checkout');
-            console.log('🔗 Callback URL:', callbackUrl);
+            console.log('🚀 Redirecting to HDFC Hosted/Embedded Checkout...');
 
             // Create and submit hidden form
             const form = document.createElement('form')

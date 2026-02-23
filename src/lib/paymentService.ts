@@ -12,7 +12,7 @@ const USERS_COLLECTION = 'users'
 
 /**
  * Store payment record in Firestore
- * Uses transaction to ensure atomicity
+ * Uses transaction to ensure atomicity and handle high concurrency
  */
 export async function storePaymentRecord(
     userId: string,
@@ -28,30 +28,34 @@ export async function storePaymentRecord(
             updated_at: now,
         }
 
-        // Store in payments collection (ignore undefined values)
         const paymentRef = db.collection(PAYMENTS_COLLECTION).doc(paymentData.razorpay_payment_id)
-        await paymentRef.set(paymentRecord, { merge: true })
-
-        // Update user's payment status
         const userRef = db.collection(USERS_COLLECTION).doc(userId)
 
-        const userUpdate: any = {
-            hasPaid: true,
-            paymentId: paymentData.razorpay_payment_id,
-            updatedAt: now,
-        }
+        await db.runTransaction(async (transaction) => {
+            // 1. Create payment record
+            transaction.set(paymentRef, paymentRecord, { merge: true })
 
-        // Handle Robo Soccer metadata if present in notes
-        if (paymentData.notes?.include_robo_soccer === 'yes') {
-            userUpdate.hasRoboSoccer = true
-            userUpdate.isRoboSoccerTeamLeader = true
-        }
+            // 2. Prepare user update
+            const userUpdate: any = {
+                hasPaid: true,
+                paymentId: paymentData.razorpay_payment_id,
+                updatedAt: now,
+            }
 
-        await userRef.update(userUpdate)
+            // Handle Robo Soccer metadata if present in notes
+            if (paymentData.notes?.include_robo_soccer === 'yes') {
+                userUpdate.hasRoboSoccer = true
+                userUpdate.isRoboSoccerTeamLeader = true
+            }
 
+            // 3. Update user doc
+            transaction.update(userRef, userUpdate)
+        })
+
+        console.log(`✅ Atomic transaction complete for payment: ${paymentData.razorpay_payment_id}`)
         return paymentRecord
     } catch (error: any) {
-        console.error('Store Payment Record Error:', error)
+        console.error('Store Payment Record Transaction Error:', error)
         throw new Error(`Failed to store payment record: ${error.message}`)
     }
 }
