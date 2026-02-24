@@ -952,7 +952,7 @@ const RealisticAncientBackground = () => {
 
 const HeroSection = ({ shouldRender3D }: { shouldRender3D: boolean }) => {
     const router = useRouter()
-    const { isLoggedIn } = useApp()
+    const { isLoggedIn, userData } = useApp()
     const { scrollY } = useScroll()
     const [isMobile, setIsMobile] = useState(false)
 
@@ -1058,9 +1058,10 @@ const HeroSection = ({ shouldRender3D }: { shouldRender3D: boolean }) => {
                         <ButtonPrimary onClick={() => {
                             if (!isLoggedIn) {
                                 router.push('/login');
+                            } else if (!userData?.hasPaid) {
+                                router.push('/notify');
                             } else {
-                                // temp
-                                router.push('/profile');
+                                router.push('/events');
                             }
                         }}>Register Now</ButtonPrimary>
                         <ButtonPrimary onClick={() => router.push('/events')}>Explore Events</ButtonPrimary>
