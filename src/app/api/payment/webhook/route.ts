@@ -152,10 +152,9 @@ async function handlePaymentCaptured(payment: any) {
         const paymentRef = db.collection('payments').doc(paymentId)
 
         const paymentDetails = await fetchPaymentDetails(payment.id)
-
-        const order = await fetchOrderDetails(paymentDetails.order_id)
+        
         // const userId = order.notes?.user_id
-        const userEmail = order.notes?.user_email
+        const userEmail = payment.notes?.user_email
         
         // AUDIT LOG: Payment Details (Section 3.9.2.1)
         console.log('--- RAZORPAY FETCH SINGLE PAYMENT RESPONSE (AUDIT LOG) ---');
