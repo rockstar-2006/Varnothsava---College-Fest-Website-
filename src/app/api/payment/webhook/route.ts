@@ -167,8 +167,9 @@ async function handlePaymentCaptured(payment: any) {
         if (payment.bank) paymentMethodDetails.bank = payment.bank
         if (payment.wallet) paymentMethodDetails.wallet = payment.wallet
         
+        const now = new Date().toISOString()
                 // 7. Prepare and Store Record
-        const paymentRecord: Omit<PaymentRecord, 'user_id' | 'created_at' | 'updated_at'> = {
+        const paymentRecord: PaymentRecord = {
             razorpay_payment_id: payment.id,
             razorpay_order_id: payment.order_id,
             razorpay_signature: '',
@@ -181,6 +182,9 @@ async function handlePaymentCaptured(payment: any) {
             payment_method_details: paymentMethodDetails,
             paid_at: new Date(payment.created_at * 1000).toISOString(),
             notes: payment.notes || {},
+            user_id: userId,
+            created_at: payment.created_at ? new Date(payment.created_at * 1000).toISOString() : now,
+            updated_at: now,
         }
 
         await db.runTransaction(async (transaction) => {
