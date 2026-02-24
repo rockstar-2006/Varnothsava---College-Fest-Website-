@@ -439,7 +439,7 @@ export default function ProfilePage() {
                             <motion.button
                                 whileHover={{ scale: 1.05, x: 5 }}
                                 whileTap={{ scale: 0.95 }}
-                                onClick={() => setActiveModal('payment')}
+                                onClick={() => router.push('/notify')}
                                 className="w-full md:w-auto px-8 md:px-10 py-4 md:py-5 bg-emerald-500 hover:bg-emerald-400 text-black font-black uppercase text-[10px] md:text-xs tracking-[0.2em] rounded-2xl transition-all shadow-2xl flex items-center justify-center gap-3 active:scale-95 group/btn"
                             >
                                 START PAYMENT <ArrowRight size={18} className="group-hover/btn:translate-x-2 transition-transform" />

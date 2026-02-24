@@ -327,9 +327,7 @@ export const MissionCard = memo(({
                                 if (!isLoggedIn) {
                                     router.push('/login');
                                 } else if (!hasPaid) {
-                                    // router.push('/notify');
-                                    // temp
-                                    router.push('/profile');
+                                    router.push('/notify');
                                 } else if (isRegistered && event.whatsappLink) {
                                     window.open(event.whatsappLink, '_blank');
                                 } else {
