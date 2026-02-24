@@ -149,43 +149,37 @@ async function handlePaymentCaptured(payment: any) {
         const userId = payment.notes?.user_id
         const hasRoboSoccer = payment.notes?.include_robo_soccer === 'yes'
 
-        const paymentRef = db.collection('payments').doc(paymentId)
+        const paymentRef = db.collection('payments').doc(paymentId);
 
-        const paymentDetails = await fetchPaymentDetails(payment.id)
-        
         // const userId = order.notes?.user_id
-        const userEmail = payment.notes?.user_email
-        
-        // AUDIT LOG: Payment Details (Section 3.9.2.1)
-        console.log('--- RAZORPAY FETCH SINGLE PAYMENT RESPONSE (AUDIT LOG) ---');
-        console.log(JSON.stringify(paymentDetails, null, 2));
+        const userEmail = payment.notes?.user_email;
         
                 // 6. Prepare Payment Method details
         const paymentMethodDetails: any = {
-            type: paymentDetails.method || 'unknown',
+            type: payment.method || 'unknown',
         }
-        if (paymentDetails.acquirer_data?.upi_transaction_id || paymentDetails.vpa) {
-            paymentMethodDetails.upi_transaction_id = paymentDetails.acquirer_data?.upi_transaction_id || paymentDetails.vpa
+        if (payment.acquirer_data?.upi_transaction_id || payment.vpa) {
+            paymentMethodDetails.upi_transaction_id = payment.acquirer_data?.upi_transaction_id || payment.vpa
         }
-        if (paymentDetails.card?.last4) {
-            paymentMethodDetails.card_last4 = paymentDetails.card.last4
+        if (payment.card?.last4) {
+            paymentMethodDetails.card_last4 = payment.card.last4
         }
-        if (paymentDetails.bank) paymentMethodDetails.bank = paymentDetails.bank
-        if (paymentDetails.wallet) paymentMethodDetails.wallet = paymentDetails.wallet
+        if (payment.bank) paymentMethodDetails.bank = payment.bank
+        if (payment.wallet) paymentMethodDetails.wallet = payment.wallet
         
                 // 7. Prepare and Store Record
         const paymentRecord: Omit<PaymentRecord, 'user_id' | 'created_at' | 'updated_at'> = {
             razorpay_payment_id: payment.id,
-            razorpay_order_id: paymentDetails.order_id,
+            razorpay_order_id: payment.order_id,
             razorpay_signature: '',
-            amount: typeof paymentDetails.amount === 'number' ? paymentDetails.amount : 0,
-            currency: paymentDetails.currency || 'INR',
-            status: paymentDetails.status === 'captured' ? 'captured' : 'authorized',
+            amount: typeof payment.amount === 'number' ? payment.amount : 0,
+            currency: payment.currency || 'INR',
+            status: payment.status === 'captured' ? 'captured' : 'authorized',
             user_email: userEmail as string,
             student_type: (userEmail as string)?.toLowerCase().endsWith('@sode-edu.in') ? 'internal' : 'external',
-            payment_method: paymentDetails.method || 'unknown',
+            payment_method: payment.method || 'unknown',
             payment_method_details: paymentMethodDetails,
-            paid_at: new Date(paymentDetails.created_at * 1000).toISOString(),
+            paid_at: new Date(payment.created_at * 1000).toISOString(),
             notes: payment.notes || {},
         }
 
