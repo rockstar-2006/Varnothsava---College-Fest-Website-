@@ -130,7 +130,7 @@ export default function LoginPage() {
 }
 
 function LoginContent() {
-    const { needsOnboarding, registerUser, isLoggedIn, mountUser, login, isInitializing, userData } = useApp()
+    const { needsOnboarding, registerUser, isLoggedIn, mountUser, login, isInitializing, userData, isAdmin } = useApp()
     const router = useRouter()
 
     const [step, setStep] = useState(1)
@@ -164,7 +164,7 @@ function LoginContent() {
     useEffect(() => {
         // Only redirect if fully initialized and logged in with complete profile
         if (!isInitializing && isLoggedIn && !needsOnboarding && userData) {
-            router.push('/profile')
+            router.push(isAdmin ? '/admin' : '/profile')
         }
         // If needs onboarding, show step 2
         if (!isInitializing && needsOnboarding) {
@@ -192,8 +192,8 @@ function LoginContent() {
         } else {
             try {
                 await login(email, password)
-                if(isLoggedIn) {
-                    router.push('/profile')
+                if (isLoggedIn) {
+                    router.push(isAdmin ? '/admin' : '/profile')
                 } else {
                     setIsLoading(false)
                 }
@@ -214,8 +214,8 @@ function LoginContent() {
                 setEmail(user.email || '')
                 setName(user.displayName || '')
             } else {
-                if(isLoggedIn) {
-                    router.push('/profile')
+                if (isLoggedIn) {
+                    router.push(isAdmin ? '/admin' : '/profile')
                 } else {
                     setIsLoading(false)
                 }
@@ -256,8 +256,8 @@ function LoginContent() {
                 collegeName: finalCollege,
                 phone,
             })
-            if(isLoggedIn && !needsOnboarding) {
-                router.push('/profile')
+            if (isLoggedIn && !needsOnboarding) {
+                router.push(isAdmin ? '/admin' : '/profile')
             } else {
                 setIsLoading(false)
             }
@@ -351,171 +351,171 @@ function LoginContent() {
                             initial={{ opacity: 0, scale: 0.98 }}
                             animate={{ opacity: 1, scale: 1 }}
                         >
-                        <AnimatePresence mode="wait">
-                            {step === 1 ? (
-                                <motion.div
-                                    key="login"
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -20 }}
-                                    className="space-y-4"
-                                >
-                                    <div className="space-y-1.5 text-center lg:text-left">
-                                        <h2 className="text-xl sm:text-2xl lg:text-2xl font-bold tracking-tight">
-                                            {isRegister ? 'Sign Up' : 'Welcome Back'}
-                                        </h2>
-                                        <p className="text-white/75 font-medium text-[10px] sm:text-[11px]">
-                                            {isRegister ? 'Join the fest today.' : 'Login to your fest dashboard.'}
-                                        </p>
-                                    </div>
-
-                                    <button
-                                        onClick={handleGoogleLoginStep1}
-                                        disabled={isLoading}
-                                        className="w-full min-h-[45px] md:min-h-[50px] flex items-center justify-center gap-2.5 bg-white text-black hover:bg-white/90 rounded-2xl text-[11px] md:text-[12px] font-bold transition-all shadow-lg active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed hover-effect"
+                            <AnimatePresence mode="wait">
+                                {step === 1 ? (
+                                    <motion.div
+                                        key="login"
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -20 }}
+                                        className="space-y-4"
                                     >
-                                        {isLoading ? (
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
-                                                <span>Connecting...</span>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <GoogleIcon />
-                                                <span>Continue with Google</span>
-                                            </>
-                                        )}
-                                    </button>
-
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-[1px] flex-1 bg-white/5" />
-                                        <span className="text-[9px] font-bold text-white/70 uppercase tracking-[0.2em]">or Email</span>
-                                        <div className="h-[1px] flex-1 bg-white/5" />
-                                    </div>
-
-                                    <form onSubmit={handleSubmitStep1} className="space-y-4">
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-bold text-white/80 ml-1">Email Address</label>
-                                            <input
-                                                required type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                                                placeholder="name@university.edu"
-                                                className="w-full bg-white/[0.05] border border-white/20 rounded-2xl px-5 py-3 text-sm focus:border-emerald-500 outline-none transition-all placeholder:text-white/30 text-white"
-                                            />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-bold text-white/80 ml-1">Password</label>
-                                            <input
-                                                required type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-                                                placeholder="Enter your password"
-                                                className="w-full bg-white/[0.05] border border-white/20 rounded-2xl px-5 py-3 text-sm focus:border-emerald-500 outline-none transition-all placeholder:text-white/30 text-white"
-                                            />
+                                        <div className="space-y-1.5 text-center lg:text-left">
+                                            <h2 className="text-xl sm:text-2xl lg:text-2xl font-bold tracking-tight">
+                                                {isRegister ? 'Sign Up' : 'Welcome Back'}
+                                            </h2>
+                                            <p className="text-white/75 font-medium text-[10px] sm:text-[11px]">
+                                                {isRegister ? 'Join the fest today.' : 'Login to your fest dashboard.'}
+                                            </p>
                                         </div>
 
                                         <button
+                                            onClick={handleGoogleLoginStep1}
                                             disabled={isLoading}
-                                            className="w-full min-h-[45px] md:min-h-[50px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl text-[13px] md:text-[14px] transition-all shadow-xl mt-3 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 hover-effect"
+                                            className="w-full min-h-[45px] md:min-h-[50px] flex items-center justify-center gap-2.5 bg-white text-black hover:bg-white/90 rounded-2xl text-[11px] md:text-[12px] font-bold transition-all shadow-lg active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed hover-effect"
                                         >
-                                            {isLoading && <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />}
-                                            {isRegister ? 'Create Account' : 'Login'}
-                                        </button>
-                                    </form>
-
-                                    <div className="text-center">
-                                        <button onClick={() => setIsRegister(!isRegister)} className="text-xs font-bold text-white/70 hover:text-emerald-500 transition-colors underline decoration-emerald-500/0 hover:decoration-emerald-500 underline-offset-3">
-                                            {isRegister ? 'Already have an account? Sign In' : "New attendee? Create Account"}
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            ) : (
-                                <motion.div
-                                    key="onboarding"
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    className="space-y-4"
-                                >
-                                    <div className="space-y-1.5 text-center lg:text-left">
-                                        <div className="flex items-center justify-between gap-2">
-                                            <h2 className="text-xl lg:text-2xl font-bold tracking-tight">About You</h2>
-                                            {email.endsWith('@sode-edu.in') ? (
-                                                <div className="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center gap-1">
-                                                    <Shield className="w-3 h-3 text-emerald-500" />
-                                                    <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-wider">Internal Student</span>
+                                            {isLoading ? (
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                                                    <span>Connecting...</span>
                                                 </div>
-                                            ) : email && (
-                                                <div className="px-2.5 py-0.5 bg-white/5 border border-white/10 rounded-full flex items-center gap-1">
-                                                    <Globe className="w-3 h-3 text-white/40" />
-                                                    <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider">External Student</span>
-                                                </div>
+                                            ) : (
+                                                <>
+                                                    <GoogleIcon />
+                                                    <span>Continue with Google</span>
+                                                </>
                                             )}
-                                        </div>
-                                        <p className="text-white/75 font-medium text-xs">Awesome! Let's get your fest pass ready with a few details.</p>
-                                    </div>
+                                        </button>
 
-                                    <form onSubmit={handleFinalSubmit} className="space-y-4">
-                                        <div className="space-y-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-[1px] flex-1 bg-white/5" />
+                                            <span className="text-[9px] font-bold text-white/70 uppercase tracking-[0.2em]">or Email</span>
+                                            <div className="h-[1px] flex-1 bg-white/5" />
+                                        </div>
+
+                                        <form onSubmit={handleSubmitStep1} className="space-y-4">
                                             <div className="space-y-1.5">
-                                                <label className="text-xs font-bold text-white/80 ml-1">Full Name</label>
-                                                <input required type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Full Name" className="w-full bg-white/[0.05] border border-white/20 rounded-2xl px-5 py-3 text-sm focus:border-emerald-500 outline-none transition-all placeholder:text-white/30 text-white" />
+                                                <label className="text-xs font-bold text-white/80 ml-1">Email Address</label>
+                                                <input
+                                                    required type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                                                    placeholder="name@university.edu"
+                                                    className="w-full bg-white/[0.05] border border-white/20 rounded-2xl px-5 py-3 text-sm focus:border-emerald-500 outline-none transition-all placeholder:text-white/30 text-white"
+                                                />
                                             </div>
                                             <div className="space-y-1.5">
-                                                <label className="text-xs font-bold text-white/80 ml-1">USN / Roll Number</label>
-                                                <input required type="text" value={usn} onChange={(e) => setUsn(e.target.value)} placeholder="College ID / USN" className="w-full bg-white/[0.05] border border-white/20 rounded-2xl px-5 py-3 text-sm focus:border-emerald-500 outline-none transition-all placeholder:text-white/30 text-white" />
+                                                <label className="text-xs font-bold text-white/80 ml-1">Password</label>
+                                                <input
+                                                    required type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+                                                    placeholder="Enter your password"
+                                                    className="w-full bg-white/[0.05] border border-white/20 rounded-2xl px-5 py-3 text-sm focus:border-emerald-500 outline-none transition-all placeholder:text-white/30 text-white"
+                                                />
                                             </div>
-                                            <div className="space-y-1.5">
-                                                <label className="text-xs font-bold text-white/80 ml-1">College</label>
-                                                <div className="relative">
-                                                    <select
-                                                        required
-                                                        value={college}
-                                                        onChange={(e) => {
-                                                            const value = e.target.value
-                                                            setCollege(value)
-                                                            if (value !== 'Other') {
-                                                                setOtherCollege('')
-                                                            }
-                                                        }}
-                                                        disabled={email.endsWith('@sode-edu.in')}
-                                                        className={`w-full bg-white/[0.05] border border-white/20 rounded-2xl px-5 py-3 text-sm focus:border-emerald-500 outline-none transition-all appearance-none cursor-pointer text-white ${email.endsWith('@sode-edu.in') ? 'opacity-60 cursor-not-allowed' : ''}`}
-                                                    >
-                                                        <option value="" disabled className="bg-[#0c1420]">Select Institution</option>
-                                                        {COLLEGES.map(c => <option key={c} value={c} className="bg-[#0c1420] text-white">{c}</option>)}
-                                                    </select>
-                                                    {!email.endsWith('@sode-edu.in') && <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />}
-                                                </div>
-                                                {email.endsWith('@sode-edu.in') && (
-                                                    <p className="text-[10px] text-emerald-400 ml-1 font-medium">Verified student domain detected.</p>
-                                                )}
-                                                {college === 'Other' && (
-                                                    <div className="mt-2">
-                                                        <label className="text-[11px] font-bold text-white/70 ml-1">Enter your college</label>
-                                                        <input
-                                                            required
-                                                            type="text"
-                                                            value={otherCollege}
-                                                            onChange={(e) => setOtherCollege(e.target.value)}
-                                                            placeholder="Your college name"
-                                                            className="mt-1.5 w-full bg-white/[0.05] border border-white/20 rounded-2xl px-5 py-3 text-sm focus:border-emerald-500 outline-none transition-all placeholder:text-white/30 text-white"
-                                                        />
+
+                                            <button
+                                                disabled={isLoading}
+                                                className="w-full min-h-[45px] md:min-h-[50px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl text-[13px] md:text-[14px] transition-all shadow-xl mt-3 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 hover-effect"
+                                            >
+                                                {isLoading && <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />}
+                                                {isRegister ? 'Create Account' : 'Login'}
+                                            </button>
+                                        </form>
+
+                                        <div className="text-center">
+                                            <button onClick={() => setIsRegister(!isRegister)} className="text-xs font-bold text-white/70 hover:text-emerald-500 transition-colors underline decoration-emerald-500/0 hover:decoration-emerald-500 underline-offset-3">
+                                                {isRegister ? 'Already have an account? Sign In' : "New attendee? Create Account"}
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                ) : (
+                                    <motion.div
+                                        key="onboarding"
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="space-y-4"
+                                    >
+                                        <div className="space-y-1.5 text-center lg:text-left">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <h2 className="text-xl lg:text-2xl font-bold tracking-tight">About You</h2>
+                                                {email.endsWith('@sode-edu.in') ? (
+                                                    <div className="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center gap-1">
+                                                        <Shield className="w-3 h-3 text-emerald-500" />
+                                                        <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-wider">Internal Student</span>
+                                                    </div>
+                                                ) : email && (
+                                                    <div className="px-2.5 py-0.5 bg-white/5 border border-white/10 rounded-full flex items-center gap-1">
+                                                        <Globe className="w-3 h-3 text-white/40" />
+                                                        <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider">External Student</span>
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className="space-y-1.5">
-                                                <label className="text-xs font-bold text-white/80 ml-1">Phone Number</label>
-                                                <input required type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91 XXX-XXX-XXXX" className="w-full bg-white/[0.05] border border-white/20 rounded-2xl px-5 py-3 text-sm focus:border-emerald-500 outline-none transition-all placeholder:text-white/30 text-white" />
-                                            </div>
+                                            <p className="text-white/75 font-medium text-xs">Awesome! Let's get your fest pass ready with a few details.</p>
                                         </div>
 
-                                        <button
-                                            disabled={isLoading}
-                                            className="w-full min-h-[50px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl text-sm transition-all shadow-xl active:scale-[0.98] mt-3 flex items-center justify-center gap-2 disabled:opacity-50 hover-effect"
-                                        >
-                                            {isLoading && <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />}
-                                            Finish Hub Setup
-                                        </button>
-                                    </form>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                                        <form onSubmit={handleFinalSubmit} className="space-y-4">
+                                            <div className="space-y-3">
+                                                <div className="space-y-1.5">
+                                                    <label className="text-xs font-bold text-white/80 ml-1">Full Name</label>
+                                                    <input required type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Full Name" className="w-full bg-white/[0.05] border border-white/20 rounded-2xl px-5 py-3 text-sm focus:border-emerald-500 outline-none transition-all placeholder:text-white/30 text-white" />
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <label className="text-xs font-bold text-white/80 ml-1">USN / Roll Number</label>
+                                                    <input required type="text" value={usn} onChange={(e) => setUsn(e.target.value)} placeholder="College ID / USN" className="w-full bg-white/[0.05] border border-white/20 rounded-2xl px-5 py-3 text-sm focus:border-emerald-500 outline-none transition-all placeholder:text-white/30 text-white" />
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <label className="text-xs font-bold text-white/80 ml-1">College</label>
+                                                    <div className="relative">
+                                                        <select
+                                                            required
+                                                            value={college}
+                                                            onChange={(e) => {
+                                                                const value = e.target.value
+                                                                setCollege(value)
+                                                                if (value !== 'Other') {
+                                                                    setOtherCollege('')
+                                                                }
+                                                            }}
+                                                            disabled={email.endsWith('@sode-edu.in')}
+                                                            className={`w-full bg-white/[0.05] border border-white/20 rounded-2xl px-5 py-3 text-sm focus:border-emerald-500 outline-none transition-all appearance-none cursor-pointer text-white ${email.endsWith('@sode-edu.in') ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                                        >
+                                                            <option value="" disabled className="bg-[#0c1420]">Select Institution</option>
+                                                            {COLLEGES.map(c => <option key={c} value={c} className="bg-[#0c1420] text-white">{c}</option>)}
+                                                        </select>
+                                                        {!email.endsWith('@sode-edu.in') && <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />}
+                                                    </div>
+                                                    {email.endsWith('@sode-edu.in') && (
+                                                        <p className="text-[10px] text-emerald-400 ml-1 font-medium">Verified student domain detected.</p>
+                                                    )}
+                                                    {college === 'Other' && (
+                                                        <div className="mt-2">
+                                                            <label className="text-[11px] font-bold text-white/70 ml-1">Enter your college</label>
+                                                            <input
+                                                                required
+                                                                type="text"
+                                                                value={otherCollege}
+                                                                onChange={(e) => setOtherCollege(e.target.value)}
+                                                                placeholder="Your college name"
+                                                                className="mt-1.5 w-full bg-white/[0.05] border border-white/20 rounded-2xl px-5 py-3 text-sm focus:border-emerald-500 outline-none transition-all placeholder:text-white/30 text-white"
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <label className="text-xs font-bold text-white/80 ml-1">Phone Number</label>
+                                                    <input required type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91 XXX-XXX-XXXX" className="w-full bg-white/[0.05] border border-white/20 rounded-2xl px-5 py-3 text-sm focus:border-emerald-500 outline-none transition-all placeholder:text-white/30 text-white" />
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                disabled={isLoading}
+                                                className="w-full min-h-[50px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl text-sm transition-all shadow-xl active:scale-[0.98] mt-3 flex items-center justify-center gap-2 disabled:opacity-50 hover-effect"
+                                            >
+                                                {isLoading && <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />}
+                                                Finish Hub Setup
+                                            </button>
+                                        </form>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </motion.div>
                     </div>
                 </div>

@@ -22,7 +22,7 @@ const orbitron = Orbitron({
 const QR_CODE_IMAGE = '/scanner-pay.jpeg'
 
 function QRPaymentContent() {
-    const { userData, isLoggedIn, isInitializing } = useApp()
+    const { userData, isLoggedIn, isInitializing, isAdmin } = useApp()
     const router = useRouter()
 
     const [utrNumber, setUtrNumber] = useState('')
@@ -35,16 +35,16 @@ function QRPaymentContent() {
     // Calculate payment amount
     const calculateAmount = () => {
         if (!userData?.email) return 0
-        
+
         // Base fee: 200 for SODE emails, 300 for others
         const isSodeEmail = userData.email.toLowerCase().includes('@sode')
         let amount = isSodeEmail ? 200 : 300
-        
+
         // Add 300 if user wants RoboSoccer
         if (includeRoboSoccer) {
             amount += 300
         }
-        
+
         return amount
     }
 
@@ -108,7 +108,7 @@ function QRPaymentContent() {
 
             const response = await fetch('/api/payment/verify-utr', {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
@@ -128,7 +128,7 @@ function QRPaymentContent() {
 
             setSuccess(true)
             setTimeout(() => {
-                router.push('/profile')
+                router.push(isAdmin ? '/admin' : '/profile')
             }, 5000)
         } catch (err: any) {
             setError(err.message || 'Verification failed. Please try again.')
@@ -199,16 +199,15 @@ function QRPaymentContent() {
                         >
                             <div className="flex items-start gap-4">
                                 {/* Checkbox */}
-                                <div className={`relative w-6 h-6 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                                    includeRoboSoccer 
-                                        ? 'bg-emerald-500 border-emerald-500' 
+                                <div className={`relative w-6 h-6 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors ${includeRoboSoccer
+                                        ? 'bg-emerald-500 border-emerald-500'
                                         : 'bg-transparent border-white/30'
-                                }`}>
+                                    }`}>
                                     {includeRoboSoccer && (
                                         <CheckCircle className="w-4 h-4 text-black" />
                                     )}
                                 </div>
-                                
+
                                 {/* Text */}
                                 <div className="flex-1">
                                     <div className="flex items-center justify-between mb-1">
@@ -232,7 +231,7 @@ function QRPaymentContent() {
                             <p className="text-xs font-black text-emerald-500 uppercase tracking-[0.2em]">
                                 Payment Amount
                             </p>
-                            
+
                             <div className="space-y-3">
                                 {/* Base Fee */}
                                 <div className="flex justify-between items-center text-sm">
@@ -243,7 +242,7 @@ function QRPaymentContent() {
                                         ₹{userData?.email?.toLowerCase().includes('@sode') ? '200' : '300'}
                                     </span>
                                 </div>
-                                
+
                                 {/* RoboSoccer Fee */}
                                 {includeRoboSoccer && (
                                     <div className="flex justify-between items-center text-sm">
@@ -251,10 +250,10 @@ function QRPaymentContent() {
                                         <span className="text-white font-bold">₹300</span>
                                     </div>
                                 )}
-                                
+
                                 {/* Divider */}
                                 <div className="border-t border-emerald-500/20 my-3"></div>
-                                
+
                                 {/* Total */}
                                 <div className="flex justify-between items-center">
                                     <span className="text-emerald-400 font-bold text-lg uppercase tracking-wide">
@@ -383,7 +382,7 @@ function QRPaymentContent() {
                         {/* Back Link */}
                         <div className="text-center pt-4 border-t border-white/5">
                             <Link
-                                href="/profile"
+                                href={isAdmin ? "/admin" : "/profile"}
                                 className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-emerald-400 font-medium transition-colors group"
                             >
                                 <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" />

@@ -143,7 +143,7 @@ const TechContentCard = ({ children, theme }: any) => {
 export default function EventDetailsPage() {
     const { id } = useParams()
     const router = useRouter()
-    const { userData, addToCart, cart } = useApp()
+    const { userData, addToCart, cart, isAdmin } = useApp()
 
     const [mission, setMission] = useState<any | null>(null)
     const [isVideoPlaying, setIsVideoPlaying] = useState(false)
@@ -177,13 +177,13 @@ export default function EventDetailsPage() {
             if (!userData?.hasRoboSoccer) {
                 // router.push('/notify?addon=robo-soccer')
                 // temp
-                router.push('/profile');
+                router.push(isAdmin ? '/admin' : '/profile');
                 return
             }
         } else if (!userData?.hasPaid) {
             // router.push('/notify')
             // temp
-            router.push('/profile');
+            router.push(isAdmin ? '/admin' : '/profile');
             return
         }
     }

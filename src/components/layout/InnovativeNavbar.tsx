@@ -41,7 +41,7 @@ const NAV_LINKS = [
 
 export function InnovativeNavbar() {
     const pathname = usePathname()
-    const { isLoggedIn, cart, pageTheme } = useApp()
+    const { isLoggedIn, cart, pageTheme, isAdmin } = useApp()
 
     const [isMobile, setIsMobile] = useState(false)
     const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -219,6 +219,23 @@ export function InnovativeNavbar() {
                                 </div>
                                 <span className={cn("text-[8px] xs:text-[9px] md:text-[11px] tracking-[0.1em] xs:tracking-[0.2em] font-bold uppercase transition-all duration-300", (pathname === '/profile' || pathname === '/login') ? "theme-nav-accent drop-shadow-[0_0_8px_rgba(var(--theme-rgb),0.8)]" : "text-white/95")}>{isLoggedIn ? 'PROFILE' : 'LOGIN'}</span>
                             </Link>
+
+                            {/* ADMIN DOCK ITEM */}
+                            {isAdmin && (
+                                <Link href="/admin" onTouchStart={(e) => e.currentTarget.click()} prefetch={true} className="group relative z-10 h-full flex flex-col items-center justify-center gap-1 flex-1 min-w-0 md:min-w-[80px] cursor-pointer touch-manipulation pointer-events-auto">
+                                    <div className={cn("relative p-2.5 xs:p-3.5 rounded-2xl transition-all duration-300", pathname.startsWith('/admin') ? "text-white" : "text-white/60 group-hover:text-white md:group-hover:bg-white/5")}>
+                                        {pathname.startsWith('/admin') && (
+                                            <motion.div
+                                                layoutId="active-pill"
+                                                className="absolute inset-0 theme-nav-bg rounded-2xl theme-nav-glow -z-10"
+                                                transition={{ type: 'spring', duration: 0.6 }}
+                                            />
+                                        )}
+                                        <LayoutGrid size={isMobile ? 22 : 24} className="text-emerald-400 group-hover:text-emerald-300 transition-colors" />
+                                    </div>
+                                    <span className={cn("text-[8px] xs:text-[9px] md:text-[11px] tracking-[0.1em] xs:tracking-[0.2em] font-bold uppercase transition-all duration-300", pathname.startsWith('/admin') ? "theme-nav-accent drop-shadow-[0_0_8px_rgba(var(--theme-rgb),0.8)]" : "text-emerald-500")}>ADMIN</span>
+                                </Link>
+                            )}
                         </div>
 
                         <div className="absolute top-0 left-0 w-12 h-12 border-l-2 border-t-2 border-[rgba(var(--theme-rgb),0.4)] rounded-tl-[2.5rem] shadow-[-5px_-5px_15px_rgba(var(--theme-rgb),0.1)]" />

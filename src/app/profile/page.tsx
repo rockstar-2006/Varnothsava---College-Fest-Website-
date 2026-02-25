@@ -7,7 +7,7 @@ import {
     ShieldCheck, QrCode, LogOut,
     Edit3, Award, Trophy, GraduationCap, CheckCircle,
     Settings, Globe, Calendar, Clock, CreditCard,
-    BookOpen, Sparkles, ChevronRight, LayoutDashboard,
+    BookOpen, Sparkles, ChevronRight, LayoutGrid, LayoutDashboard,
     ArrowRight, MapPin, Link2, X, Fingerprint, Eye, Users
 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
@@ -191,7 +191,7 @@ const CountUp = ({ end, duration = 1.5 }: { end: number, duration?: number }) =>
 // --- MAIN PAGE ---
 
 export default function ProfilePage() {
-    const { userData, logout, isLoggedIn, needsOnboarding, mountUser, updateAvatar, updateProfile } = useApp()
+    const { userData, logout, isLoggedIn, needsOnboarding, mountUser, updateAvatar, updateProfile, isAdmin } = useApp()
     const router = useRouter()
     const [mounted, setMounted] = useState(false)
     const [activeModal, setActiveModal] = useState<'settings' | 'qr' | 'scanner' | 'editProfile' | 'registrationDetails' | 'payment' | null>(null)
@@ -399,6 +399,18 @@ export default function ProfilePage() {
                                 </button>
                             </div>
                         </AnimatedBorderCard>
+
+                        {isAdmin && (
+                            <motion.button
+                                whileHover={{ scale: 1.02, backgroundColor: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.4)' }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => router.push('/admin')}
+                                className="flex items-center gap-4 px-8 py-5 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl text-emerald-400 font-bold uppercase tracking-[0.2em] text-[10px] transition-all shadow-xl group h-full whitespace-nowrap"
+                            >
+                                <LayoutGrid size={18} />
+                                ADMIN
+                            </motion.button>
+                        )}
 
                         <motion.button
                             whileHover={{ scale: 1.02, backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.4)' }}

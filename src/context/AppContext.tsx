@@ -4,6 +4,8 @@ import { auth, getAuthToken, getCurrentUser, loginRequired, loginWithEmail, sign
 import { useRouter } from 'next/navigation'
 import React, { createContext, useContext, useState, useEffect } from 'react'
 
+export type AdminRole = 'SUPER_ADMIN' | 'COORDINATOR' | 'FINANCE' | 'VOLUNTEER';
+
 export interface UserData {
     id: string
     name: string
@@ -17,6 +19,8 @@ export interface UserData {
     registeredEvents: { id: string, eventId: string, teamName: string }[]
     avatar: string
     studentType: 'internal' | 'external'
+    role?: AdminRole
+    isBlocked?: boolean
     // Optional fields
     age?: string
     idCardUrl?: string
@@ -58,7 +62,8 @@ interface AppContextType {
     isSiteLoaded: boolean,
     setIsSiteLoaded: (val: boolean) => void,
     pageTheme: PageTheme | null,
-    setPageTheme: (theme: PageTheme | any) => void
+    setPageTheme: (theme: PageTheme | any) => void,
+    isAdmin: boolean // Added for RBAC
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -102,6 +107,7 @@ async function getUserData(currentUser?: any) {
 export function AppProvider({ children }: { children: React.ReactNode }) {
     const [cart, setCart] = useState<Event[]>([])
     const [isLoggedIn, setIsLoggedIn] = useState(false)
+    const [isAdmin, setIsAdmin] = useState(false)
     const [isInitializing, setIsInitializing] = useState(true)
     const [userData, setUserData] = useState<UserData | null>(null)
     const [needsOnboarding, setNeedsOnboarding] = useState(false)
@@ -119,6 +125,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             } else {
                 // User logged out - reset all state
                 setIsLoggedIn(false);
+                setIsAdmin(false);
                 setUserData(null);
                 setNeedsOnboarding(false);
                 setIsInitializing(false);
@@ -134,10 +141,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (currentUser) {
             setIsInitializing(true);
             try {
+                // Get ID token result specifically to check for custom claims
+                const idTokenResult = await currentUser.getIdTokenResult();
+                const role = idTokenResult.claims.role as AdminRole | undefined;
+
+                setIsAdmin(!!role);
+
                 const data = await getUserData(currentUser);
                 if (data) {
+                    // Check if user is blocked
+                    if (data.isBlocked) {
+                        alert("Your account has been blocked. Please contact the administrator.");
+                        signOut();
+                        setIsLoggedIn(false);
+                        setUserData(null);
+                        setIsInitializing(false);
+                        return;
+                    }
                     // User has complete profile
-                    setUserData(data);
+                    setUserData({ ...data, role }); // Merge role from claims
                     setIsLoggedIn(true);
                     setNeedsOnboarding(false);
                 } else {
@@ -164,6 +186,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         } else {
             // No user logged in
             setIsLoggedIn(false);
+            setIsAdmin(false);
             setUserData(null);
             setNeedsOnboarding(false);
             setIsInitializing(false);
@@ -195,6 +218,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             if (user) {
                 const data = await getUserData(user);
                 if (data) {
+                    if (data.isBlocked) {
+                        alert("Your account has been blocked. Please contact the administrator.");
+                        signOut();
+                        return;
+                    }
                     setUserData(data);
                     setIsLoggedIn(true);
                     setNeedsOnboarding(false);
@@ -382,7 +410,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             isSiteLoaded,
             setIsSiteLoaded,
             pageTheme,
-            setPageTheme
+            setPageTheme,
+            isAdmin
         }}>
             {children}
         </AppContext.Provider>

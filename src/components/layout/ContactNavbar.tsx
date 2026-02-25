@@ -11,7 +11,7 @@ export function ContactNavbar() {
     const [isOpen, setIsOpen] = useState(false)
     const [labelIndex, setLabelIndex] = useState(0)
     const pathname = usePathname()
-    const { pageTheme } = useApp()
+    const { pageTheme, isAdmin } = useApp()
 
     const labels = ["MENU", "CONTACT", "TEAM"]
 
@@ -156,6 +156,24 @@ export function ContactNavbar() {
                         >
                             Developers
                         </Link>
+
+                        {/* Admin Link for Authorized Users */}
+                        {isAdmin && (
+                            <>
+                                <div className="w-full h-[1px] bg-white/10 sm:w-1.5 sm:h-1.5 sm:rounded-full sm:bg-white/50 sm:my-0 my-1" style={{ boxShadow: `0 0 4px ${themeColor}40` }} />
+                                <Link
+                                    href="/admin"
+                                    className="text-[15px] sm:text-sm font-extrabold tracking-[0.18em] text-emerald-400 hover:text-emerald-300 transition-all duration-150 uppercase text-center hover:scale-[1.04] active:scale-95 flex items-center justify-center gap-2"
+                                    style={{
+                                        textShadow: `0 0 10px rgba(16,185,129,0.7), 0 0 2px #000`,
+                                        letterSpacing: '0.18em',
+                                    }}
+                                    onClick={() => setIsOpen(false)}
+                                >
+                                    Admin Portal
+                                </Link>
+                            </>
+                        )}
                     </motion.div>
                 )}
             </AnimatePresence>

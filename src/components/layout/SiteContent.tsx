@@ -13,8 +13,9 @@ export function SiteContent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname()
 
     const isRulebook = pathname === '/rulebook'
+    const isAdmin = pathname?.startsWith('/admin')
 
-    if (isRulebook) {
+    if (isRulebook || isAdmin) {
         return (
             <>
                 {children}
