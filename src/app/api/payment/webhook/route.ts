@@ -9,6 +9,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { db, fieldValue as FieldValue } from '@/lib/firebaseAdmin'
+import { fetchOrderDetails, fetchPaymentDetails } from '@/lib/razorpay'
+import { PaymentRecord } from '@/types/payment'
 
 /**
  * Verify webhook signature
@@ -147,16 +149,47 @@ async function handlePaymentCaptured(payment: any) {
         const userId = payment.notes?.user_id
         const hasRoboSoccer = payment.notes?.include_robo_soccer === 'yes'
 
-        const paymentRef = db.collection('payments').doc(paymentId)
+        const paymentRef = db.collection('payments').doc(paymentId);
+
+        // const userId = order.notes?.user_id
+        const userEmail = payment.notes?.user_email;
+        
+                // 6. Prepare Payment Method details
+        const paymentMethodDetails: any = {
+            type: payment.method || 'unknown',
+        }
+        if (payment.acquirer_data?.upi_transaction_id || payment.vpa) {
+            paymentMethodDetails.upi_transaction_id = payment.acquirer_data?.upi_transaction_id || payment.vpa
+        }
+        if (payment.card?.last4) {
+            paymentMethodDetails.card_last4 = payment.card.last4
+        }
+        if (payment.bank) paymentMethodDetails.bank = payment.bank
+        if (payment.wallet) paymentMethodDetails.wallet = payment.wallet
+        
+        const now = new Date().toISOString()
+                // 7. Prepare and Store Record
+        const paymentRecord: PaymentRecord = {
+            razorpay_payment_id: payment.id,
+            razorpay_order_id: payment.order_id,
+            razorpay_signature: '',
+            amount: typeof payment.amount === 'number' ? payment.amount : 0,
+            currency: payment.currency || 'INR',
+            status: payment.status === 'captured' ? 'captured' : 'authorized',
+            user_email: userEmail as string,
+            student_type: (userEmail as string)?.toLowerCase().endsWith('@sode-edu.in') ? 'internal' : 'external',
+            payment_method: payment.method || 'unknown',
+            payment_method_details: paymentMethodDetails,
+            paid_at: new Date(payment.created_at * 1000).toISOString(),
+            notes: payment.notes || {},
+            user_id: userId,
+            created_at: payment.created_at ? new Date(payment.created_at * 1000).toISOString() : now,
+            updated_at: now,
+        }
 
         await db.runTransaction(async (transaction) => {
             // 1. Update payment record
-            transaction.set(paymentRef, {
-                status: 'captured',
-                captured_at: new Date().toISOString(),
-                updated_at: FieldValue.serverTimestamp(),
-                webhook_event: 'payment.captured'
-            }, { merge: true })
+            transaction.set(paymentRef, paymentRecord, { merge: true })
 
             // 2. Update user status if userId exists
             if (userId) {
