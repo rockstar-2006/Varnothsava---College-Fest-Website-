@@ -233,7 +233,7 @@ export const missions: Event[] = [
         category: "Coding",
         description: "PC-based technical challenge designed to test your logical thinking, debugging skills, and problem-solving ability.This event rewards observation and reasoning, not memorization or speed alone.",
         rules: [
-    "Team of 2 - 4 Members",
+    "Team of 2 - 3 Members",
     "Each team must use one system only.",
     "Search for hidden flags embedded in code, files, and programs.",
     "Challenges may involve code, logic, and analysis.",
