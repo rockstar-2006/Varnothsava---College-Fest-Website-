@@ -566,17 +566,55 @@ export function EventGrid({ missions }: EventGridProps) {
                         </div>
                     </div>
 
-                    {/* Standard Team Event Note */}
+                    {/* Compact Simple Team Guide */}
                     <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="header-reveal w-full mb-8 relative cursor-default"
+                        className="header-reveal w-full mb-6 relative cursor-default"
                     >
-                        <div className="bg-red-500/10 border border-red-500/20 backdrop-blur-md rounded-xl py-4 px-6 flex flex-col md:flex-row items-center justify-center gap-4">
-                            <Info className="w-5 h-5 text-red-500 shrink-0" />
-                            <p className="text-xs md:text-sm font-bold text-red-500 uppercase tracking-wider text-center">
-                                For team events, only the team leader should put the profile codes of their team mates and form a team.
-                            </p>
+                        <div className="bg-[#1a0505]/95 border border-red-500/30 backdrop-blur-xl rounded-[1.5rem] py-4 px-5 flex flex-col xl:flex-row items-center justify-between gap-4 shadow-[0_0_30px_rgba(239,68,68,0.15)] overflow-hidden">
+                            <div className="flex items-center gap-3 shrink-0">
+                                <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-500">
+                                    <Info size={16} />
+                                </div>
+                                <div className="text-left">
+                                    <h3 className="text-sm md:text-base font-black text-white uppercase tracking-tight">Team Join Guide</h3>
+                                    <p className="text-[9px] font-bold text-red-400 uppercase tracking-widest leading-none">Pay Once, Join Every Event!</p>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-4 flex-1">
+                                <div className="flex items-center gap-3 bg-white/[0.03] p-2 md:p-3 xl:p-0 rounded-xl xl:bg-transparent border border-white/5 xl:border-none group">
+                                    <span className="text-[9px] font-black text-red-500/40 group-hover:text-red-500 transition-colors uppercase">Step 01</span>
+                                    <p className="text-[10px] md:text-xs font-bold text-white/90 uppercase leading-none">Pay <span className="text-red-400 italic">once</span> for all events</p>
+                                </div>
+                                <div className="hidden xl:block w-px h-4 bg-red-500/10" />
+                                <div className="flex items-center gap-3 bg-white/[0.03] p-2 md:p-3 xl:p-0 rounded-xl xl:bg-transparent border border-white/5 xl:border-none group">
+                                    <span className="text-[9px] font-black text-red-500/40 group-hover:text-red-500 transition-colors uppercase">Step 02</span>
+                                    <p className="text-[10px] md:text-xs font-bold text-white/90 uppercase leading-none">Get friend's ID from <span className="text-red-400">profile page</span></p>
+                                </div>
+                                <div className="hidden xl:block w-px h-4 bg-red-500/10" />
+                                <div className="flex items-center gap-3 bg-white/[0.03] p-2 md:p-3 xl:p-0 rounded-xl xl:bg-transparent border border-white/5 xl:border-none group">
+                                    <span className="text-[9px] font-black text-red-500/40 group-hover:text-red-500 transition-colors uppercase">Step 03</span>
+                                    <p className="text-[10px] md:text-xs font-bold text-white/90 uppercase leading-none">Leader <span className="text-red-400">registers</span> group</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2 bg-red-500/10 px-3 py-1.5 rounded-full border border-red-500/20 whitespace-nowrap">
+                                    <span className="w-1 h-1 rounded-full bg-red-500 animate-pulse" />
+                                    <p className="text-[8px] md:text-[9px] font-black text-red-400 uppercase tracking-widest italic leading-none">All-Access Pass</p>
+                                </div>
+                                <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10 whitespace-nowrap">
+                                    <p className="text-[8px] md:text-[9px] font-black text-white/60 uppercase tracking-widest italic leading-none">No Pass = No Entry</p>
+                                </div>
+                            </div>
+
+                            {/* Mobile Scroll Indicator */}
+                            <div className="md:hidden flex flex-col items-center gap-1 mt-2 w-full pt-4 border-t border-white/5">
+                                <span className="text-[9px] font-black text-red-400 uppercase tracking-[0.4em] animate-pulse">Scroll to Explore</span>
+                                <ChevronDown className="w-3 h-3 text-red-500/40 animate-bounce" />
+                            </div>
                         </div>
                     </motion.div>
 

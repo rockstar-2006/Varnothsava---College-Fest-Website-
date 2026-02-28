@@ -58,7 +58,9 @@ interface AppContextType {
     isSiteLoaded: boolean,
     setIsSiteLoaded: (val: boolean) => void,
     pageTheme: PageTheme | null,
-    setPageTheme: (theme: PageTheme | any) => void
+    setPageTheme: (theme: PageTheme | any) => void,
+    isChatOpen: boolean,
+    setIsChatOpen: (val: boolean) => void
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -107,6 +109,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const [needsOnboarding, setNeedsOnboarding] = useState(false)
     const [isSiteLoaded, setIsSiteLoaded] = useState(false)
     const [pageTheme, setPageTheme] = useState<PageTheme | null>(null)
+    const [isChatOpen, setIsChatOpen] = useState(false)
     const router = useRouter();
 
     useEffect(() => {
@@ -382,7 +385,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             isSiteLoaded,
             setIsSiteLoaded,
             pageTheme,
-            setPageTheme
+            setPageTheme,
+            isChatOpen,
+            setIsChatOpen
         }}>
             {children}
         </AppContext.Provider>

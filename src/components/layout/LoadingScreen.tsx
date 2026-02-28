@@ -277,7 +277,11 @@ function LoadingContent() {
                     if ((p >= 100 && isFullyReady && hasMinTime) || isTimeout) {
                         clearInterval(timer)
                         console.log('Loading complete:', { isDOMReady, imagesLoaded, fontsReady, assetsReady, elapsed })
-                        setTimeout(() => setStep('READY'), 200)
+
+                        // SKIP INTERMEDIATE STEPS AND REDIRECT TO LANDING PAGE
+                        setVisible(false)
+                        setIsSiteLoaded(true)
+                        sessionStorage.setItem('fest_initial_loaded', 'true')
                         return 100
                     }
 
@@ -662,17 +666,17 @@ function LoadingContent() {
                     </div>
 
                     {/* Corner HUD Metrics - Sharp & Visible */}
-<div className="absolute top-8 left-8 md:top-12 md:left-16 hidden md:flex flex-col gap-2 drop-shadow-lg">
+                    <div className="absolute top-8 left-8 md:top-12 md:left-16 hidden md:flex flex-col gap-2 drop-shadow-lg">
                         <div className="flex items-center gap-3 font-black text-[10px] md:text-xs tracking-[0.3em] uppercase" style={{ color: themeConfig.color }}>
                             <Terminal className="w-4 h-4" /> Hosted by SMVITM
                         </div>
                         <div className="h-[1px] w-24 bg-gradient-to-r from-white/40 to-transparent" />
                         <div className="text-white/60 text-[8px] md:text-[9px] font-mono tracking-widest uppercase">
-                            Since 2014 
+                            Since 2014
                         </div>
                     </div>
 
-<div className="absolute top-8 right-8 md:top-12 md:right-16 hidden md:flex text-right flex-col gap-2 items-end drop-shadow-lg">
+                    <div className="absolute top-8 right-8 md:top-12 md:right-16 hidden md:flex text-right flex-col gap-2 items-end drop-shadow-lg">
                         <div className="flex items-center justify-end gap-3 font-black text-[10px] md:text-xs tracking-[0.3em] uppercase" style={{ color: themeConfig.color }}>
                             Edition 2026 <Star className="w-4 h-4" />
                         </div>
@@ -798,7 +802,7 @@ function LoadingContent() {
                                             >
                                                 FESTIVAL
                                             </span>
-                                           
+
                                         </motion.div>
                                     </div>
 

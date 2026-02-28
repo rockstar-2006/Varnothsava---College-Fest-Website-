@@ -19,7 +19,7 @@ export interface Event {
     brochureUrl?: string
     minTeamSize: number
     maxTeamSize: number
-    note?:string[]
+    note?: string[]
     rounds?: {
         round1?: string[]
         round2?: string[]
@@ -84,33 +84,28 @@ export const missions: Event[] = [
         title: "Prompt To Product",
         type: "Technical",
         category: "AI/Product",
-        description: "Prompt to Product is a time-bound product development challenge where teams use AI tools to design, build, and deploy a functional digital product based on a given problem statement.",
+        description: "Prompt to Product is an AI-driven technical event that challenges participants to transform thinking, observation, and logical reasoning into meaningful digital outcomes using AI tools.",
         rules: [
-            " Team of 2 Members",
-            "Problem statement will be revealed 30 minutes before the event begins.",
-            "During the first 30 mins: Analyze problem, plan features, design prompt strategies.",
-            "Product development must begin exactly at the event start time.",
-            "Total event duration is 4 hours (3hr building + 1hr evaluation).",
-            "Teams may use any AI tools (Lovable, Antigravity, ChatGPT, Claude, Copilot, etc.).",
-            "Any technology stack or platform is allowed. Internet access is permitted.",
-            "Using AI to generate major parts is allowed but must show intentional/guided usage.",
-            "Each team must submit 5 key prompts with a brief explanation.",
-            "Final product must be deployed and accessible via a live URL.",
-            "Must demonstrate: Complete user flow, core functionality, meaningful AI use.",
-            "No pre-built projects or prepared code allowed.",
-            "Plagiarism of prompts, code, or design results in disqualification."
+            "Team of exactly 2 members.",
+            "No prior knowledge of coding is required; focus is on effective AI prompting.",
+            "Total Event Duration: 4 Hours.",
+            "Round 1 (Image Replication): Replicate a complex AI image shown only once using precise prompts. Internet allowed only for AI tools.",
+            "Round 2 (AI Product Revival): Fix and revive a broken repository through 5 specific phases using AI tools (90 minutes).",
+            "Allowed tools: ChatGPT, Gemini, Copilot, DeepSeek, etc. Internet usage restricted to these tools.",
+            "Manual coding is not mandatory; retrieval and correction of systems are expected.",
+            "Final submission includes: Key prompts used, outputs for all 5 phases, and the revived product.",
+            "Evaluation based on: Prompt effectiveness, Logical approach, Accuracy of outputs, and Hidden details discovered."
         ],
         evaluation: [
-            "Problem Understanding & Idea Clarity",
-            "AI Usage & Prompt Strategy",
-            "Product Functionality",
-            "Innovation & Smart Thinking",
-            "User Experience & Presentation",
-            "Practical Feasibility"
+            "Effectiveness of prompts used",
+            "Logical thinking and problem-solving approach",
+            "Accuracy of replicated or revived outputs",
+            "Number of hidden details or outputs successfully achieved",
+            "Overall transformation from input to functional outcome"
         ],
         prizePool: "₹12,000+",
-        coordinators: ["Dr. Rashmi", "Suraj Bhagwat", "BHUSHAN POOJARY"],
-        coordinatorsContact: ["9686143861", "8660293807", "7381709385"],
+        coordinators: ["Suraj Bhagwat", "Prarthana"],
+        coordinatorsContact: ["8660293807", "6363530119"],
         fee: 200,
         visual: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&q=80",
         date: "11-MARCH",
@@ -118,9 +113,9 @@ export const missions: Event[] = [
         minTeamSize: 2,
         maxTeamSize: 2,
         teamFormate: "Group",
-        tags: ['AI', 'Product', 'Gen-AI'],
+        tags: ['AI', 'Product', 'Prompt Engineering'],
         team: 'Group',
-        whatsappLink:"https://chat.whatsapp.com/KkqtB4iUxlh20khnW9NM6o?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/KkqtB4iUxlh20khnW9NM6o?mode=gi_t"
     },
     {
         id: "TECH-003",
@@ -156,7 +151,7 @@ export const missions: Event[] = [
         teamFormate: "Group",
         tags: ['Electronics', 'Circuit', 'Logic'],
         team: 'Group',
-        whatsappLink:"https://chat.whatsapp.com/GqXLxK72ltt1KochD4n89I?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/GqXLxK72ltt1KochD4n89I?mode=gi_t"
     },
     {
         id: "TECH-004",
@@ -195,7 +190,7 @@ export const missions: Event[] = [
         teamFormate: "Group",
         tags: ['Robotics', 'Hardware', 'Sensors'],
         team: 'Group',
-        whatsappLink:"https://chat.whatsapp.com/GQpfde9AYbM13EYof2IkMw?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/GQpfde9AYbM13EYof2IkMw?mode=gi_t"
     },
     {
         id: "GAME-001",
@@ -224,7 +219,7 @@ export const missions: Event[] = [
         teamFormate: "Group",
         tags: ['5v5', 'FPS', 'Valorant'],
         team: 'Group',
-        whatsappLink:"https://chat.whatsapp.com/KsswM38wb5r7hy4aTjvdfy?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/KsswM38wb5r7hy4aTjvdfy?mode=gi_t"
     },
     {
         id: "TECH-005",
@@ -233,57 +228,57 @@ export const missions: Event[] = [
         category: "Coding",
         description: "PC-based technical challenge designed to test your logical thinking, debugging skills, and problem-solving ability.This event rewards observation and reasoning, not memorization or speed alone.",
         rules: [
-    "Team of 2 - 3 Members",
-    "Each team must use one system only.",
-    "Search for hidden flags embedded in code, files, and programs.",
-    "Challenges may involve code, logic, and analysis.",
-    "Teams may request hints at a penalty cost.",
-    "Submit all found flags and explanations for discovery.",
-    "Teams must submit required outputs in the specified format.",
-    "Internet access is allowed unless stated otherwise during the event.",
-    "External tools/websites may be used where permitted.",
-    "Inter-team communication is strictly prohibited.",
-    "Internet access is not allowed unless specified for specific tasks (if applicable to certain rounds).",
-    "Any form of copying or unfair collaboration will lead to disqualification.",
-    "Attempting to bypass the system or exploit unintended loopholes may result in disqualification.",
-    "Judges’ decisions will be final."
-]
-,
+            "Team of 2 - 3 Members",
+            "Each team must use one system only.",
+            "Search for hidden flags embedded in code, files, and programs.",
+            "Challenges may involve code, logic, and analysis.",
+            "Teams may request hints at a penalty cost.",
+            "Submit all found flags and explanations for discovery.",
+            "Teams must submit required outputs in the specified format.",
+            "Internet access is allowed unless stated otherwise during the event.",
+            "External tools/websites may be used where permitted.",
+            "Inter-team communication is strictly prohibited.",
+            "Internet access is not allowed unless specified for specific tasks (if applicable to certain rounds).",
+            "Any form of copying or unfair collaboration will lead to disqualification.",
+            "Attempting to bypass the system or exploit unintended loopholes may result in disqualification.",
+            "Judges’ decisions will be final."
+        ]
+        ,
         rounds: {
-    round1: [
-        "Elimination Round (90 minutes).",
-        "This round consists of multiple technical and logical challenges.",
-        "Tasks may include coding, debugging, and analytical problem-solving.",
-        "Only a limited number of teams will qualify for the next round.",
-        "Hint Policy (Round 1 Only):",
-        "Teams may request hints if they are stuck.",
-        "Each hint carries a 5-minute time penalty.",
-        "Penalties are cumulative.",
-        "Hints must be requested through event coordinators only."
-    ],
-    round2: [
-        "Final Round (2 hours).",
-        "Only teams qualified from Round 1 will participate.",
-        "This round focuses on advanced reasoning and abstraction.",
-        "Difficulty level is significantly higher.",
-        "No hints will be provided in this round."
-    ]
-}
-,
+            round1: [
+                "Elimination Round (90 minutes).",
+                "This round consists of multiple technical and logical challenges.",
+                "Tasks may include coding, debugging, and analytical problem-solving.",
+                "Only a limited number of teams will qualify for the next round.",
+                "Hint Policy (Round 1 Only):",
+                "Teams may request hints if they are stuck.",
+                "Each hint carries a 5-minute time penalty.",
+                "Penalties are cumulative.",
+                "Hints must be requested through event coordinators only."
+            ],
+            round2: [
+                "Final Round (2 hours).",
+                "Only teams qualified from Round 1 will participate.",
+                "This round focuses on advanced reasoning and abstraction.",
+                "Difficulty level is significantly higher.",
+                "No hints will be provided in this round."
+            ]
+        }
+        ,
         evaluation: [
-    "Number of challenges solved.",
-    "Accuracy of solutions.",
-    "Quality of reasoning and explanations.",
-    "Time taken (including penalties, if any).",
-    "Top 3 teams will be declared winners."
-]
-,
-note: [
-    "Guessing without reasoning may not help.",
-    "Solving even part of the challenge is considered a strong performance.",
-    "Think carefully before requesting hints.",
-    "This event emphasizes thinking deeply over rushing."
-],
+            "Number of challenges solved.",
+            "Accuracy of solutions.",
+            "Quality of reasoning and explanations.",
+            "Time taken (including penalties, if any).",
+            "Top 3 teams will be declared winners."
+        ]
+        ,
+        note: [
+            "Guessing without reasoning may not help.",
+            "Solving even part of the challenge is considered a strong performance.",
+            "Think carefully before requesting hints.",
+            "This event emphasizes thinking deeply over rushing."
+        ],
 
         prizePool: "₹15,000+",
         coordinators: ["Ms. Ashwitha", "SUMEDH NAVADA", "Tejas Nayak"],
@@ -297,7 +292,7 @@ note: [
         teamFormate: "Group",
         tags: ['Cyber', 'Logic', 'Coding'],
         team: 'Group',
-        whatsappLink:"https://chat.whatsapp.com/GW3UgzaaoGjKRgXtZv1cfL?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/GW3UgzaaoGjKRgXtZv1cfL?mode=gi_t"
     },
     {
         id: "TECH-006",
@@ -339,7 +334,7 @@ note: [
             "Smart Transportation"
         ],
         team: 'Group',
-        whatsappLink:"https://chat.whatsapp.com/KoZFHTf8i4PINJ3ZwqhagI?mode=hqctswa"
+        whatsappLink: "https://chat.whatsapp.com/KoZFHTf8i4PINJ3ZwqhagI?mode=hqctswa"
 
 
     },
@@ -380,7 +375,7 @@ note: [
         teamFormate: "Group",
         tags: ['Aero', 'Design', 'Physics'],
         team: 'Group',
-        whatsappLink:"https://chat.whatsapp.com/EX4UXPyxREQ8P6fOgwGRjd?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/EX4UXPyxREQ8P6fOgwGRjd?mode=gi_t"
     },
     {
         id: "TECH-008",
@@ -411,7 +406,7 @@ note: [
         prizePool: "₹12,000",
         coordinators: ["Ms. Sthuthi", "Shreekiran Bhat", "Riston"],
         coordinatorsContact: ["8762840054", "7019267494", "9606721573"],
-        fee: 200,
+        fee: 300,
         visual: "https://images.unsplash.com/photo-1561557944-6e7860d1a7eb?w=1200&q=80",
         date: "11-MARCH",
         time: "10:00 AM",
@@ -420,7 +415,7 @@ note: [
         teamFormate: "Group",
         tags: ['Robotics', 'Sports', 'Mechanics'],
         team: 'Group',
-        whatsappLink:"https://chat.whatsapp.com/KidSfxcStJS2mBtawXhM97?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/KidSfxcStJS2mBtawXhM97?mode=gi_t"
     },
     {
         id: "GAME-002",
@@ -451,7 +446,7 @@ note: [
         teamFormate: "Group",
         tags: ['Squad', 'Mobile', 'BGMI'],
         team: 'Group',
-        whatsappLink:"https://chat.whatsapp.com/Gvgtq2CsGFDC6vHEAbMX5I?mode=gi_c"
+        whatsappLink: "https://chat.whatsapp.com/Gvgtq2CsGFDC6vHEAbMX5I?mode=gi_c"
     },
     {
         id: "MBA-001",
@@ -481,7 +476,7 @@ note: [
         maxTeamSize: 2,
         teamFormate: "Group",
         team: 'Group',
-        whatsappLink:"https://chat.whatsapp.com/IJ526vnuh8o7by4eBY7Ets"
+        whatsappLink: "https://chat.whatsapp.com/IJ526vnuh8o7by4eBY7Ets"
     },
     {
         id: "MBA-002",
@@ -511,7 +506,7 @@ note: [
         maxTeamSize: 3,
         teamFormate: "Group",
         team: 'Group',
-        whatsappLink:"https://chat.whatsapp.com/J4m8JwBiU0hIXcDXNX5Rf3?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/J4m8JwBiU0hIXcDXNX5Rf3?mode=gi_t"
     },
     {
         id: "MBA-003",
@@ -541,7 +536,7 @@ note: [
         maxTeamSize: 3,
         teamFormate: "Group",
         team: 'Group',
-        whatsappLink:"https://chat.whatsapp.com/IohwECqGg6pCGaH5kqsGqW"
+        whatsappLink: "https://chat.whatsapp.com/IohwECqGg6pCGaH5kqsGqW"
     },
     // --- CULTURAL EVENTS ---
 
@@ -572,7 +567,7 @@ note: [
         time: '9:00 AM',
         coordinatorsContact: ["9900656796", "9844101520", "7625093587"],
         team: 'Solo',
-        whatsappLink:'https://chat.whatsapp.com/LUrBSSlfDhX84z3U5Hr9H3?mode=gi_t'
+        whatsappLink: 'https://chat.whatsapp.com/LUrBSSlfDhX84z3U5Hr9H3?mode=gi_t'
     },
     {
         id: 'Group-Singing',
@@ -603,7 +598,7 @@ note: [
         time: "10:30 AM",
         coordinatorsContact: ['9741709922', '6363553296', '9591051497'],
         team: 'Group',
-        whatsappLink:"https://chat.whatsapp.com/HoO4nw0jx1QJGIhoAuWl2Y?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/HoO4nw0jx1QJGIhoAuWl2Y?mode=gi_t"
     },
     {
         id: 'Solo-Classical-Dance',
@@ -636,7 +631,7 @@ note: [
         time: '9:30 AM',
         coordinatorsContact: ['7483491283', '7022433574', '8073972157'],
         team: "Solo",
-        whatsappLink:"https://chat.whatsapp.com/GbNsbZQbt4nHdnw81N5mYJ?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/GbNsbZQbt4nHdnw81N5mYJ?mode=gi_t"
     },
     {
         id: 'Group-Western-Dance',
@@ -669,7 +664,7 @@ note: [
         time: '11:30 AM',
         coordinatorsContact: ['9945683675', '6361745283', '9036815985'],
         team: "Group",
-        whatsappLink:"https://chat.whatsapp.com/HxQGp0E6z4I6Yq0whtFY25?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/HxQGp0E6z4I6Yq0whtFY25?mode=gi_t"
     },
     {
         id: 'Stand-Up-Comedy',
@@ -698,7 +693,7 @@ note: [
         time: "12:00 PM",
         coordinatorsContact: ['8762840054', '8618231007', '6362786915'],
         team: "Solo",
-        whatsappLink:"https://chat.whatsapp.com/IjVXXJyNN5V6t4Qi3LU6BK"
+        whatsappLink: "https://chat.whatsapp.com/IjVXXJyNN5V6t4Qi3LU6BK"
     },
     {
         id: 'Face-Painting',
@@ -726,7 +721,7 @@ note: [
         time: "9:30 AM",
         coordinatorsContact: ['9606611417', '9108717638', '9108007378'],
         team: "Solo",
-        whatsappLink:"https://chat.whatsapp.com/G6TMEYqzS5m06RKp7OY1XR?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/G6TMEYqzS5m06RKp7OY1XR?mode=gi_t"
     },
     {
         id: 'Mehandi',
@@ -755,7 +750,7 @@ note: [
         coordinatorsContact: ['6360980426', '6361126213', '8310780821'],
         time: '10:30 AM',
         team: "Solo",
-        whatsappLink:"https://chat.whatsapp.com/Bdf9iuLx82TBGxsYmFgtLP?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/Bdf9iuLx82TBGxsYmFgtLP?mode=gi_t"
     },
     {
         id: 'Anime-Quiz',
@@ -784,7 +779,7 @@ note: [
         time: '9:00 AM',
         coordinatorsContact: ['9686143861', '9483480040', '6366021926'],
         team: "Group",
-        whatsappLink:"https://chat.whatsapp.com/LNdHlSYnUyu9DhK8W6XelZ?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/LNdHlSYnUyu9DhK8W6XelZ?mode=gi_t"
     },
     {
         id: 'Antakshari',
@@ -813,7 +808,7 @@ note: [
         time: '11:00 AM',
         coordinatorsContact: [' 9964379957', '6360258731', '8105052692'],
         team: "Group",
-        whatsappLink:"https://chat.whatsapp.com/Jj3pDST2vVM59sKNnKXp54?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/Jj3pDST2vVM59sKNnKXp54?mode=gi_t"
 
     },
 
@@ -852,7 +847,7 @@ note: [
         time: "9:30 AM",
         coordinatorsContact: ['9964819895', '7619303486', '9148249921'],
         team: "Group",
-        whatsappLink:"https://chat.whatsapp.com/HqfF3H17JeK1o5aBBBTijB?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/HqfF3H17JeK1o5aBBBTijB?mode=gi_t"
     },
     {
         id: 'Variety-Act',
@@ -900,7 +895,7 @@ note: [
         time: "2:00 PM",
         coordinatorsContact: ['9945683675', '8867469704', '6364100730'],
         team: "Group",
-        whatsappLink:"https://chat.whatsapp.com/CwDIYq8j85BDnkgmcuWWgo?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/CwDIYq8j85BDnkgmcuWWgo?mode=gi_t"
 
     }
     ,
@@ -932,7 +927,7 @@ note: [
         time: "10:30 AM",
         coordinatorsContact: ['9900977963', '7829690950', '9845855804'],
         team: "Group",
-        whatsappLink:"https://chat.whatsapp.com/FmEDTrP8XPM5KsGZIjnKcu?mode=gi_c"
+        whatsappLink: "https://chat.whatsapp.com/FmEDTrP8XPM5KsGZIjnKcu?mode=gi_c"
     },
     {
         id: 'Rangoli',
@@ -964,7 +959,7 @@ note: [
         time: '9:00 AM',
         coordinatorsContact: ['9741709922', '6361774398', '8431738571'],
         team: "Group",
-        whatsappLink:"https://chat.whatsapp.com/GxoxXHE1uiR8cmEydYOM9Q?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/GxoxXHE1uiR8cmEydYOM9Q?mode=gi_t"
     }
     ,
     {
@@ -1001,7 +996,7 @@ note: [
         time: '10:30 AM',
         coordinatorsContact: ['9686143861', '6361473453', '8310575239'],
         team: "Solo",
-        whatsappLink:"https://chat.whatsapp.com/CyrbFtXevJdJHB5WITDmmN?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/CyrbFtXevJdJHB5WITDmmN?mode=gi_t"
     }
     ,
     {
@@ -1033,7 +1028,7 @@ note: [
         time: "2:00 PM",
         coordinatorsContact: ['6360980426', '8073093293', '8762463944'],
         team: "Solo",
-        whatsappLink:"https://chat.whatsapp.com/GlIirINqyXNA4xDczVle0E?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/GlIirINqyXNA4xDczVle0E?mode=gi_t"
     }
     ,
     {
@@ -1068,7 +1063,7 @@ note: [
         time: "10:30 AM",
         coordinatorsContact: ['9900977963', '9448186715', '6363581583'],
         team: "Solo",
-        whatsappLink:"https://chat.whatsapp.com/KW5tqbt1FL12eVVIimkeLw?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/KW5tqbt1FL12eVVIimkeLw?mode=gi_t"
 
 
 
@@ -1107,7 +1102,7 @@ note: [
         location: 'Admin Block,Seminar Hall',
         coordinatorsContact: ['9535626843', '9880668999', '8123936830'],
         team: "Solo",
-        whatsappLink:"https://chat.whatsapp.com/BtbvmabgPm41ib6sl6LpX9?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/BtbvmabgPm41ib6sl6LpX9?mode=gi_t"
 
     }
     ,
@@ -1146,7 +1141,7 @@ note: [
         location: 'Admin Block,Seminar Hall',
         coordinatorsContact: ['9480390687', '9741487028', '8123936830'],
         team: "Group",
-        whatsappLink:"https://chat.whatsapp.com/IBnHFInfnWBCZOmXGgKHhW?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/IBnHFInfnWBCZOmXGgKHhW?mode=gi_t"
 
     }
 
