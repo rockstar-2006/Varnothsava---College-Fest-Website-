@@ -24,39 +24,7 @@ function RegisterContent() {
     const searchParams = useSearchParams()
     const { initiatePayment, checkPaymentStatus, isLoading, error, clearError } = useRazorpayPayment()
 
-    const allowedEmails:string[] = [
-        "test-razorpay1@gmail.com",
-        "test-razorpay2@sode-edu.in",
-        "test-razor3@gmail.com",
-        "test-razor4@gmail.com",
-        "test-razor5@gmail.com",
-        "test-razor6@gmail.com",
-        "test-razor7@gmail.com",
-        "test-razor8@gmail.com",
-        "test-razor9@gmail.com",
-        "test-razor10@gmail.com",
-        "test-razor11@gmail.com",
-        "test-razor12@gmail.com",
-        "test-razor13@gmail.com",
-        "test-razor14@gmail.com",
-        "test-razor15@gmail.com",
-        "test-razor16@gmail.com",
-        "test-razor17@sode-edu.in",
-        "test-razor18@sode-edu.in",
-        "razor1@gmail.com",
-        "razor2@gmail.com",
-        "razor3@gmail.com",
-        "razor4@gmail.com",
-        "razor5@gmail.com",
-        "razor6@sode-edu.in",
-        "razor7@sode-edu.in",
-        "razor8@sode-edu.in",
-        "razor9@sode-edu.in",
-        "razor10@sode-edu.in",
-
-        //test
-        "razor11@sode-edu.in",
-    ];
+    // Live Registration is now open for all verified users
 
     const [paymentStatus, setPaymentStatus] = useState<{
         hasPaid: boolean
@@ -145,7 +113,7 @@ function RegisterContent() {
         }, 1000)
     }
 
-    if(!userData?.email) {
+    if (!userData?.email) {
         return (
             <div className="min-h-screen bg-[#020202] flex items-center justify-center px-2 sm:px-4 py-8 sm:py-12">
                 <div className="text-center">
@@ -162,17 +130,7 @@ function RegisterContent() {
         )
     }
 
-    if(!allowedEmails.includes(userData?.email)) {
-        //coming soon message
-        return (
-            <div className="min-h-screen bg-[#020202] flex items-center justify-center px-2 sm:px-4 py-8 sm:py-12">
-                <div className="text-center">
-                    <h1 className="text-2xl sm:text-3xl font-bold text-white mb-4">Coming Soon</h1>
-                    <p className="text-gray-400">Registration is not yet open.</p>
-                </div>
-            </div>
-        )
-    }
+    // Registration is live for all authenticated users
 
     if (isInitializing || checkingStatus) {
         return (

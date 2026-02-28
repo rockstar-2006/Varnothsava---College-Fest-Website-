@@ -58,8 +58,8 @@ export default function RazorpayTestPage() {
                     <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
                         <span className="text-white font-medium">Script Tag in DOM</span>
                         <span className={`px-3 py-1 rounded-full text-sm font-semibold ${status.scriptLoaded
-                                ? 'bg-green-500/20 text-green-400'
-                                : 'bg-red-500/20 text-red-400'
+                            ? 'bg-green-500/20 text-green-400'
+                            : 'bg-red-500/20 text-red-400'
                             }`}>
                             {status.scriptLoaded ? '✅ Yes' : '❌ No'}
                         </span>
@@ -69,8 +69,8 @@ export default function RazorpayTestPage() {
                     <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
                         <span className="text-white font-medium">window.Razorpay Available</span>
                         <span className={`px-3 py-1 rounded-full text-sm font-semibold ${status.razorpayAvailable
-                                ? 'bg-green-500/20 text-green-400'
-                                : 'bg-red-500/20 text-red-400'
+                            ? 'bg-green-500/20 text-green-400'
+                            : 'bg-red-500/20 text-red-400'
                             }`}>
                             {status.razorpayAvailable ? '✅ Yes' : '❌ No'}
                         </span>

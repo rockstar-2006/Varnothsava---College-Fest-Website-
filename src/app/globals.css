@@ -89,7 +89,7 @@ body {
     /* Better for standard mobile feel */
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    user-select: none;
+    user-select: auto;
     /* Premium app feel */
     -webkit-tap-highlight-color: transparent;
 }
@@ -793,4 +793,27 @@ body.modal-open .innovative-navbar {
     .no-print {
         display: none !important;
     }
+}
+
+/* --- CHAT SCROLLBAR --- */
+.chat-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-track {
+    background: rgba(16, 185, 129, 0.05);
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(16, 185, 129, 0.3);
+    border-radius: 10px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(16, 185, 129, 0.5);
+}
+
+.chat-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(16, 185, 129, 0.3) transparent;
 }

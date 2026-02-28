@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
             return cleaned
         }
 
-        // 8. Prepare payment record
+        // AUDIT LOG: Payment Record Preparation
         const paymentRecord: Omit<PaymentRecord, 'user_id' | 'created_at' | 'updated_at'> = {
             razorpay_payment_id,
             razorpay_order_id,
@@ -142,6 +142,12 @@ export async function POST(request: NextRequest) {
             paid_at: new Date(paymentDetails.created_at * 1000).toISOString(),
             notes: paymentDetails.notes || {},
         }
+
+        console.log('--- PAYMENT VERIFICATION AUDIT LOG ---');
+        console.log(`Payment ID: ${razorpay_payment_id}`);
+        console.log(`Order ID: ${razorpay_order_id}`);
+        console.log(`Status: ${paymentRecord.status}`);
+        console.log(`Method: ${paymentRecord.payment_method}`);
 
         // Clean undefined values before storing
         const cleanedPaymentRecord = removeUndefined(paymentRecord) as Omit<PaymentRecord, 'user_id' | 'created_at' | 'updated_at'>

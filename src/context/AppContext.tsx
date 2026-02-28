@@ -63,7 +63,11 @@ interface AppContextType {
     setIsSiteLoaded: (val: boolean) => void,
     pageTheme: PageTheme | null,
     setPageTheme: (theme: PageTheme | any) => void,
-    isAdmin: boolean // Added for RBAC
+
+    isChatOpen: boolean,
+    setIsChatOpen: (val: boolean) => void,
+    isAdmin: boolean
+
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -113,6 +117,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const [needsOnboarding, setNeedsOnboarding] = useState(false)
     const [isSiteLoaded, setIsSiteLoaded] = useState(false)
     const [pageTheme, setPageTheme] = useState<PageTheme | null>(null)
+    const [isChatOpen, setIsChatOpen] = useState(false)
     const router = useRouter();
 
     useEffect(() => {
@@ -411,7 +416,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             setIsSiteLoaded,
             pageTheme,
             setPageTheme,
+
+            isChatOpen,
+            setIsChatOpen,
             isAdmin
+
         }}>
             {children}
         </AppContext.Provider>

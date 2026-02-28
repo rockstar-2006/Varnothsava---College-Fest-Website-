@@ -20,9 +20,9 @@ function Loader() {
 
 function Model() {
     // Load the GLTF file which references the external .bin and .jpg texture
-    const { scene } = useGLTF('/medallion.gltf')
+    const { scene } = useGLTF('/coin1.gltf')
 
-    return <primitive object={scene} scale={4.2} rotation={[0, Math.PI, 0]} />
+    return <primitive object={scene} scale={2.7} rotation={[0, Math.PI, 0]} />
 }
 
 export default function Fest3DModel() {
@@ -90,4 +90,4 @@ export default function Fest3DModel() {
     )
 }
 
-useGLTF.preload('/medallion.gltf')
+useGLTF.preload('/coin1.gltf')
