@@ -791,7 +791,7 @@ note: [
         title: 'Musical Marathon ',
         type: 'Cultural',
         category: 'Hobby Club',
-        description: 'Express your artistic talent through traditional and modern Mehandi designs.',
+        description: 'A vibrant musical face-off where participants continue songs from the last letter sung. Showcasing quick thinking, memory, and melody, Anthakshari fills the stage with rhythm, laughter, and energetic competition',
         rules: [
             "Team of 2 members",
             "The competition will have 3 rounds",

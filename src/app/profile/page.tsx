@@ -479,7 +479,7 @@ export default function ProfilePage() {
                                             <div className="relative w-28 md:w-36 h-28 md:h-36 rounded-[2rem] md:rounded-[2.5rem] p-1.5 bg-gradient-to-br from-emerald-500/50 via-cyan-500/50 to-emerald-500/50">
                                                 <div className="w-full h-full bg-[#05060a] rounded-[1.8rem] md:rounded-[2.2rem] overflow-hidden border border-white/10 relative">
                                                     <Image
-                                                        src={userData.avatar}
+                                                        src={userData.avatar || ANIME_AVATARS[0].src}
                                                         alt={userData.name}
                                                         unoptimized
                                                         fill
@@ -535,7 +535,7 @@ export default function ProfilePage() {
                                                 <div className="relative w-28 md:w-36 h-28 md:h-36 rounded-[2rem] md:rounded-[2.5rem] p-1.5 bg-gradient-to-br from-emerald-500/50 via-cyan-500/50 to-emerald-500/50">
                                                     <div className="w-full h-full bg-[#05060a] rounded-[1.8rem] md:rounded-[2.2rem] overflow-hidden border border-white/10 relative">
                                                         <Image
-                                                            src={userData.avatar}
+                                                            src={userData.avatar || ANIME_AVATARS[0].src}
                                                             alt={userData.name}
                                                             unoptimized
                                                             fill
@@ -831,7 +831,7 @@ export default function ProfilePage() {
                                                         </div>
                                                     )}
                                                     <Image
-                                                        src={userData.avatar}
+                                                        src={userData.avatar || ANIME_AVATARS[0].src}
                                                         alt="Avatar"
                                                         unoptimized
                                                         fill
@@ -902,7 +902,7 @@ export default function ProfilePage() {
                                                     {/* User Segment */}
                                                     <div className="w-full border-b-2 border-dashed border-gray-300 pb-5 mb-6 flex flex-col items-center">
                                                         <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-emerald-500 mb-3 shadow-lg ring-4 ring-emerald-500/10">
-                                                            <img src={userData.avatar} alt="" className="w-full h-full object-cover" />
+                                                            <img src={userData.avatar || ANIME_AVATARS[0].src} alt="" className="w-full h-full object-cover" />
                                                         </div>
                                                         <h4 className="text-xl font-black tracking-tighter uppercase leading-none">{userData.name}</h4>
                                                         <p className="text-[9px] font-bold text-gray-400 tracking-[0.2em] mt-2 italic">DIGITAL ACCESS TOKEN</p>
