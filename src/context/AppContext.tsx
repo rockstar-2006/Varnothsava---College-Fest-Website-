@@ -48,6 +48,7 @@ interface AppContextType {
     clearCart: () => void
     totalAmount: number
     isLoggedIn: boolean
+    isAdmin: boolean
     isInitializing: boolean
     needsOnboarding: boolean
     userData: UserData | null
@@ -63,7 +64,10 @@ interface AppContextType {
     setIsSiteLoaded: (val: boolean) => void,
     pageTheme: PageTheme | null,
     setPageTheme: (theme: PageTheme | any) => void,
-    isAdmin: boolean // Added for RBAC
+
+    isChatOpen: boolean,
+    setIsChatOpen: (val: boolean) => void
+
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -113,6 +117,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const [needsOnboarding, setNeedsOnboarding] = useState(false)
     const [isSiteLoaded, setIsSiteLoaded] = useState(false)
     const [pageTheme, setPageTheme] = useState<PageTheme | null>(null)
+    const [isChatOpen, setIsChatOpen] = useState(false)
     const router = useRouter();
 
     useEffect(() => {
@@ -396,6 +401,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             clearCart,
             totalAmount,
             isLoggedIn,
+            isAdmin,
             isInitializing,
             userData,
             needsOnboarding,
@@ -411,7 +417,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             setIsSiteLoaded,
             pageTheme,
             setPageTheme,
-            isAdmin
+
+            isChatOpen,
+            setIsChatOpen
+
         }}>
             {children}
         </AppContext.Provider>

@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { LayoutGrid, Zap, Trophy, Camera, User, ShoppingCart, Rocket, Menu, X } from 'lucide-react'
+import { LayoutGrid, Zap, Trophy, Camera, User, ShoppingCart, Rocket, Menu, X, Bot, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
@@ -41,7 +41,9 @@ const NAV_LINKS = [
 
 export function InnovativeNavbar() {
     const pathname = usePathname()
-    const { isLoggedIn, cart, pageTheme, isAdmin } = useApp()
+
+    const { isLoggedIn, isAdmin, cart, pageTheme, isChatOpen, setIsChatOpen } = useApp()
+
 
     const [isMobile, setIsMobile] = useState(false)
     const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -56,17 +58,26 @@ export function InnovativeNavbar() {
 
         const handleScroll = () => {
             const currentScrollY = window.scrollY
+            const diff = currentScrollY - lastScrollY.current
 
-            // Optimization: Only update visibility state if it actually changes
+            // 1. Always show near top
             if (currentScrollY < 50) {
                 setIsVisible(true)
-            } else if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
-                setIsVisible((prev) => prev ? false : prev) // Only set false if currently true
-            } else if (currentScrollY < lastScrollY.current) {
-                setIsVisible((prev) => prev ? prev : true)  // Only set true if currently false
+                lastScrollY.current = currentScrollY
+                return
             }
 
-            lastScrollY.current = currentScrollY
+            // 2. Smooth threshold (10px) to avoid jitter on mobile
+            if (Math.abs(diff) > 10) {
+                if (currentScrollY > lastScrollY.current) {
+                    // Scrolling DOWN - Hide
+                    setIsVisible(false)
+                } else {
+                    // Scrolling UP - Show
+                    setIsVisible(true)
+                }
+                lastScrollY.current = currentScrollY
+            }
         }
 
         checkMobile()
@@ -85,24 +96,21 @@ export function InnovativeNavbar() {
     if (pathname === '/rulebook' || pathname === '/developers') return null;
 
     return (
-
-
         <>
             <AnimatePresence>
                 <motion.div
-                    initial={{ y: 50, opacity: 0 }}
+                    initial={{ y: 100, opacity: 0 }}
                     animate={{
-                        y: isVisible ? 0 : 100,
-                        opacity: isVisible ? 1 : 0
+                        y: isVisible ? 0 : 120,
+                        opacity: isVisible ? 1 : 0,
+                        scale: isVisible ? 1 : 0.95,
                     }}
                     style={{
                         '--theme-rgb': themeRgb
                     } as any}
                     transition={{
-                        type: 'spring',
-                        stiffness: 220,
-                        damping: 25,
-                        mass: 0.8
+                        duration: 0.5,
+                        ease: [0.22, 1, 0.36, 1] // Custom "Buttery Smooth" Cubic Bezier
                     }}
                     className="innovative-navbar fixed z-[5000] bottom-0 left-0 right-0 flex justify-center pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-8 px-4 md:px-8 pointer-events-none translate-gpu"
                 >
@@ -241,18 +249,54 @@ export function InnovativeNavbar() {
                         <div className="absolute top-0 left-0 w-12 h-12 border-l-2 border-t-2 border-[rgba(var(--theme-rgb),0.4)] rounded-tl-[2.5rem] shadow-[-5px_-5px_15px_rgba(var(--theme-rgb),0.1)]" />
                         <div className="absolute top-0 right-0 w-12 h-12 border-r-2 border-t-2 border-[rgba(var(--theme-rgb),0.4)] rounded-tr-[2.5rem] shadow-[5px_-5px_15px_rgba(var(--theme-rgb),0.1)]" />
 
-                        {/* Cart Button - Responsive Position: Stacked on Mobile, Side on Desktop */}
-                        <div className="absolute right-0 bottom-[90px] md:bottom-0 md:right-[-100px] flex flex-col items-center gap-4 pointer-events-auto z-40">
-                            <Link href="/checkout" className="block relative group" aria-label="View Cart" prefetch={true}>
-                                <motion.div whileHover={{ scale: 1.1, x: 10 }} className="p-4 md:p-5 bg-black/60 backdrop-blur-3xl border border-[rgba(var(--theme-rgb),0.3)] rounded-[1.5rem] shadow-2xl overflow-hidden">
-                                    <ShoppingCart size={isMobile ? 20 : 22} className="text-[rgb(var(--theme-rgb))]" />
-                                    {cart.length > 0 && (
-                                        <span className="absolute top-2 right-2 w-5 h-5 bg-[rgb(var(--theme-rgb))] text-black text-[10px] font-black rounded-full flex items-center justify-center border-2 border-[#050805]">
-                                            {cart.length}
-                                        </span>
+                        {/* ChatBot Button - Replaces Cart as requested */}
+                        <div className="absolute right-0 bottom-[110px] md:bottom-[-20px] md:right-[-110px] xl:right-[-130px] flex flex-col items-center gap-3 pointer-events-auto z-40">
+                            {/* Informational Hint Label - Now ABOVE the bot icon to avoid overlap */}
+                            <AnimatePresence>
+                                {!isChatOpen && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: 10 }}
+                                        className="hidden xl:block px-4 py-2 bg-black/60 backdrop-blur-3xl border border-[rgba(var(--theme-rgb),0.2)] rounded-2xl shadow-2xl relative"
+                                    >
+                                        {/* Little arrow pointing down */}
+                                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-black/60 border-r border-b border-[rgba(var(--theme-rgb),0.2)] rotate-45" />
+
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-[rgb(var(--theme-rgb))] text-[10px] font-black tracking-[0.2em] uppercase">Need Help?</span>
+                                            <span className="text-white/40 text-[8px] font-medium uppercase tracking-widest whitespace-nowrap">Ask our AI Assistant</span>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+
+                            <button
+                                onClick={() => setIsChatOpen(!isChatOpen)}
+                                className="block relative group"
+                                aria-label="Toggle AI Assistant"
+                            >
+                                <motion.div
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    className="p-4 md:p-5 bg-black/60 backdrop-blur-3xl border border-[rgba(var(--theme-rgb),0.3)] rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden relative"
+                                >
+                                    {isChatOpen ? (
+                                        <X size={isMobile ? 22 : 24} className="text-[rgb(var(--theme-rgb))]" />
+                                    ) : (
+                                        <Bot size={isMobile ? 22 : 24} className="text-[rgb(var(--theme-rgb))]" />
+                                    )}
+
+                                    {!isChatOpen && (
+                                        <span className="absolute top-2 right-2 w-4 h-4 bg-emerald-500 rounded-full border-2 border-[#050805] animate-bounce shadow-[0_0_10px_rgba(16,185,129,0.8)]" />
                                     )}
                                 </motion.div>
-                            </Link>
+
+                                {/* Label for Mobile/Small screens - Positioned clearly below */}
+                                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 xl:hidden whitespace-nowrap">
+                                    <span className="text-[rgb(var(--theme-rgb))] text-[8px] font-black uppercase tracking-widest opacity-80 bg-black/20 px-2 py-0.5 rounded-full">Ask AI</span>
+                                </div>
+                            </button>
                         </div>
                     </motion.div>
                 </motion.div>

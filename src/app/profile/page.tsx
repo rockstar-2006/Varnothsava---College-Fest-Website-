@@ -8,7 +8,8 @@ import {
     Edit3, Award, Trophy, GraduationCap, CheckCircle,
     Settings, Globe, Calendar, Clock, CreditCard,
     BookOpen, Sparkles, ChevronRight, LayoutGrid, LayoutDashboard,
-    ArrowRight, MapPin, Link2, X, Fingerprint, Eye, Users
+    ArrowRight, MapPin, Link2, X, Fingerprint, Eye, Users, Zap
+
 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { getAuthToken } from '@/lib/firebaseClient'
@@ -451,7 +452,7 @@ export default function ProfilePage() {
                             <motion.button
                                 whileHover={{ scale: 1.05, x: 5 }}
                                 whileTap={{ scale: 0.95 }}
-                                onClick={() => setActiveModal('payment')}
+                                onClick={() => router.push('/notify')}
                                 className="w-full md:w-auto px-8 md:px-10 py-4 md:py-5 bg-emerald-500 hover:bg-emerald-400 text-black font-black uppercase text-[10px] md:text-xs tracking-[0.2em] rounded-2xl transition-all shadow-2xl flex items-center justify-center gap-3 active:scale-95 group/btn"
                             >
                                 START PAYMENT <ArrowRight size={18} className="group-hover/btn:translate-x-2 transition-transform" />
@@ -1195,30 +1196,13 @@ export default function ProfilePage() {
                                                     <CreditCard size={32} />
                                                 </div>
                                                 <div>
-                                                    <h4 className="text-xl font-black text-white uppercase italic">Choose Payment Method</h4>
-                                                    <p className="text-xs text-slate-400 font-medium mt-2">Select how you'd like to complete your registration</p>
+                                                    <h4 className="text-xl font-black text-white uppercase italic">Complete Your Registration</h4>
+                                                    <p className="text-xs text-slate-400 font-medium mt-2">Access all events and features by completing your one-time registration fee.</p>
                                                 </div>
                                             </div>
 
                                             <div className="space-y-4">
-                                                {/* Pay Using QR Option */}
-                                                <motion.button
-                                                    whileHover={{ scale: 1.02, backgroundColor: 'rgba(0, 242, 255, 0.1)' }}
-                                                    whileTap={{ scale: 0.98 }}
-                                                    onClick={() => router.push('/qr-payment')}
-                                                    className="w-full p-6 bg-white/5 border border-cyan-500/20 rounded-2xl hover:border-cyan-500/40 transition-all flex items-center gap-4 group/payment active:scale-95"
-                                                >
-                                                    <div className="w-12 h-12 bg-cyan-500/10 rounded-xl flex items-center justify-center text-cyan-400 group-hover/payment:bg-cyan-500/20 transition-all">
-                                                        <QrCode size={24} />
-                                                    </div>
-                                                    <div className="text-left flex-1">
-                                                        <p className="text-sm md:text-base font-black text-white uppercase tracking-tight">Pay Using QR</p>
-                                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Scan Payment Code</p>
-                                                    </div>
-                                                    <ChevronRight size={18} className="text-cyan-500 group-hover/payment:translate-x-1 transition-transform" />
-                                                </motion.button>
-
-                                                {/* Payment Gateway Option */}
+                                                {/* Professional Payment Gateway Option (Primary) */}
                                                 <motion.button
                                                     whileHover={{ scale: 1.02, backgroundColor: 'rgba(16, 185, 129, 0.1)' }}
                                                     whileTap={{ scale: 0.98 }}
@@ -1226,17 +1210,26 @@ export default function ProfilePage() {
                                                         setActiveModal(null)
                                                         router.push('/notify')
                                                     }}
-                                                    className="w-full p-6 bg-white/5 border border-emerald-500/20 rounded-2xl hover:border-emerald-500/40 transition-all flex items-center gap-4 group/payment active:scale-95"
+                                                    className="w-full p-8 bg-emerald-500/10 border border-emerald-500/30 rounded-[2rem] hover:border-emerald-500/60 transition-all flex items-center gap-6 group/payment active:scale-95 shadow-[0_0_30px_rgba(16,185,129,0.1)]"
                                                 >
-                                                    <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400 group-hover/payment:bg-emerald-500/20 transition-all">
-                                                        <Globe size={24} />
+                                                    <div className="w-16 h-16 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-400 group-hover/payment:bg-emerald-500/30 transition-all border border-emerald-500/20 shadow-lg">
+                                                        <ShieldCheck size={32} />
                                                     </div>
                                                     <div className="text-left flex-1">
-                                                        <p className="text-sm md:text-base font-black text-white uppercase tracking-tight">Payment Gateway</p>
-                                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Coming Soon • Secure Online</p>
+                                                        <p className="text-lg md:text-xl font-black text-white uppercase tracking-tight">Official Payment Gateway</p>
+                                                        <p className="text-[10px] text-emerald-500/70 font-black uppercase tracking-[0.2em] mt-2 italic">Secure • Instant Activation • All Methods</p>
                                                     </div>
-                                                    <ChevronRight size={18} className="text-emerald-500 group-hover/payment:translate-x-1 transition-transform" />
+                                                    <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center group-hover/payment:bg-emerald-500/20 transition-all">
+                                                        <ArrowRight size={20} className="text-emerald-500 group-hover/payment:translate-x-1 transition-transform" />
+                                                    </div>
                                                 </motion.button>
+
+                                                <div className="p-4 rounded-xl bg-white/5 border border-white/5 flex items-center gap-3 opacity-60">
+                                                    <Zap size={14} className="text-emerald-400" />
+                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
+                                                        Supports UPI, Credit/Debit Cards, NetBanking, and Wallets. Your pass will be activated immediately upon success.
+                                                    </p>
+                                                </div>
                                             </div>
 
                                             <button
