@@ -819,7 +819,7 @@ export const missions: Event[] = [
         title: 'Natures Palette',
         type: 'Cultural',
         category: 'General',
-        description: 'Nature’s Palette is all about feeling, observing, and expressing the beauty around us. From sunsets to leaves, from rain to flowers — every shade of nature inspires a story. Come, bring your creativity to life and let your colors speak',
+        description: 'Nature’s Palette is a creative celebration inspired by the colors and beauty of nature. It invites participants to express their imagination through art, bringing the harmony of the natural world to life with vibrant creativity',
         rules: [
             "Team of 3 members",
             "Each team will get 2 hours",
