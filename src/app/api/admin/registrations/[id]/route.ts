@@ -3,9 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
+        const params = await context.params;
         const { id } = params;
         const authHeader = request.headers.get('Authorization') || '';
         if (!authHeader.startsWith('Bearer ')) {
