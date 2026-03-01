@@ -788,7 +788,7 @@ export const missions: Event[] = [
         title: 'Musical Marathon ',
         type: 'Cultural',
         category: 'Hobby Club',
-        description: 'Express your artistic talent through traditional and modern Mehandi designs.',
+        description: 'A lively musical game where participants sing songs based on the last letter of the previous song. It tests memory, creativity, and teamwork, creating a fun and energetic atmosphere for everyone involved.',
         rules: [
             "Team of 2 members",
             "The competition will have 3 rounds",
