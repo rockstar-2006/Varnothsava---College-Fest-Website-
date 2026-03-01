@@ -52,6 +52,7 @@ export function InnovativeNavbar() {
 
     useEffect(() => {
         const checkMobile = () => {
+            if (typeof window === 'undefined') return;
             const width = window.innerWidth;
             setIsMobile(width < 768 || 'ontouchstart' in window);
         }

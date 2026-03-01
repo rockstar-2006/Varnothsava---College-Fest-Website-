@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion'
-import { useState, useEffect, useMemo, Suspense } from 'react'
+import { useState, useEffect, useMemo, Suspense, useRef } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import {
@@ -45,6 +45,7 @@ function LoadingContent() {
     const [isMounted, setIsMounted] = useState(false)
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
     const [assetsReady, setAssetsReady] = useState(false)
+    const progressRef = useRef(0)
 
     // Parallax Motion Values
     const mouseX = useMotionValue(0);
@@ -229,7 +230,10 @@ function LoadingContent() {
     }, [isMobile])
 
     useEffect(() => {
-        const checkMobile = () => setIsMobile(window.innerWidth < 768)
+        const checkMobile = () => {
+            if (typeof window === 'undefined') return;
+            setIsMobile(window.innerWidth < 768)
+        }
         checkMobile()
         window.addEventListener('resize', checkMobile)
         return () => window.removeEventListener('resize', checkMobile)
@@ -253,58 +257,58 @@ function LoadingContent() {
             const MAX_LOADING_TIME = 8000 // Maximum 8 seconds - force complete if stuck
 
             const timer = setInterval(() => {
-                setProgress(p => {
-                    const elapsed = Date.now() - startTime
+                const p = progressRef.current
+                const elapsed = Date.now() - startTime
 
-                    // GATEKEEPER: Wait for DOM, images, fonts, and preloaded assets
-                    const isDOMReady = typeof document !== 'undefined' &&
-                        (document.readyState === 'complete' || document.readyState === 'interactive')
+                // GATEKEEPER: Wait for DOM, images, fonts, and preloaded assets
+                const isDOMReady = typeof document !== 'undefined' &&
+                    (document.readyState === 'complete' || document.readyState === 'interactive')
 
-                    // Check if critical images are loaded (more lenient - allow some to fail)
-                    const images = document.querySelectorAll('img')
-                    const totalImages = images.length
-                    const loadedImages = Array.from(images).filter(img => img.complete).length
-                    const imagesLoaded = totalImages === 0 || (loadedImages / totalImages) > 0.7 // 70% threshold
+                // Check if critical images are loaded (more lenient - allow some to fail)
+                const images = document.querySelectorAll('img')
+                const totalImages = images.length
+                const loadedImages = Array.from(images).filter(img => img.complete).length
+                const imagesLoaded = totalImages === 0 || (loadedImages / totalImages) > 0.7 // 70% threshold
 
-                    // Check if fonts are loaded (more lenient)
-                    const fontsReady = !document.fonts || document.fonts.status === 'loaded' || elapsed > 4000
+                // Check if fonts are loaded (more lenient)
+                const fontsReady = !document.fonts || document.fonts.status === 'loaded' || elapsed > 4000
 
-                    const isFullyReady = isDOMReady && (imagesLoaded || elapsed > 4000) && (fontsReady || assetsReady)
-                    const hasMinTime = elapsed >= MIN_LOADING_TIME
-                    const isTimeout = elapsed >= MAX_LOADING_TIME // Force complete if taking too long
+                const isFullyReady = isDOMReady && (imagesLoaded || elapsed > 4000) && (fontsReady || assetsReady)
+                const hasMinTime = elapsed >= MIN_LOADING_TIME
+                const isTimeout = elapsed >= MAX_LOADING_TIME // Force complete if taking too long
 
-                    // Complete if: reached 100% AND (everything ready OR timeout)
-                    if ((p >= 100 && isFullyReady && hasMinTime) || isTimeout) {
-                        clearInterval(timer)
-                        console.log('Loading complete:', { isDOMReady, imagesLoaded, fontsReady, assetsReady, elapsed })
+                // Complete if: reached 100% AND (everything ready OR timeout)
+                if ((p >= 100 && isFullyReady && hasMinTime) || isTimeout) {
+                    clearInterval(timer)
+                    console.log('Loading complete:', { isDOMReady, imagesLoaded, fontsReady, assetsReady, elapsed })
 
-                        // SKIP INTERMEDIATE STEPS AND REDIRECT TO LANDING PAGE
+                    // Defer side effects to avoid "Cannot update a component while rendering another"
+                    setTimeout(() => {
                         setVisible(false)
                         setIsSiteLoaded(true)
                         sessionStorage.setItem('fest_initial_loaded', 'true')
-                        return 100
-                    }
+                    }, 0)
 
-                    // SLOWER, MORE VISIBLE PROGRESS
-                    // Stage 1: 0-30% - Quick initial load (feels responsive)
-                    // Stage 2: 30-70% - Medium speed (loading assets)
-                    // Stage 3: 70-95% - Slow down (almost ready)
-                    // Stage 4: 95-100% - Very slow (final checks)
+                    progressRef.current = 100
+                    setProgress(100)
+                    return
+                }
 
-                    let increment
-                    if (p < 30) {
-                        increment = isFullyReady ? 1.5 : 0.8 // Fast start
-                    } else if (p < 70) {
-                        increment = isFullyReady ? 0.8 : 0.5 // Medium
-                    } else if (p < 95) {
-                        increment = isFullyReady && hasMinTime ? 0.4 : 0.25 // Slow down
-                    } else {
-                        // Final stage - only proceed if everything is ready OR timeout approaching
-                        increment = (isFullyReady && hasMinTime) || elapsed > 6000 ? 0.3 : 0.1
-                    }
+                // SLOWER, MORE VISIBLE PROGRESS
+                let increment
+                if (p < 30) {
+                    increment = isFullyReady ? 1.5 : 0.8 // Fast start
+                } else if (p < 70) {
+                    increment = isFullyReady ? 0.8 : 0.5 // Medium
+                } else if (p < 95) {
+                    increment = isFullyReady && hasMinTime ? 0.4 : 0.25 // Slow down
+                } else {
+                    increment = (isFullyReady && hasMinTime) || elapsed > 6000 ? 0.3 : 0.1
+                }
 
-                    return Math.min(p + increment, 100)
-                })
+                const nextP = Math.min(p + increment, 100)
+                progressRef.current = nextP
+                setProgress(nextP)
             }, 50) // Update every 50ms for smoother animation
             return () => clearInterval(timer)
         }
