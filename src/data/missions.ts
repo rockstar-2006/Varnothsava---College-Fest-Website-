@@ -233,7 +233,7 @@ export const missions: Event[] = [
         category: "Coding",
         description: "PC-based technical challenge designed to test your logical thinking, debugging skills, and problem-solving ability.This event rewards observation and reasoning, not memorization or speed alone.",
         rules: [
-    "Team of 2 - 4 Members",
+    "Team of 2 - 3 Members",
     "Each team must use one system only.",
     "Search for hidden flags embedded in code, files, and programs.",
     "Challenges may involve code, logic, and analysis.",
@@ -822,7 +822,7 @@ note: [
         title: 'Natures Palette',
         type: 'Cultural',
         category: 'General',
-        description: 'Express your artistic talent through traditional and modern Mehandi designs.',
+        description: 'Nature’s Palette is all about feeling, observing, and expressing the beauty around us. From sunsets to leaves, from rain to flowers — every shade of nature inspires a story. Come, bring your creativity to life and let your colors speak',
         rules: [
             "Team of 3 members",
             "Each team will get 2 hours",
@@ -906,7 +906,7 @@ note: [
     ,
     {
         id: 'MIME',
-        title: 'Slient Symphony ',
+        title: 'Silent Symphony ',
         type: 'Cultural',
         category: 'Hobby Club',
         description: 'A silent yet powerful performance art conveying stories without words.Participants communicate emotions and messages through expressions and movement.',
