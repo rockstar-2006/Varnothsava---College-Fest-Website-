@@ -700,7 +700,7 @@ export const missions: Event[] = [
         title: 'Who Am I',
         type: 'Cultural',
         category: 'General',
-        description: 'Short-form video storytelling. Create engaging Reels that capture the vibrant energy of Varnothsava.',
+        description: 'A creative solo face painting competition where participants transform a model’s face into a living masterpiece. Showcasing imagination, precision, and artistic skill, this event brings colors and creativity to life within a limited time.',
         rules: [
             "Each participant will get 75 minutes",
             "No assistants are allowed during the competition (only two people are permitted: one competitor and one model for face painting)",
@@ -817,7 +817,7 @@ export const missions: Event[] = [
         title: 'Natures Palette',
         type: 'Cultural',
         category: 'General',
-        description: 'Express your artistic talent through traditional and modern Mehandi designs.',
+        description: 'Nature’s Palette is a creative celebration inspired by the colors and beauty of nature. It invites participants to express their imagination through art, bringing the harmony of the natural world to life with vibrant creativity',
         rules: [
             "Team of 3 members",
             "Each team will get 2 hours",
@@ -901,7 +901,7 @@ export const missions: Event[] = [
     ,
     {
         id: 'MIME',
-        title: 'Slient Symphony ',
+        title: 'Silent Symphony ',
         type: 'Cultural',
         category: 'Hobby Club',
         description: 'A silent yet powerful performance art conveying stories without words.Participants communicate emotions and messages through expressions and movement.',
