@@ -272,7 +272,7 @@ export const missions: Event[] = [
             "Accuracy of solutions.",
             "Quality of reasoning and explanations.",
             "Time taken (including penalties, if any).",
-            "Top 3 teams will be declared winners."
+            "Top 2 teams will be declared winners."
         ]
         ,
         note: [
