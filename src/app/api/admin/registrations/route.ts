@@ -24,19 +24,54 @@ export async function GET(request: NextRequest) {
 
         const { searchParams } = new URL(request.url);
         const eventId = searchParams.get('eventId');
+        const search = (searchParams.get('search') || '').toLowerCase();
         const lastId = searchParams.get('lastId') || '';
         const limit = parseInt(searchParams.get('limit') || '20');
 
-        console.log(`[RegAPI] Fetching. Role: ${role}, EventId: ${eventId}, UID: ${verified.uid}`);
+        console.log(`[RegAPI] Fetching. Role: ${role}, EventId: ${eventId}, Search: ${search}`);
 
         let queryBase: any = registrationsCollection;
 
+        // Apply Search (Global Search)
+        if (search) {
+            // Find user IDs matching the name/email prefix first
+            const userSearchSnapshot = await usersCollection
+                .orderBy('name')
+                .startAt(search)
+                .endAt(search + '\uf8ff')
+                .limit(50)
+                .get();
+
+            const uids = userSearchSnapshot.docs.map(d => d.id);
+
+            // We'll search for: 
+            // 1. Team Name starting with search
+            // 2. Team Leader is one of the matched UIDs
+            // Note: Multiple OR queries are tricky in Firestore, 
+            // but we can prioritize. 
+            if (uids.length > 0) {
+                // If it's a person search, filter by teamLeader or members
+                // Since Firestore doesn't support array-contains for 'in', 
+                // we'll focus on teamLeader for now as the primary global search target.
+                queryBase = queryBase.where('teamLeader', 'in', uids.slice(0, 30));
+            } else {
+                // Case-insensitive prefix search for Team Name (assuming stored as such or best effort)
+                queryBase = queryBase.orderBy('teamName').startAt(search).endAt(search + '\uf8ff');
+            }
+        }
+
         // Apply Coordinator filtering
         if (role === 'COORDINATOR') {
-            const eventsSnapshot = await adminDb.collection('events')
-                .where('coordinators', 'array-contains', verified.uid)
-                .get();
-            const assignedEventIds = eventsSnapshot.docs.map(doc => doc.id);
+            const userName = userData?.name || '';
+            const eventsSnapshot = await adminDb.collection('events').get();
+            const assignedEventIds = eventsSnapshot.docs
+                .filter(doc => {
+                    const coords = doc.data().coordinators || [];
+                    return coords.includes(verified.uid) ||
+                        coords.includes(userName) ||
+                        coords.includes(userName.toUpperCase());
+                })
+                .map(doc => doc.id);
 
             if (assignedEventIds.length === 0) {
                 return NextResponse.json({ registrations: [], totalCount: 0 });
@@ -73,22 +108,62 @@ export async function GET(request: NextRequest) {
             totalCount = totalCountSnap.data().count;
         }
 
-        let query = queryBase.orderBy('registeredAt', 'desc').limit(limit);
+        let registrations: any[] = [];
+        let snapshot: any = null;
 
-        if (lastId) {
-            const lastDoc = await registrationsCollection.doc(lastId).get();
-            if (lastDoc.exists) {
-                query = query.startAfter(lastDoc);
+        try {
+            console.log(`[RegAPI] Executing primary query...`);
+            let query = queryBase.orderBy('registeredAt', 'desc');
+
+            if (!search) {
+                query = query.limit(limit);
+                if (lastId) {
+                    const lastDoc = await registrationsCollection.doc(lastId).get();
+                    if (lastDoc.exists) {
+                        query = query.startAfter(lastDoc);
+                    }
+                }
+            }
+
+            snapshot = await query.get();
+            registrations = snapshot.docs.map((doc: any) => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+        } catch (error: any) {
+            if (error.message?.includes('index') || error.code === 9) {
+                console.warn("[RegAPI] Missing index fallback triggered:", error.message);
+                // Fallback: Fetch without orderBy and handle in-memory
+                // For safety, we'll fetch more than current limit to allow sorting
+                const fallbackSnapshot = await queryBase.limit(500).get();
+                let results = fallbackSnapshot.docs.map((doc: any) => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                // In-memory sort by registeredAt desc
+                results.sort((a: any, b: any) => {
+                    const dateA = a.registeredAt || '';
+                    const dateB = b.registeredAt || '';
+                    return dateB.localeCompare(dateA);
+                });
+
+                // Manual pagination for fallback
+                let startIndex = 0;
+                if (lastId) {
+                    const prevIndex = results.findIndex((r: any) => r.id === lastId);
+                    if (prevIndex !== -1) startIndex = prevIndex + 1;
+                }
+
+                registrations = results.slice(startIndex, startIndex + limit);
+                // Mock snapshot-like behavior for hasMore
+                snapshot = { docs: registrations };
+            } else {
+                throw error;
             }
         }
 
-        const snapshot = await query.get();
-        const registrations = snapshot.docs.map((doc: any) => ({
-            id: doc.id,
-            ...doc.data()
-        }));
-
-        console.log(`[RegAPI] After filtering, found ${registrations.length} records for ${eventId || 'all'}`);
+        console.log(`[RegAPI] Result: ${registrations.length} records. Fallback: ${!snapshot.get}`);
 
         // Enrich with user data for ONLY the current batch of 20
         const userIds = new Set<string>();
@@ -109,15 +184,30 @@ export async function GET(request: NextRequest) {
             }
         }
 
+        // Fetch all events for name mapping
+        const eventsSnapshot = await adminDb.collection('events').get();
+        const eventMap: Record<string, string> = {};
+        eventsSnapshot.docs.forEach(doc => {
+            eventMap[doc.id] = doc.data().title || doc.id;
+        });
+
         const enrichedRegistrations = registrations.map((reg: any) => {
             const leader = usersDataMap[reg.teamLeader] || {};
             const membersData = (reg.members || []).map((id: string) => usersDataMap[id]).filter(Boolean);
+            const college = (leader.collegeName || leader.college || leader.institution || '').toUpperCase();
+            const email = (leader.email || '').toLowerCase();
+            const isInternal = leader.studentType === 'internal' ||
+                college.includes('SMVITM') ||
+                college.includes('SODE') ||
+                email.endsWith('@sode-edu.in');
 
             return {
                 ...reg,
                 leaderName: leader.name || 'Unknown',
-                college: leader.collegeName || 'Unknown',
+                college: leader.collegeName || leader.college || leader.institution || 'Unknown',
                 paymentStatus: leader.hasPaid ? 'Paid' : 'Unpaid',
+                studentType: isInternal ? 'internal' : 'external',
+                eventTitle: eventMap[reg.eventId] || reg.eventId,
                 membersDetails: membersData.map((m: any) => ({ name: m.name, usn: m.usn }))
             };
         });
@@ -125,8 +215,8 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({
             registrations: enrichedRegistrations,
             totalCount,
-            internalCount: role === 'SUPER_ADMIN' ? (s.internalRegs || 0) : null,
-            externalCount: role === 'SUPER_ADMIN' ? (s.externalRegs || 0) : null,
+            internalCount: s.internalRegs || 0,
+            externalCount: s.externalRegs || 0,
             lastId: snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1].id : null,
             hasMore: snapshot.docs.length === limit
         });

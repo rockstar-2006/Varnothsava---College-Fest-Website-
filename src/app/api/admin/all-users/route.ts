@@ -24,78 +24,98 @@ export async function GET(request: NextRequest) {
         const lastId = request.nextUrl.searchParams.get('lastId') || '';
         const limit = parseInt(request.nextUrl.searchParams.get('limit') || '20');
         const status = request.nextUrl.searchParams.get('status') || 'all';
+        const search = request.nextUrl.searchParams.get('search') || '';
 
         // Strategy 4: Summary Document Fetch for fast metadata
         const statsRef = adminDb.collection('system').doc('stats');
         const statsDoc = await statsRef.get();
         const s = statsDoc.data() || {};
-        const totalCount = s.totalUsers || 0;
-        const paidCount = s.paidUsers || 0;
-        const unpaidCount = s.unpaidUsers || 0;
 
-        // Base query for users
-        let query: any = usersCollection.orderBy('name');
+        let users: any[] = [];
+        let snapshot: any;
 
-        if (status === 'paid') {
-            query = query.where('hasPaid', '==', true);
-        } else if (status === 'unpaid') {
-            query = query.where('hasPaid', '==', false);
-        }
+        if (search) {
+            // MULTI-FIELD SEARCH (Name, Email)
+            // Since Firestore doesn't support OR on prefix match, we run two queries
+            const nameQuery = usersCollection.orderBy('name').startAt(search).endAt(search + '\uf8ff').limit(limit).get();
+            const emailQuery = usersCollection.orderBy('email').startAt(search.toLowerCase()).endAt(search.toLowerCase() + '\uf8ff').limit(limit).get();
 
-        query = query.limit(limit);
+            const [nameSnap, emailSnap] = await Promise.all([nameQuery, emailQuery]);
 
-        if (lastId) {
-            const lastDoc = await usersCollection.doc(lastId).get();
-            if (lastDoc.exists) {
-                query = query.startAfter(lastDoc);
+            // Merge and deduplicate
+            const userMap = new Map();
+            nameSnap.docs.forEach(d => userMap.set(d.id, { id: d.id, ...d.data() }));
+            emailSnap.docs.forEach(d => userMap.set(d.id, { id: d.id, ...d.data() }));
+
+            users = Array.from(userMap.values());
+            snapshot = { docs: nameSnap.docs }; // Dummy for pagination tracking if needed, though search results are usually small
+        } else {
+            // Base query for users
+            let query: any = usersCollection;
+
+            // Apply filters (Database Level)
+            const hasFilter = status && status !== 'all';
+            if (status === 'paid') query = query.where('hasPaid', '==', true);
+            else if (status === 'unpaid') query = query.where('hasPaid', '==', false);
+            else if (status === 'internal') query = query.where('studentType', '==', 'internal');
+            else if (status === 'external') query = query.where('studentType', '==', 'external');
+
+            if (!hasFilter) {
+                query = query.orderBy('name');
             }
+
+            query = query.limit(limit);
+
+            if (lastId) {
+                const lastDoc = await usersCollection.doc(lastId).get();
+                if (lastDoc.exists) {
+                    query = query.startAfter(lastDoc);
+                }
+            }
+
+            snapshot = await query.get();
+            users = snapshot.docs.map((doc: any) => ({
+                id: doc.id,
+                ...doc.data()
+            }));
         }
 
-        // Strategy 2: True Server-Side Pagination
-        const snapshot = await query.get();
-        const users = snapshot.docs.map((doc: any) => ({
-            id: doc.id,
-            ...doc.data()
-        }));
-
-        // Enrich current patch for display (same logic as before)
-        const currentBatchIds = users.map((u: any) => u.id);
-        const paidUserIds = new Set<string>();
-
-        if (currentBatchIds.length > 0) {
-            const capturedSnap = await adminDb.collection('payments')
-                .where('status', '==', 'captured')
-                .where('user_id', 'in', currentBatchIds).get();
-
-            const verifiedSnap = await adminDb.collection('payments')
-                .where('notes.verification_status', '==', 'verified')
-                .where('user_id', 'in', currentBatchIds).get();
-
-            capturedSnap.docs.forEach(d => paidUserIds.add(d.data().user_id));
-            verifiedSnap.docs.forEach(d => paidUserIds.add(d.data().user_id));
-        }
-
-        const enrichedUsers = users.map((u: any) => {
+        // Enrichment & Code-Level Filtering (Source of Truth)
+        let filteredUsers = users.map((u: any) => {
             const college = (u.collegeName || u.college || u.institution || '').toUpperCase();
             const email = (u.email || '').toLowerCase();
             const isInternal = u.studentType === 'internal' ||
                 college.includes('SMVITM') ||
+                college.includes('SODE') ||
                 email.endsWith('@sode-edu.in');
 
             return {
                 ...u,
                 studentType: isInternal ? 'internal' : 'external',
-                hasPaid: paidUserIds.has(u.id) || u.hasPaid
+                hasPaid: !!u.hasPaid
             };
         });
 
+        // Apply filters in code if it was a search result (since search bypasses DB filter for indexes)
+        if (search && status && status !== 'all') {
+            filteredUsers = filteredUsers.filter((u: any) => {
+                if (status === 'internal') return u.studentType === 'internal';
+                if (status === 'external') return u.studentType === 'external';
+                if (status === 'paid') return u.hasPaid === true;
+                if (status === 'unpaid') return u.hasPaid === false;
+                return true;
+            });
+        }
+
         return NextResponse.json({
-            users: enrichedUsers,
-            totalCount,
-            paidCount,
-            unpaidCount,
-            lastId: snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1].id : null,
-            hasMore: snapshot.docs.length === limit
+            users: filteredUsers,
+            totalCount: s.totalUsers || 0,
+            paidCount: s.paidUsers || 0,
+            unpaidCount: s.unpaidUsers || 0,
+            internalCount: s.internalUsers || 0,
+            externalCount: s.externalUsers || 0,
+            lastId: snapshot?.docs && snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1].id : null,
+            hasMore: snapshot?.docs ? snapshot.docs.length === limit : false
         });
 
     } catch (error: any) {
@@ -188,11 +208,11 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ message: "No user IDs provided" }, { status: 400 });
         }
 
-        // Use batch for better performance
-        const batch = adminDb.batch();
         const statsRef = adminDb.collection('system').doc('stats');
 
         for (const targetId of targets) {
+            const batch = adminDb.batch();
+
             // Get user data for stats update
             const userDoc = await usersCollection.doc(targetId).get();
             if (userDoc.exists) {
@@ -207,24 +227,34 @@ export async function DELETE(request: NextRequest) {
                 }, { merge: true });
             }
 
-            // 1. Delete user registrations
-            const regSnap = await adminDb.collection('registrations')
+            // 1. Delete user registrations (where তারা Leader)
+            const regLeaderSnap = await adminDb.collection('registrations')
                 .where('teamLeader', '==', targetId).get();
-            regSnap.docs.forEach(doc => batch.delete(doc.ref));
+            regLeaderSnap.docs.forEach(doc => batch.delete(doc.ref));
 
-            // 2. Delete user payments
+            // 2. Remove from 'members' array in other registrations
+            const regMemberSnap = await adminDb.collection('registrations')
+                .where('members', 'array-contains', targetId).get();
+            regMemberSnap.docs.forEach(doc => {
+                const data = doc.data();
+                const newMembers = (data.members || []).filter((m: string) => m !== targetId);
+                batch.update(doc.ref, { members: newMembers });
+            });
+
+            // 3. Delete user payments
             const paySnap = await adminDb.collection('payments')
                 .where('user_id', '==', targetId).get();
             paySnap.docs.forEach(doc => batch.delete(doc.ref));
 
-            // 3. Delete user document
+            // 4. Delete user document
             batch.delete(usersCollection.doc(targetId));
+
+            await batch.commit();
         }
 
-        await batch.commit();
-
-        return NextResponse.json({ message: `${targets.length} user(s) and associated data deleted successfully` });
+        return NextResponse.json({ message: `${targets.length} user(s) and all associated data cleared.` });
     } catch (error: any) {
+        console.error("Delete Error:", error);
         return NextResponse.json({ message: error.message }, { status: 500 });
     }
 }

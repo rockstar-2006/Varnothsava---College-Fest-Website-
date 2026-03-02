@@ -20,8 +20,12 @@ import {
     X,
     FileText,
     Tag,
-    RefreshCcw
+    RefreshCcw,
+    Zap,
+    Download,
+    FileSpreadsheet
 } from 'lucide-react'
+import { fetchAndDownload } from '@/lib/exportUtils'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getAuthToken } from '@/lib/firebaseClient'
 import { cn } from '@/lib/utils'
@@ -38,6 +42,7 @@ interface Registration {
     status: 'approved' | 'rejected' | 'pending';
     registeredAt: string;
     eventType: 'SOLO' | 'GROUP';
+    eventTitle?: string;
     membersDetails: { name: string, usn: string }[];
 }
 
@@ -70,6 +75,7 @@ export default function ParticipantsManagementPage() {
 
             let url = `/api/admin/registrations?lastId=${currentLastId}&limit=20`
             if (targetEventId && targetEventId !== 'all') url += `&eventId=${targetEventId}`
+            if (searchQuery) url += `&search=${encodeURIComponent(searchQuery)}`
 
             const res = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -111,10 +117,21 @@ export default function ParticipantsManagementPage() {
         }
     }
 
-    // No automatic fetching on page load
+    // Fetch on filter change
     useEffect(() => {
-        // fetchRegistrations(selectedEventId) and fetchEvents() are now manual
-    }, [])
+        if (registrations.length === 0 || selectedEventId !== 'all') {
+            fetchRegistrations(selectedEventId, false)
+        }
+    }, [selectedEventId])
+
+    // Global Search with debounce
+    useEffect(() => {
+        if (!searchQuery && registrations.length > 0) return;
+        const timer = setTimeout(() => {
+            fetchRegistrations(selectedEventId, false)
+        }, 500)
+        return () => clearTimeout(timer)
+    }, [searchQuery])
 
     const handleUpdateStatus = async (id: string, status: 'approved' | 'rejected') => {
         setUpdatingId(id)
@@ -144,11 +161,11 @@ export default function ParticipantsManagementPage() {
         }
     }
 
-    const filteredRegs = registrations.filter(reg =>
-        reg.leaderName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        reg.teamName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        reg.college.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    const filteredRegs = registrations.filter(reg => {
+        // Server side filtering handled the query, 
+        // local filtering remains for Super Admins if needed but mostly for consistency
+        return true;
+    })
 
     const formatDate = (dateStr: string) => {
         try {
@@ -197,6 +214,20 @@ export default function ParticipantsManagementPage() {
                                 <p className="text-xs font-bold uppercase tracking-widest text-white leading-none">Sync Signals</p>
                             </div>
                         </button>
+
+                        {userData?.role === 'SUPER_ADMIN' && (
+                            <button
+                                onClick={() => fetchAndDownload('registrations', `Registrations_${selectedEventId}`, getAuthToken, { eventId: selectedEventId })}
+                                className="bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/50 text-emerald-500 px-5 py-2.5 rounded-xl transition-all group flex items-center gap-3 shadow-xl"
+                                title="Download Full Report (Excel)"
+                            >
+                                <FileSpreadsheet size={18} className="transition-transform group-hover:scale-110" />
+                                <div className="text-left">
+                                    <p className="text-[9px] font-black uppercase tracking-wider text-emerald-500/50 leading-none mb-1">Database</p>
+                                    <p className="text-xs font-bold uppercase tracking-widest text-emerald-500 leading-none font-mono">EXPORT</p>
+                                </div>
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -254,11 +285,10 @@ export default function ParticipantsManagementPage() {
                             <thead>
                                 <tr className="border-b border-white/5 bg-white/5 text-xs text-gray-500 font-semibold uppercase tracking-wider">
                                     <th className="px-6 py-4">Participant & Team</th>
+                                    <th className="px-6 py-4">Participated Event</th>
                                     <th className="px-6 py-4">Institution</th>
-                                    <th className="px-6 py-4">Payment</th>
+                                    <th className="px-6 py-4 text-center">Payment</th>
                                     <th className="px-6 py-4">Reg. Date</th>
-                                    <th className="px-6 py-4">Approval</th>
-                                    <th className="px-6 py-4 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5 text-sm">
@@ -293,67 +323,37 @@ export default function ParticipantsManagementPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2 text-gray-300">
-                                                <School size={16} className="text-gray-600" />
-                                                <span className="truncate max-w-[200px]" title={reg.college}>{reg.college}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className={cn(
-                                                "flex items-center gap-2 font-bold px-3 py-1 rounded-full w-fit text-[10px] uppercase",
-                                                reg.paymentStatus === 'Paid' ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"
-                                            )}>
-                                                <CreditCard size={12} />
-                                                {reg.paymentStatus}
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-8 h-8 rounded-lg bg-emerald-500/5 flex items-center justify-center text-emerald-500 border border-emerald-500/10">
+                                                    <Zap size={14} />
+                                                </div>
+                                                <span className="font-bold text-white uppercase tracking-tighter text-xs">
+                                                    {reg.eventTitle || reg.eventId}
+                                                </span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2 text-gray-400">
-                                                <Calendar size={16} className="text-gray-600" />
-                                                <span>{formatDate(reg.registeredAt)}</span>
+                                                <School size={16} className="text-gray-600" />
+                                                <span className="truncate max-w-[150px] text-xs font-medium" title={reg.college}>{reg.college}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <div className={cn(
+                                                "inline-flex items-center gap-1.5 font-black px-2.5 py-1 rounded-lg text-[9px] uppercase tracking-widest border",
+                                                reg.paymentStatus === 'Paid' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-red-500/10 text-red-500 border-red-500/20"
+                                            )}>
+                                                {reg.paymentStatus === 'Paid' ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
+                                                {reg.paymentStatus}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className={cn(
-                                                "flex items-center gap-2 font-black px-3 py-1 rounded-full w-fit text-[10px] uppercase tracking-tighter",
-                                                reg.status === 'approved' ? "bg-emerald-500/10 text-emerald-500" :
-                                                    reg.status === 'rejected' ? "bg-red-500/10 text-red-500" :
-                                                        "bg-amber-500/10 text-amber-500"
-                                            )}>
-                                                {reg.status === 'approved' ? <CheckCircle2 size={12} /> :
-                                                    reg.status === 'rejected' ? <XCircle size={12} /> :
-                                                        <Clock size={12} />}
-                                                {reg.status || 'pending'}
+                                            <div className="flex flex-col">
+                                                <span className="text-xs text-white font-bold tracking-tight">{formatDate(reg.registeredAt)}</span>
+                                                <span className="text-[8px] text-gray-600 font-mono mt-0.5 uppercase">Signal Received</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex justify-end gap-2">
-                                                {updatingId === reg.id ? (
-                                                    <Loader2 size={24} className="animate-spin text-emerald-500" />
-                                                ) : (
-                                                    <>
-                                                        {reg.status !== 'approved' && (
-                                                            <button
-                                                                onClick={() => handleUpdateStatus(reg.id, 'approved')}
-                                                                className="p-2 bg-emerald-500 text-black rounded-lg hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/20"
-                                                                title="Approve"
-                                                            >
-                                                                <Check size={16} strokeWidth={3} />
-                                                            </button>
-                                                        )}
-                                                        {reg.status !== 'rejected' && (
-                                                            <button
-                                                                onClick={() => handleUpdateStatus(reg.id, 'rejected')}
-                                                                className="p-2 bg-white/5 text-red-500 border border-red-500/20 rounded-lg hover:bg-red-500 hover:text-white transition-all"
-                                                                title="Reject"
-                                                            >
-                                                                <X size={16} strokeWidth={3} />
-                                                            </button>
-                                                        )}
-                                                    </>
-                                                )}
-                                            </div>
-                                        </td>
+
                                     </tr>
                                 ))}
                             </tbody>

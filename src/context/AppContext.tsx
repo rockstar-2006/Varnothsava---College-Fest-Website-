@@ -74,13 +74,17 @@ interface AppContextType {
         events?: any[];
         staff?: any[];
         totalVerifiedPayments?: number;
+        totalRevenue?: number;
         totalUsersCount?: number;
         totalPaymentsCount?: number;
         totalRegCount?: number;
         paidUsersCount?: number;
         unpaidUsersCount?: number;
+        internalUsersCount?: number;
+        externalUsersCount?: number;
         totalInternalRegs?: number;
         totalExternalRegs?: number;
+        eventRegMap?: Record<string, any[]>;
         _updatedAt?: number;
     };
     updateAdminCache: (key: string, data: any) => void;

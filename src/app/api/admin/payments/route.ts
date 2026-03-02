@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const eventId = searchParams.get('eventId');
         const status = searchParams.get('status');
+        const search = searchParams.get('search') || '';
         const lastId = searchParams.get('lastId') || '';
         const limit = parseInt(searchParams.get('limit') || '20');
 
@@ -31,60 +32,83 @@ export async function GET(request: NextRequest) {
         const statsRef = adminDb.collection('system').doc('stats');
         const statsDoc = await statsRef.get();
         const s = statsDoc.data() || {};
-        const totalCount = s.totalVerifiedPayments || 0;
 
         let paymentsQuery: any = adminDb.collection('payments');
 
-        // Handle filtering by event via registrations
-        let filteredUserIds: string[] | null = null;
-        if (role === 'COORDINATOR') {
-            const eventsSnapshot = await adminDb.collection('events')
-                .where('coordinators', 'array-contains', verified.uid)
+        // Apply Search (Global Database Search)
+        let searchUids: string[] | null = null;
+        if (search) {
+            const userSearchSnapshot = await usersCollection
+                .orderBy('name')
+                .startAt(search)
+                .endAt(search + '\uf8ff')
+                .limit(30)
                 .get();
-            const assignedEventIds = eventsSnapshot.docs.map(doc => doc.id);
 
-            if (assignedEventIds.length === 0) {
-                return NextResponse.json({ payments: [], totalCount: 0 });
+            searchUids = userSearchSnapshot.docs.map(d => d.id);
+            if (searchUids.length === 0) {
+                if (search.startsWith('pay_')) {
+                    const singlePay = await adminDb.collection('payments').doc(search).get();
+                    if (singlePay.exists) {
+                        return NextResponse.json({
+                            payments: await enrichPaymentsArray([{ id: singlePay.id, ...singlePay.data() }]),
+                            totalCount: 1,
+                            lastId: null,
+                            hasMore: false
+                        });
+                    }
+                }
+                return NextResponse.json({ payments: [], totalCount: 0, hasMore: false });
+            }
+        }
+
+        // Handle Coordinator scope and Event filtering
+        let eventUserIds: string[] | null = null;
+        if (role === 'COORDINATOR' || (eventId && eventId !== 'all')) {
+            let assignedEventIds: string[] = [];
+            if (role === 'COORDINATOR') {
+                const eventsSnapshot = await adminDb.collection('events')
+                    .where('coordinators', 'array-contains', verified.uid)
+                    .get();
+                assignedEventIds = eventsSnapshot.docs.map(doc => doc.id);
             }
 
             let regQuery: any = adminDb.collection('registrations');
             if (eventId && eventId !== 'all') {
-                if (!assignedEventIds.includes(eventId)) {
+                if (role === 'COORDINATOR' && !assignedEventIds.includes(eventId)) {
                     return NextResponse.json({ message: "Forbidden: Not assigned to this event" }, { status: 403 });
                 }
                 regQuery = regQuery.where('eventId', '==', eventId);
-            } else {
+            } else if (role === 'COORDINATOR') {
+                if (assignedEventIds.length === 0) return NextResponse.json({ payments: [], totalCount: 0 });
                 regQuery = regQuery.where('eventId', 'in', assignedEventIds);
             }
 
             const regSnapshot = await regQuery.get();
-            filteredUserIds = Array.from(new Set(regSnapshot.docs.flatMap((doc: any) => {
-                const data = doc.data();
-                return [data.teamLeader, ...(data.members || [])];
+            eventUserIds = Array.from(new Set(regSnapshot.docs.flatMap((doc: any) => {
+                const d = doc.data();
+                return [d.teamLeader, ...(d.members || [])];
             })));
 
-            if (filteredUserIds.length === 0) {
-                return NextResponse.json({ payments: [], totalCount: 0 });
-            }
-        } else if (eventId && eventId !== 'all') {
-            const regSnapshot = await adminDb.collection('registrations')
-                .where('eventId', '==', eventId)
-                .get();
-            filteredUserIds = Array.from(new Set(regSnapshot.docs.flatMap((doc: any) => {
-                const data = doc.data();
-                return [data.teamLeader, ...(data.members || [])];
-            })));
-
-            if (filteredUserIds.length === 0) {
+            if (eventUserIds.length === 0) {
                 return NextResponse.json({ payments: [], totalCount: 0 });
             }
         }
 
-        if (filteredUserIds) {
-            // Firestore 'in' has 30 limit. If more, we might need a different strategy.
-            // For MVP focusing on cost, we'll slice to first 30 if exceeds, or better, 
-            // just use the first 30 for the 'in' filter to stay in free tier limits.
-            paymentsQuery = paymentsQuery.where('user_id', 'in', filteredUserIds.slice(0, 30));
+        // Strategy: Combine all UID filters into ONE 'in' query
+        // Firestore limit: 30 items for 'in'
+        let finalFilterUids: string[] | null = null;
+        if (searchUids && eventUserIds) {
+            finalFilterUids = searchUids.filter(id => eventUserIds!.includes(id)).slice(0, 30);
+            if (finalFilterUids.length === 0) return NextResponse.json({ payments: [], totalCount: 0, hasMore: false });
+        } else if (searchUids) {
+            finalFilterUids = searchUids.slice(0, 30);
+        } else if (eventUserIds) {
+            finalFilterUids = eventUserIds.slice(0, 30);
+        }
+
+        if (finalFilterUids) {
+            paymentsQuery = paymentsQuery.where('user_id', 'in', finalFilterUids);
         }
 
         if (status && status !== 'all') {
@@ -101,6 +125,7 @@ export async function GET(request: NextRequest) {
         }
 
         const snapshot = await query.get();
+        const totalCount = s.totalPaymentsCount || s.totalVerifiedPayments || 0;
         const payments = snapshot.docs.map((doc: any) => ({
             id: doc.id,
             ...doc.data()

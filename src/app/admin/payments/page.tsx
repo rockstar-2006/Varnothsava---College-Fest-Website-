@@ -23,8 +23,10 @@ import {
     Zap,
     Building2,
     Trash2,
-    RefreshCcw
+    RefreshCcw,
+    FileSpreadsheet
 } from 'lucide-react'
+import { fetchAndDownload } from '@/lib/exportUtils'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getAuthToken } from '@/lib/firebaseClient'
 import { cn } from '@/lib/utils'
@@ -77,6 +79,7 @@ export default function PaymentsManagementPage() {
     const [loadingTotal, setLoadingTotal] = useState(false)
     const [hasMore, setHasMore] = useState(false)
     const [totalPaymentsCount, setTotalPaymentsCount] = useState(adminCache.totalPaymentsCount || 0)
+    const [totalRevenue, setTotalRevenue] = useState<number | null>(adminCache.totalRevenue || null)
     const [lastId, setLastId] = useState<string | null>(null)
 
     const toggleSelect = (id: string) => {
@@ -132,7 +135,12 @@ export default function PaymentsManagementPage() {
             const data = await res.json()
             if (res.ok) {
                 setTotalPaidPeople(data.totalPayments)
+                setTotalRevenue(data.totalAmount)
+                setTotalPaymentsCount(data.transactionCount)
+
                 updateAdminCache('totalVerifiedPayments', data.totalPayments)
+                updateAdminCache('totalRevenue', data.totalAmount)
+                updateAdminCache('totalPaymentsCount', data.transactionCount)
             }
         } catch (error) {
             console.error("Failed to fetch total amount:", error)
@@ -157,10 +165,21 @@ export default function PaymentsManagementPage() {
         }
     }
 
-    // Sync button is now the only trigger for fresh directory data
+    // Fetch on filter change
     useEffect(() => {
-        // Init logic if any. 
-    }, [])
+        if (payments.length === 0 || selectedStatus !== 'all' || selectedEventId !== 'all') {
+            fetchPayments(false)
+        }
+    }, [selectedStatus, selectedEventId, selectedType])
+
+    // Fetch on search with debounce
+    useEffect(() => {
+        if (!searchQuery && payments.length > 0) return;
+        const timer = setTimeout(() => {
+            fetchPayments(false)
+        }, 500)
+        return () => clearTimeout(timer)
+    }, [searchQuery])
 
     const handleVerify = async (id: string, status: 'verified' | 'rejected') => {
         setUpdatingId(id)
@@ -292,7 +311,7 @@ export default function PaymentsManagementPage() {
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-white">Payments Management</h1>
-                        <p className="text-gray-400 text-sm">Monitor {totalPaymentsCount} transactions and verify manual payments</p>
+                        <p className="text-gray-400 text-sm">Monitor {totalPaymentsCount} captured payment logs and verify manual transactions</p>
                     </div>
 
                     <div className="flex flex-col items-end gap-3">
@@ -321,10 +340,16 @@ export default function PaymentsManagementPage() {
                                     <motion.div
                                         initial={{ opacity: 0, x: 20 }}
                                         animate={{ opacity: 1, x: 0 }}
-                                        className="bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-xl"
+                                        className="bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-xl flex items-center gap-4"
                                     >
-                                        <p className="text-[8px] font-black uppercase tracking-tighter text-blue-500 leading-none mb-1">People Paid</p>
-                                        <p className="text-sm font-black text-white italic">{totalPaidPeople}</p>
+                                        <div>
+                                            <p className="text-[8px] font-black uppercase tracking-tighter text-blue-500 leading-none mb-1">Total Revenue</p>
+                                            <p className="text-sm font-black text-white italic">₹{totalRevenue?.toLocaleString()}</p>
+                                        </div>
+                                        <div className="border-l border-white/10 pl-4">
+                                            <p className="text-[8px] font-black uppercase tracking-tighter text-blue-500 leading-none mb-1">Participants</p>
+                                            <p className="text-sm font-black text-white italic">{totalPaidPeople}</p>
+                                        </div>
                                     </motion.div>
                                 )}
                             </AnimatePresence>
@@ -353,6 +378,20 @@ export default function PaymentsManagementPage() {
                                     <p className="text-xs font-bold uppercase tracking-widest text-white leading-none">Sync Payments</p>
                                 </div>
                             </button>
+
+                            {userData?.role === 'SUPER_ADMIN' && (
+                                <button
+                                    onClick={() => fetchAndDownload('payments', `Payments_${selectedStatus}_${selectedEventId}`, getAuthToken, { eventId: selectedEventId, status: selectedStatus })}
+                                    className="bg-blue-500/10 border border-blue-500/20 hover:border-blue-500/50 text-blue-500 px-5 py-2.5 rounded-xl transition-all group flex items-center gap-3 shadow-xl h-[46px]"
+                                    title="Download Filtered Report (Excel)"
+                                >
+                                    <FileSpreadsheet size={18} className="transition-transform group-hover:scale-110" />
+                                    <div className="text-left">
+                                        <p className="text-[9px] font-black uppercase tracking-wider text-blue-500/50 leading-none mb-1">Reports</p>
+                                        <p className="text-xs font-bold uppercase tracking-widest text-blue-500 leading-none font-mono">EXPORT</p>
+                                    </div>
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

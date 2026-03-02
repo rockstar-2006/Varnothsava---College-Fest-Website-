@@ -16,8 +16,11 @@ import {
     MoreHorizontal,
     Trash2,
     RefreshCcw,
-    CreditCard
+    CreditCard,
+    FileSpreadsheet,
+    Phone
 } from 'lucide-react'
+import { fetchAndDownload } from '@/lib/exportUtils'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getAuthToken } from '@/lib/firebaseClient'
 import { cn } from '@/lib/utils'
@@ -64,7 +67,7 @@ export default function UserManagementPage() {
             setSelectedIds(filteredUsers.map(u => u.id))
         }
     }
-    const [paymentFilter, setPaymentFilter] = useState<'all' | 'paid' | 'unpaid'>('all')
+    const [paymentFilter, setPaymentFilter] = useState<'all' | 'paid' | 'unpaid' | 'internal' | 'external'>('all')
 
     const fetchUsers = async (isLoadMore = false) => {
         try {
@@ -116,9 +119,22 @@ export default function UserManagementPage() {
     }
 
     // Sync button is now the only trigger for fresh directory data
+    // Fetch on filter change
     useEffect(() => {
-        // Init logic if any. 
-    }, [])
+        // ONLY auto-fetch if we change filters OR if the cache is empty
+        if (users.length === 0 || paymentFilter !== 'all') {
+            fetchUsers(false)
+        }
+    }, [paymentFilter])
+
+    // Fetch on search with debounce
+    useEffect(() => {
+        if (!searchQuery && users.length > 0) return; // Don't fetch on empty search if we have data
+        const timer = setTimeout(() => {
+            fetchUsers(false)
+        }, 500)
+        return () => clearTimeout(timer)
+    }, [searchQuery])
 
 
 
@@ -203,15 +219,6 @@ export default function UserManagementPage() {
 
     const filteredUsers = users.filter(u => {
         if (u.role === 'SUPER_ADMIN') return false;
-
-        const matchesSearch = u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (u.usn || '').toLowerCase().includes(searchQuery.toLowerCase());
-
-        if (!matchesSearch) return false;
-
-        if (paymentFilter === 'paid') return u.hasPaid === true;
-        if (paymentFilter === 'unpaid') return u.hasPaid === false || !u.hasPaid;
         return true;
     })
 
@@ -228,6 +235,8 @@ export default function UserManagementPage() {
                             {paymentFilter === 'all' && `Access all ${totalUsersCount} registered users`}
                             {paymentFilter === 'paid' && `Access ${paidUsersCount} verified paid participants`}
                             {paymentFilter === 'unpaid' && `View ${unpaidUsersCount} pending enrollment records`}
+                            {paymentFilter === 'internal' && `Viewing internal SODE students`}
+                            {paymentFilter === 'external' && `Viewing external participants`}
                         </p>
                     </div>
 
@@ -286,6 +295,20 @@ export default function UserManagementPage() {
                                 <p className="text-xs font-bold uppercase tracking-widest text-white leading-none">Sync Users</p>
                             </div>
                         </button>
+
+                        {userData?.role === 'SUPER_ADMIN' && (
+                            <button
+                                onClick={() => fetchAndDownload('users', `Users_${paymentFilter}`, getAuthToken, { status: paymentFilter })}
+                                className="bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/50 text-emerald-500 px-5 py-3 rounded-xl transition-all group flex items-center gap-3 h-12 shadow-xl"
+                                title="Download All Users (Excel)"
+                            >
+                                <FileSpreadsheet size={18} className="transition-transform group-hover:scale-110" />
+                                <div className="text-left">
+                                    <p className="text-[9px] font-black uppercase tracking-wider text-emerald-500/50 leading-none mb-1">Directory</p>
+                                    <p className="text-xs font-bold uppercase tracking-widest text-emerald-500 leading-none font-mono">EXPORT</p>
+                                </div>
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -339,7 +362,30 @@ export default function UserManagementPage() {
                         >
                             <XCircle size={14} />
                             Unpaid
-                            <span className="text-[9px] bg-red-500/10 px-1.5 py-0.5 rounded-md text-red-500">{unpaidUsersCount}</span>
+                        </button>
+
+                        <button
+                            onClick={() => setPaymentFilter('internal')}
+                            className={cn(
+                                "flex-1 px-4 h-full rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap flex items-center justify-center gap-2 border-l border-white/5",
+                                paymentFilter === 'internal'
+                                    ? 'bg-blue-500/10 text-blue-400 shadow-lg'
+                                    : 'text-gray-500 hover:text-gray-300'
+                            )}
+                        >
+                            Internal
+                        </button>
+
+                        <button
+                            onClick={() => setPaymentFilter('external')}
+                            className={cn(
+                                "flex-1 px-4 h-full rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap flex items-center justify-center gap-2 border-l border-white/5",
+                                paymentFilter === 'external'
+                                    ? 'bg-purple-500/10 text-purple-400 shadow-lg'
+                                    : 'text-gray-500 hover:text-gray-300'
+                            )}
+                        >
+                            External
                         </button>
                     </div>
                 </div>
@@ -366,12 +412,12 @@ export default function UserManagementPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
-                                {loading ? (
+                                {loading && users.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="px-6 py-10 text-center">
                                             <div className="flex justify-center flex-col items-center gap-2">
                                                 <Loader2 className="animate-spin text-emerald-500" size={24} />
-                                                <span className="text-gray-500">Searching directory...</span>
+                                                <span className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">Accessing Database...</span>
                                             </div>
                                         </td>
                                     </tr>
@@ -412,6 +458,11 @@ export default function UserManagementPage() {
                                                     <p className="text-xs text-gray-500 flex items-center gap-1 uppercase">
                                                         <Mail size={10} /> {u.email}
                                                     </p>
+                                                    {u.phone && (
+                                                        <p className="text-[10px] text-gray-600 flex items-center gap-1 uppercase mt-0.5">
+                                                            <Phone size={10} /> {u.phone}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </div>
                                         </td>

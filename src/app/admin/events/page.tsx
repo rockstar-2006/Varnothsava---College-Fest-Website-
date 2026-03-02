@@ -21,8 +21,10 @@ import {
     Gamepad2,
     Users,
     User,
-    RefreshCcw
+    RefreshCcw,
+    FileSpreadsheet
 } from 'lucide-react'
+import { fetchAndDownload } from '@/lib/exportUtils'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getAuthToken } from '@/lib/firebaseClient'
 import { cn } from '@/lib/utils'
@@ -81,7 +83,15 @@ export default function EventManagementPage() {
             const data = await res.json()
             if (res.ok) {
                 setEvents(data.events)
+                // Clear map on full sync + update events
                 updateAdminCache('events', data.events)
+                updateAdminCache('eventRegMap', {})
+                // Also trigger a stats refresh
+                const sRes = await fetch('/api/admin/stats', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const sData = await sRes.json();
+                if (sRes.ok) updateAdminCache('stats', sData.stats);
             }
         } catch (error) {
             console.error("Failed to fetch events:", error)
@@ -214,19 +224,40 @@ export default function EventManagementPage() {
     const [selectedEventForReg, setSelectedEventForReg] = useState<AdminEvent | null>(null)
     const [eventRegs, setEventRegs] = useState<any[]>([])
     const [loadingRegs, setLoadingRegs] = useState(false)
+    const [eventSearchQuery, setEventSearchQuery] = useState('')
 
-    const fetchEventRegistrations = async (eventId: string) => {
-        console.log(`[Frontend] Fetching registrations for: ${eventId}`);
+    const fetchEventRegistrations = async (eventId: string, searchInput?: string, forceRefresh: boolean = false) => {
+        console.log(`[Frontend] Fetching registrations for: ${eventId}, Search: ${searchInput}`);
+
+        // Cache Check
+        if (!forceRefresh && !searchInput && adminCache.eventRegMap?.[eventId]) {
+            console.log(`[Frontend] Using cached registrations for: ${eventId}`);
+            setEventRegs(adminCache.eventRegMap[eventId]);
+            return;
+        }
+
         setLoadingRegs(true)
         try {
             const token = await getAuthToken()
-            const res = await fetch(`/api/admin/registrations?eventId=${eventId}`, {
+            let url = `/api/admin/registrations?eventId=${eventId}`
+            if (searchInput) url += `&search=${encodeURIComponent(searchInput)}`
+
+            const res = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             const data = await res.json()
             if (res.ok) {
                 console.log(`[Frontend] Found ${data.registrations.length} registrations`);
                 setEventRegs(data.registrations)
+
+                // Update Cache if not a search
+                if (!searchInput) {
+                    const currentMap = adminCache.eventRegMap || {};
+                    updateAdminCache('eventRegMap', {
+                        ...currentMap,
+                        [eventId]: data.registrations
+                    });
+                }
             }
         } catch (error) {
             console.error("Failed to fetch registrations:", error)
@@ -235,10 +266,25 @@ export default function EventManagementPage() {
         }
     }
 
+    // Debounced search for event participant modal
+    useEffect(() => {
+        if (showRegistrations && selectedEventForReg) {
+            const timer = setTimeout(() => {
+                fetchEventRegistrations(selectedEventForReg.id, eventSearchQuery)
+            }, 500)
+            return () => clearTimeout(timer)
+        }
+    }, [eventSearchQuery, showRegistrations])
+
     const handleViewRegistrations = (event: AdminEvent) => {
         setSelectedEventForReg(event)
         setShowRegistrations(true)
-        fetchEventRegistrations(event.id)
+        // Only fetch if not in cache
+        if (!adminCache.eventRegMap?.[event.id]) {
+            fetchEventRegistrations(event.id)
+        } else {
+            setEventRegs(adminCache.eventRegMap[event.id])
+        }
     }
 
     const categories = ['All', 'Technical', 'Cultural', 'Business', 'Gaming']
@@ -635,12 +681,33 @@ export default function EventManagementPage() {
                                             </p>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => setShowRegistrations(false)}
-                                        className="p-2 hover:bg-white/5 text-gray-400 hover:text-white rounded-xl transition-all"
-                                    >
-                                        <X size={24} />
-                                    </button>
+                                    <div className="flex items-center gap-2 md:gap-4">
+                                        {userData?.role === 'SUPER_ADMIN' && (
+                                            <button
+                                                onClick={() => fetchAndDownload('registrations', `Roster_${selectedEventForReg.title}`, getAuthToken, { eventId: selectedEventForReg.id })}
+                                                className="p-2 md:px-4 md:py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 rounded-xl transition-all flex items-center gap-2 group"
+                                                title="Download Roster (Excel)"
+                                            >
+                                                <FileSpreadsheet size={18} className="transition-transform group-hover:scale-110" />
+                                                <span className="hidden md:inline text-xs font-bold uppercase tracking-widest">Export</span>
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => fetchEventRegistrations(selectedEventForReg.id, '', true)}
+                                            disabled={loadingRegs}
+                                            className="p-2 md:px-4 md:py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 rounded-xl transition-all flex items-center gap-2 group"
+                                            title="Sync Participant Data"
+                                        >
+                                            <RefreshCcw size={18} className={cn("transition-transform group-hover:rotate-180", loadingRegs && "animate-spin")} />
+                                            <span className="hidden md:inline text-xs font-bold uppercase tracking-widest">Sync</span>
+                                        </button>
+                                        <button
+                                            onClick={() => setShowRegistrations(false)}
+                                            className="p-2 hover:bg-white/5 text-gray-400 hover:text-white rounded-xl transition-all"
+                                        >
+                                            <X size={24} />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {/* Modal Search & Stats */}
@@ -650,16 +717,11 @@ export default function EventManagementPage() {
                                         <input
                                             type="text"
                                             placeholder="Search teams or leaders..."
-                                            onChange={(e) => {
-                                                const val = e.target.value.toLowerCase();
-                                                const cards = document.querySelectorAll('.reg-card');
-                                                cards.forEach((card: any) => {
-                                                    const text = card.textContent.toLowerCase();
-                                                    card.style.display = text.includes(val) ? 'block' : 'none';
-                                                });
-                                            }}
+                                            value={eventSearchQuery}
+                                            onChange={(e) => setEventSearchQuery(e.target.value)}
                                             className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-xs text-white focus:outline-none focus:border-emerald-500/30"
                                         />
+                                        {loadingRegs && <Loader2 size={12} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-emerald-500" />}
                                     </div>
                                     <div className="flex gap-4">
                                         <div className="flex flex-col items-center px-4 py-1 border-r border-white/5">
