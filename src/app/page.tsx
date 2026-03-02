@@ -19,7 +19,7 @@ import {
     ArrowRight, MapPin, Mail, Phone, Globe,
     Facebook, Instagram, Youtube, Twitter,
     ChevronDown, Plus, Utensils, Gamepad2, Lightbulb, Zap, Activity,
-    Sparkles, Star, Users, Trophy, Mic, Music, Banknote
+    Sparkles, Star, Users, Trophy, Mic, Music, Banknote, Search, Code
 } from 'lucide-react'
 import { TaranaInPixels, OriginalMusic } from '@/components/sections/TaranaSections'
 
@@ -1753,18 +1753,38 @@ const ContactSection = () => {
                         </motion.div>
                     ))}
                 </div>
+
+                {/* Additional Action Links */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="flex flex-wrap justify-center gap-6 mt-16"
+                >
+                    <Link href="/contact">
+                        <ButtonPrimary>
+                            <Users className="w-5 h-5" /> Student Council
+                        </ButtonPrimary>
+                    </Link>
+                    <Link href="/developers">
+                        <ButtonPrimary>
+                            <Code className="w-5 h-5" /> Developers Team
+                        </ButtonPrimary>
+                    </Link>
+                </motion.div>
             </div>
         </section>
     )
 }
 
 const FAQ = () => {
-    const [activeIndex, setActiveIndex] = useState<number | null>(0)
+    const [activeIndex, setActiveIndex] = useState<number | null>(null)
+    const [searchQuery, setSearchQuery] = useState("")
 
     // ... existing FAQ data ...
     const faqs = [
         { q: "What is Varnothsava?", a: "Varnothsava is the annual National-level techno-cultural fest of SMVITM." },
-        { q: "How do I create an account?", a: "To create an account: 1. Click Login, 2. Click Create Account, 3. Enter your College Email ID, 4. Create password, 5. Fill details on 'About You' page, 6. Click Finish Hub Setup." },
+        { q: "How do I create an account?", a: "To create an account: 1. Click Login, 2. Click Create Account, 3. Enter your College Email ID, 4. Create password, 5. Fill details on 'About You' page, 7. Click Finish Hub Setup." },
         { q: "Can I use any email ID to register?", a: "No, you must use a valid and active college email ID during the registration process." },
         { q: "What should I do if I forget my password?", a: "Go to the Login page and click on 'Forgot Password' (if available). Enter your registered email ID and follow the instructions sent to reset it." },
         { q: "Can I edit my profile details after submission?", a: "Yes, if enabled. Log in, go to your Profile Page, click on Edit Profile, update your details, and save the changes." },
@@ -1794,48 +1814,81 @@ const FAQ = () => {
         { q: "Are participation certificates provided?", a: "All participants receive E-participation certificates. Winners receive Merit certificates." }
     ]
 
+    const filteredFaqs = faqs.filter(faq =>
+        faq.q.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        faq.a.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+
     return (
         <section className="py-20 px-4 md:px-6 container mx-auto">
             <div className="max-w-4xl mx-auto">
                 <StaggerTitle title="FAQ" subtitle="Common Queries" />
-                <div className="space-y-4">
-                    {faqs.map((faq, i) => (
-                        <motion.div
-                            key={i}
-                            initial={{ opacity: 0, y: 10 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: i * 0.1 }}
-                            className="border border-white/10 rounded-2xl overflow-hidden bg-white/5 hover:bg-white/10 transition-colors"
+
+                {/* Search Bar */}
+                <div className="relative mb-12">
+                    <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
+                        <Search className="w-5 h-5 text-emerald-500/50" />
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="Search questions or answers..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-16 pr-6 text-white placeholder:text-gray-500 focus:outline-none focus:border-emerald-500/50 focus:bg-white/[0.08] transition-all"
+                    />
+                    {searchQuery && (
+                        <button
+                            onClick={() => setSearchQuery("")}
+                            className="absolute inset-y-0 right-6 flex items-center text-gray-500 hover:text-white transition-colors"
                         >
-                            <button
-                                onClick={() => setActiveIndex(activeIndex === i ? null : i)}
-                                aria-expanded={activeIndex === i}
-                                aria-controls={`faq-answer-${i}`}
-                                className="w-full flex items-center justify-between p-6 text-left"
+                            Clear
+                        </button>
+                    )}
+                </div>
+
+                <div className="space-y-4">
+                    {filteredFaqs.length > 0 ? (
+                        filteredFaqs.map((faq, i) => (
+                            <motion.div
+                                key={i}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: i * 0.05 }}
+                                className="border border-white/10 rounded-2xl overflow-hidden bg-white/5 hover:bg-white/10 transition-colors"
                             >
-                                <span className={`text-lg md:text-xl font-bold font-[family-name:var(--font-inter)] ${activeIndex === i ? 'text-emerald-400' : 'text-white'}`}>
-                                    {faq.q}
-                                </span>
-                                <Plus className={`w-6 h-6 transition-transform duration-300 ${activeIndex === i ? 'rotate-45 text-emerald-500' : 'text-gray-400'}`} />
-                            </button>
-                            <AnimatePresence>
-                                {activeIndex === i && (
-                                    <motion.div
-                                        id={`faq-answer-${i}`}
-                                        initial={{ height: 0, opacity: 0 }}
-                                        animate={{ height: "auto", opacity: 1 }}
-                                        exit={{ height: 0, opacity: 0 }}
-                                        className="overflow-hidden"
-                                    >
-                                        <div className="p-6 pt-0 text-gray-400 leading-relaxed border-t border-white/5">
-                                            {faq.a}
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </motion.div>
-                    ))}
+                                <button
+                                    onClick={() => setActiveIndex(activeIndex === i ? null : i)}
+                                    aria-expanded={activeIndex === i}
+                                    aria-controls={`faq-answer-${i}`}
+                                    className="w-full flex items-center justify-between p-6 text-left"
+                                >
+                                    <span className={`text-lg md:text-xl font-bold font-[family-name:var(--font-inter)] ${activeIndex === i ? 'text-emerald-400' : 'text-white'}`}>
+                                        {faq.q}
+                                    </span>
+                                    <Plus className={`w-6 h-6 transition-transform duration-300 ${activeIndex === i ? 'rotate-45 text-emerald-500' : 'text-gray-400'}`} />
+                                </button>
+                                <AnimatePresence>
+                                    {activeIndex === i && (
+                                        <motion.div
+                                            id={`faq-answer-${i}`}
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: "auto", opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            className="overflow-hidden"
+                                        >
+                                            <div className="p-6 pt-0 text-gray-400 leading-relaxed border-t border-white/5">
+                                                {faq.a}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </motion.div>
+                        ))
+                    ) : (
+                        <div className="text-center py-12 text-gray-500">
+                            No matching questions found for "{searchQuery}"
+                        </div>
+                    )}
                 </div>
             </div>
         </section>
