@@ -1,4 +1,4 @@
-import { usersCollection, verifyAuthToken } from "@/lib/firebaseAdmin";
+import { adminDb, fieldValue, usersCollection, verifyAuthToken } from "@/lib/firebaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 import { registerUserSchema } from "@/lib/validation";
 import { handleApiError, ApiError } from "@/lib/errorHandler";
@@ -90,10 +90,30 @@ export async function POST(request: NextRequest) {
             emailVerified: verified.email_verified || false,
         };
 
-        // 7. Save to database (isolated by UID - no email lookup)
-        await usersCollection.doc(verified.uid).set(userProfile, { merge: true });
+        // --- ADMIN ROLE INJECTION ---
+        if (email === 'admin@varnothsava.in' || email === 'abhishree621@gmail.com') {
+            userProfile.role = 'SUPER_ADMIN';
+        } else if (email === 'coordinator@varnothsava.in') {
+            userProfile.role = 'COORDINATOR';
+        }
+        // ----------------------------
 
-        console.log('User registered successfully:', verified.uid);
+        const statsRef = adminDb.collection('system').doc('stats');
+
+        // 7. Save to database AND update summary stats atomically
+        const batch = adminDb.batch();
+        batch.set(usersCollection.doc(verified.uid), userProfile, { merge: true });
+
+        // Strategy 4: Summary Document Increment
+        batch.set(statsRef, {
+            totalUsers: fieldValue.increment(1),
+            [studentType === 'internal' ? 'internalUsers' : 'externalUsers']: fieldValue.increment(1),
+            updatedAt: new Date().toISOString()
+        }, { merge: true });
+
+        await batch.commit();
+
+        console.log('User registered successfully (Stats Updated):', verified.uid);
 
         // 8. Return success response
         return NextResponse.json({

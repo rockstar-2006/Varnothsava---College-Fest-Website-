@@ -156,6 +156,22 @@ export function RegistrationModal({ isOpen, onClose, event, userData, onConfirm 
         }
     }, [isOpen, lenisControl])
 
+    useEffect(() => {
+        if (isOpen) return
+
+        setTeamName('')
+        setMemberIds([])
+        setNewMemberId('')
+        setIsLoading(false)
+        setError(null)
+        setMemberDetails({})
+        setIsAddingMember(false)
+        setIsSuccess(false)
+        setRegId(null)
+        setQrDataUrl('')
+        setShowManual(false)
+    }, [isOpen])
+
     if (!event) return null
 
     const isTeamEvent = (event.maxTeamSize ?? 1) > 1

@@ -8,9 +8,27 @@ import * as admin from 'firebase-admin';
 let serviceAccount: any = null;
 try {
     if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-        serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+        let keyString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY.trim();
+        // Handle common quoting issues from .env files
+        if ((keyString.startsWith("'") && keyString.endsWith("'")) ||
+            (keyString.startsWith('"') && keyString.endsWith('"'))) {
+            keyString = keyString.substring(1, keyString.length - 1);
+        }
+        serviceAccount = JSON.parse(keyString);
         if (serviceAccount && serviceAccount.private_key) {
             serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+        }
+    } else {
+        // Fallback to local file for convenience
+        try {
+            const fs = require('fs');
+            const path = require('path');
+            const filePath = path.resolve(process.cwd(), 'src/lib/service-account.json');
+            if (fs.existsSync(filePath)) {
+                serviceAccount = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            }
+        } catch (e: any) {
+            console.warn("Could not load service-account.json fallback:", e.message);
         }
     }
 } catch (err) {

@@ -175,6 +175,7 @@ export default function EventDetailsPage() {
 
         if (mission.id === "TECH-008") {
             if (!userData?.hasRoboSoccer) {
+
                 router.push('/notify?addon=robo-soccer');
                 return
             }
