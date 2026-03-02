@@ -46,8 +46,16 @@ export async function GET(request: NextRequest) {
 
         let userData = userDoc.data();
 
+        // --- ADMIN BYPASS LOGIC (For Testing/Launch) ---
+        if (userData?.email === 'admin@varnothsava.in' || userData?.email === 'abhishree621@gmail.com') {
+            userData.role = 'SUPER_ADMIN';
+        } else if (userData?.email === 'coordinator@varnothsava.in') {
+            userData.role = 'COORDINATOR';
+        }
+        // ----------------------------------------------
+
         const registrations = await registrationsCollection.where('members', 'array-contains', verified.uid).get();
-        const registeredEvents = registrations.docs.map(doc => ({id: doc.id, data: doc.data()})).map(reg => ({ id: reg.id, eventId: reg.data.eventId, teamName: reg.data.teamName }));
+        const registeredEvents = registrations.docs.map(doc => ({ id: doc.id, data: doc.data() })).map(reg => ({ id: reg.id, eventId: reg.data.eventId, teamName: reg.data.teamName }));
         userData = {
             ...userData,
             hasPaid: userData?.hasPaid === true,
@@ -63,6 +71,15 @@ export async function GET(request: NextRequest) {
         });
     } catch (error: any) {
         console.error("Me API Error:", error);
+
+        // Handle Firebase Quota Exceeded specifically
+        if (error.code === 8 || error.message?.includes('RESOURCE_EXHAUSTED') || error.message?.includes('Quota exceeded')) {
+            return NextResponse.json({
+                message: "System Overloaded (Quota Exceeded)",
+                detail: "The free database limit for today has been reached. Please try again after reset (1:30 PM IST)."
+            }, { status: 503 });
+        }
+
         return NextResponse.json({
             message: "Authentication Error",
             detail: error.message

@@ -64,10 +64,26 @@ interface AppContextType {
     setIsSiteLoaded: (val: boolean) => void,
     pageTheme: PageTheme | null,
     setPageTheme: (theme: PageTheme | any) => void,
-
     isChatOpen: boolean,
-    setIsChatOpen: (val: boolean) => void
-
+    setIsChatOpen: (val: boolean) => void,
+    adminCache: {
+        stats?: any;
+        users?: any[];
+        payments?: any[];
+        registrations?: any[];
+        events?: any[];
+        staff?: any[];
+        totalVerifiedPayments?: number;
+        totalUsersCount?: number;
+        totalPaymentsCount?: number;
+        totalRegCount?: number;
+        paidUsersCount?: number;
+        unpaidUsersCount?: number;
+        totalInternalRegs?: number;
+        totalExternalRegs?: number;
+        _updatedAt?: number;
+    };
+    updateAdminCache: (key: string, data: any) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -118,7 +134,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const [isSiteLoaded, setIsSiteLoaded] = useState(false)
     const [pageTheme, setPageTheme] = useState<PageTheme | null>(null)
     const [isChatOpen, setIsChatOpen] = useState(false)
+    const [adminCache, setAdminCache] = useState<AppContextType['adminCache']>({})
     const router = useRouter();
+
+    // Hydrate admin cache from localStorage on mount
+    useEffect(() => {
+        const savedCache = localStorage.getItem('admin_gate_cache');
+        if (savedCache) {
+            try {
+                setAdminCache(JSON.parse(savedCache));
+            } catch (e) {
+                console.error("Failed to parse admin cache:", e);
+            }
+        }
+    }, []);
+
+    const updateAdminCache = (key: string, data: any) => {
+        setAdminCache(prev => {
+            const newCache = { ...prev, [key]: data, _updatedAt: Date.now() };
+            // Persist to localStorage
+            localStorage.setItem('admin_gate_cache', JSON.stringify(newCache));
+            return newCache;
+        });
+    }
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -135,6 +173,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                 setNeedsOnboarding(false);
                 setIsInitializing(false);
                 setCart([]); // Clear cart on logout
+                setAdminCache({}); // Clear admin cache on logout
+                localStorage.removeItem('admin_gate_cache'); // Clear persisted cache
             }
         });
         return () => unsubscribe();
@@ -148,11 +188,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             try {
                 // Get ID token result specifically to check for custom claims
                 const idTokenResult = await currentUser.getIdTokenResult();
-                const role = idTokenResult.claims.role as AdminRole | undefined;
-
-                setIsAdmin(!!role);
+                let role = idTokenResult.claims.role as AdminRole | undefined;
 
                 const data = await getUserData(currentUser);
+
+                // --- ADMIN ROLE MERGE ---
+                // If it's not in the token claims (custom claims), check the Firestore data
+                // This allows our 'me' API bypass to work smoothly for testing
+                if (!role && data?.role) {
+                    role = data.role as AdminRole;
+                }
+                setIsAdmin(!!role);
+                // ------------------------
+
                 if (data) {
                     // Check if user is blocked
                     if (data.isBlocked) {
@@ -164,7 +212,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                         return;
                     }
                     // User has complete profile
-                    setUserData({ ...data, role }); // Merge role from claims
+                    setUserData({ ...data, role }); // Merge role
                     setIsLoggedIn(true);
                     setNeedsOnboarding(false);
                 } else {
@@ -252,6 +300,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setUserData(null);
         setNeedsOnboarding(false);
         setCart([]); // Clear cart
+        setAdminCache({}); // Clear admin cache
+        localStorage.removeItem('admin_gate_cache'); // Clear persisted cache
         setIsInitializing(false); // Ensure not stuck in loading
 
         // Redirect to login page
@@ -417,10 +467,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             setIsSiteLoaded,
             pageTheme,
             setPageTheme,
-
             isChatOpen,
-            setIsChatOpen
-
+            setIsChatOpen,
+            adminCache,
+            updateAdminCache
         }}>
             {children}
         </AppContext.Provider>

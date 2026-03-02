@@ -19,7 +19,8 @@ import {
     Check,
     X,
     FileText,
-    Tag
+    Tag,
+    RefreshCcw
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getAuthToken } from '@/lib/firebaseClient'
@@ -47,27 +48,46 @@ interface Event {
 }
 
 export default function ParticipantsManagementPage() {
-    const { userData } = useApp()
-    const [registrations, setRegistrations] = useState<Registration[]>([])
-    const [events, setEvents] = useState<Event[]>([])
-    const [loading, setLoading] = useState(true)
+    const { userData, adminCache, updateAdminCache } = useApp()
+    const [registrations, setRegistrations] = useState<Registration[]>(adminCache.registrations || [])
+    const [events, setEvents] = useState<Event[]>(adminCache.events || [])
+    const [loading, setLoading] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedEventId, setSelectedEventId] = useState<string>('all')
     const [updatingId, setUpdatingId] = useState<string | null>(null)
+    const [hasMore, setHasMore] = useState(false)
+    const [totalRegCount, setTotalRegCount] = useState(adminCache.totalRegCount || 0)
+    const [totalInternalRegs, setTotalInternalRegs] = useState(adminCache.totalInternalRegs || 0)
+    const [totalExternalRegs, setTotalExternalRegs] = useState(adminCache.totalExternalRegs || 0)
+    const [lastId, setLastId] = useState<string | null>(null)
 
-    const fetchRegistrations = async (eventId?: string) => {
+    const fetchRegistrations = async (eventId?: string, isLoadMore = false) => {
         setLoading(true)
         try {
             const token = await getAuthToken()
-            const url = eventId && eventId !== 'all'
-                ? `/api/admin/registrations?eventId=${eventId}`
-                : '/api/admin/registrations'
+            const currentLastId = isLoadMore ? lastId : '';
+            const targetEventId = eventId || selectedEventId;
+
+            let url = `/api/admin/registrations?lastId=${currentLastId}&limit=20`
+            if (targetEventId && targetEventId !== 'all') url += `&eventId=${targetEventId}`
 
             const res = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             const data = await res.json()
-            if (res.ok) setRegistrations(data.registrations)
+            if (res.ok) {
+                const newRegs = isLoadMore ? [...registrations, ...data.registrations] : data.registrations;
+                setRegistrations(newRegs)
+                setHasMore(data.hasMore)
+                setLastId(data.lastId)
+                setTotalRegCount(data.totalCount)
+                setTotalInternalRegs(data.internalCount || 0)
+                setTotalExternalRegs(data.externalCount || 0)
+                updateAdminCache('registrations', newRegs)
+                updateAdminCache('totalRegCount', data.totalCount)
+                updateAdminCache('totalInternalRegs', data.internalCount || 0)
+                updateAdminCache('totalExternalRegs', data.externalCount || 0)
+            }
         } catch (error) {
             console.error("Failed to fetch registrations:", error)
         } finally {
@@ -82,16 +102,19 @@ export default function ParticipantsManagementPage() {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             const data = await res.json()
-            if (res.ok) setEvents(data.events)
+            if (res.ok) {
+                setEvents(data.events)
+                updateAdminCache('events', data.events)
+            }
         } catch (error) {
             console.error("Failed to fetch events:", error)
         }
     }
 
+    // No automatic fetching on page load
     useEffect(() => {
-        fetchRegistrations(selectedEventId)
-        fetchEvents()
-    }, [selectedEventId])
+        // fetchRegistrations(selectedEventId) and fetchEvents() are now manual
+    }, [])
 
     const handleUpdateStatus = async (id: string, status: 'approved' | 'rejected') => {
         setUpdatingId(id)
@@ -143,9 +166,38 @@ export default function ParticipantsManagementPage() {
     return (
         <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'COORDINATOR']}>
             <div className="space-y-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-white">Participants Management</h1>
-                    <p className="text-gray-400 text-sm">Review and approve event registrations</p>
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-white uppercase tracking-tighter italic">REGISTRATIONS</h1>
+                        <p className="text-gray-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                            <FileText size={14} className="text-emerald-500/50" />
+                            {selectedEventId === 'all' ? `Global database contains ${totalRegCount} registration records` : `Accessing registration signals for selected sector`}
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row md:items-center gap-4">
+                        <div className="flex items-center gap-2">
+                            <div className="bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl">
+                                <p className="text-[8px] font-black uppercase tracking-tighter text-emerald-500 leading-none mb-1 text-center">Internal</p>
+                                <p className="text-sm font-black text-white italic text-center">{totalInternalRegs}</p>
+                            </div>
+                            <div className="bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-xl">
+                                <p className="text-[8px] font-black uppercase tracking-tighter text-blue-500 leading-none mb-1 text-center">External</p>
+                                <p className="text-sm font-black text-white italic text-center">{totalExternalRegs}</p>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => fetchRegistrations(selectedEventId, false)}
+                            className="bg-[#111] border border-white/10 hover:border-emerald-500/50 text-white px-5 py-2.5 rounded-xl transition-all group flex items-center gap-3 shadow-xl"
+                        >
+                            <RefreshCcw size={18} className={cn("text-emerald-500 transition-transform group-hover:rotate-180", loading && "animate-spin")} />
+                            <div className="text-left">
+                                <p className="text-[9px] font-black uppercase tracking-wider text-gray-500 leading-none mb-1">Live Feed</p>
+                                <p className="text-xs font-bold uppercase tracking-widest text-white leading-none">Sync Signals</p>
+                            </div>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Filters */}
@@ -178,8 +230,8 @@ export default function ParticipantsManagementPage() {
                 {/* Stats Summary */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-[#111] p-4 rounded-2xl border border-white/5">
-                        <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1">Total</p>
-                        <p className="text-2xl font-bold text-white">{registrations.length}</p>
+                        <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1 text-[8px]">Database Total</p>
+                        <p className="text-2xl font-black text-white italic">{totalRegCount}</p>
                     </div>
                     <div className="bg-[#111] p-4 rounded-2xl border border-white/5">
                         <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1">Pending</p>
@@ -222,7 +274,7 @@ export default function ParticipantsManagementPage() {
                                 ) : filteredRegs.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="px-6 py-12 text-center text-gray-500 font-medium italic">
-                                            No registration signals found in the current sector.
+                                            No local cache found. Click "Sync Signals" to fetch registration data.
                                         </td>
                                     </tr>
                                 ) : filteredRegs.map((reg) => (
@@ -307,6 +359,25 @@ export default function ParticipantsManagementPage() {
                             </tbody>
                         </table>
                     </div>
+                    {/* Pagination */}
+                    {hasMore && (
+                        <div className="p-4 border-t border-white/5 flex justify-center mt-6">
+                            <button
+                                onClick={() => fetchRegistrations(selectedEventId, true)}
+                                disabled={loading}
+                                className="px-8 py-2.5 bg-[#111] hover:bg-emerald-500/10 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl transition-all border border-white/10 hover:border-emerald-500/50 disabled:opacity-50 flex items-center gap-3 group"
+                            >
+                                {loading ? (
+                                    <Loader2 className="animate-spin text-emerald-500" size={16} />
+                                ) : (
+                                    <>
+                                        <span>Load Sector {totalRegCount - registrations.length}</span>
+                                        <RefreshCcw size={14} className="group-hover:rotate-180 transition-transform text-emerald-500" />
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </ProtectedRoute>

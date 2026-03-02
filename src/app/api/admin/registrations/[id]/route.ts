@@ -3,11 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
     request: NextRequest,
-    context: { params: Promise<{ id: string }> }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const params = await context.params;
-        const { id } = params;
+        const { id } = await params;
         const authHeader = request.headers.get('Authorization') || '';
         if (!authHeader.startsWith('Bearer ')) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });

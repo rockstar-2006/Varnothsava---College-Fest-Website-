@@ -24,10 +24,14 @@ export async function GET(request: NextRequest) {
 
         const { searchParams } = new URL(request.url);
         const eventId = searchParams.get('eventId');
+        const lastId = searchParams.get('lastId') || '';
+        const limit = parseInt(searchParams.get('limit') || '20');
 
-        let regQuery: any = registrationsCollection;
+        console.log(`[RegAPI] Fetching. Role: ${role}, EventId: ${eventId}, UID: ${verified.uid}`);
 
-        // RBAC: COORDINATOR only sees assigned events
+        let queryBase: any = registrationsCollection;
+
+        // Apply Coordinator filtering
         if (role === 'COORDINATOR') {
             const eventsSnapshot = await adminDb.collection('events')
                 .where('coordinators', 'array-contains', verified.uid)
@@ -35,35 +39,58 @@ export async function GET(request: NextRequest) {
             const assignedEventIds = eventsSnapshot.docs.map(doc => doc.id);
 
             if (assignedEventIds.length === 0) {
-                return NextResponse.json({ registrations: [] });
+                return NextResponse.json({ registrations: [], totalCount: 0 });
             }
 
-            if (eventId) {
+            if (eventId && eventId !== 'all') {
                 if (!assignedEventIds.includes(eventId)) {
                     return NextResponse.json({ message: "Forbidden: Not assigned to this event" }, { status: 403 });
                 }
-                regQuery = regQuery.where('eventId', '==', eventId);
+                queryBase = queryBase.where('eventId', '==', eventId);
             } else {
-                // Firestore 'in' query limit is 10, but usually coordinators aren't in > 10 events.
-                // If they are, we'd need to chunk this.
-                regQuery = regQuery.where('eventId', 'in', assignedEventIds);
+                queryBase = queryBase.where('eventId', 'in', assignedEventIds);
+            }
+        } else if (eventId && eventId !== 'all') {
+            // SUPER_ADMIN filtering by event
+            queryBase = queryBase.where('eventId', '==', eventId);
+        }
+
+        // Strategy 4: Summary Document Fetch for Metadata
+        const statsRef = adminDb.collection('system').doc('stats');
+        const statsDoc = await statsRef.get();
+        const s = statsDoc.data() || {};
+
+        let totalCount = 0;
+        if (role === 'SUPER_ADMIN') {
+            if (eventId && eventId !== 'all') {
+                totalCount = s[`reg_${eventId}_total`] || 0;
+            } else {
+                totalCount = s.totalRegistrations || 0;
             }
         } else {
-            // SUPER_ADMIN or others with access
-            if (eventId) {
-                regQuery = regQuery.where('eventId', '==', eventId);
+            // Coordinator needs accurate real-time count for assigned scope
+            const totalCountSnap = await queryBase.count().get();
+            totalCount = totalCountSnap.data().count;
+        }
+
+        let query = queryBase.orderBy('registeredAt', 'desc').limit(limit);
+
+        if (lastId) {
+            const lastDoc = await registrationsCollection.doc(lastId).get();
+            if (lastDoc.exists) {
+                query = query.startAfter(lastDoc);
             }
         }
 
-        const snapshot = await regQuery.orderBy('registeredAt', 'desc').get();
+        const snapshot = await query.get();
         const registrations = snapshot.docs.map((doc: any) => ({
             id: doc.id,
             ...doc.data()
         }));
 
-        // Enrich with user data
-        // We need names and college for participants
-        // To be efficient, we'll collect all unique UIDs and fetch them in one batch if possible
+        console.log(`[RegAPI] After filtering, found ${registrations.length} records for ${eventId || 'all'}`);
+
+        // Enrich with user data for ONLY the current batch of 20
         const userIds = new Set<string>();
         registrations.forEach((reg: any) => {
             if (reg.members) reg.members.forEach((id: string) => userIds.add(id));
@@ -73,9 +100,6 @@ export async function GET(request: NextRequest) {
         const usersDataMap: Record<string, any> = {};
         if (userIds.size > 0) {
             const userIdArray = Array.from(userIds);
-            // Chunk by 30 for Firestore 'where in' (limit is actually 30 in some SDKs, 10 in others)
-            // Let's use 10 for safety or just fetch individually if count is small.
-            // For a dashboard, individual get() is usually fine if we cache them.
             for (let i = 0; i < userIdArray.length; i += 10) {
                 const chunk = userIdArray.slice(i, i + 10);
                 const userSnapshot = await usersCollection.where('__name__', 'in', chunk).get();
@@ -98,7 +122,14 @@ export async function GET(request: NextRequest) {
             };
         });
 
-        return NextResponse.json({ registrations: enrichedRegistrations });
+        return NextResponse.json({
+            registrations: enrichedRegistrations,
+            totalCount,
+            internalCount: role === 'SUPER_ADMIN' ? (s.internalRegs || 0) : null,
+            externalCount: role === 'SUPER_ADMIN' ? (s.externalRegs || 0) : null,
+            lastId: snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1].id : null,
+            hasMore: snapshot.docs.length === limit
+        });
     } catch (error: any) {
         console.error("Admin Registrations GET Error:", error);
         return NextResponse.json({ message: error.message }, { status: 500 });

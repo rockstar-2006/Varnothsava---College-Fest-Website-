@@ -1,4 +1,4 @@
-import { usersCollection, verifyAuthToken, setAdminRole } from "@/lib/firebaseAdmin";
+import { adminDb, usersCollection, verifyAuthToken, setAdminRole } from "@/lib/firebaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -15,33 +15,70 @@ export async function GET(request: NextRequest) {
 
         const userDoc = await usersCollection.doc(verified.uid).get();
         const userData = userDoc.data();
-        if (userData?.role !== 'SUPER_ADMIN') {
-            // If not super admin, only return "staff" roles
-            const snapshot = await usersCollection.get();
-            const staff = snapshot.docs.map((doc: any) => {
-                const data = doc.data();
-                return {
-                    id: doc.id,
-                    name: data.name,
-                    role: data.role
-                };
-            }).filter(u => ['SUPER_ADMIN', 'COORDINATOR', 'VOLUNTEER', 'FINANCE'].includes(u.role || ''));
-            return NextResponse.json({ users: staff });
-        }
 
-        // Full user list for SUPER_ADMIN
-        const snapshot = await usersCollection.get();
-        const users = snapshot.docs.map((doc: any) => {
+        // 1. Fetch all events to find assignments
+        const eventsSnapshot = await adminDb.collection('events').get();
+        const eventMap: Record<string, any[]> = {}; // uid -> [{title, type, date}]
+
+        eventsSnapshot.docs.forEach(doc => {
             const data = doc.data();
+            const coordinators = data.coordinators || [];
+            coordinators.forEach((identifier: string) => {
+                // Store by raw identifier (UID or Name)
+                if (!eventMap[identifier]) eventMap[identifier] = [];
+                eventMap[identifier].push({
+                    id: doc.id,
+                    title: data.title || 'Untitled Event',
+                    type: data.type || 'Other',
+                    date: data.date || 'TBD'
+                });
+
+                // Also store a case-insensitive name key
+                const lowerName = identifier.toLowerCase();
+                if (!eventMap[lowerName]) eventMap[lowerName] = [];
+                // Avoid duplicating if the identifier was already lowercase
+                if (lowerName !== identifier) {
+                    eventMap[lowerName].push({
+                        id: doc.id,
+                        title: data.title || 'Untitled Event',
+                        type: data.type || 'Other',
+                        date: data.date || 'TBD'
+                    });
+                }
+            });
+        });
+
+        const usersSnapshot = await usersCollection.get();
+        const users = usersSnapshot.docs.map((doc: any) => {
+            const data = doc.data();
+            const role = data.role || 'USER';
+
+            // Only return the coordinator details the user wants
+            if (!['SUPER_ADMIN', 'COORDINATOR', 'VOLUNTEER', 'FINANCE'].includes(role) && userData?.role !== 'SUPER_ADMIN') {
+                return null;
+            }
+
+            // Match by UID and by Name (case-insensitive)
+            const eventsByUid = eventMap[doc.id] || [];
+            const eventsByName = eventMap[data.name?.toLowerCase()] || [];
+
+            // Deduplicate events by ID
+            const combinedEventsMap = new Map();
+            [...eventsByUid, ...eventsByName].forEach(evt => {
+                combinedEventsMap.set(evt.id, evt);
+            });
+
             return {
                 id: doc.id,
                 name: data.name,
                 email: data.email,
-                role: data.role || 'USER',
+                role: role,
                 usn: data.usn,
-                collegeName: data.collegeName
+                phone: data.phone,
+                collegeName: data.collegeName,
+                assignedEvents: Array.from(combinedEventsMap.values())
             };
-        });
+        }).filter(Boolean);
 
         return NextResponse.json({ users });
     } catch (error: any) {
