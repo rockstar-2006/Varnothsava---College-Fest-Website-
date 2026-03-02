@@ -1,4 +1,4 @@
-import { adminDb, usersCollection, registrationsCollection, verifyAuthToken } from "@/lib/firebaseAdmin";
+import { adminDb, verifyAuthToken, usersCollection } from "@/lib/firebaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -14,77 +14,43 @@ export async function GET(request: NextRequest) {
         }
 
         const userDoc = await usersCollection.doc(verified.uid).get();
-        const userData = userDoc.data();
-        const role = userData?.role;
+        const role = userDoc.data()?.role;
 
-        if (!role || !['SUPER_ADMIN', 'COORDINATOR', 'FINANCE'].includes(role)) {
+        if (!role || !['SUPER_ADMIN', 'FINANCE', 'COORDINATOR'].includes(role)) {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });
         }
 
-        // 1. Total Registrations
-        const regSnapshot = await registrationsCollection.count().get();
-        const totalRegistrations = regSnapshot.data().count;
+        // Strategy 4: Summary Document Fetch
+        const statsRef = adminDb.collection('system').doc('stats');
+        const statsDoc = await statsRef.get();
 
-        // 2. Total Users
-        const usersSnapshot = await usersCollection.count().get();
-        const totalUsers = usersSnapshot.data().count;
+        if (!statsDoc.exists) {
+            // INITIALIZATION: If stats doc doesn't exist, calculate it once (expensive, but only happens once)
+            // Strategy 3: count() for initialization
+            const [usersSnap, internalSnap, paidSnap, regSnap] = await Promise.all([
+                usersCollection.count().get(),
+                usersCollection.where('studentType', '==', 'internal').count().get(),
+                usersCollection.where('hasPaid', '==', true).count().get(),
+                adminDb.collection('registrations').count().get()
+            ]);
 
-        // 3. Total Revenue & Verified Payments
-        // Assuming payments collection exists based on previous work
-        const paymentsSnapshot = await adminDb.collection('payments').get();
-        let totalRevenue = 0;
-        let verifiedPaymentsCount = 0;
-
-        paymentsSnapshot.docs.forEach(doc => {
-            const data = doc.data();
-            if (data.notes?.verification_status === 'verified' || data.status === 'success') {
-                totalRevenue += (data.amount || 0);
-                verifiedPaymentsCount++;
-            }
-        });
-
-        // 4. Active Events
-        const eventsSnapshot = await adminDb.collection('events').count().get();
-        const activeEventsCount = eventsSnapshot.data().count;
-
-        // 5. Recent Activity (Latest 5 registrations)
-        const recentRegsProxy = await registrationsCollection
-            .orderBy('registeredAt', 'desc')
-            .limit(5)
-            .get();
-
-        const recentRegistrations = await Promise.all(recentRegsProxy.docs.map(async (doc) => {
-            const data = doc.data();
-            const userSub = await usersCollection.doc(data.teamLeader).get();
-            const uData = userSub.data();
-
-            // Get event title
-            const eventSub = await adminDb.collection('events').doc(data.eventId).get();
-            const eData = eventSub.data();
-
-            return {
-                id: doc.id,
-                userName: uData?.name || 'Unknown',
-                userUsn: uData?.usn || 'N/A',
-                eventName: eData?.title || data.eventId,
-                status: data.status || 'pending',
-                amount: eData?.fee || 0 // Assuming fee comes from event data
+            const initialStats = {
+                totalUsers: usersSnap.data().count,
+                internalUsers: internalSnap.data().count,
+                externalUsers: usersSnap.data().count - internalSnap.data().count,
+                paidUsers: paidSnap.data().count,
+                unpaidUsers: usersSnap.data().count - paidSnap.data().count,
+                totalRegistrations: regSnap.data().count,
+                initializedAt: new Date().toISOString()
             };
-        }));
 
-        return NextResponse.json({
-            stats: {
-                totalRegistrations,
-                totalUsers,
-                totalRevenue,
-                verifiedPayments: verifiedPaymentsCount,
-                activeEvents: activeEventsCount
-            },
-            recentRegistrations
-        });
+            await statsRef.set(initialStats);
+            return NextResponse.json({ stats: initialStats });
+        }
+
+        return NextResponse.json({ stats: statsDoc.data() });
 
     } catch (error: any) {
-        console.error("Dashboard Stats Error:", error);
         return NextResponse.json({ message: error.message }, { status: 500 });
     }
 }

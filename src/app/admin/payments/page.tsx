@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useApp } from '@/context/AppContext'
 import {
     Search,
@@ -20,7 +20,10 @@ import {
     X,
     MoreHorizontal,
     Globe,
-    Zap
+    Zap,
+    Building2,
+    Trash2,
+    RefreshCcw
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getAuthToken } from '@/lib/firebaseClient'
@@ -34,6 +37,7 @@ interface Payment {
     userEmail: string;
     userPhone: string;
     userCollege: string;
+    studentType?: 'internal' | 'external';
     amount: number;
     payment_method: string;
     status: string;
@@ -57,34 +61,83 @@ interface Event {
 }
 
 export default function PaymentsManagementPage() {
-    const { userData } = useApp()
-    const [payments, setPayments] = useState<Payment[]>([])
-    const [events, setEvents] = useState<Event[]>([])
-    const [loading, setLoading] = useState(true)
+    const { userData, adminCache, updateAdminCache } = useApp()
+    const [payments, setPayments] = useState<Payment[]>(adminCache.payments || [])
+    const [events, setEvents] = useState<Event[]>(adminCache.events || [])
+    const [loading, setLoading] = useState(!adminCache.payments)
     const [searchQuery, setSearchQuery] = useState('')
+    const [selectedIds, setSelectedIds] = useState<string[]>([])
     const [selectedEventId, setSelectedEventId] = useState<string>('all')
     const [selectedStatus, setSelectedStatus] = useState<string>('all')
+    const [selectedType, setSelectedType] = useState<'all' | 'internal' | 'external'>('all')
+    const [isDeleting, setIsDeleting] = useState(false)
+    const [visibleCount, setVisibleCount] = useState(20)
     const [updatingId, setUpdatingId] = useState<string | null>(null)
+    const [totalPaidPeople, setTotalPaidPeople] = useState<number | null>(adminCache.totalVerifiedPayments || null)
+    const [loadingTotal, setLoadingTotal] = useState(false)
+    const [hasMore, setHasMore] = useState(false)
+    const [totalPaymentsCount, setTotalPaymentsCount] = useState(adminCache.totalPaymentsCount || 0)
+    const [lastId, setLastId] = useState<string | null>(null)
+
+    const toggleSelect = (id: string) => {
+        setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
+    }
+
+    const toggleSelectAll = (filteredPayments: Payment[]) => {
+        if (selectedIds.length === filteredPayments.length) {
+            setSelectedIds([])
+        } else {
+            setSelectedIds(filteredPayments.map(p => p.id))
+        }
+    }
 
     const canVerify = userData?.role === 'SUPER_ADMIN' || userData?.role === 'FINANCE'
 
-    const fetchPayments = async () => {
+    const fetchPayments = async (isLoadMore = false) => {
         setLoading(true)
         try {
             const token = await getAuthToken()
-            let url = '/api/admin/payments?'
-            if (selectedEventId !== 'all') url += `eventId=${selectedEventId}&`
-            if (selectedStatus !== 'all') url += `status=${selectedStatus}`
+            const currentLastId = isLoadMore ? lastId : '';
+            let url = `/api/admin/payments?lastId=${currentLastId}&limit=20`
+            if (selectedEventId !== 'all') url += `&eventId=${selectedEventId}`
+            if (selectedStatus !== 'all') url += `&status=${selectedStatus}`
 
             const res = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             const data = await res.json()
-            if (res.ok) setPayments(data.payments)
+            if (res.ok) {
+                const newPayments = isLoadMore ? [...payments, ...data.payments] : data.payments;
+                setPayments(newPayments)
+                setHasMore(data.hasMore)
+                setLastId(data.lastId)
+                setTotalPaymentsCount(data.totalCount)
+                updateAdminCache('payments', newPayments)
+                updateAdminCache('totalPaymentsCount', data.totalCount)
+            }
         } catch (error) {
             console.error("Failed to fetch payments:", error)
         } finally {
             setLoading(false)
+        }
+    }
+
+    const fetchTotalAmount = async () => {
+        setLoadingTotal(true)
+        try {
+            const token = await getAuthToken()
+            const res = await fetch('/api/admin/payments/total', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            const data = await res.json()
+            if (res.ok) {
+                setTotalPaidPeople(data.totalPayments)
+                updateAdminCache('totalVerifiedPayments', data.totalPayments)
+            }
+        } catch (error) {
+            console.error("Failed to fetch total amount:", error)
+        } finally {
+            setLoadingTotal(false)
         }
     }
 
@@ -95,16 +148,19 @@ export default function PaymentsManagementPage() {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             const data = await res.json()
-            if (res.ok) setEvents(data.events)
+            if (res.ok) {
+                setEvents(data.events)
+                updateAdminCache('events', data.events)
+            }
         } catch (error) {
             console.error("Failed to fetch events:", error)
         }
     }
 
+    // Sync button is now the only trigger for fresh directory data
     useEffect(() => {
-        fetchPayments()
-        fetchEvents()
-    }, [selectedEventId, selectedStatus])
+        // Init logic if any. 
+    }, [])
 
     const handleVerify = async (id: string, status: 'verified' | 'rejected') => {
         setUpdatingId(id)
@@ -133,14 +189,74 @@ export default function PaymentsManagementPage() {
             setUpdatingId(null)
         }
     }
+    const handleDeletePayment = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this payment record? It will reset the user's paid status in the database.")) {
+            return;
+        }
 
-    const filteredPayments = payments.filter(p =>
-        p.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.userEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (p.notes?.upi_transaction_id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (p.payment_method_details?.upi_transaction_id || '').toLowerCase().includes(searchQuery.toLowerCase())
-    )
+        setUpdatingId(id)
+        try {
+            const token = await getAuthToken()
+            const res = await fetch(`/api/admin/payments/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+
+            if (res.ok) {
+                setPayments(prev => prev.filter(p => p.id !== id))
+            } else {
+                const data = await res.json()
+                alert(data.message || "Failed to delete payment")
+            }
+        } catch (error) {
+            console.error("Error deleting payment:", error)
+        } finally {
+            setUpdatingId(null)
+        }
+    }
+
+    const handleBulkDelete = async () => {
+        if (selectedIds.length === 0) return;
+        if (!confirm(`Are you sure you want to delete ${selectedIds.length} payments? This will reset the daily status for these users.`)) return;
+
+        setLoading(true)
+        try {
+            const token = await getAuthToken()
+            const res = await fetch('/api/admin/payments', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ paymentIds: selectedIds })
+            })
+            if (res.ok) {
+                setPayments(prev => prev.filter(p => !selectedIds.includes(p.id)))
+                setSelectedIds([])
+            } else {
+                const data = await res.json()
+                alert(data.message || "Bulk delete failed")
+            }
+        } catch (error) {
+            console.error("Bulk delete error:", error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const filteredPayments = payments.filter(p => {
+        const matchesSearch = p.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.userEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (p.notes?.upi_transaction_id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (p.payment_method_details?.upi_transaction_id || '').toLowerCase().includes(searchQuery.toLowerCase());
+
+        const matchesType = selectedType === 'all' || p.studentType === selectedType;
+
+        return matchesSearch && matchesType;
+    })
 
     const formatDate = (dateStr: string) => {
         try {
@@ -156,16 +272,93 @@ export default function PaymentsManagementPage() {
         }
     }
 
+    const validPayments = payments.filter(p => p.status === 'captured' || p.notes?.verification_status === 'verified')
+    const uniquePaidUsers = Array.from(new Set(validPayments.map(p => p.user_id)))
+
+    const stats = {
+        totalRevenue: validPayments.reduce((acc, p) => acc + (p.amount / 100), 0),
+
+        // Accurate counts based on unique Users, not Transactions
+        totalInternal: Array.from(new Set(validPayments.filter(p => p.studentType === 'internal').map(p => p.user_id))).length,
+        totalExternal: Array.from(new Set(validPayments.filter(p => p.studentType === 'external').map(p => p.user_id))).length,
+
+        internalRevenue: validPayments.filter(p => p.studentType === 'internal').reduce((acc, p) => acc + (p.amount / 100), 0),
+        externalRevenue: validPayments.filter(p => p.studentType === 'external').reduce((acc, p) => acc + (p.amount / 100), 0),
+    }
+
     return (
         <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'FINANCE', 'COORDINATOR']}>
             <div className="space-y-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-white">Payments Management</h1>
-                    <p className="text-gray-400 text-sm">Monitor transactions and verify manual payments</p>
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-white">Payments Management</h1>
+                        <p className="text-gray-400 text-sm">Monitor {totalPaymentsCount} transactions and verify manual payments</p>
+                    </div>
+
+                    <div className="flex flex-col items-end gap-3">
+                        <AnimatePresence>
+                            {selectedIds.length > 0 && userData?.role === 'SUPER_ADMIN' && (
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.9 }}
+                                    className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 px-4 py-1.5 rounded-full"
+                                >
+                                    <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">{selectedIds.length} Payments Selected</span>
+                                    <button
+                                        onClick={handleBulkDelete}
+                                        className="bg-red-500 text-white text-[10px] font-black uppercase tracking-tighter px-3 py-1 rounded-full hover:bg-red-600 transition-colors flex items-center gap-1"
+                                    >
+                                        <Trash2 size={10} /> Delete Selected
+                                    </button>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        <div className="flex items-center gap-3">
+                            <AnimatePresence>
+                                {totalPaidPeople !== null && (
+                                    <motion.div
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        className="bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-xl"
+                                    >
+                                        <p className="text-[8px] font-black uppercase tracking-tighter text-blue-500 leading-none mb-1">People Paid</p>
+                                        <p className="text-sm font-black text-white italic">{totalPaidPeople}</p>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+
+                            {(userData?.role === 'SUPER_ADMIN' || userData?.role === 'FINANCE') && (
+                                <button
+                                    onClick={fetchTotalAmount}
+                                    disabled={loadingTotal}
+                                    className="bg-[#111] border border-white/10 hover:border-blue-500/50 text-white px-5 py-2.5 rounded-xl transition-all group flex items-center gap-3 shadow-xl h-[46px]"
+                                >
+                                    <CreditCard size={18} className={cn("text-blue-500 transition-transform group-hover:scale-110", loadingTotal && "animate-spin")} />
+                                    <div className="text-left">
+                                        <p className="text-[9px] font-black uppercase tracking-wider text-gray-500 leading-none mb-1">Financial Check</p>
+                                        <p className="text-xs font-bold uppercase tracking-widest text-white leading-none">Check Total</p>
+                                    </div>
+                                </button>
+                            )}
+
+                            <button
+                                onClick={() => fetchPayments(false)}
+                                className="bg-[#111] border border-white/10 hover:border-emerald-500/50 text-white px-5 py-2.5 rounded-xl transition-all group flex items-center gap-3 shadow-xl h-[46px]"
+                            >
+                                <RefreshCcw size={18} className={cn("text-emerald-500 transition-transform group-hover:rotate-180", loading && "animate-spin")} />
+                                <div className="text-left">
+                                    <p className="text-[9px] font-black uppercase tracking-wider text-gray-500 leading-none mb-1">Live Ledger</p>
+                                    <p className="text-xs font-bold uppercase tracking-widest text-white leading-none">Sync Payments</p>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Filters */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-[#111] p-4 rounded-2xl border border-white/5">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-[#111] p-4 rounded-2xl border border-white/5">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                         <input
@@ -190,13 +383,25 @@ export default function PaymentsManagementPage() {
                         </select>
                     </div>
                     <div className="flex items-center gap-2">
+                        <School size={18} className="text-gray-500" />
+                        <select
+                            value={selectedType}
+                            onChange={(e) => setSelectedType(e.target.value as any)}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-emerald-500/50 text-sm font-semibold"
+                        >
+                            <option value="all">All Participants</option>
+                            <option value="internal" className="text-blue-400">Internal (SMVITM)</option>
+                            <option value="external" className="text-purple-400">External Students</option>
+                        </select>
+                    </div>
+                    <div className="flex items-center gap-2">
                         <Filter size={18} className="text-gray-500" />
                         <select
                             value={selectedEventId}
                             onChange={(e) => setSelectedEventId(e.target.value)}
                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-emerald-500/50 text-sm"
                         >
-                            <option value="all">All Participants</option>
+                            <option value="all">All Events</option>
                             {events.map(event => (
                                 <option key={event.id} value={event.id}>{event.title}</option>
                             ))}
@@ -210,6 +415,14 @@ export default function PaymentsManagementPage() {
                         <table className="w-full text-left">
                             <thead>
                                 <tr className="border-b border-white/5 bg-white/5 text-xs text-gray-500 font-semibold uppercase tracking-wider">
+                                    <th className="px-6 py-4 w-10">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedIds.length === filteredPayments.length && filteredPayments.length > 0}
+                                            onChange={() => toggleSelectAll(filteredPayments)}
+                                            className="rounded border-white/10 bg-white/5 text-emerald-500 focus:ring-emerald-500/20"
+                                        />
+                                    </th>
                                     <th className="px-6 py-4">Transaction Details</th>
                                     <th className="px-6 py-4">User</th>
                                     <th className="px-6 py-4">Amount</th>
@@ -221,21 +434,32 @@ export default function PaymentsManagementPage() {
                             <tbody className="divide-y divide-white/5 text-sm">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={6} className="px-6 py-12 text-center">
+                                        <td colSpan={7} className="px-6 py-12 text-center">
                                             <div className="flex justify-center flex-col items-center gap-3">
-                                                <Loader2 className="animate-spin text-emerald-500" size={32} />
+                                                <Loader2 className="animate-spin text-emerald-500" size={24} />
                                                 <span className="text-gray-500 font-medium">Fetching transaction ledger...</span>
                                             </div>
                                         </td>
                                     </tr>
                                 ) : filteredPayments.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="px-6 py-12 text-center text-gray-500 font-medium italic">
-                                            No transaction signals matching your criteria.
+                                        <td colSpan={7} className="px-6 py-12 text-center text-gray-500 italic">
+                                            No transactions found matching your criteria.
                                         </td>
                                     </tr>
-                                ) : filteredPayments.map((payment) => (
-                                    <tr key={payment.id} className="hover:bg-white/2 transition-colors group">
+                                ) : filteredPayments.slice(0, payments.length).map((payment) => (
+                                    <tr key={payment.id} className={cn(
+                                        "hover:bg-white/2 transition-colors group",
+                                        selectedIds.includes(payment.id) && "bg-white/5"
+                                    )}>
+                                        <td className="px-6 py-4">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedIds.includes(payment.id)}
+                                                onChange={() => toggleSelect(payment.id)}
+                                                className="rounded border-white/10 bg-white/5 text-emerald-500 focus:ring-emerald-500/20"
+                                            />
+                                        </td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col gap-1">
                                                 <p className="font-mono text-xs text-emerald-500 font-bold">{payment.id}</p>
@@ -319,6 +543,17 @@ export default function PaymentsManagementPage() {
                                                         </>
                                                     )
                                                 )}
+
+                                                {/* Super Admin Delete Option */}
+                                                {userData?.role === 'SUPER_ADMIN' && updatingId !== payment.id && (
+                                                    <button
+                                                        onClick={() => handleDeletePayment(payment.id)}
+                                                        className="p-2 text-gray-500 hover:bg-red-500 hover:text-white rounded-lg transition-all border border-transparent hover:border-red-500"
+                                                        title="Delete Record"
+                                                    >
+                                                        <Trash2 size={20} />
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -326,8 +561,20 @@ export default function PaymentsManagementPage() {
                             </tbody>
                         </table>
                     </div>
+
+                    {(hasMore || filteredPayments.length < totalPaymentsCount) && (
+                        <div className="p-4 border-t border-white/5 flex justify-center">
+                            <button
+                                onClick={() => fetchPayments(true)}
+                                disabled={loading}
+                                className="px-8 py-2.5 bg-white/5 hover:bg-white/10 text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-all border border-white/10 hover:border-emerald-500/50 disabled:opacity-50"
+                            >
+                                {loading ? <Loader2 className="animate-spin text-emerald-500" size={16} /> : `Show More Payments (${totalPaymentsCount - payments.length} remaining)`}
+                            </button>
+                        </div>
+                    )}
                 </div>
-            </div>
-        </ProtectedRoute>
+            </div >
+        </ProtectedRoute >
     )
 }

@@ -27,12 +27,6 @@ interface NavItem {
 
 const navItems: NavItem[] = [
     {
-        label: 'Dashboard',
-        href: '/admin',
-        icon: LayoutDashboard,
-        roles: ['SUPER_ADMIN', 'COORDINATOR', 'FINANCE', 'VOLUNTEER']
-    },
-    {
         label: 'Registrations',
         href: '/admin/registrations',
         icon: Users,
@@ -45,21 +39,9 @@ const navItems: NavItem[] = [
         roles: ['SUPER_ADMIN', 'FINANCE', 'COORDINATOR']
     },
     {
-        label: 'Attendance',
-        href: '/admin/attendance',
-        icon: CheckSquare,
-        roles: ['SUPER_ADMIN', 'COORDINATOR', 'VOLUNTEER']
-    },
-    {
         label: 'Events Management',
         href: '/admin/events',
         icon: Calendar,
-        roles: ['SUPER_ADMIN']
-    },
-    {
-        label: 'Role Management',
-        href: '/admin/roles',
-        icon: ShieldCheck,
         roles: ['SUPER_ADMIN']
     },
     {

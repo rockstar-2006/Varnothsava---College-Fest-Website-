@@ -228,6 +228,7 @@ export const missions: Event[] = [
         category: "Coding",
         description: "PC-based technical challenge designed to test your logical thinking, debugging skills, and problem-solving ability.This event rewards observation and reasoning, not memorization or speed alone.",
         rules: [
+
             "Team of 2 - 3 Members",
             "Each team must use one system only.",
             "Search for hidden flags embedded in code, files, and programs.",
@@ -244,6 +245,7 @@ export const missions: Event[] = [
             "Judges’ decisions will be final."
         ]
         ,
+
         rounds: {
             round1: [
                 "Elimination Round (90 minutes).",
@@ -700,7 +702,7 @@ export const missions: Event[] = [
         title: 'Who Am I',
         type: 'Cultural',
         category: 'General',
-        description: 'A creative solo face painting competition where participants transform a model’s face into a living masterpiece. Showcasing imagination, precision, and artistic skill, this event brings colors and creativity to life within a limited time.',
+        description: 'Short-form video storytelling. Create engaging Reels that capture the vibrant energy of Varnothsava.',
         rules: [
             "Each participant will get 75 minutes",
             "No assistants are allowed during the competition (only two people are permitted: one competitor and one model for face painting)",
@@ -786,7 +788,7 @@ export const missions: Event[] = [
         title: 'Musical Marathon ',
         type: 'Cultural',
         category: 'Hobby Club',
-        description: 'A vibrant musical face-off where participants continue songs from the last letter sung. Showcasing quick thinking, memory, and melody, Anthakshari fills the stage with rhythm, laughter, and energetic competition',
+        description: 'A lively musical game where participants sing songs based on the last letter of the previous song. It tests memory, creativity, and teamwork, creating a fun and energetic atmosphere for everyone involved.',
         rules: [
             "Team of 2 members",
             "The competition will have 3 rounds",

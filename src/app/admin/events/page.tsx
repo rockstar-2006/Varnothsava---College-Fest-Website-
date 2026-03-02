@@ -14,10 +14,18 @@ import {
     X,
     Check,
     Loader2,
-    AlertCircle
+    AlertCircle,
+    Zap,
+    Music,
+    Briefcase,
+    Gamepad2,
+    Users,
+    User,
+    RefreshCcw
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getAuthToken } from '@/lib/firebaseClient'
+import { cn } from '@/lib/utils'
 import ProtectedRoute from '@/components/admin/ProtectedRoute'
 
 interface AdminEvent {
@@ -40,14 +48,15 @@ interface User {
 }
 
 export default function EventManagementPage() {
-    const { userData, isAdmin } = useApp()
-    const [events, setEvents] = useState<AdminEvent[]>([])
-    const [staff, setStaff] = useState<User[]>([])
-    const [loading, setLoading] = useState(true)
+    const { userData, isAdmin, adminCache, updateAdminCache } = useApp()
+    const [events, setEvents] = useState<AdminEvent[]>(adminCache.events || [])
+    const [staff, setStaff] = useState<User[]>(adminCache.staff || [])
+    const [loading, setLoading] = useState(!adminCache.events)
     const [searchQuery, setSearchQuery] = useState('')
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingEvent, setEditingEvent] = useState<AdminEvent | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [syncingId, setSyncingId] = useState<string | null>(null)
 
     // Form State
     const [formData, setFormData] = useState<Partial<AdminEvent>>({
@@ -70,11 +79,37 @@ export default function EventManagementPage() {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             const data = await res.json()
-            if (res.ok) setEvents(data.events)
+            if (res.ok) {
+                setEvents(data.events)
+                updateAdminCache('events', data.events)
+            }
         } catch (error) {
             console.error("Failed to fetch events:", error)
         } finally {
             setLoading(false)
+        }
+    }
+
+    const fetchSingleEvent = async (id: string) => {
+        setSyncingId(id)
+        try {
+            const token = await getAuthToken()
+            const res = await fetch(`/api/admin/events/${id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            const data = await res.json()
+            if (res.ok) {
+                setEvents(prev => {
+                    const updated = prev.map(e => e.id === id ? { ...e, ...data.event } : e);
+                    // Defer cache update to avoid setState-in-render error
+                    setTimeout(() => updateAdminCache('events', updated), 0);
+                    return updated;
+                });
+            }
+        } catch (error) {
+            console.error(`Failed to sync event ${id}:`, error)
+        } finally {
+            setSyncingId(null)
         }
     }
 
@@ -85,15 +120,18 @@ export default function EventManagementPage() {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             const data = await res.json()
-            if (res.ok) setStaff(data.users)
+            if (res.ok) {
+                setStaff(data.users)
+                updateAdminCache('staff', data.users)
+            }
         } catch (error) {
             console.error("Failed to fetch staff:", error)
         }
     }
 
+    // Use manual sync only - no automatic fetch on mount
     useEffect(() => {
-        fetchEvents()
-        fetchStaff()
+        // fetchEvents() and fetchStaff() are now triggered by users manually
     }, [])
 
     const handleOpenModal = (event: AdminEvent | null = null) => {
@@ -172,153 +210,254 @@ export default function EventManagementPage() {
         }
     }
 
-    const filteredEvents = events.filter(event =>
-        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        event.category?.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    const [showRegistrations, setShowRegistrations] = useState(false)
+    const [selectedEventForReg, setSelectedEventForReg] = useState<AdminEvent | null>(null)
+    const [eventRegs, setEventRegs] = useState<any[]>([])
+    const [loadingRegs, setLoadingRegs] = useState(false)
+
+    const fetchEventRegistrations = async (eventId: string) => {
+        console.log(`[Frontend] Fetching registrations for: ${eventId}`);
+        setLoadingRegs(true)
+        try {
+            const token = await getAuthToken()
+            const res = await fetch(`/api/admin/registrations?eventId=${eventId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            const data = await res.json()
+            if (res.ok) {
+                console.log(`[Frontend] Found ${data.registrations.length} registrations`);
+                setEventRegs(data.registrations)
+            }
+        } catch (error) {
+            console.error("Failed to fetch registrations:", error)
+        } finally {
+            setLoadingRegs(false)
+        }
+    }
+
+    const handleViewRegistrations = (event: AdminEvent) => {
+        setSelectedEventForReg(event)
+        setShowRegistrations(true)
+        fetchEventRegistrations(event.id)
+    }
+
+    const categories = ['All', 'Technical', 'Cultural', 'Business', 'Gaming']
+    const [activeTab, setActiveTab] = useState('All')
+
+    const filteredEvents = events.filter(event => {
+        const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            event.category?.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesCategory = activeTab === 'All' ||
+            event.type?.toLowerCase() === activeTab.toLowerCase();
+        return matchesSearch && matchesCategory;
+    });
+
+    const getCategoryIcon = (cat: string) => {
+        switch (cat) {
+            case 'Technical': return <Zap size={18} className="text-blue-400" />;
+            case 'Cultural': return <Music size={18} className="text-purple-400" />;
+            case 'Business': return <Briefcase size={18} className="text-emerald-400" />;
+            case 'Gaming': return <Gamepad2 size={18} className="text-amber-400" />;
+            default: return <Tag size={18} className="text-gray-400" />;
+        }
+    }
 
     return (
         <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'COORDINATOR']}>
-            <div className="space-y-6">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="space-y-8 pb-10">
+                <div className="flex flex-col md:flex-row justify-between items-end gap-6">
                     <div>
-                        <h1 className="text-2xl font-bold text-white">Event Management</h1>
-                        <p className="text-gray-400 text-sm">Create, edit and manage fest events</p>
+                        <h1 className="text-4xl font-black text-white italic tracking-tighter">
+                            EVENT <span className="text-emerald-500">DASHBOARD</span>
+                        </h1>
+                        <div className="flex items-center gap-4 mt-2">
+                            <p className="text-gray-400 text-xs font-bold uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full border border-white/5">
+                                {events.length} Total Competitions
+                            </p>
+                            <p className="text-emerald-500/80 text-xs font-bold uppercase tracking-widest bg-emerald-500/5 px-3 py-1 rounded-full border border-emerald-500/10">
+                                {events.reduce((acc, curr: any) => acc + (curr.metrics?.total || 0), 0)} Total Registrations
+                            </p>
+                        </div>
                     </div>
 
-                    {isSuperAdmin && (
+                    <div className="flex flex-col md:flex-row items-end md:items-center gap-3">
                         <button
-                            onClick={() => handleOpenModal()}
-                            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-all"
+                            onClick={() => {
+                                setLoading(true)
+                                fetchEvents()
+                                fetchStaff()
+                            }}
+                            className="bg-[#111] border border-white/10 hover:border-emerald-500/50 text-white px-5 py-2.5 rounded-xl transition-all group flex items-center gap-3 shadow-xl h-11"
                         >
-                            <Plus size={20} />
-                            Add Event
+                            <RefreshCcw size={18} className={cn("text-emerald-500 transition-transform group-hover:rotate-180", loading && "animate-spin")} />
+                            <div className="text-left">
+                                <p className="text-[9px] font-black uppercase tracking-wider text-gray-500 leading-none mb-1">Live Feed</p>
+                                <p className="text-xs font-bold uppercase tracking-widest text-white leading-none">Sync Events</p>
+                            </div>
                         </button>
-                    )}
+
+                        {isSuperAdmin && (
+                            <button
+                                onClick={() => handleOpenModal()}
+                                className="flex items-center gap-2 px-6 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-black rounded-xl transition-all shadow-lg shadow-emerald-500/20 uppercase text-[10px] h-11 tracking-widest"
+                            >
+                                <Plus size={18} />
+                                Create Event
+                            </button>
+                        )}
+                    </div>
                 </div>
 
-                {/* Filters & Search */}
-                <div className="flex flex-col md:flex-row gap-4 bg-[#111] p-4 rounded-2xl border border-white/5">
-                    <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                {/* Search & Category Tabs */}
+                <div className="space-y-6">
+                    <div className="relative group">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-emerald-500 transition-colors" size={20} />
                         <input
                             type="text"
-                            placeholder="Search events by title or category..."
+                            placeholder="Find event by title or category..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                            className="w-full bg-[#111] border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-emerald-500/50 transition-all font-medium"
                         />
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Filter size={18} className="text-gray-500" />
-                        <select className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-emerald-500/50">
-                            <option value="all">All Types</option>
-                            <option value="Technical">Technical</option>
-                            <option value="Cultural">Cultural</option>
-                            <option value="Gaming">Gaming</option>
-                            <option value="Business">Business</option>
-                        </select>
+
+                    <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                        {categories.map(cat => (
+                            <button
+                                key={cat}
+                                onClick={() => setActiveTab(cat)}
+                                className={`flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap border ${activeTab === cat
+                                    ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
+                                    : 'bg-[#111] text-gray-500 border-white/5 hover:border-white/10'
+                                    }`}
+                            >
+                                {cat === 'All' ? <Zap size={18} className="text-emerald-400" /> : getCategoryIcon(cat)}
+                                {cat}
+                                <span className={`ml-2 px-1.5 py-0.5 rounded-md text-[8px] ${activeTab === cat ? 'bg-emerald-500 text-black' : 'bg-white/5 text-gray-500'
+                                    }`}>
+                                    {cat === 'All' ? events.length : events.filter(e => e.type === cat).length}
+                                </span>
+                            </button>
+                        ))}
                     </div>
                 </div>
 
-                {/* Event List */}
-                <div className="bg-[#111] border border-white/5 rounded-2xl overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead>
-                                <tr className="border-b border-white/5 bg-white/5 text-xs text-gray-500 font-semibold uppercase tracking-wider">
-                                    <th className="px-6 py-4">Event Details</th>
-                                    <th className="px-6 py-4">Category</th>
-                                    <th className="px-6 py-4">Date & Time</th>
-                                    <th className="px-6 py-4">Status</th>
-                                    <th className="px-6 py-4">Coordinators</th>
-                                    <th className="px-6 py-4 text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/5">
-                                {loading ? (
-                                    <tr>
-                                        <td colSpan={6} className="px-6 py-10 text-center">
-                                            <div className="flex justify-center flex-col items-center gap-2">
-                                                <Loader2 className="animate-spin text-emerald-500" size={24} />
-                                                <span className="text-gray-500">Loading events...</span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ) : filteredEvents.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
-                                            No events found
-                                        </td>
-                                    </tr>
-                                ) : filteredEvents.map((event) => (
-                                    <tr key={event.id} className="hover:bg-white/5 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <div>
-                                                <p className="font-semibold text-white">{event.title}</p>
-                                                <p className="text-xs text-emerald-500/70 font-mono">{event.type}</p>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="text-sm text-gray-300">{event.category || 'N/A'}</span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm">
-                                                <p className="text-white flex items-center gap-1">
-                                                    <Calendar size={14} className="text-gray-500" />
-                                                    {event.date}
-                                                </p>
-                                                <p className="text-gray-400 text-xs ml-5">{event.time || ''}</p>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${event.registrationStatus === 'open' ? 'bg-emerald-500/10 text-emerald-500' :
-                                                event.registrationStatus === 'closed' ? 'bg-red-500/10 text-red-500' :
-                                                    'bg-amber-500/10 text-amber-500'
-                                                }`}>
-                                                {event.registrationStatus}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex -space-x-2">
-                                                {event.coordinators && event.coordinators.length > 0 ? (
-                                                    event.coordinators.map(coordId => {
-                                                        const u = staff.find(s => s.id === coordId)
-                                                        return (
-                                                            <div key={coordId} title={u?.name || 'Unknown'} className="w-8 h-8 rounded-full bg-white/10 border-2 border-[#111] flex items-center justify-center text-[10px] text-white">
-                                                                {u?.name ? u.name[0].toUpperCase() : '?'}
-                                                            </div>
-                                                        )
-                                                    })
-                                                ) : (
-                                                    <span className="text-xs text-gray-600 italic">None assigned</span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button
-                                                    onClick={() => handleOpenModal(event)}
-                                                    className="p-2 bg-white/5 hover:bg-emerald-500/10 text-gray-400 hover:text-emerald-500 rounded-lg transition-all"
-                                                >
-                                                    <Edit2 size={16} />
-                                                </button>
-                                                {isSuperAdmin && (
-                                                    <button
-                                                        onClick={() => handleDelete(event.id)}
-                                                        className="p-2 bg-white/5 hover:bg-red-500/10 text-gray-400 hover:text-red-500 rounded-lg transition-all"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                {/* Event Grid View (Categorized) */}
+                {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {[...Array(6)].map((_, i) => <div key={i} className="h-64 bg-white/5 rounded-2xl animate-pulse" />)}
                     </div>
-                </div>
+                ) : filteredEvents.length === 0 ? (
+                    <div className="py-20 text-center bg-[#111] rounded-3xl border border-white/5">
+                        <Calendar size={48} className="mx-auto text-white/10 mb-4" />
+                        <h3 className="text-white font-bold text-lg">No competitions found</h3>
+                        <p className="text-gray-500 max-w-xs mx-auto text-sm mt-2">Try adjusting your filters or search terms to find specific events.</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {filteredEvents.map((event) => (
+                            <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                key={event.id}
+                                onClick={() => handleViewRegistrations(event as any)}
+                                className="bg-[#111] border border-white/5 rounded-2xl p-5 hover:border-emerald-500/20 transition-all group relative overflow-hidden flex flex-col cursor-pointer"
+                            >
+                                <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 z-10" onClick={(e) => e.stopPropagation()}>
+                                    <button
+                                        onClick={() => fetchSingleEvent(event.id)}
+                                        disabled={syncingId === event.id}
+                                        className="p-2 bg-white/5 hover:bg-emerald-500/10 text-gray-400 hover:text-emerald-500 rounded-lg backdrop-blur-md"
+                                        title="Sync this event only"
+                                    >
+                                        <RefreshCcw size={14} className={cn(syncingId === event.id && "animate-spin")} />
+                                    </button>
+                                    <button onClick={() => handleOpenModal(event as any)} className="p-2 bg-white/5 hover:bg-emerald-500/10 text-gray-400 hover:text-emerald-500 rounded-lg backdrop-blur-md">
+                                        <Edit2 size={14} />
+                                    </button>
+                                    {isSuperAdmin && (
+                                        <button onClick={() => handleDelete(event.id)} className="p-2 bg-white/5 hover:bg-red-500/10 text-gray-400 hover:text-red-500 rounded-lg backdrop-blur-md">
+                                            <Trash2 size={14} />
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="flex-1 mb-6">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <span className={cn(
+                                            "px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider",
+                                            event.registrationStatus === 'open' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
+                                        )}>
+                                            {event.registrationStatus}
+                                        </span>
+                                        {event.category && (
+                                            <span className="bg-white/5 text-[8px] text-gray-500 font-bold uppercase px-2 py-0.5 rounded-full border border-white/5">
+                                                {event.category}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <h3 className="text-white font-black text-xl leading-tight group-hover:text-emerald-400 transition-colors uppercase italic mb-4">{event.title}</h3>
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="bg-white/2 p-2 rounded-xl border border-white/5">
+                                            <p className="text-[7px] text-gray-500 font-bold uppercase tracking-widest mb-1">Schedule</p>
+                                            <div className="flex items-center gap-1.5 text-[9px] text-gray-300 font-medium">
+                                                <Calendar size={10} className="text-emerald-500/50" />
+                                                {event.date || 'TBA'}
+                                            </div>
+                                        </div>
+                                        <div className="bg-white/2 p-2 rounded-xl border border-white/5">
+                                            <p className="text-[7px] text-gray-500 font-bold uppercase tracking-widest mb-1">Entry Fee</p>
+                                            <div className="flex items-center gap-1.5 text-[9px] text-emerald-400 font-black">
+                                                <Tag size={10} className="text-emerald-500/50" />
+                                                ₹{event.fee || 0}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Metrics Section */}
+                                <div className="mt-auto pt-4 border-t border-white/5 space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex flex-col">
+                                            <span className="text-[7px] text-gray-500 font-black uppercase tracking-widest">Total Squads</span>
+                                            <span className="text-2xl font-black text-white italic -mt-1">
+                                                {(event as any).metrics?.total || 0}
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-[7px] text-gray-500 font-black uppercase tracking-widest">Composition</span>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <div className="flex items-center gap-1">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]" />
+                                                    <span className="text-[9px] font-black text-emerald-400">{(event as any).metrics?.internal || 0}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                                    <span className="text-[9px] font-black text-blue-400">{(event as any).metrics?.external || 0}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden flex shadow-inner">
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${(((event as any).metrics?.internal || 0) / ((event as any).metrics?.total || 1)) * 100}%` }}
+                                            className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]"
+                                        />
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${(((event as any).metrics?.external || 0) / ((event as any).metrics?.total || 1)) * 100}%` }}
+                                            className="h-full bg-blue-500"
+                                        />
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                )}
 
                 {/* Add/Edit Modal */}
                 <AnimatePresence>
@@ -460,6 +599,163 @@ export default function EventManagementPage() {
                                         </button>
                                     </div>
                                 </form>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
+                {/* Participants Detail Modal */}
+                <AnimatePresence>
+                    {showRegistrations && selectedEventForReg && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                onClick={() => setShowRegistrations(false)}
+                                className="absolute inset-0 bg-black/80 backdrop-blur-md"
+                            />
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                                className="relative w-full max-w-4xl max-h-[85vh] bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col"
+                            >
+                                {/* Modal Header */}
+                                <div className="p-6 border-b border-white/5 bg-white/2 flex justify-between items-center bg-gradient-to-r from-emerald-500/5 to-transparent">
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-3 bg-emerald-500/10 rounded-2xl text-emerald-500">
+                                            <Users size={24} />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-xl font-black text-white italic uppercase tracking-tight">
+                                                {selectedEventForReg.title} <span className="text-emerald-500">ROSTER</span>
+                                            </h2>
+                                            <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">
+                                                {eventRegs.length} Teams Registered • {selectedEventForReg.type}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowRegistrations(false)}
+                                        className="p-2 hover:bg-white/5 text-gray-400 hover:text-white rounded-xl transition-all"
+                                    >
+                                        <X size={24} />
+                                    </button>
+                                </div>
+
+                                {/* Modal Search & Stats */}
+                                <div className="px-6 py-4 bg-white/2 border-b border-white/5 flex flex-col md:flex-row gap-4 justify-between items-center">
+                                    <div className="relative w-full md:max-w-xs">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
+                                        <input
+                                            type="text"
+                                            placeholder="Search teams or leaders..."
+                                            onChange={(e) => {
+                                                const val = e.target.value.toLowerCase();
+                                                const cards = document.querySelectorAll('.reg-card');
+                                                cards.forEach((card: any) => {
+                                                    const text = card.textContent.toLowerCase();
+                                                    card.style.display = text.includes(val) ? 'block' : 'none';
+                                                });
+                                            }}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-xs text-white focus:outline-none focus:border-emerald-500/30"
+                                        />
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <div className="flex flex-col items-center px-4 py-1 border-r border-white/5">
+                                            <span className="text-[10px] text-gray-500 font-bold uppercase">Paid</span>
+                                            <span className="text-sm font-black text-emerald-500">{eventRegs.filter(r => r.paymentStatus === 'Paid').length}</span>
+                                        </div>
+                                        <div className="flex flex-col items-center px-4 py-1">
+                                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-tight">Total SODE</span>
+                                            <span className="text-sm font-black text-blue-400">{eventRegs.filter(r => r.college?.toLowerCase().includes('sode')).length}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Participants List */}
+                                <div className="flex-1 overflow-y-auto p-6 no-scrollbar custom-scrollbar">
+                                    {loadingRegs ? (
+                                        <div className="flex flex-col items-center justify-center py-20 gap-4">
+                                            <Loader2 className="animate-spin text-emerald-500" size={40} />
+                                            <p className="text-gray-500 font-black uppercase tracking-widest text-xs">Accessing Registration Database...</p>
+                                        </div>
+                                    ) : eventRegs.length === 0 ? (
+                                        <div className="text-center py-20 opacity-30">
+                                            <Users size={64} className="mx-auto mb-4" />
+                                            <p className="font-bold">No participants registered yet</p>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {eventRegs.map((reg, idx) => (
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: idx * 0.05 }}
+                                                    key={reg.id}
+                                                    className="p-4 bg-white/2 border border-white/5 rounded-2xl hover:border-emerald-500/30 transition-all group reg-card"
+                                                >
+                                                    <div className="flex justify-between items-start mb-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-emerald-500 border border-white/5">
+                                                                {reg.eventType === 'SOLO' ? <User size={20} /> : <Users size={20} />}
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="text-white font-bold leading-none">{reg.teamName || reg.leaderName}</h4>
+                                                                <p className="text-[10px] text-gray-500 font-bold mt-1 uppercase tracking-tighter">Leader: {reg.leaderName}</p>
+                                                            </div>
+                                                        </div>
+                                                        <span className={cn(
+                                                            "text-[8px] font-black px-2 py-0.5 rounded shadow-sm border",
+                                                            reg.college?.toLowerCase().includes('sode') || reg.college?.toLowerCase().includes('shri madhwa')
+                                                                ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                                                                : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                                                        )}>
+                                                            {reg.college?.toLowerCase().includes('sode') ? 'INTERNAL' : 'EXTERNAL'}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="space-y-4 mb-4">
+                                                        <div className="flex items-center gap-2 text-[10px] text-gray-400 bg-black/20 p-2 rounded-lg border border-white/5">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                                            <span className="font-medium truncate">{reg.college}</span>
+                                                        </div>
+
+                                                        {reg.membersDetails && reg.membersDetails.length > 0 && (
+                                                            <div className="space-y-2">
+                                                                <p className="text-[7px] text-gray-600 font-black uppercase tracking-widest px-2">Squad Members</p>
+                                                                <div className="bg-white/1 rounded-xl p-3 border border-white/5 space-y-2">
+                                                                    {reg.membersDetails.map((m: any, i: number) => (
+                                                                        <div key={i} className="text-[10px] text-gray-300 flex justify-between items-center bg-white/2 px-2 py-1.5 rounded-md">
+                                                                            <span className="font-bold uppercase tracking-tight">{m.name}</span>
+                                                                            <span className="font-mono text-emerald-500/40 text-[9px]">{m.usn}</span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="flex justify-between items-center pt-3 border-t border-white/5">
+                                                        <div className={cn(
+                                                            "text-[8px] font-black uppercase px-2 py-0.5 rounded-full flex items-center gap-1",
+                                                            reg.paymentStatus === 'Paid' ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" : "text-red-500 bg-red-500/10 border-red-500/20"
+                                                        )}>
+                                                            {reg.paymentStatus === 'Paid' ? <Check size={10} /> : <X size={10} />}
+                                                            {reg.paymentStatus}
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="text-[9px] text-gray-600 font-mono">#{reg.id.substring(0, 6)}</p>
+                                                            <button className="p-1 hover:text-white text-gray-700 transition-colors">
+                                                                <Edit2 size={12} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </motion.div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </motion.div>
                         </div>
                     )}

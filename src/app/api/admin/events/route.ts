@@ -37,10 +37,32 @@ export async function GET(request: NextRequest) {
         }
 
         const snapshot = await eventsQuery.get();
-        const events = snapshot.docs.map((doc: any) => ({
-            id: doc.id,
-            ...doc.data()
-        }));
+        console.log(`Fetched ${snapshot.docs.length} events from database`);
+
+        // Strategy 4: Summary Document Fetch
+        const statsRef = adminDb.collection('system').doc('stats');
+        const statsDoc = await statsRef.get();
+        const s = statsDoc.data() || {};
+
+        const events = snapshot.docs.map((doc: any) => {
+            const data = doc.data();
+            const eventId = doc.id;
+
+            // Get metrics from stats map
+            const total = s[`reg_${eventId}_total`] || 0;
+            const internal = s[`reg_${eventId}_internal`] || 0;
+            const external = s[`reg_${eventId}_external`] || 0;
+
+            return {
+                id: eventId,
+                ...data,
+                metrics: {
+                    total,
+                    internal,
+                    external
+                }
+            };
+        });
 
         return NextResponse.json({ events });
     } catch (error: any) {
