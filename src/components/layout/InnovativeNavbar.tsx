@@ -42,7 +42,7 @@ const NAV_LINKS = [
 export function InnovativeNavbar() {
     const pathname = usePathname()
 
-    const { isLoggedIn, isAdmin, cart, pageTheme, isChatOpen, setIsChatOpen } = useApp()
+    const { isLoggedIn, cart, pageTheme, isChatOpen, setIsChatOpen, isAdmin } = useApp()
 
 
     const [isMobile, setIsMobile] = useState(false)
@@ -52,6 +52,7 @@ export function InnovativeNavbar() {
 
     useEffect(() => {
         const checkMobile = () => {
+            if (typeof window === 'undefined') return;
             const width = window.innerWidth;
             setIsMobile(width < 768 || 'ontouchstart' in window);
         }

@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion'
-import { useState, useEffect, useMemo, Suspense } from 'react'
+import { useState, useEffect, useMemo, Suspense, useRef } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import {
@@ -45,6 +45,7 @@ function LoadingContent() {
     const [isMounted, setIsMounted] = useState(false)
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
     const [assetsReady, setAssetsReady] = useState(false)
+    const progressRef = useRef(0)
 
     // Parallax Motion Values
     const mouseX = useMotionValue(0);
@@ -229,7 +230,10 @@ function LoadingContent() {
     }, [isMobile])
 
     useEffect(() => {
-        const checkMobile = () => setIsMobile(window.innerWidth < 768)
+        const checkMobile = () => {
+            if (typeof window === 'undefined') return;
+            setIsMobile(window.innerWidth < 768)
+        }
         checkMobile()
         window.addEventListener('resize', checkMobile)
         return () => window.removeEventListener('resize', checkMobile)
@@ -253,62 +257,53 @@ function LoadingContent() {
             const MAX_LOADING_TIME = 8000 // Maximum 8 seconds - force complete if stuck
 
             const timer = setInterval(() => {
-                setProgress(p => {
-                    const elapsed = Date.now() - startTime
+                const p = progressRef.current
+                const elapsed = Date.now() - startTime
 
-                    // GATEKEEPER: Wait for DOM, images, fonts, and preloaded assets
-                    const isDOMReady = typeof document !== 'undefined' &&
-                        (document.readyState === 'complete' || document.readyState === 'interactive')
+                // GATEKEEPER: Wait for DOM, images, fonts, and preloaded assets
+                const isDOMReady = typeof document !== 'undefined' &&
+                    (document.readyState === 'complete' || document.readyState === 'interactive')
 
-                    // Check if critical images are loaded (more lenient - allow some to fail)
-                    const images = document.querySelectorAll('img')
-                    const totalImages = images.length
-                    const loadedImages = Array.from(images).filter(img => img.complete).length
-                    const imagesLoaded = totalImages === 0 || (loadedImages / totalImages) > 0.7 // 70% threshold
+                // Check if critical images are loaded (more lenient - allow some to fail)
+                const images = document.querySelectorAll('img')
+                const totalImages = images.length
+                const loadedImages = Array.from(images).filter(img => img.complete).length
+                const imagesLoaded = totalImages === 0 || (loadedImages / totalImages) > 0.7 // 70% threshold
 
-                    // Check if fonts are loaded (more lenient)
-                    const fontsReady = !document.fonts || document.fonts.status === 'loaded' || elapsed > 4000
+                // Check if fonts are loaded (more lenient)
+                const fontsReady = !document.fonts || document.fonts.status === 'loaded' || elapsed > 4000
 
-                    const isFullyReady = isDOMReady && (imagesLoaded || elapsed > 4000) && (fontsReady || assetsReady)
-                    const hasMinTime = elapsed >= MIN_LOADING_TIME
-                    const isTimeout = elapsed >= MAX_LOADING_TIME // Force complete if taking too long
+                const isFullyReady = isDOMReady && (imagesLoaded || elapsed > 4000) && (fontsReady || assetsReady)
+                const hasMinTime = elapsed >= MIN_LOADING_TIME
+                const isTimeout = elapsed >= MAX_LOADING_TIME // Force complete if taking too long
 
-                    // Complete if: reached 100% AND (everything ready OR timeout)
-                    if ((p >= 100 && isFullyReady && hasMinTime) || isTimeout) {
-                        clearInterval(timer)
-                        console.log('Loading complete:', { isDOMReady, imagesLoaded, fontsReady, assetsReady, elapsed })
+                // Complete if: reached 100% AND (everything ready OR timeout)
+                if ((p >= 100 && isFullyReady && hasMinTime) || isTimeout) {
+                    clearInterval(timer)
+                    console.log('Loading complete:', { isDOMReady, imagesLoaded, fontsReady, assetsReady, elapsed })
+                    setTimeout(() => startExperience(), 500)
+                    return
+                }
 
-                        // SKIP INTERMEDIATE STEPS AND REDIRECT TO LANDING PAGE
-                        setVisible(false)
-                        setIsSiteLoaded(true)
-                        sessionStorage.setItem('fest_initial_loaded', 'true')
-                        return 100
-                    }
+                // SLOWER, MORE VISIBLE PROGRESS
+                let increment
+                if (p < 30) {
+                    increment = isFullyReady ? 1.5 : 0.8 // Fast start
+                } else if (p < 70) {
+                    increment = isFullyReady ? 0.8 : 0.5 // Medium
+                } else if (p < 95) {
+                    increment = isFullyReady && hasMinTime ? 0.4 : 0.25 // Slow down
+                } else {
+                    increment = (isFullyReady && hasMinTime) || elapsed > 6000 ? 0.3 : 0.1
+                }
 
-                    // SLOWER, MORE VISIBLE PROGRESS
-                    // Stage 1: 0-30% - Quick initial load (feels responsive)
-                    // Stage 2: 30-70% - Medium speed (loading assets)
-                    // Stage 3: 70-95% - Slow down (almost ready)
-                    // Stage 4: 95-100% - Very slow (final checks)
-
-                    let increment
-                    if (p < 30) {
-                        increment = isFullyReady ? 1.5 : 0.8 // Fast start
-                    } else if (p < 70) {
-                        increment = isFullyReady ? 0.8 : 0.5 // Medium
-                    } else if (p < 95) {
-                        increment = isFullyReady && hasMinTime ? 0.4 : 0.25 // Slow down
-                    } else {
-                        // Final stage - only proceed if everything is ready OR timeout approaching
-                        increment = (isFullyReady && hasMinTime) || elapsed > 6000 ? 0.3 : 0.1
-                    }
-
-                    return Math.min(p + increment, 100)
-                })
+                const nextP = Math.min(p + increment, 100)
+                progressRef.current = nextP
+                setProgress(nextP)
             }, 50) // Update every 50ms for smoother animation
             return () => clearInterval(timer)
         }
-    }, [step])
+    }, [step, assetsReady])
 
     useEffect(() => {
         if (step === 'MESSAGE') {
@@ -748,112 +743,6 @@ function LoadingContent() {
                                 </motion.div>
                             )}
 
-                            {step === 'READY' && (
-                                <motion.div
-                                    key="ready"
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 1.1 }}
-                                    className="flex flex-col items-center gap-4 md:gap-8"
-                                >
-                                    {/* Icon Container - Glowing & Distinct - Optimized for mobile */}
-                                    <motion.div
-                                        animate={{ y: [0, -10, 0] }}
-                                        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                                        className="relative group cursor-pointer"
-                                    >
-                                        {/* Simplified glow for mobile - no blur */}
-                                        {isMobile ? (
-                                            <div className="absolute inset-0 rounded-full opacity-20" style={{ backgroundColor: themeConfig.color, boxShadow: `0 0 30px ${themeConfig.color}` }} />
-                                        ) : (
-                                            <div className="absolute inset-0 rounded-full blur-[40px] opacity-30" style={{ backgroundColor: themeConfig.color }} />
-                                        )}
-                                        <div
-                                            className={`relative w-20 h-20 md:w-24 md:h-24 rounded-full border border-white/20 bg-black/40 flex items-center justify-center shadow-[0_0_30px_rgba(0,0,0,0.6)] group-hover:bg-black/50 transition-all duration-300 ${isMobile ? '' : 'backdrop-blur-md'}`}
-                                            style={{ boxShadow: `0 0 20px ${themeConfig.color}11`, willChange: 'transform' }}
-                                        >
-                                            <Icon className="w-8 h-8 md:w-10 md:h-10 drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]" style={{ color: themeConfig.color }} />
-                                        </div>
-                                    </motion.div>
-
-                                    {/* Main Welcome Text - Balanced Size */}
-                                    <div className="text-center space-y-3">
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: 0.2 }}
-                                            className="flex flex-col items-center"
-                                        >
-                                            <span
-                                                className="text-sm md:text-base tracking-[0.2em] text-white/70 uppercase mb-2 drop-shadow-md"
-                                                style={{ fontFamily: "'Rye', serif" }}
-                                            >
-                                                Welcome To
-                                            </span>
-                                            <h2
-                                                className="text-5xl sm:text-6xl md:text-7xl uppercase leading-none text-white drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)]"
-                                                style={{ fontFamily: "'Rye', serif" }}
-                                            >
-                                                SMVITM
-                                            </h2>
-                                            <span
-                                                className="text-transparent bg-clip-text bg-gradient-to-r from-white/80 via-[#10b981] to-white/80 text-xl md:text-2xl tracking-[0.4em] uppercase mt-2 drop-shadow-sm animate-text-shimmer"
-                                                style={{ fontFamily: "'Rye', serif" }}
-                                            >
-                                                FESTIVAL
-                                            </span>
-
-                                        </motion.div>
-                                    </div>
-
-                                    {/* The Button - Ancient Stone Artifact Design */}
-                                    {/* The Button - LEVITATING RUNESTONE (Ancient & Heavy) */}
-                                    {/* The Button - FRACTURED ENERGY SEAL */}
-                                    <motion.button
-                                        initial={{ opacity: 0, y: 30 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.5 }}
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        onClick={startExperience}
-                                        className="relative group mt-4 md:mt-12 cursor-pointer outline-none focus:outline-none w-[85vw] max-w-[380px]"
-                                    >
-                                        {/* Outer Glow (The Aura) */}
-                                        <div className="absolute -inset-1 bg-emerald-500/30 rounded-lg blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                                        {/* Button Container */}
-                                        <div className="relative px-6 py-5 md:px-12 md:py-6 bg-black border border-emerald-900 overflow-hidden flex items-center justify-center rounded-lg shadow-[0_0_30px_rgba(0,0,0,0.8)]">
-
-                                            {/* THE CRACKS - jagged lines created with rotated gradients */}
-                                            {/* Main Fissure */}
-                                            <div className="absolute inset-0 opacity-40 group-hover:opacity-100 transition-opacity duration-500">
-                                                <div className="absolute top-[-50%] left-[40%] w-[2px] h-[200%] bg-emerald-400 rotate-[25deg] shadow-[0_0_10px_#10b981]" />
-                                                <div className="absolute top-[-50%] left-[45%] w-[1px] h-[200%] bg-emerald-500 rotate-[15deg] translate-x-4" />
-                                                <div className="absolute top-[20%] left-[20%] w-[60%] h-[2px] bg-emerald-400 rotate-[-10deg] shadow-[0_0_15px_#10b981]" />
-                                                <div className="absolute bottom-[30%] right-[20%] w-[40%] h-[1px] bg-white/80 rotate-[45deg]" />
-                                            </div>
-
-                                            {/* Fractured Glass/Energy Texture */}
-                                            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-emerald-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                                            {/* Text Content */}
-                                            <span className="relative z-10 text-xl md:text-3xl text-white uppercase tracking-[0.2em] flex items-center gap-4 drop-shadow-lg whitespace-nowrap" style={{ fontFamily: "'Rye', serif" }}>
-                                                <span className="text-emerald-500 group-hover:text-emerald-300 transition-colors hidden sm:inline">❖</span>
-                                                ENTER THE FEST
-                                                <span className="text-emerald-500 group-hover:text-emerald-300 transition-colors hidden sm:inline">❖</span>
-                                            </span>
-
-                                        </div>
-                                        {/* Subtext underneath */}
-                                        <div className="absolute -bottom-6 left-0 right-0 text-center">
-                                            <span className="text-[9px] uppercase tracking-[0.3em] text-emerald-500/50 font-sans group-hover:text-emerald-400 transition-colors">
-                                                Break The Seal
-                                            </span>
-                                        </div>
-                                    </motion.button>
-                                </motion.div>
-                            )}
-
                             {step === 'MESSAGE' && (
                                 <motion.div
                                     key="message"
@@ -880,7 +769,7 @@ function LoadingContent() {
                 </motion.div>
 
                 {/* Outer HUD Decorative Elements */}
-                <div className=" md:flex fixed top-8 left-1/2 -translate-x-1/2 flex items-center gap-4 opacity-40 z-[12000]">
+                <div className="md:flex fixed top-8 left-1/2 -translate-x-1/2 flex items-center gap-4 opacity-40 z-[12000]">
                     <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: themeConfig.color }} />
                     <span className="text-white text-[10px] font-black tracking-[0.4em] uppercase italic">National-Level College Festival</span>
                 </div>
