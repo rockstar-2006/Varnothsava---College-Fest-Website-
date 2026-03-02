@@ -441,16 +441,13 @@ export function EventGrid({ missions }: EventGridProps) {
     }
 
     const handleConfirmRegistration = async (data: { teamName: string, members: string[] }) => {
-        try {
-            const { success, registrationId } = await registerMission(selectedEvent.id, data.teamName, data.members)
-            if (success) {
-                // Actually, the modal will handle the success state now, 
-                // but we keep this here for logging or just in case.
-                console.log(`Successfully registered: ${registrationId}`)
-            }
-        } catch (error: any) {
-            alert(`Registration failed: ${error.message}`)
+        const result = await registerMission(selectedEvent.id, data.teamName, data.members)
+
+        if (result.success) {
+            console.log(`Successfully registered: ${result.registrationId}`)
         }
+
+        return result
     }
 
     // Portal implementation to fix background scrolling issue
