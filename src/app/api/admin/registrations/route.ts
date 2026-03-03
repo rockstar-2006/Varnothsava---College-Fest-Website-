@@ -1,5 +1,6 @@
 import { adminDb, registrationsCollection, usersCollection, verifyAuthToken } from "@/lib/firebaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
+import { getAdminRole } from "@/lib/admin";
 
 export async function GET(request: NextRequest) {
     try {
@@ -16,21 +17,28 @@ export async function GET(request: NextRequest) {
         // Fetch user data for role check
         const userDoc = await usersCollection.doc(verified.uid).get();
         const userData = userDoc.data();
-        const role = userData?.role;
+        const { role: userRole, eventId: userEventId } = getAdminRole(userData?.email);
 
-        if (!role) {
+
+        if (!userRole) {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });
         }
 
         const { searchParams } = new URL(request.url);
         const eventId = searchParams.get('eventId');
         const search = (searchParams.get('search') || '').toLowerCase();
+        const studentType = searchParams.get('studentType'); // 'internal' or 'external'
         const lastId = searchParams.get('lastId') || '';
         const limit = parseInt(searchParams.get('limit') || '20');
 
-        console.log(`[RegAPI] Fetching. Role: ${role}, EventId: ${eventId}, Search: ${search}`);
+        console.log(`[RegAPI] Fetching. Role: ${userRole}, EventId: ${eventId}, Search: ${search}, Type: ${studentType}`);
 
         let queryBase: any = registrationsCollection;
+
+        // Apply studentType filter if provided
+        if (studentType === 'internal' || studentType === 'external') {
+            queryBase = queryBase.where('leaderType', '==', studentType);
+        }
 
         // Apply Search (Global Search)
         if (search) {
@@ -60,30 +68,26 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        // Apply Coordinator filtering
-        if (role === 'COORDINATOR') {
-            const userName = userData?.name || '';
-            const eventsSnapshot = await adminDb.collection('events').get();
-            const assignedEventIds = eventsSnapshot.docs
-                .filter(doc => {
-                    const coords = doc.data().coordinators || [];
-                    return coords.includes(verified.uid) ||
-                        coords.includes(userName) ||
-                        coords.includes(userName.toUpperCase());
-                })
-                .map(doc => doc.id);
-
-            if (assignedEventIds.length === 0) {
-                return NextResponse.json({ registrations: [], totalCount: 0 });
-            }
+        // Apply coordinator filters
+        if (userRole === 'COORDINATOR' && userEventId) {
+            const coordinatorEventIds = userEventId.split(',').map((id: string) => id.trim());
 
             if (eventId && eventId !== 'all') {
-                if (!assignedEventIds.includes(eventId)) {
+                // Specific event requested
+                if (coordinatorEventIds.includes('all') || coordinatorEventIds.includes(eventId)) {
+                    queryBase = queryBase.where('eventId', '==', eventId);
+                } else {
                     return NextResponse.json({ message: "Forbidden: Not assigned to this event" }, { status: 403 });
                 }
-                queryBase = queryBase.where('eventId', '==', eventId);
             } else {
-                queryBase = queryBase.where('eventId', 'in', assignedEventIds);
+                // No specific event requested, filter by assigned events
+                if (!coordinatorEventIds.includes('all')) {
+                    if (coordinatorEventIds.length > 1) {
+                        queryBase = queryBase.where('eventId', 'in', coordinatorEventIds);
+                    } else {
+                        queryBase = queryBase.where('eventId', '==', coordinatorEventIds[0]);
+                    }
+                }
             }
         } else if (eventId && eventId !== 'all') {
             // SUPER_ADMIN filtering by event
@@ -96,7 +100,7 @@ export async function GET(request: NextRequest) {
         const s = statsDoc.data() || {};
 
         let totalCount = 0;
-        if (role === 'SUPER_ADMIN') {
+        if (userRole === 'SUPER_ADMIN') {
             if (eventId && eventId !== 'all') {
                 totalCount = s[`reg_${eventId}_total`] || 0;
             } else {
@@ -204,11 +208,12 @@ export async function GET(request: NextRequest) {
             return {
                 ...reg,
                 leaderName: leader.name || 'Unknown',
+                phone: leader.phone || 'N/A',
                 college: leader.collegeName || leader.college || leader.institution || 'Unknown',
                 paymentStatus: leader.hasPaid ? 'Paid' : 'Unpaid',
                 studentType: isInternal ? 'internal' : 'external',
                 eventTitle: eventMap[reg.eventId] || reg.eventId,
-                membersDetails: membersData.map((m: any) => ({ name: m.name, usn: m.usn }))
+                membersDetails: (membersData || []).map((m: any) => ({ name: m.name, usn: m.usn, phone: m.phone || 'N/A' }))
             };
         });
 

@@ -1,6 +1,7 @@
 import { registrationsCollection, usersCollection, verifyAuthToken } from "@/lib/firebaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 import { checkApiRateLimit, getClientIdentifier } from "@/lib/ratelimit";
+import { getAdminRole } from "@/lib/admin";
 
 export async function GET(request: NextRequest) {
     try {
@@ -45,13 +46,17 @@ export async function GET(request: NextRequest) {
         }
 
         let userData = userDoc.data();
-
-        // --- ADMIN BYPASS LOGIC (For Testing/Launch) ---
-        if (userData?.email === 'admin@varnothsava.in' || userData?.email === 'abhishree621@gmail.com') {
-            userData.role = 'SUPER_ADMIN';
-        } else if (userData?.email === 'coordinator@varnothsava.in') {
-            userData.role = 'COORDINATOR';
+        if (!userData) {
+            return NextResponse.json({ message: "User profile incomplete." }, { status: 404 });
         }
+
+        // --- ADMIN ROLE HELPERS ---
+        const { role, eventId } = getAdminRole(userData?.email);
+        if (role) {
+            userData.role = role;
+            userData.eventId = eventId;
+        }
+
         // ----------------------------------------------
 
         const registrations = await registrationsCollection.where('members', 'array-contains', verified.uid).get();

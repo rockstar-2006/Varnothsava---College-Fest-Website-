@@ -1,5 +1,6 @@
 import { adminDb, usersCollection, verifyAuthToken } from "@/lib/firebaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
+import { getAdminRole } from "@/lib/admin";
 
 export async function GET(request: NextRequest) {
     try {
@@ -15,9 +16,10 @@ export async function GET(request: NextRequest) {
 
         const userDoc = await usersCollection.doc(verified.uid).get();
         const userData = userDoc.data();
-        const role = userData?.role;
+        const { role: userRole, eventId: userEventId } = getAdminRole(userData?.email);
 
-        if (!role || !['SUPER_ADMIN', 'COORDINATOR', 'VOLUNTEER'].includes(role)) {
+
+        if (!userRole || !['SUPER_ADMIN', 'COORDINATOR', 'VOLUNTEER'].includes(userRole)) {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });
         }
 
@@ -28,13 +30,10 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ message: "Event ID required" }, { status: 400 });
         }
 
-        // RBAC: COORDINATOR and VOLUNTEER must be assigned to the event
-        if (role !== 'SUPER_ADMIN') {
-            const eventDoc = await adminDb.collection('events').doc(eventId).get();
-            const eventData = eventDoc.data();
-            const isAssigned = (eventData?.coordinators || []).includes(verified.uid) ||
-                (eventData?.volunteers || []).includes(verified.uid);
-
+        // RBAC Check
+        if (userRole !== 'SUPER_ADMIN') {
+            const coordinatorEventIds = (userEventId || '').split(',').map((id: string) => id.trim());
+            const isAssigned = coordinatorEventIds.includes('all') || coordinatorEventIds.includes(eventId);
             if (!isAssigned) {
                 return NextResponse.json({ message: "Forbidden: Not assigned to this event" }, { status: 403 });
             }
@@ -101,9 +100,10 @@ export async function PATCH(request: NextRequest) {
 
         const userDoc = await usersCollection.doc(verified.uid).get();
         const userData = userDoc.data();
-        const role = userData?.role;
+        const { role: userRole, eventId: userEventId } = getAdminRole(userData?.email);
 
-        if (!role || !['SUPER_ADMIN', 'COORDINATOR', 'VOLUNTEER'].includes(role)) {
+
+        if (!userRole || !['SUPER_ADMIN', 'COORDINATOR', 'VOLUNTEER'].includes(userRole)) {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });
         }
 
@@ -115,12 +115,10 @@ export async function PATCH(request: NextRequest) {
 
         const regData = regDoc.data();
 
-        // RBAC check for the event
-        if (role !== 'SUPER_ADMIN') {
-            const eventDoc = await adminDb.collection('events').doc(regData?.eventId).get();
-            const eventData = eventDoc.data();
-            const isAssigned = (eventData?.coordinators || []).includes(verified.uid) ||
-                (eventData?.volunteers || []).includes(verified.uid);
+        // RBAC Check for the event
+        if (userRole !== 'SUPER_ADMIN') {
+            const coordinatorEventIds = (userEventId || '').split(',').map((id: string) => id.trim());
+            const isAssigned = coordinatorEventIds.includes('all') || coordinatorEventIds.includes(regData?.eventId);
             if (!isAssigned) {
                 return NextResponse.json({ message: "Forbidden: Not assigned to this event" }, { status: 403 });
             }

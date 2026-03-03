@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { registerUserSchema } from "@/lib/validation";
 import { handleApiError, ApiError } from "@/lib/errorHandler";
 import { checkRegistrationRateLimit, getClientIdentifier } from "@/lib/ratelimit";
+import { getAdminRole } from "@/lib/admin";
 
 export async function POST(request: NextRequest) {
     try {
@@ -91,10 +92,10 @@ export async function POST(request: NextRequest) {
         };
 
         // --- ADMIN ROLE INJECTION ---
-        if (email === 'admin@varnothsava.in' || email === 'abhishree621@gmail.com') {
-            userProfile.role = 'SUPER_ADMIN';
-        } else if (email === 'coordinator@varnothsava.in') {
-            userProfile.role = 'COORDINATOR';
+        const { role, eventId: assignedEventId } = getAdminRole(email);
+        if (role) {
+            userProfile.role = role;
+            if (assignedEventId) userProfile.eventId = assignedEventId;
         }
         // ----------------------------
 

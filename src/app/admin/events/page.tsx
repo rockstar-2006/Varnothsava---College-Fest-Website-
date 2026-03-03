@@ -40,9 +40,14 @@ interface AdminEvent {
     coordinators?: string[]; // IDs
     registrationStatus?: 'open' | 'closed' | 'full';
     fee?: number;
+    metrics?: {
+        total: number;
+        internal: number;
+        external: number;
+    };
 }
 
-interface User {
+interface StaffMember {
     id: string;
     name: string;
     email: string;
@@ -52,7 +57,7 @@ interface User {
 export default function EventManagementPage() {
     const { userData, isAdmin, adminCache, updateAdminCache } = useApp()
     const [events, setEvents] = useState<AdminEvent[]>(adminCache.events || [])
-    const [staff, setStaff] = useState<User[]>(adminCache.staff || [])
+    const [staff, setStaff] = useState<StaffMember[]>(adminCache.staff || [])
     const [loading, setLoading] = useState(!adminCache.events)
     const [searchQuery, setSearchQuery] = useState('')
     const [isModalOpen, setIsModalOpen] = useState(false)
@@ -321,7 +326,7 @@ export default function EventManagementPage() {
                                 {events.length} Total Competitions
                             </p>
                             <p className="text-emerald-500/80 text-xs font-bold uppercase tracking-widest bg-emerald-500/5 px-3 py-1 rounded-full border border-emerald-500/10">
-                                {events.reduce((acc, curr: any) => acc + (curr.metrics?.total || 0), 0)} Total Registrations
+                                {events.reduce((acc, curr) => acc + (curr.metrics?.total || 0), 0)} Total Registrations
                             </p>
                         </div>
                     </div>
@@ -407,7 +412,7 @@ export default function EventManagementPage() {
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 key={event.id}
-                                onClick={() => handleViewRegistrations(event as any)}
+                                onClick={() => handleViewRegistrations(event)}
                                 className="bg-[#111] border border-white/5 rounded-2xl p-5 hover:border-emerald-500/20 transition-all group relative overflow-hidden flex flex-col cursor-pointer"
                             >
                                 <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 z-10" onClick={(e) => e.stopPropagation()}>
@@ -419,11 +424,11 @@ export default function EventManagementPage() {
                                     >
                                         <RefreshCcw size={14} className={cn(syncingId === event.id && "animate-spin")} />
                                     </button>
-                                    <button onClick={() => handleOpenModal(event as any)} className="p-2 bg-white/5 hover:bg-emerald-500/10 text-gray-400 hover:text-emerald-500 rounded-lg backdrop-blur-md">
+                                    <button onClick={(e) => { e.stopPropagation(); handleOpenModal(event); }} className="p-2 bg-white/5 hover:bg-emerald-500/10 text-gray-400 hover:text-emerald-500 rounded-lg backdrop-blur-md">
                                         <Edit2 size={14} />
                                     </button>
                                     {isSuperAdmin && (
-                                        <button onClick={() => handleDelete(event.id)} className="p-2 bg-white/5 hover:bg-red-500/10 text-gray-400 hover:text-red-500 rounded-lg backdrop-blur-md">
+                                        <button onClick={(e) => { e.stopPropagation(); handleDelete(event.id); }} className="p-2 bg-white/5 hover:bg-red-500/10 text-gray-400 hover:text-red-500 rounded-lg backdrop-blur-md">
                                             <Trash2 size={14} />
                                         </button>
                                     )}
@@ -469,7 +474,7 @@ export default function EventManagementPage() {
                                         <div className="flex flex-col">
                                             <span className="text-[7px] text-gray-500 font-black uppercase tracking-widest">Total Squads</span>
                                             <span className="text-2xl font-black text-white italic -mt-1">
-                                                {(event as any).metrics?.total || 0}
+                                                {event.metrics?.total || 0}
                                             </span>
                                         </div>
                                         <div className="flex flex-col items-end">
@@ -477,11 +482,11 @@ export default function EventManagementPage() {
                                             <div className="flex items-center gap-2 mt-0.5">
                                                 <div className="flex items-center gap-1">
                                                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]" />
-                                                    <span className="text-[9px] font-black text-emerald-400">{(event as any).metrics?.internal || 0}</span>
+                                                    <span className="text-[9px] font-black text-emerald-400">{event.metrics?.internal || 0}</span>
                                                 </div>
                                                 <div className="flex items-center gap-1">
                                                     <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                                                    <span className="text-[9px] font-black text-blue-400">{(event as any).metrics?.external || 0}</span>
+                                                    <span className="text-[9px] font-black text-blue-400">{event.metrics?.external || 0}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -490,12 +495,12 @@ export default function EventManagementPage() {
                                     <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden flex shadow-inner">
                                         <motion.div
                                             initial={{ width: 0 }}
-                                            animate={{ width: `${(((event as any).metrics?.internal || 0) / ((event as any).metrics?.total || 1)) * 100}%` }}
+                                            animate={{ width: `${((event.metrics?.internal || 0) / (event.metrics?.total || 1)) * 100}%` }}
                                             className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]"
                                         />
                                         <motion.div
                                             initial={{ width: 0 }}
-                                            animate={{ width: `${(((event as any).metrics?.external || 0) / ((event as any).metrics?.total || 1)) * 100}%` }}
+                                            animate={{ width: `${((event.metrics?.external || 0) / (event.metrics?.total || 1)) * 100}%` }}
                                             className="h-full bg-blue-500"
                                         />
                                     </div>

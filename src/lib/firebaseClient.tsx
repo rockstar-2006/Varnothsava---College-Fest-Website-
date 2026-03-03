@@ -1,4 +1,4 @@
-import { createUserWithEmailAndPassword, getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, User, getIdToken } from 'firebase/auth';
+import { createUserWithEmailAndPassword, getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, User, getIdToken } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { initializeApp, getApps } from 'firebase/app';
@@ -97,14 +97,34 @@ export function loginWithEmail(email: string, password: string): Promise<User> {
 export function loginWithGoogle(): Promise<User> {
     return new Promise((resolve, reject) => {
         const provider = new GoogleAuthProvider();
+        // Try popup first; fall back to redirect if the browser blocks it
         signInWithPopup(auth, provider)
             .then((result) => {
                 resolve(result.user);
             })
             .catch((error) => {
-                reject(error);
+                if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
+                    // Fall back to redirect flow
+                    signInWithRedirect(auth, provider).catch(reject);
+                    // The result will be picked up on the next page load via getRedirectResult
+                    // We reject with a special signal so callers can show a loading state
+                    reject({ code: 'auth/redirect-started', message: 'Redirecting to Google Sign-In...' });
+                } else {
+                    reject(error);
+                }
             });
     });
+}
+
+// Call this once on app load to capture the redirect sign-in result
+export async function handleGoogleRedirectResult(): Promise<User | null> {
+    try {
+        const result = await getRedirectResult(auth);
+        return result?.user ?? null;
+    } catch (error) {
+        console.error('Redirect result error:', error);
+        return null;
+    }
 }
 
 export function signOut() {

@@ -20,6 +20,7 @@ export interface UserData {
     avatar: string
     studentType: 'internal' | 'external'
     role?: AdminRole
+    eventId?: string
     isBlocked?: boolean
     // Optional fields
     age?: string
@@ -59,7 +60,7 @@ interface AppContextType {
     registerMission: (eventId: string, teamName: string, members: string[]) => Promise<{ success: boolean, registrationId?: string }>
     updateAvatar: (avatarUrl: string) => void,
     updateProfile: (data: { name: string, usn: string, phone: string, collegeName: string }) => Promise<boolean>,
-    mountUser: () => Promise<void>,
+    mountUser: (passedUser?: any) => Promise<void>,
     isSiteLoaded: boolean,
     setIsSiteLoaded: (val: boolean) => void,
     pageTheme: PageTheme | null,
@@ -84,6 +85,8 @@ interface AppContextType {
         externalUsersCount?: number;
         totalInternalRegs?: number;
         totalExternalRegs?: number;
+        attendance?: any[];
+        eventAttendanceMap?: Record<string, any[]>;
         eventRegMap?: Record<string, any[]>;
         _updatedAt?: number;
     };
@@ -95,7 +98,8 @@ const AppContext = createContext<AppContextType | undefined>(undefined)
 async function getUserData(currentUser?: any) {
     let token = null;
     if (currentUser) {
-        token = await currentUser.getIdToken();
+        // Force-refresh=false: reuse cached token (avoids extra network call)
+        token = await currentUser.getIdToken(false);
     } else {
         token = await getAuthToken();
     }
@@ -108,7 +112,8 @@ async function getUserData(currentUser?: any) {
         const response = await fetch('/api/me', {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`,
+                'Cache-Control': 'no-cache'
             }
         });
 
@@ -190,23 +195,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (currentUser) {
             setIsInitializing(true);
             try {
-                // Get ID token result specifically to check for custom claims
-                const idTokenResult = await currentUser.getIdTokenResult();
-                let role = idTokenResult.claims.role as AdminRole | undefined;
-
+                // Single API call to /api/me — role, eventId, registrations all returned together.
+                // Avoids separate getIdTokenResult() network roundtrip.
                 const data = await getUserData(currentUser);
 
-                // --- ADMIN ROLE MERGE ---
-                // If it's not in the token claims (custom claims), check the Firestore data
-                // This allows our 'me' API bypass to work smoothly for testing
-                if (!role && data?.role) {
-                    role = data.role as AdminRole;
-                }
-                setIsAdmin(!!role);
-                // ------------------------
-
                 if (data) {
-                    // Check if user is blocked
                     if (data.isBlocked) {
                         alert("Your account has been blocked. Please contact the administrator.");
                         signOut();
@@ -215,25 +208,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                         setIsInitializing(false);
                         return;
                     }
-                    // User has complete profile
-                    setUserData({ ...data, role }); // Merge role
+                    // role comes directly from /api/me (COORDINATOR_MAP bypass included)
+                    const role = data.role as AdminRole | undefined;
+                    setIsAdmin(!!role);
+                    setUserData(data);
                     setIsLoggedIn(true);
                     setNeedsOnboarding(false);
                 } else {
-                    // User is authenticated but no profile in database
-                    // This means they need to complete registration
+                    // Authenticated but no profile in DB → needs onboarding
                     setUserData(null);
                     setIsLoggedIn(true);
                     setNeedsOnboarding(true);
+                    setIsAdmin(false);
 
-                    // If they're on profile page, redirect to login to complete registration
-                    if (window.location.pathname === '/profile') {
+                    if (typeof window !== 'undefined' && window.location.pathname === '/profile') {
                         router.push('/login');
                     }
                 }
             } catch (error) {
                 console.error('Error fetching user data:', error);
-                // On error, assume they need to register
                 setUserData(null);
                 setIsLoggedIn(true);
                 setNeedsOnboarding(true);
@@ -241,7 +234,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                 setIsInitializing(false);
             }
         } else {
-            // No user logged in
             setIsLoggedIn(false);
             setIsAdmin(false);
             setUserData(null);
@@ -269,29 +261,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             alert("Please enter both email and password.")
             return;
         }
-
         try {
-            const user = await loginWithEmail(email, password);
-            if (user) {
-                const data = await getUserData(user);
-                if (data) {
-                    if (data.isBlocked) {
-                        alert("Your account has been blocked. Please contact the administrator.");
-                        signOut();
-                        return;
-                    }
-                    setUserData(data);
-                    setIsLoggedIn(true);
-                    setNeedsOnboarding(false);
-                } else {
-                    // Authenticated but no user profile in DB
-                    setUserData(null);
-                    setIsLoggedIn(true);
-                    setNeedsOnboarding(true);
-                }
-            } else {
-                alert("Invalid credentials or user not found. Please register.")
-            }
+            // Just authenticate — onAuthStateChanged will fire and call mountUser()
+            // which does the single /api/me call. No double-fetch.
+            await loginWithEmail(email, password);
         } catch (error) {
             console.error("Login failed:", error);
             alert("Login failed. Please check your credentials and try again.")

@@ -785,7 +785,7 @@ export const missions: Event[] = [
     },
     {
         id: 'Antakshari',
-        title: 'Musical Marathon ',
+        title: 'Musical Marathon',
         type: 'Cultural',
         category: 'Hobby Club',
         description: 'A lively musical game where participants sing songs based on the last letter of the previous song. It tests memory, creativity, and teamwork, creating a fun and energetic atmosphere for everyone involved.',
@@ -903,7 +903,7 @@ export const missions: Event[] = [
     ,
     {
         id: 'MIME',
-        title: 'Silent Symphony ',
+        title: 'Silent Symphony',
         type: 'Cultural',
         category: 'Hobby Club',
         description: 'A silent yet powerful performance art conveying stories without words.Participants communicate emotions and messages through expressions and movement.',
@@ -1003,7 +1003,7 @@ export const missions: Event[] = [
     ,
     {
         id: 'Pencil-Sketch',
-        title: 'Sketch Chronicles ',
+        title: 'Sketch Chronicles',
         type: 'Cultural',
         category: 'Hobby Club',
         description: 'A pencil sketching contest focused on shading, depth, and realism.Artists bring the given theme to life using only gradation pencils.',
@@ -1035,7 +1035,7 @@ export const missions: Event[] = [
     ,
     {
         id: 'Pick-and-Speech',
-        title: 'JAM ',
+        title: 'JAM',
         type: 'Cultural',
         category: 'General',
         description: 'A fast-paced speaking challenge testing clarity, confidence, and fluency.Participants speak nonstop for one minute on an impromptu topic.',
@@ -1074,7 +1074,7 @@ export const missions: Event[] = [
     ,
     {
         id: 'Photography',
-        title: 'Shutterverse ',
+        title: 'Shutterverse',
         type: 'Cultural',
         category: 'Promotional',
         description: 'A photography contest capturing the true essence of Varnothsava 2026.Participants tell powerful stories through frames, light, and composition.',

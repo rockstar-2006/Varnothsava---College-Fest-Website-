@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useApp } from '@/context/AppContext'
 import {
     Search,
@@ -37,13 +37,14 @@ interface Registration {
     teamName: string;
     teamLeader: string;
     leaderName: string;
+    phone?: string;
     college: string;
     paymentStatus: 'Paid' | 'Unpaid';
     status: 'approved' | 'rejected' | 'pending';
     registeredAt: string;
     eventType: 'SOLO' | 'GROUP';
     eventTitle?: string;
-    membersDetails: { name: string, usn: string }[];
+    membersDetails: { name: string, usn: string, phone?: string }[];
 }
 
 interface Event {
@@ -58,23 +59,33 @@ export default function ParticipantsManagementPage() {
     const [events, setEvents] = useState<Event[]>(adminCache.events || [])
     const [loading, setLoading] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
-    const [selectedEventId, setSelectedEventId] = useState<string>('all')
+    const [selectedEventId, setSelectedEventId] = useState<string>(
+        (userData?.role === 'COORDINATOR' && userData?.eventId && userData.eventId !== 'all') ? userData.eventId : 'all'
+    )
+    const [studentType, setStudentType] = useState<string>('all') // 'all', 'internal', 'external'
+    const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
     const [updatingId, setUpdatingId] = useState<string | null>(null)
     const [hasMore, setHasMore] = useState(false)
     const [totalRegCount, setTotalRegCount] = useState(adminCache.totalRegCount || 0)
     const [totalInternalRegs, setTotalInternalRegs] = useState(adminCache.totalInternalRegs || 0)
     const [totalExternalRegs, setTotalExternalRegs] = useState(adminCache.totalExternalRegs || 0)
     const [lastId, setLastId] = useState<string | null>(null)
+    const [isInitialMount, setIsInitialMount] = useState(true)
 
     const fetchRegistrations = async (eventId?: string, isLoadMore = false) => {
         setLoading(true)
         try {
             const token = await getAuthToken()
             const currentLastId = isLoadMore ? lastId : '';
-            const targetEventId = eventId || selectedEventId;
+            // If it's a coordinator, they might be restricted to certain eventId
+            let targetEventId = eventId || selectedEventId;
+            if (userData?.role === 'COORDINATOR' && userData?.eventId && userData.eventId !== 'all') {
+                targetEventId = userData.eventId;
+            }
 
             let url = `/api/admin/registrations?lastId=${currentLastId}&limit=20`
             if (targetEventId && targetEventId !== 'all') url += `&eventId=${targetEventId}`
+            if (studentType !== 'all') url += `&studentType=${studentType}`
             if (searchQuery) url += `&search=${encodeURIComponent(searchQuery)}`
 
             const res = await fetch(url, {
@@ -89,10 +100,14 @@ export default function ParticipantsManagementPage() {
                 setTotalRegCount(data.totalCount)
                 setTotalInternalRegs(data.internalCount || 0)
                 setTotalExternalRegs(data.externalCount || 0)
-                updateAdminCache('registrations', newRegs)
-                updateAdminCache('totalRegCount', data.totalCount)
-                updateAdminCache('totalInternalRegs', data.internalCount || 0)
-                updateAdminCache('totalExternalRegs', data.externalCount || 0)
+
+                // If it's just a sync (not load more), update cache
+                if (!isLoadMore) {
+                    updateAdminCache('registrations', newRegs)
+                    updateAdminCache('totalRegCount', data.totalCount)
+                    updateAdminCache('totalInternalRegs', data.internalCount || 0)
+                    updateAdminCache('totalExternalRegs', data.externalCount || 0)
+                }
             }
         } catch (error) {
             console.error("Failed to fetch registrations:", error)
@@ -117,15 +132,28 @@ export default function ParticipantsManagementPage() {
         }
     }
 
+    // Toggle expanded mapping
+    const toggleExpand = (id: string) => {
+        const newSet = new Set(expandedIds);
+        if (newSet.has(id)) newSet.delete(id);
+        else newSet.add(id);
+        setExpandedIds(newSet);
+    }
+
     // Fetch on filter change
     useEffect(() => {
-        if (registrations.length === 0 || selectedEventId !== 'all') {
-            fetchRegistrations(selectedEventId, false)
+        if (isInitialMount && registrations.length > 0) {
+            setIsInitialMount(false);
+            return;
         }
-    }, [selectedEventId])
+        fetchRegistrations(selectedEventId, false)
+        if (events.length === 0) fetchEvents()
+        setIsInitialMount(false);
+    }, [selectedEventId, studentType])
 
     // Global Search with debounce
     useEffect(() => {
+        if (isInitialMount) return;
         if (!searchQuery && registrations.length > 0) return;
         const timer = setTimeout(() => {
             fetchRegistrations(selectedEventId, false)
@@ -194,14 +222,34 @@ export default function ParticipantsManagementPage() {
 
                     <div className="flex flex-col md:flex-row md:items-center gap-4">
                         <div className="flex items-center gap-2">
-                            <div className="bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl">
-                                <p className="text-[8px] font-black uppercase tracking-tighter text-emerald-500 leading-none mb-1 text-center">Internal</p>
-                                <p className="text-sm font-black text-white italic text-center">{totalInternalRegs}</p>
-                            </div>
-                            <div className="bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-xl">
-                                <p className="text-[8px] font-black uppercase tracking-tighter text-blue-500 leading-none mb-1 text-center">External</p>
-                                <p className="text-sm font-black text-white italic text-center">{totalExternalRegs}</p>
-                            </div>
+                            <button
+                                onClick={() => setStudentType('internal')}
+                                className={cn(
+                                    "px-3 py-1.5 rounded-xl transition-all border flex flex-col items-center min-w-[60px]",
+                                    studentType === 'internal' ? "bg-emerald-500/20 border-emerald-500/50" : "bg-white/5 border-white/10 hover:border-emerald-500/30"
+                                )}
+                            >
+                                <p className="text-[8px] font-black uppercase tracking-tighter text-emerald-500 leading-none mb-1">Internal</p>
+                                <p className="text-sm font-black text-white italic">{totalInternalRegs}</p>
+                            </button>
+                            <button
+                                onClick={() => setStudentType('external')}
+                                className={cn(
+                                    "px-3 py-1.5 rounded-xl transition-all border flex flex-col items-center min-w-[60px]",
+                                    studentType === 'external' ? "bg-blue-500/20 border-blue-500/50" : "bg-white/5 border-white/10 hover:border-blue-500/30"
+                                )}
+                            >
+                                <p className="text-[8px] font-black uppercase tracking-tighter text-blue-500 leading-none mb-1">External</p>
+                                <p className="text-sm font-black text-white italic">{totalExternalRegs}</p>
+                            </button>
+                            {studentType !== 'all' && (
+                                <button
+                                    onClick={() => setStudentType('all')}
+                                    className="p-1 px-2 text-[8px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors"
+                                >
+                                    Clear
+                                </button>
+                            )}
                         </div>
 
                         <button
@@ -285,99 +333,191 @@ export default function ParticipantsManagementPage() {
                             <thead>
                                 <tr className="border-b border-white/5 bg-white/5 text-xs text-gray-500 font-semibold uppercase tracking-wider">
                                     <th className="px-6 py-4">Participant & Team</th>
+                                    <th className="px-6 py-4">Contact Info</th>
                                     <th className="px-6 py-4">Participated Event</th>
                                     <th className="px-6 py-4">Institution</th>
                                     <th className="px-6 py-4 text-center">Payment</th>
                                     <th className="px-6 py-4">Reg. Date</th>
+                                    <th className="px-6 py-4 text-right">Members</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5 text-sm">
-                                {loading ? (
+                                {loading && registrations.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="px-6 py-12 text-center">
+                                        <td colSpan={7} className="px-6 py-12 text-center">
                                             <div className="flex justify-center flex-col items-center gap-3">
                                                 <Loader2 className="animate-spin text-emerald-500" size={32} />
                                                 <span className="text-gray-500 font-medium">Synchronizing participant records...</span>
                                             </div>
                                         </td>
                                     </tr>
-                                ) : filteredRegs.length === 0 ? (
+                                ) : registrations.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="px-6 py-12 text-center text-gray-500 font-medium italic">
+                                        <td colSpan={7} className="px-6 py-12 text-center text-gray-500 font-medium italic">
                                             No local cache found. Click "Sync Signals" to fetch registration data.
                                         </td>
                                     </tr>
-                                ) : filteredRegs.map((reg) => (
-                                    <tr key={reg.id} className="hover:bg-white/2 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-emerald-500 font-bold border border-white/10 group-hover:border-emerald-500/30 transition-all">
-                                                    {reg.eventType === 'SOLO' ? <User size={20} /> : <Users size={20} />}
+                                ) : registrations.map((reg) => (
+                                    <React.Fragment key={reg.id}>
+                                        <tr className="hover:bg-white/2 transition-colors group">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-emerald-500 font-bold border border-white/10 group-hover:border-emerald-500/30 transition-all">
+                                                        {reg.eventType === 'SOLO' ? <User size={20} /> : <Users size={20} />}
+                                                    </div>
+                                                    <div
+                                                        onClick={() => toggleExpand(reg.id)}
+                                                        className="cursor-pointer group-hover:translate-x-1 transition-transform"
+                                                    >
+                                                        <p className="font-bold text-white text-base hover:text-emerald-500 transition-colors">{reg.leaderName}</p>
+                                                        <p className="text-xs text-emerald-500 font-mono flex items-center gap-1 group/team">
+                                                            <TagIcon size={10} className="opacity-70" />
+                                                            <span className="group-hover/team:underline decoration-emerald-500/30">{reg.teamName}</span>
+                                                            <ChevronDown size={10} className={cn("transition-transform", expandedIds.has(reg.id) && "rotate-180")} />
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className="font-bold text-white text-base">{reg.leaderName}</p>
-                                                    <p className="text-xs text-emerald-500 font-mono flex items-center gap-1">
-                                                        <Tag size={10} className="opacity-70" /> {reg.teamName}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="space-y-1">
+                                                    <p className="text-xs font-bold text-white flex items-center gap-1.5 whitespace-nowrap">
+                                                        <CreditCard size={12} className="text-emerald-500/50" />
+                                                        {reg.phone || 'N/A'}
                                                     </p>
+                                                    {reg.eventType === 'GROUP' && (
+                                                        <p className="text-[10px] text-gray-500 font-medium">Team Leader Contact</p>
+                                                    )}
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-8 h-8 rounded-lg bg-emerald-500/5 flex items-center justify-center text-emerald-500 border border-emerald-500/10">
-                                                    <Zap size={14} />
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 border border-emerald-500/20">
+                                                        <Zap size={14} />
+                                                    </div>
+                                                    <span className="font-bold text-white uppercase tracking-tighter text-xs">
+                                                        {reg.eventTitle || reg.eventId}
+                                                    </span>
                                                 </div>
-                                                <span className="font-bold text-white uppercase tracking-tighter text-xs">
-                                                    {reg.eventTitle || reg.eventId}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2 text-gray-400">
-                                                <School size={16} className="text-gray-600" />
-                                                <span className="truncate max-w-[150px] text-xs font-medium" title={reg.college}>{reg.college}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <div className={cn(
-                                                "inline-flex items-center gap-1.5 font-black px-2.5 py-1 rounded-lg text-[9px] uppercase tracking-widest border",
-                                                reg.paymentStatus === 'Paid' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-red-500/10 text-red-500 border-red-500/20"
-                                            )}>
-                                                {reg.paymentStatus === 'Paid' ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
-                                                {reg.paymentStatus}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-col">
-                                                <span className="text-xs text-white font-bold tracking-tight">{formatDate(reg.registeredAt)}</span>
-                                                <span className="text-[8px] text-gray-600 font-mono mt-0.5 uppercase">Signal Received</span>
-                                            </div>
-                                        </td>
-
-                                    </tr>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2 text-gray-400">
+                                                    <School size={16} className="text-gray-600" />
+                                                    <span className="truncate max-w-[150px] text-xs font-medium" title={reg.college}>{reg.college}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <div className={cn(
+                                                    "inline-flex items-center gap-1.5 font-black px-2.5 py-1 rounded-lg text-[9px] uppercase tracking-widest border",
+                                                    reg.paymentStatus === 'Paid' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-red-500/10 text-red-500 border-red-500/20"
+                                                )}>
+                                                    {reg.paymentStatus === 'Paid' ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
+                                                    {reg.paymentStatus}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs text-white font-bold tracking-tight">{formatDate(reg.registeredAt)}</span>
+                                                    <span className="text-[8px] text-gray-600 font-mono mt-0.5 uppercase">Signal Received</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                {reg.eventType === 'GROUP' ? (
+                                                    <button
+                                                        onClick={() => toggleExpand(reg.id)}
+                                                        className={cn(
+                                                            "px-3 py-1 rounded-lg border text-[10px] font-black uppercase tracking-tighter transition-all",
+                                                            expandedIds.has(reg.id) ? "bg-emerald-500 text-black border-emerald-500" : "border-white/10 text-gray-400 hover:border-emerald-500/50"
+                                                        )}
+                                                    >
+                                                        {expandedIds.has(reg.id) ? 'Hide Members' : `${reg.membersDetails?.length || 0} Members`}
+                                                    </button>
+                                                ) : (
+                                                    <span className="text-[10px] font-black text-gray-600 uppercase italic">Solo Entry</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                        {expandedIds.has(reg.id) && reg.membersDetails && (
+                                            <AnimatePresence>
+                                                <motion.tr
+                                                    initial={{ opacity: 0, scale: 0.95 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    className="bg-[#050505] border-l-4 border-emerald-500"
+                                                >
+                                                    <td colSpan={7} className="px-12 py-8">
+                                                        <div className="flex items-center gap-3 mb-6">
+                                                            <div className="p-2 bg-emerald-500/10 rounded-lg">
+                                                                <FileText size={16} className="text-emerald-500" />
+                                                            </div>
+                                                            <div>
+                                                                <h3 className="text-sm font-black text-white uppercase tracking-widest italic">TEAM_DATA_FOLDER: {reg.teamName}</h3>
+                                                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter">Authorized personnel only // Signal analysis active</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                                            {/* Team Leader always included as M1 or specifically noted */}
+                                                            <div className="bg-emerald-500/5 rounded-2xl p-4 border border-emerald-500/20 relative overflow-hidden group/member">
+                                                                <div className="absolute top-0 right-0 p-2 opacity-10 group-hover/member:opacity-30 transition-opacity">
+                                                                    <User size={40} />
+                                                                </div>
+                                                                <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest mb-1">TEAM_LEADER</p>
+                                                                <p className="text-sm font-bold text-white mb-0.5">{reg.leaderName}</p>
+                                                                <p className="text-[10px] text-gray-500 font-mono mb-2">{reg.phone || 'N/A'}</p>
+                                                            </div>
+                                                            {reg.membersDetails.map((member, idx) => (
+                                                                <div key={idx} className="bg-white/5 rounded-2xl p-4 border border-white/5 hover:border-emerald-500/30 transition-all relative overflow-hidden group/member">
+                                                                    <div className="absolute top-0 right-0 p-2 opacity-5 group-hover/member:opacity-20 transition-opacity">
+                                                                        <Users size={40} />
+                                                                    </div>
+                                                                    <p className="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1">MEMBER_{idx + 2}</p>
+                                                                    <p className="text-sm font-bold text-white mb-0.5">{member.name}</p>
+                                                                    <p className="text-[10px] text-gray-500 font-mono mb-2">{member.usn}</p>
+                                                                    {member.phone && member.phone !== 'N/A' && (
+                                                                        <div className="flex items-center gap-1 text-[9px] text-emerald-500/70 font-bold uppercase italic">
+                                                                            <CreditCard size={10} /> {member.phone}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </td>
+                                                </motion.tr>
+                                            </AnimatePresence>
+                                        )}
+                                    </React.Fragment>
                                 ))}
                             </tbody>
                         </table>
                     </div>
                     {/* Pagination */}
-                    {hasMore && (
-                        <div className="p-4 border-t border-white/5 flex justify-center mt-6">
+                    <div className="p-6 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4 bg-white/[0.01]">
+                        <div className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            Showing <span className="text-white">{registrations.length}</span> / <span className="text-white">{totalRegCount}</span> Sector Signals
+                        </div>
+
+                        {hasMore && (
                             <button
                                 onClick={() => fetchRegistrations(selectedEventId, true)}
                                 disabled={loading}
-                                className="px-8 py-2.5 bg-[#111] hover:bg-emerald-500/10 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl transition-all border border-white/10 hover:border-emerald-500/50 disabled:opacity-50 flex items-center gap-3 group"
+                                className="px-8 py-3 bg-[#111] hover:bg-emerald-500 text-white hover:text-black text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all border border-white/10 hover:border-emerald-500 disabled:opacity-50 flex items-center gap-3 group shadow-[0_0_20px_rgba(16,185,129,0.1)] active:scale-95"
                             >
                                 {loading ? (
-                                    <Loader2 className="animate-spin text-emerald-500" size={16} />
+                                    <Loader2 className="animate-spin" size={16} />
                                 ) : (
                                     <>
-                                        <span>Load Sector {totalRegCount - registrations.length}</span>
-                                        <RefreshCcw size={14} className="group-hover:rotate-180 transition-transform text-emerald-500" />
+                                        <span>Load Next Data Stream</span>
+                                        <ChevronDown size={14} className="group-hover:translate-y-0.5 transition-transform" />
                                     </>
                                 )}
                             </button>
-                        </div>
-                    )}
+                        )}
+
+                        {!hasMore && registrations.length > 0 && (
+                            <div className="text-[10px] font-black text-emerald-500/50 uppercase tracking-widest border border-emerald-500/10 px-4 py-2 rounded-full">
+                                End of Database Reached
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </ProtectedRoute>
