@@ -216,93 +216,87 @@ export default function ParticipantsManagementPage() {
 
     return (
         <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'COORDINATOR']}>
-            <div className="space-y-6">
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="space-y-4 md:space-y-6">
+                <div className="flex flex-col gap-3">
                     <div>
-                        <h1 className="text-2xl font-bold text-white uppercase tracking-tighter italic">REGISTRATIONS</h1>
+                        <h1 className="text-xl md:text-2xl font-bold text-white uppercase tracking-tighter italic">REGISTRATIONS</h1>
                         <p className="text-gray-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
                             <FileText size={14} className="text-emerald-500/50" />
-                            {selectedEventId === 'all' ? `Global database contains ${totalRegCount} registration records` : `Accessing registration signals for selected sector`}
+                            {selectedEventId === 'all' ? `${totalRegCount} teams · ${totalParticipants} participants` : `Signals for selected sector`}
                         </p>
                     </div>
 
-                    <div className="flex flex-col md:flex-row md:items-center gap-4">
-                        <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <button
+                            onClick={() => setStudentType('internal')}
+                            className={cn(
+                                "px-3 py-1.5 rounded-xl transition-all border flex flex-col items-center min-w-[55px]",
+                                studentType === 'internal' ? "bg-emerald-500/20 border-emerald-500/50" : "bg-white/5 border-white/10 hover:border-emerald-500/30"
+                            )}
+                        >
+                            <p className="text-[8px] font-black uppercase tracking-tighter text-emerald-500 leading-none mb-1">Internal</p>
+                            <p className="text-sm font-black text-white italic">{totalInternalRegs}</p>
+                        </button>
+                        <button
+                            onClick={() => setStudentType('external')}
+                            className={cn(
+                                "px-3 py-1.5 rounded-xl transition-all border flex flex-col items-center min-w-[55px]",
+                                studentType === 'external' ? "bg-blue-500/20 border-blue-500/50" : "bg-white/5 border-white/10 hover:border-blue-500/30"
+                            )}
+                        >
+                            <p className="text-[8px] font-black uppercase tracking-tighter text-blue-500 leading-none mb-1">External</p>
+                            <p className="text-sm font-black text-white italic">{totalExternalRegs}</p>
+                        </button>
+                        {studentType !== 'all' && (
                             <button
-                                onClick={() => setStudentType('internal')}
-                                className={cn(
-                                    "px-3 py-1.5 rounded-xl transition-all border flex flex-col items-center min-w-[60px]",
-                                    studentType === 'internal' ? "bg-emerald-500/20 border-emerald-500/50" : "bg-white/5 border-white/10 hover:border-emerald-500/30"
-                                )}
+                                onClick={() => setStudentType('all')}
+                                className="p-1 px-2 text-[8px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors"
                             >
-                                <p className="text-[8px] font-black uppercase tracking-tighter text-emerald-500 leading-none mb-1">Internal</p>
-                                <p className="text-sm font-black text-white italic">{totalInternalRegs}</p>
+                                Clear
                             </button>
+                        )}
+
+                        <div className="ml-auto flex items-center gap-2">
                             <button
-                                onClick={() => setStudentType('external')}
-                                className={cn(
-                                    "px-3 py-1.5 rounded-xl transition-all border flex flex-col items-center min-w-[60px]",
-                                    studentType === 'external' ? "bg-blue-500/20 border-blue-500/50" : "bg-white/5 border-white/10 hover:border-blue-500/30"
-                                )}
+                                onClick={() => fetchRegistrations(selectedEventId, false)}
+                                className="bg-[#111] border border-white/10 hover:border-emerald-500/50 text-white px-3 md:px-5 py-2 rounded-xl transition-all group flex items-center gap-2 shadow-xl"
                             >
-                                <p className="text-[8px] font-black uppercase tracking-tighter text-blue-500 leading-none mb-1">External</p>
-                                <p className="text-sm font-black text-white italic">{totalExternalRegs}</p>
+                                <RefreshCcw size={16} className={cn("text-emerald-500 transition-transform group-hover:rotate-180", loading && "animate-spin")} />
+                                <span className="text-xs font-bold uppercase tracking-widest text-white hidden sm:block">Sync</span>
                             </button>
-                            {studentType !== 'all' && (
+
+                            {userData?.role === 'SUPER_ADMIN' && (
                                 <button
-                                    onClick={() => setStudentType('all')}
-                                    className="p-1 px-2 text-[8px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors"
+                                    onClick={() => fetchAndDownload('registrations', `Registrations_${selectedEventId}`, getAuthToken, { eventId: selectedEventId })}
+                                    className="bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/50 text-emerald-500 px-3 md:px-5 py-2 rounded-xl transition-all group flex items-center gap-2 shadow-xl"
+                                    title="Export"
                                 >
-                                    Clear
+                                    <FileSpreadsheet size={16} className="transition-transform group-hover:scale-110" />
+                                    <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Export</span>
                                 </button>
                             )}
                         </div>
-
-                        <button
-                            onClick={() => fetchRegistrations(selectedEventId, false)}
-                            className="bg-[#111] border border-white/10 hover:border-emerald-500/50 text-white px-5 py-2.5 rounded-xl transition-all group flex items-center gap-3 shadow-xl"
-                        >
-                            <RefreshCcw size={18} className={cn("text-emerald-500 transition-transform group-hover:rotate-180", loading && "animate-spin")} />
-                            <div className="text-left">
-                                <p className="text-[9px] font-black uppercase tracking-wider text-gray-500 leading-none mb-1">Live Feed</p>
-                                <p className="text-xs font-bold uppercase tracking-widest text-white leading-none">Sync Signals</p>
-                            </div>
-                        </button>
-
-                        {userData?.role === 'SUPER_ADMIN' && (
-                            <button
-                                onClick={() => fetchAndDownload('registrations', `Registrations_${selectedEventId}`, getAuthToken, { eventId: selectedEventId })}
-                                className="bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/50 text-emerald-500 px-5 py-2.5 rounded-xl transition-all group flex items-center gap-3 shadow-xl"
-                                title="Download Full Report (Excel)"
-                            >
-                                <FileSpreadsheet size={18} className="transition-transform group-hover:scale-110" />
-                                <div className="text-left">
-                                    <p className="text-[9px] font-black uppercase tracking-wider text-emerald-500/50 leading-none mb-1">Database</p>
-                                    <p className="text-xs font-bold uppercase tracking-widest text-emerald-500 leading-none font-mono">EXPORT</p>
-                                </div>
-                            </button>
-                        )}
                     </div>
                 </div>
 
                 {/* Filters */}
-                <div className="flex flex-col md:flex-row gap-4 bg-[#111] p-4 rounded-2xl border border-white/5">
+                <div className="flex flex-col sm:flex-row gap-3 bg-[#111] p-3 md:p-4 rounded-2xl border border-white/5">
                     <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
                         <input
                             type="text"
-                            placeholder="Search by participant, team, or college..."
+                            placeholder="Search by participant, team..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-white focus:outline-none focus:border-emerald-500/50 transition-all font-medium text-sm"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-9 pr-4 text-white focus:outline-none focus:border-emerald-500/50 transition-all font-medium text-sm"
                         />
                     </div>
                     <div className="flex items-center gap-2">
-                        <Filter size={18} className="text-gray-500" />
+                        <Filter size={16} className="text-gray-500 flex-shrink-0" />
                         <select
                             value={selectedEventId}
                             onChange={(e) => setSelectedEventId(e.target.value)}
-                            className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-emerald-500/50 text-sm"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500/50 text-sm"
                         >
                             <option value="all">All Assigned Events</option>
                             {events.map(event => (
@@ -313,36 +307,103 @@ export default function ParticipantsManagementPage() {
                 </div>
 
                 {/* Stats Summary */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-[#111] p-4 rounded-2xl border border-white/5 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-2 opacity-5">
-                            <Users size={40} />
-                        </div>
-                        <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1 text-[8px]">Teams Registered</p>
-                        <p className="text-2xl font-black text-white italic">{totalRegCount}</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="bg-[#111] p-3 md:p-4 rounded-2xl border border-white/5 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-2 opacity-5"><Users size={40} /></div>
+                        <p className="text-gray-500 text-[9px] uppercase font-bold tracking-wider mb-1">Teams Registered</p>
+                        <p className="text-xl md:text-2xl font-black text-white italic">{totalRegCount}</p>
                     </div>
-                    <div className="bg-[#111] p-4 rounded-2xl border border-white/5 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-2 opacity-5">
-                            <User size={40} />
-                        </div>
-                        <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1 text-[8px]">Total Participants</p>
-                        <p className="text-2xl font-black text-emerald-500 italic">{totalParticipants}</p>
+                    <div className="bg-[#111] p-3 md:p-4 rounded-2xl border border-white/5 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-2 opacity-5"><User size={40} /></div>
+                        <p className="text-gray-500 text-[9px] uppercase font-bold tracking-wider mb-1">Total Participants</p>
+                        <p className="text-xl md:text-2xl font-black text-emerald-500 italic">{totalParticipants}</p>
                     </div>
-                    <div className="bg-[#111] p-4 rounded-2xl border border-white/5">
-                        <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1 text-[8px]">Pending Approval</p>
-                        <p className="text-2xl font-bold text-amber-500 italic">{registrations.filter(r => r.status === 'pending' || !r.status).length}</p>
+                    <div className="bg-[#111] p-3 md:p-4 rounded-2xl border border-white/5">
+                        <p className="text-gray-500 text-[9px] uppercase font-bold tracking-wider mb-1">Pending Approval</p>
+                        <p className="text-xl md:text-2xl font-bold text-amber-500 italic">{registrations.filter(r => r.status === 'pending' || !r.status).length}</p>
                     </div>
-                    <div className="bg-[#111] p-4 rounded-2xl border border-white/5 border-l-amber-500 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-2 opacity-5">
-                            <CreditCard size={40} />
-                        </div>
-                        <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1 text-[8px]">Unpaid Teams</p>
-                        <p className="text-2xl font-bold text-red-500 italic">{registrations.filter(r => r.paymentStatus === 'Unpaid').length}</p>
+                    <div className="bg-[#111] p-3 md:p-4 rounded-2xl border border-white/5 border-l-amber-500 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-2 opacity-5"><CreditCard size={40} /></div>
+                        <p className="text-gray-500 text-[9px] uppercase font-bold tracking-wider mb-1">Unpaid Teams</p>
+                        <p className="text-xl md:text-2xl font-bold text-red-500 italic">{registrations.filter(r => r.paymentStatus === 'Unpaid').length}</p>
                     </div>
                 </div>
 
-                {/* Participants Table */}
-                <div className="bg-[#111] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
+                {/* Mobile Cards */}
+                <div className="md:hidden space-y-3">
+                    {loading && registrations.length === 0 ? (
+                        <div className="bg-[#111] rounded-2xl p-8 flex flex-col items-center gap-3 border border-white/5">
+                            <Loader2 className="animate-spin text-emerald-500" size={28} />
+                            <span className="text-gray-500 font-medium text-sm">Syncing records...</span>
+                        </div>
+                    ) : registrations.length === 0 ? (
+                        <div className="bg-[#111] rounded-2xl p-8 text-center text-gray-500 font-medium italic text-sm border border-white/5">
+                            No data. Click Sync to fetch.
+                        </div>
+                    ) : registrations.map((reg) => (
+                        <div key={reg.id} className="bg-[#111] border border-white/5 rounded-2xl p-4 space-y-3">
+                            <div className="flex items-start justify-between gap-2">
+                                <div>
+                                    <p className="font-bold text-white text-base">{reg.leaderName}</p>
+                                    <p className="text-xs text-emerald-500 font-mono">{reg.teamName}</p>
+                                </div>
+                                <div className={cn(
+                                    "flex items-center gap-1 font-black px-2 py-1 rounded-lg text-[9px] uppercase tracking-widest border flex-shrink-0",
+                                    reg.paymentStatus === 'Paid' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-red-500/10 text-red-500 border-red-500/20"
+                                )}>
+                                    {reg.paymentStatus === 'Paid' ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
+                                    {reg.paymentStatus}
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div className="bg-white/5 rounded-xl p-2">
+                                    <p className="text-[9px] text-gray-500 uppercase font-bold mb-0.5">Event</p>
+                                    <p className="text-white font-bold truncate">{reg.eventTitle || reg.eventId}</p>
+                                </div>
+                                <div className="bg-white/5 rounded-xl p-2">
+                                    <p className="text-[9px] text-gray-500 uppercase font-bold mb-0.5">Phone</p>
+                                    <p className="text-white font-bold">{reg.phone || 'N/A'}</p>
+                                </div>
+                                <div className="bg-white/5 rounded-xl p-2 col-span-2">
+                                    <p className="text-[9px] text-gray-500 uppercase font-bold mb-0.5">College</p>
+                                    <p className="text-white font-bold truncate">{reg.college}</p>
+                                </div>
+                            </div>
+                            {reg.eventType === 'GROUP' && reg.membersDetails && reg.membersDetails.length > 0 && (
+                                <div>
+                                    <button
+                                        onClick={() => toggleExpand(reg.id)}
+                                        className={cn(
+                                            "w-full px-3 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-tighter transition-all flex items-center justify-center gap-2",
+                                            expandedIds.has(reg.id) ? "bg-emerald-500 text-black border-emerald-500" : "border-white/10 text-gray-400 hover:border-emerald-500/50"
+                                        )}
+                                    >
+                                        <Users size={12} />
+                                        {expandedIds.has(reg.id) ? 'Hide' : `${reg.membersDetails.length} Members`}
+                                    </button>
+                                    {expandedIds.has(reg.id) && (
+                                        <div className="mt-2 space-y-2">
+                                            {reg.membersDetails.map((m, i) => (
+                                                <div key={i} className="bg-white/5 rounded-xl p-2 text-xs flex items-center gap-2">
+                                                    <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center text-[10px] font-black text-gray-400 flex-shrink-0">
+                                                        {m.name?.[0]?.toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-white">{m.name}</p>
+                                                        <p className="text-gray-500 font-mono">{m.usn}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+
+                {/* Desktop Table */}
+                <div className="hidden md:block bg-[#111] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead>
@@ -533,6 +594,19 @@ export default function ParticipantsManagementPage() {
                             </div>
                         )}
                     </div>
+                </div>
+
+                {/* Mobile Pagination */}
+                <div className="md:hidden">
+                    {hasMore && (
+                        <button
+                            onClick={() => fetchRegistrations(selectedEventId, true)}
+                            disabled={loading}
+                            className="w-full py-3 bg-[#111] hover:bg-emerald-500 text-white hover:text-black text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all border border-white/10 hover:border-emerald-500 disabled:opacity-50 flex items-center justify-center gap-3"
+                        >
+                            {loading ? <Loader2 className="animate-spin" size={16} /> : 'Load More'}
+                        </button>
+                    )}
                 </div>
             </div>
         </ProtectedRoute>

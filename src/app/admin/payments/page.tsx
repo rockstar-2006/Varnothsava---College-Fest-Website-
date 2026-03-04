@@ -311,46 +311,44 @@ export default function PaymentsManagementPage() {
     return (
         <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'FINANCE', 'COORDINATOR']}>
             <div className="space-y-6">
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                {/* Header */}
+                <div className="flex flex-col gap-3">
                     <div>
-                        <h1 className="text-2xl font-bold text-white">Payments Management</h1>
-                        <p className="text-gray-400 text-sm">Monitor {totalPaymentsCount} captured payment logs and verify manual transactions</p>
+                        <h1 className="text-xl md:text-2xl font-bold text-white">Payments Management</h1>
+                        <p className="text-gray-400 text-sm">{totalPaymentsCount} payment logs</p>
                     </div>
 
-                    <div className="flex flex-col items-end gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
                         <AnimatePresence>
                             {selectedIds.length > 0 && userData?.role === 'SUPER_ADMIN' && (
                                 <motion.div
                                     initial={{ opacity: 0, scale: 0.9 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.9 }}
-                                    className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 px-4 py-1.5 rounded-full"
+                                    className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-full"
                                 >
-                                    <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">{selectedIds.length} Payments Selected</span>
-                                    <button
-                                        onClick={handleBulkDelete}
-                                        className="bg-red-500 text-white text-[10px] font-black uppercase tracking-tighter px-3 py-1 rounded-full hover:bg-red-600 transition-colors flex items-center gap-1"
-                                    >
-                                        <Trash2 size={10} /> Delete Selected
+                                    <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">{selectedIds.length} Selected</span>
+                                    <button onClick={handleBulkDelete} className="bg-red-500 text-white text-[10px] font-black uppercase tracking-tighter px-2 py-1 rounded-full hover:bg-red-600 transition-colors flex items-center gap-1">
+                                        <Trash2 size={10} /> Delete
                                     </button>
                                 </motion.div>
                             )}
                         </AnimatePresence>
 
-                        <div className="flex items-center gap-3">
+                        <div className="ml-auto flex items-center gap-2 flex-wrap">
                             <AnimatePresence>
                                 {totalPaidPeople !== null && (
                                     <motion.div
                                         initial={{ opacity: 0, x: 20 }}
                                         animate={{ opacity: 1, x: 0 }}
-                                        className="bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-xl flex items-center gap-4"
+                                        className="bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-xl flex items-center gap-3"
                                     >
                                         <div>
-                                            <p className="text-[8px] font-black uppercase tracking-tighter text-blue-500 leading-none mb-1">Total Revenue</p>
+                                            <p className="text-[8px] font-black uppercase tracking-tighter text-blue-500 leading-none mb-0.5">Revenue</p>
                                             <p className="text-sm font-black text-white italic">₹{totalRevenue?.toLocaleString()}</p>
                                         </div>
-                                        <div className="border-l border-white/10 pl-4">
-                                            <p className="text-[8px] font-black uppercase tracking-tighter text-blue-500 leading-none mb-1">Participants</p>
+                                        <div className="border-l border-white/10 pl-3">
+                                            <p className="text-[8px] font-black uppercase tracking-tighter text-blue-500 leading-none mb-0.5">Paid</p>
                                             <p className="text-sm font-black text-white italic">{totalPaidPeople}</p>
                                         </div>
                                     </motion.div>
@@ -358,41 +356,27 @@ export default function PaymentsManagementPage() {
                             </AnimatePresence>
 
                             {(userData?.role === 'SUPER_ADMIN' || userData?.role === 'FINANCE') && (
-                                <button
-                                    onClick={fetchTotalAmount}
-                                    disabled={loadingTotal}
-                                    className="bg-[#111] border border-white/10 hover:border-blue-500/50 text-white px-5 py-2.5 rounded-xl transition-all group flex items-center gap-3 shadow-xl h-[46px]"
+                                <button onClick={fetchTotalAmount} disabled={loadingTotal}
+                                    className="bg-[#111] border border-white/10 hover:border-blue-500/50 text-white px-3 py-2 rounded-xl transition-all group flex items-center gap-2 h-10"
                                 >
-                                    <CreditCard size={18} className={cn("text-blue-500 transition-transform group-hover:scale-110", loadingTotal && "animate-spin")} />
-                                    <div className="text-left">
-                                        <p className="text-[9px] font-black uppercase tracking-wider text-gray-500 leading-none mb-1">Financial Check</p>
-                                        <p className="text-xs font-bold uppercase tracking-widest text-white leading-none">Check Total</p>
-                                    </div>
+                                    <CreditCard size={16} className={cn("text-blue-500", loadingTotal && "animate-spin")} />
+                                    <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Total</span>
                                 </button>
                             )}
 
-                            <button
-                                onClick={() => fetchPayments(false)}
-                                className="bg-[#111] border border-white/10 hover:border-emerald-500/50 text-white px-5 py-2.5 rounded-xl transition-all group flex items-center gap-3 shadow-xl h-[46px]"
+                            <button onClick={() => fetchPayments(false)}
+                                className="bg-[#111] border border-white/10 hover:border-emerald-500/50 text-white px-3 py-2 rounded-xl transition-all group flex items-center gap-2 h-10"
                             >
-                                <RefreshCcw size={18} className={cn("text-emerald-500 transition-transform group-hover:rotate-180", loading && "animate-spin")} />
-                                <div className="text-left">
-                                    <p className="text-[9px] font-black uppercase tracking-wider text-gray-500 leading-none mb-1">Live Ledger</p>
-                                    <p className="text-xs font-bold uppercase tracking-widest text-white leading-none">Sync Payments</p>
-                                </div>
+                                <RefreshCcw size={16} className={cn("text-emerald-500 transition-transform group-hover:rotate-180", loading && "animate-spin")} />
+                                <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Sync</span>
                             </button>
 
                             {userData?.role === 'SUPER_ADMIN' && (
-                                <button
-                                    onClick={() => fetchAndDownload('payments', `Payments_${selectedStatus}_${selectedEventId}`, getAuthToken, { eventId: selectedEventId, status: selectedStatus })}
-                                    className="bg-blue-500/10 border border-blue-500/20 hover:border-blue-500/50 text-blue-500 px-5 py-2.5 rounded-xl transition-all group flex items-center gap-3 shadow-xl h-[46px]"
-                                    title="Download Filtered Report (Excel)"
+                                <button onClick={() => fetchAndDownload('payments', `Payments_${selectedStatus}_${selectedEventId}`, getAuthToken, { eventId: selectedEventId, status: selectedStatus })}
+                                    className="bg-blue-500/10 border border-blue-500/20 hover:border-blue-500/50 text-blue-500 px-3 py-2 rounded-xl transition-all group flex items-center gap-2 h-10"
                                 >
-                                    <FileSpreadsheet size={18} className="transition-transform group-hover:scale-110" />
-                                    <div className="text-left">
-                                        <p className="text-[9px] font-black uppercase tracking-wider text-blue-500/50 leading-none mb-1">Reports</p>
-                                        <p className="text-xs font-bold uppercase tracking-widest text-blue-500 leading-none font-mono">EXPORT</p>
-                                    </div>
+                                    <FileSpreadsheet size={16} />
+                                    <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Export</span>
                                 </button>
                             )}
                         </div>
@@ -400,49 +384,40 @@ export default function PaymentsManagementPage() {
                 </div>
 
                 {/* Filters */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-[#111] p-4 rounded-2xl border border-white/5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 bg-[#111] p-3 md:p-4 rounded-2xl border border-white/5">
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
                         <input
                             type="text"
                             placeholder="Search by name, email, UTR..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-white focus:outline-none focus:border-emerald-500/50 transition-all text-sm"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-9 pr-4 text-white focus:outline-none focus:border-emerald-500/50 transition-all text-sm"
                         />
                     </div>
                     <div className="flex items-center gap-2">
-                        <Zap size={18} className="text-gray-500" />
-                        <select
-                            value={selectedStatus}
-                            onChange={(e) => setSelectedStatus(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-emerald-500/50 text-sm"
-                        >
-                            <option value="all">All Gateway Status</option>
+                        <Zap size={16} className="text-gray-500 flex-shrink-0" />
+                        <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500/50 text-sm">
+                            <option value="all">All Status</option>
                             <option value="captured">Captured</option>
                             <option value="failed">Failed</option>
                             <option value="authorized">Authorized</option>
                         </select>
                     </div>
                     <div className="flex items-center gap-2">
-                        <School size={18} className="text-gray-500" />
-                        <select
-                            value={selectedType}
-                            onChange={(e) => setSelectedType(e.target.value as any)}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-emerald-500/50 text-sm font-semibold"
-                        >
+                        <School size={16} className="text-gray-500 flex-shrink-0" />
+                        <select value={selectedType} onChange={(e) => setSelectedType(e.target.value as any)}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500/50 text-sm font-semibold">
                             <option value="all">All Participants</option>
-                            <option value="internal" className="text-blue-400">Internal (SMVITM)</option>
-                            <option value="external" className="text-purple-400">External Students</option>
+                            <option value="internal">Internal (SMVITM)</option>
+                            <option value="external">External Students</option>
                         </select>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Filter size={18} className="text-gray-500" />
-                        <select
-                            value={selectedEventId}
-                            onChange={(e) => setSelectedEventId(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-emerald-500/50 text-sm"
-                        >
+                        <Filter size={16} className="text-gray-500 flex-shrink-0" />
+                        <select value={selectedEventId} onChange={(e) => setSelectedEventId(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500/50 text-sm">
                             <option value="all">All Events</option>
                             {events.map(event => (
                                 <option key={event.id} value={event.id}>{event.title}</option>
@@ -451,8 +426,70 @@ export default function PaymentsManagementPage() {
                     </div>
                 </div>
 
-                {/* Payment List */}
-                <div className="bg-[#111] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
+                {/* Mobile Cards */}
+                <div className="md:hidden space-y-3">
+                    {loading ? (
+                        <div className="bg-[#111] rounded-2xl p-8 flex flex-col items-center gap-3 border border-white/5">
+                            <Loader2 className="animate-spin text-emerald-500" size={24} />
+                            <span className="text-gray-500 font-medium text-sm">Loading payments...</span>
+                        </div>
+                    ) : filteredPayments.length === 0 ? (
+                        <div className="bg-[#111] rounded-2xl p-8 text-center text-gray-500 italic text-sm border border-white/5">
+                            No transactions found.
+                        </div>
+                    ) : filteredPayments.map((payment) => (
+                        <div key={payment.id} className="bg-[#111] border border-white/5 rounded-2xl p-4 space-y-3">
+                            <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0">
+                                    <p className="font-bold text-white">{payment.userName}</p>
+                                    <p className="text-xs text-gray-500 truncate">{payment.userEmail}</p>
+                                </div>
+                                <div className="text-right flex-shrink-0">
+                                    <p className="text-lg font-black text-white">₹{(payment.amount / 100).toFixed(0)}</p>
+                                    <div className={cn(
+                                        "inline-flex items-center gap-1 font-black px-2 py-0.5 rounded-full text-[9px] uppercase tracking-tighter",
+                                        payment.notes?.verification_status === 'verified' ? "bg-emerald-500/10 text-emerald-500" :
+                                            payment.notes?.verification_status === 'rejected' ? "bg-red-500/10 text-red-500" :
+                                                "bg-amber-500/10 text-amber-500"
+                                    )}>
+                                        {payment.notes?.verification_status?.replace(/_/g, ' ') || (payment.status === 'captured' ? 'Auto' : 'Pending')}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div className="bg-white/5 rounded-xl p-2">
+                                    <p className="text-[9px] text-gray-500 uppercase font-bold mb-0.5">College</p>
+                                    <p className="text-white font-bold truncate">{payment.userCollege}</p>
+                                </div>
+                                <div className="bg-white/5 rounded-xl p-2">
+                                    <p className="text-[9px] text-gray-500 uppercase font-bold mb-0.5">Method</p>
+                                    <p className="text-white font-bold capitalize">{payment.payment_method}</p>
+                                </div>
+                            </div>
+                            {canVerify && payment.notes?.payment_type === 'qr_code' && (
+                                <div className="flex gap-2">
+                                    {payment.notes?.verification_status !== 'verified' && (
+                                        <button onClick={() => handleVerify(payment.id, 'verified')}
+                                            className="flex-1 py-2 bg-emerald-500 text-black rounded-xl text-xs font-black uppercase flex items-center justify-center gap-2"
+                                        >
+                                            <Check size={14} strokeWidth={3} /> Verify
+                                        </button>
+                                    )}
+                                    {payment.notes?.verification_status !== 'rejected' && (
+                                        <button onClick={() => handleVerify(payment.id, 'rejected')}
+                                            className="flex-1 py-2 bg-red-500/10 text-red-500 border border-red-500/20 rounded-xl text-xs font-black uppercase flex items-center justify-center gap-2"
+                                        >
+                                            <X size={14} strokeWidth={3} /> Reject
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+
+                {/* Desktop Table */}
+                <div className="hidden md:block bg-[#111] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead>

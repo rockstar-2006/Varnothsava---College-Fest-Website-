@@ -183,51 +183,51 @@ export default function AttendancePage() {
 
     return (
         <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'COORDINATOR', 'VOLUNTEER']}>
-            <div className="space-y-6">
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="space-y-4 md:space-y-6">
+                <div className="flex flex-col gap-3">
                     <div>
-                        <h1 className="text-2xl font-bold text-white uppercase tracking-tighter italic">ATTENDANCE CONTROL</h1>
+                        <h1 className="text-xl md:text-2xl font-bold text-white uppercase tracking-tighter italic">ATTENDANCE CONTROL</h1>
                         <p className="text-gray-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
                             <UserCheck size={14} className="text-emerald-500/50" />
                             Manage live attendance for confirmed participants
                         </p>
                     </div>
 
-                    <div className="flex flex-col md:flex-row md:items-center gap-4">
-                        <div className="bg-[#111] border border-white/10 px-6 py-2 rounded-xl flex items-center gap-6">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <div className="bg-[#111] border border-white/10 px-4 py-2 rounded-xl flex items-center gap-4">
                             <div>
-                                <p className="text-[8px] font-black uppercase tracking-widest text-gray-500 mb-1">Total Signals</p>
-                                <p className="text-xl font-black text-white italic">{stats.total}</p>
+                                <p className="text-[8px] font-black uppercase tracking-widest text-gray-500 mb-0.5">Total</p>
+                                <p className="text-lg font-black text-white italic">{stats.total}</p>
                             </div>
-                            <div className="w-px h-8 bg-white/10" />
+                            <div className="w-px h-6 bg-white/10" />
                             <div>
-                                <p className="text-[8px] font-black uppercase tracking-widest text-emerald-500 mb-1">Present</p>
-                                <p className="text-xl font-black text-emerald-400 italic">{stats.present}</p>
+                                <p className="text-[8px] font-black uppercase tracking-widest text-emerald-500 mb-0.5">Present</p>
+                                <p className="text-lg font-black text-emerald-400 italic">{stats.present}</p>
                             </div>
                         </div>
 
                         <button
                             onClick={() => fetchAttendees(selectedEventId)}
-                            className="bg-emerald-500/10 border border-emerald-500/30 hover:border-emerald-500/60 text-emerald-500 px-5 py-2.5 rounded-xl transition-all flex items-center gap-3 active:scale-95 shadow-lg group"
+                            className="ml-auto bg-emerald-500/10 border border-emerald-500/30 hover:border-emerald-500/60 text-emerald-500 px-4 py-2 rounded-xl transition-all flex items-center gap-2 active:scale-95 group"
                         >
-                            <RefreshCcw size={18} className={cn("transition-transform group-hover:rotate-180", loading && "animate-spin")} />
-                            <span className="text-xs font-bold uppercase tracking-widest">Refresh</span>
+                            <RefreshCcw size={16} className={cn("transition-transform group-hover:rotate-180", loading && "animate-spin")} />
+                            <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Refresh</span>
                         </button>
                     </div>
                 </div>
 
                 {/* Selection & Search */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="md:col-span-1">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="sm:col-span-1">
                         <div className="relative">
-                            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
                             <select
                                 value={selectedEventId}
                                 onChange={(e) => setSelectedEventId(e.target.value)}
                                 disabled={Boolean(userData?.role === 'COORDINATOR' && userData?.eventId && userData.eventId !== 'all' && userData.eventId !== '')}
-                                className="w-full bg-[#111] border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-emerald-500/50 transition-all font-medium text-sm appearance-none disabled:opacity-60"
+                                className="w-full bg-[#111] border border-white/10 rounded-xl py-2.5 pl-9 pr-4 text-white focus:outline-none focus:border-emerald-500/50 transition-all font-medium text-sm appearance-none disabled:opacity-60"
                             >
-                                <option value="" disabled>-- Select Sector --</option>
+                                <option value="" disabled>-- Select Event --</option>
                                 {events.map(event => (
                                     <option key={event.id} value={event.id}>{event.title}</option>
                                 ))}
@@ -235,22 +235,89 @@ export default function AttendancePage() {
                             <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
                         </div>
                     </div>
-                    <div className="md:col-span-2">
+                    <div className="sm:col-span-2">
                         <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
                             <input
                                 type="text"
-                                placeholder="Search unit code, name, or USN..."
+                                placeholder="Search name, team, or USN..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-[#111] border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-emerald-500/50 transition-all font-medium text-sm"
+                                className="w-full bg-[#111] border border-white/10 rounded-xl py-2.5 pl-9 pr-4 text-white focus:outline-none focus:border-emerald-500/50 transition-all font-medium text-sm"
                             />
                         </div>
                     </div>
                 </div>
 
-                {/* Attendees Table */}
-                <div className="bg-[#111] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+                {/* Mobile Cards */}
+                <div className="md:hidden space-y-3">
+                    {loading && attendees.length === 0 ? (
+                        <div className="bg-[#111] rounded-2xl p-8 flex flex-col items-center gap-3 border border-white/5">
+                            <div className="w-10 h-10 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Loading...</p>
+                        </div>
+                    ) : filteredAttendees.length === 0 ? (
+                        <div className="bg-[#111] rounded-2xl p-8 text-center border border-white/5">
+                            <div className="flex flex-col items-center gap-2 opacity-20">
+                                <Zap size={36} />
+                                <p className="text-sm font-bold uppercase tracking-widest">No matches</p>
+                            </div>
+                        </div>
+                    ) : filteredAttendees.map((reg) => {
+                        const members: { id: string; name: string; usn: string; isLeader?: boolean }[] = [
+                            { id: reg.teamLeader, name: reg.leaderName, usn: 'Leader', isLeader: true },
+                            ...(reg.membersDetails || [])
+                        ]
+                        return (
+                            <div key={reg.id} className="bg-[#111] border border-white/5 rounded-2xl overflow-hidden">
+                                <div className="px-4 py-3 bg-emerald-500/5 border-b border-emerald-500/10">
+                                    <p className="text-sm font-black text-white uppercase tracking-tight">{reg.teamName}</p>
+                                    <p className="text-[10px] text-gray-500 font-mono">REG-{reg.id.slice(-6).toUpperCase()}</p>
+                                </div>
+                                <div className="divide-y divide-white/5">
+                                    {members.map((member) => (
+                                        <div key={member.id} className="px-4 py-3 flex items-center justify-between gap-3">
+                                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                <div className={cn(
+                                                    "w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black flex-shrink-0",
+                                                    member.isLeader ? "bg-emerald-500/20 text-emerald-500" : "bg-white/5 text-gray-400"
+                                                )}>
+                                                    {member.name[0].toUpperCase()}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-bold text-white truncate">{member.name}</p>
+                                                    <p className="text-[10px] font-mono text-gray-500">{member.usn}</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => toggleAttendance(reg.id, member.id, reg.attendance[member.id] || false)}
+                                                disabled={updatingUserId === member.id}
+                                                className={cn(
+                                                    "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border flex items-center gap-1.5 flex-shrink-0",
+                                                    reg.attendance[member.id]
+                                                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500"
+                                                        : "bg-red-500/5 border-red-500/20 text-red-400"
+                                                )}
+                                            >
+                                                {updatingUserId === member.id ? (
+                                                    <Loader2 size={12} className="animate-spin" />
+                                                ) : reg.attendance[member.id] ? (
+                                                    <CheckCircle2 size={12} />
+                                                ) : (
+                                                    <X size={12} />
+                                                )}
+                                                {reg.attendance[member.id] ? 'Present' : 'Absent'}
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
+
+                {/* Desktop Table */}
+                <div className="hidden md:block bg-[#111] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
