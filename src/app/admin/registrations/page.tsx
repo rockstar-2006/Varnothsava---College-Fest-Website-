@@ -83,13 +83,16 @@ export default function ParticipantsManagementPage() {
                 targetEventId = userData.eventId;
             }
 
-            let url = `/api/admin/registrations?lastId=${currentLastId}&limit=20`
+            let url = `/api/admin/registrations?lastId=${currentLastId}&limit=20&_t=${Date.now()}`
             if (targetEventId && targetEventId !== 'all') url += `&eventId=${targetEventId}`
             if (studentType !== 'all') url += `&studentType=${studentType}`
             if (searchQuery) url += `&search=${encodeURIComponent(searchQuery)}`
 
             const res = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Cache-Control': 'no-cache'
+                }
             })
             const data = await res.json()
             if (res.ok) {
@@ -463,7 +466,7 @@ export default function ParticipantsManagementPage() {
                                                                 <p className="text-sm font-bold text-white mb-0.5">{reg.leaderName}</p>
                                                                 <p className="text-[10px] text-gray-500 font-mono mb-2">{reg.phone || 'N/A'}</p>
                                                             </div>
-                                                            {reg.membersDetails.map((member, idx) => (
+                                                            {reg.membersDetails?.filter(m => m.name !== reg.leaderName).map((member, idx) => (
                                                                 <div key={idx} className="bg-white/5 rounded-2xl p-4 border border-white/5 hover:border-emerald-500/30 transition-all relative overflow-hidden group/member">
                                                                     <div className="absolute top-0 right-0 p-2 opacity-5 group-hover/member:opacity-20 transition-opacity">
                                                                         <Users size={40} />

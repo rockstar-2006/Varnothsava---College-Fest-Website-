@@ -94,23 +94,54 @@ export async function GET(request: NextRequest) {
             queryBase = queryBase.where('eventId', '==', eventId);
         }
 
-        // Strategy 4: Summary Document Fetch for Metadata
+        // Strategy: Use summary document (stats) for counts where possible
+        // Determination of counts - Hybrid Strategy
+        // Use live counts for specific event scope for 100% accuracy on sync
+        // Fall back to stats doc for global 'all' views for performance
+
+        const targetScopedEvent = (eventId && eventId !== 'all') ? eventId : null;
+        let coordinatorScopedEvents = (userRole === 'COORDINATOR' && userEventId) ? userEventId.split(',').map(id => id.trim()).filter(id => id !== 'all') : [];
+        if (coordinatorScopedEvents.length === 0 && userRole === 'COORDINATOR' && !userEventId?.includes('all')) {
+            // Fallback if no specific events assigned but not 'all' either
+            coordinatorScopedEvents = [];
+        }
+
         const statsRef = adminDb.collection('system').doc('stats');
         const statsDoc = await statsRef.get();
         const s = statsDoc.data() || {};
 
         let totalCount = 0;
-        if (userRole === 'SUPER_ADMIN') {
-            if (eventId && eventId !== 'all') {
-                totalCount = s[`reg_${eventId}_total`] || 0;
-            } else {
-                totalCount = s.totalRegistrations || 0;
-            }
+        let internalCount = 0;
+        let externalCount = 0;
+
+        if (targetScopedEvent) {
+            // High Accuracy: Single event selected
+            const [totalSnap, internalSnap] = await Promise.all([
+                registrationsCollection.where('eventId', '==', targetScopedEvent).count().get(),
+                registrationsCollection.where('eventId', '==', targetScopedEvent).where('leaderType', '==', 'internal').count().get()
+            ]);
+            totalCount = totalSnap.data().count;
+            internalCount = internalSnap.data().count;
+        } else if (userRole === 'COORDINATOR' && coordinatorScopedEvents.length > 0) {
+            // High Accuracy: Coordinator multiple events
+            const [totalSnap, internalSnap] = await Promise.all([
+                registrationsCollection.where('eventId', 'in', coordinatorScopedEvents).count().get(),
+                registrationsCollection.where('eventId', 'in', coordinatorScopedEvents).where('leaderType', '==', 'internal').count().get()
+            ]);
+            totalCount = totalSnap.data().count;
+            internalCount = internalSnap.data().count;
         } else {
-            // Coordinator needs accurate real-time count for assigned scope
-            const totalCountSnap = await queryBase.count().get();
-            totalCount = totalCountSnap.data().count;
+            // Performance Mode: Global view
+            totalCount = s.totalRegistrations || 0;
+            // Sum internal from stats
+            Object.keys(s).forEach(k => {
+                if (k.startsWith('reg_') && k.endsWith('_internal')) {
+                    internalCount += (s[k] || 0);
+                }
+            });
         }
+
+        externalCount = totalCount - internalCount;
 
         let registrations: any[] = [];
         let snapshot: any = null;
@@ -183,7 +214,7 @@ export async function GET(request: NextRequest) {
                 const chunk = userIdArray.slice(i, i + 10);
                 const userSnapshot = await usersCollection.where('__name__', 'in', chunk).get();
                 userSnapshot.docs.forEach(doc => {
-                    usersDataMap[doc.id] = doc.data();
+                    usersDataMap[doc.id] = { id: doc.id, ...doc.data() };
                 });
             }
         }
@@ -197,7 +228,10 @@ export async function GET(request: NextRequest) {
 
         const enrichedRegistrations = registrations.map((reg: any) => {
             const leader = usersDataMap[reg.teamLeader] || {};
-            const membersData = (reg.members || []).map((id: string) => usersDataMap[id]).filter(Boolean);
+            const membersData = (reg.members || [])
+                .filter((id: any) => String(id) !== String(reg.teamLeader))
+                .map((id: any) => usersDataMap[String(id)])
+                .filter(Boolean);
             const college = (leader.collegeName || leader.college || leader.institution || '').toUpperCase();
             const email = (leader.email || '').toLowerCase();
             const isInternal = leader.studentType === 'internal' ||
@@ -213,15 +247,20 @@ export async function GET(request: NextRequest) {
                 paymentStatus: leader.hasPaid ? 'Paid' : 'Unpaid',
                 studentType: isInternal ? 'internal' : 'external',
                 eventTitle: eventMap[reg.eventId] || reg.eventId,
-                membersDetails: (membersData || []).map((m: any) => ({ name: m.name, usn: m.usn, phone: m.phone || 'N/A' }))
+                membersDetails: (membersData || []).map((m: any) => ({
+                    id: m.id,
+                    name: m.name,
+                    usn: m.usn,
+                    phone: m.phone || 'N/A'
+                }))
             };
         });
 
         return NextResponse.json({
             registrations: enrichedRegistrations,
             totalCount,
-            internalCount: s.internalRegs || 0,
-            externalCount: s.externalRegs || 0,
+            internalCount,
+            externalCount,
             lastId: snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1].id : null,
             hasMore: snapshot.docs.length === limit
         });

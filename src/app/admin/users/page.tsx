@@ -54,6 +54,8 @@ export default function UserManagementPage() {
     const [totalUsersCount, setTotalUsersCount] = useState(adminCache.totalUsersCount || 0)
     const [paidUsersCount, setPaidUsersCount] = useState(adminCache.paidUsersCount || 0)
     const [unpaidUsersCount, setUnpaidUsersCount] = useState(adminCache.unpaidUsersCount || 0)
+    const [internalUsersCount, setInternalUsersCount] = useState(adminCache.internalUsersCount || 0)
+    const [externalUsersCount, setExternalUsersCount] = useState(adminCache.externalUsersCount || 0)
     const [lastId, setLastId] = useState<string | null>(null)
 
     const toggleSelect = (id: string) => {
@@ -87,10 +89,14 @@ export default function UserManagementPage() {
                 setTotalUsersCount(data.totalCount)
                 setPaidUsersCount(data.paidCount)
                 setUnpaidUsersCount(data.unpaidCount)
+                setInternalUsersCount(data.internalCount)
+                setExternalUsersCount(data.externalCount)
                 updateAdminCache('users', newUsers)
                 updateAdminCache('totalUsersCount', data.totalCount)
                 updateAdminCache('paidUsersCount', data.paidCount)
                 updateAdminCache('unpaidUsersCount', data.unpaidCount)
+                updateAdminCache('internalUsersCount', data.internalCount)
+                updateAdminCache('externalUsersCount', data.externalCount)
             }
         } catch (error) {
             console.error("Failed to fetch users:", error)
@@ -374,6 +380,7 @@ export default function UserManagementPage() {
                             )}
                         >
                             Internal
+                            <span className="text-[9px] bg-blue-500/10 px-1.5 py-0.5 rounded-md text-blue-400">{internalUsersCount}</span>
                         </button>
 
                         <button
@@ -386,6 +393,7 @@ export default function UserManagementPage() {
                             )}
                         >
                             External
+                            <span className="text-[9px] bg-purple-500/10 px-1.5 py-0.5 rounded-md text-purple-400">{externalUsersCount}</span>
                         </button>
                     </div>
                 </div>
