@@ -1,5 +1,6 @@
 import { adminDb, fieldValue, usersCollection, verifyAuthToken } from "@/lib/firebaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
+import { getAdminRole } from "@/lib/admin";
 
 export async function GET(request: NextRequest) {
     try {
@@ -14,8 +15,13 @@ export async function GET(request: NextRequest) {
         }
 
         const userDoc = await usersCollection.doc(verified.uid).get();
+        if (!userDoc.exists) {
+            return NextResponse.json({ message: "User profile not found" }, { status: 404 });
+        }
         const userData = userDoc.data();
-        const role = userData?.role;
+
+        // Use getAdminRole for strict blacklist enforcement
+        const { role } = getAdminRole(verified.email || userData?.email);
 
         if (!role || !['SUPER_ADMIN', 'FINANCE'].includes(role)) {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });
@@ -88,6 +94,7 @@ export async function GET(request: NextRequest) {
             const isInternal = u.studentType === 'internal' ||
                 college.includes('SMVITM') ||
                 college.includes('SODE') ||
+                college.includes('SHRI MADHWA VADIRAJA') ||
                 email.endsWith('@sode-edu.in');
 
             return {

@@ -1,5 +1,6 @@
 import { adminDb, usersCollection, verifyAuthToken } from "@/lib/firebaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
+import { getAdminRole } from "@/lib/admin";
 
 export async function GET(request: NextRequest) {
     try {
@@ -14,10 +15,16 @@ export async function GET(request: NextRequest) {
         }
 
         const userDoc = await usersCollection.doc(verified.uid).get();
+        if (!userDoc.exists) {
+            return NextResponse.json({ message: "User profile not found" }, { status: 404 });
+        }
         const userData = userDoc.data();
-        const role = userData?.role;
 
-        if (!role || !['SUPER_ADMIN', 'FINANCE', 'COORDINATOR'].includes(role)) {
+        // Use getAdminRole for strict blacklist enforcement
+        const { role } = getAdminRole(verified.email || userData?.email);
+
+        // Fallback to database role only if not blacklisted (getAdminRole handles this)
+        if (!role) {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });
         }
 

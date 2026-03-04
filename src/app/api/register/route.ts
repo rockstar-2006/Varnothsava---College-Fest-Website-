@@ -70,8 +70,14 @@ export async function POST(request: NextRequest) {
             throw new ApiError(500, "Database service unavailable", "DB_UNAVAILABLE");
         }
 
-        // 5. Determine student type based on email domain
-        const studentType = email.endsWith('@sode-edu.in') ? 'internal' : 'external';
+        // 5. Determine student type based on email domain AND college name
+        const nCollege = (collegeName || "").toUpperCase();
+        const isInternal = email.endsWith('@sode-edu.in') ||
+            nCollege.includes('SMVITM') ||
+            nCollege.includes('SODE') ||
+            nCollege.includes('SHRI MADHWA VADIRAJA');
+
+        const studentType = isInternal ? 'internal' : 'external';
 
         // 6. Create user profile (isolated by UID only)
         const userProfile: any = {

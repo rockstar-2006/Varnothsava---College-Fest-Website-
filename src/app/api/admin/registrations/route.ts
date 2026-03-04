@@ -113,26 +113,53 @@ export async function GET(request: NextRequest) {
         let totalCount = 0;
         let internalCount = 0;
         let externalCount = 0;
+        let totalParticipants = 0;
 
         if (targetScopedEvent) {
             // High Accuracy: Single event selected
-            const [totalSnap, internalSnap] = await Promise.all([
+            const [totalSnap, internalSnap, allSnap] = await Promise.all([
                 registrationsCollection.where('eventId', '==', targetScopedEvent).count().get(),
-                registrationsCollection.where('eventId', '==', targetScopedEvent).where('leaderType', '==', 'internal').count().get()
+                registrationsCollection.where('eventId', '==', targetScopedEvent).where('leaderType', '==', 'internal').count().get(),
+                registrationsCollection.where('eventId', '==', targetScopedEvent).get()
             ]);
             totalCount = totalSnap.data().count;
             internalCount = internalSnap.data().count;
+
+            // Calculate unique participants for this specific event
+            const uniqueEventP = new Set<string>();
+            allSnap.docs.forEach(doc => {
+                const data = doc.data();
+                if (data.teamLeader) uniqueEventP.add(data.teamLeader);
+                if (data.members && Array.isArray(data.members)) {
+                    data.members.forEach((m: string) => uniqueEventP.add(m));
+                }
+            });
+            totalParticipants = uniqueEventP.size;
+
         } else if (userRole === 'COORDINATOR' && coordinatorScopedEvents.length > 0) {
             // High Accuracy: Coordinator multiple events
-            const [totalSnap, internalSnap] = await Promise.all([
+            const [totalSnap, internalSnap, allSnap] = await Promise.all([
                 registrationsCollection.where('eventId', 'in', coordinatorScopedEvents).count().get(),
-                registrationsCollection.where('eventId', 'in', coordinatorScopedEvents).where('leaderType', '==', 'internal').count().get()
+                registrationsCollection.where('eventId', 'in', coordinatorScopedEvents).where('leaderType', '==', 'internal').count().get(),
+                registrationsCollection.where('eventId', 'in', coordinatorScopedEvents).get()
             ]);
             totalCount = totalSnap.data().count;
             internalCount = internalSnap.data().count;
+
+            const uniqueEventP = new Set<string>();
+            allSnap.docs.forEach(doc => {
+                const data = doc.data();
+                if (data.teamLeader) uniqueEventP.add(data.teamLeader);
+                if (data.members && Array.isArray(data.members)) {
+                    data.members.forEach((m: string) => uniqueEventP.add(m));
+                }
+            });
+            totalParticipants = uniqueEventP.size;
+
         } else {
             // Performance Mode: Global view
             totalCount = s.totalRegistrations || 0;
+            totalParticipants = s.totalParticipants || totalCount; // Fallback to team count if missing
             // Sum internal from stats
             Object.keys(s).forEach(k => {
                 if (k.startsWith('reg_') && k.endsWith('_internal')) {
@@ -237,6 +264,7 @@ export async function GET(request: NextRequest) {
             const isInternal = leader.studentType === 'internal' ||
                 college.includes('SMVITM') ||
                 college.includes('SODE') ||
+                college.includes('SHRI MADHWA VADIRAJA') ||
                 email.endsWith('@sode-edu.in');
 
             return {
@@ -261,6 +289,7 @@ export async function GET(request: NextRequest) {
             totalCount,
             internalCount,
             externalCount,
+            totalParticipants,
             lastId: snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1].id : null,
             hasMore: snapshot.docs.length === limit
         });
