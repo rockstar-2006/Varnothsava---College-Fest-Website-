@@ -107,13 +107,26 @@ export async function GET(request: NextRequest) {
             });
         }
 
+        // LIVE ACCURATE COUNTS (Fast for <10k users)
+        const [usersSnap, internalSnap, paidSnap] = await Promise.all([
+            usersCollection.count().get(),
+            usersCollection.where('studentType', '==', 'internal').count().get(),
+            usersCollection.where('hasPaid', '==', true).count().get()
+        ]);
+
+        const totalCount = usersSnap.data().count;
+        const internalCount = internalSnap.data().count;
+        const paidCount = paidSnap.data().count;
+        const externalCount = totalCount - internalCount;
+        const unpaidCount = totalCount - paidCount;
+
         return NextResponse.json({
             users: filteredUsers,
-            totalCount: s.totalUsers || 0,
-            paidCount: s.paidUsers || 0,
-            unpaidCount: s.unpaidUsers || 0,
-            internalCount: s.internalUsers || 0,
-            externalCount: s.externalUsers || 0,
+            totalCount,
+            paidCount,
+            unpaidCount,
+            internalCount,
+            externalCount,
             lastId: snapshot?.docs && snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1].id : null,
             hasMore: snapshot?.docs ? snapshot.docs.length === limit : false
         });
