@@ -35,17 +35,18 @@ export async function GET(request: NextRequest) {
         let snapshot: any;
 
         if (search) {
-            // MULTI-FIELD SEARCH (Name, Email)
-            // Since Firestore doesn't support OR on prefix match, we run two queries
+            const capitalizedSearchTerm = search.charAt(0).toUpperCase() + search.slice(1);
             const nameQuery = usersCollection.orderBy('name').startAt(search).endAt(search + '\uf8ff').limit(limit).get();
             const emailQuery = usersCollection.orderBy('email').startAt(search.toLowerCase()).endAt(search.toLowerCase() + '\uf8ff').limit(limit).get();
+            const capNameQuery = usersCollection.orderBy('name').startAt(capitalizedSearchTerm).endAt(capitalizedSearchTerm + '\uf8ff').limit(limit).get();
 
-            const [nameSnap, emailSnap] = await Promise.all([nameQuery, emailQuery]);
+            const [nameSnap, emailSnap, capNameSnap] = await Promise.all([nameQuery, emailQuery, capNameQuery]);
 
             // Merge and deduplicate
             const userMap = new Map();
             nameSnap.docs.forEach(d => userMap.set(d.id, { id: d.id, ...d.data() }));
             emailSnap.docs.forEach(d => userMap.set(d.id, { id: d.id, ...d.data() }));
+            capNameSnap.docs.forEach(d => userMap.set(d.id, { id: d.id, ...d.data() }));
 
             users = Array.from(userMap.values());
             snapshot = { docs: nameSnap.docs }; // Dummy for pagination tracking if needed, though search results are usually small
