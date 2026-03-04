@@ -85,6 +85,7 @@ interface AppContextType {
         externalUsersCount?: number;
         totalInternalRegs?: number;
         totalExternalRegs?: number;
+        totalParticipants?: number;
         attendance?: any[];
         eventAttendanceMap?: Record<string, any[]>;
         eventRegMap?: Record<string, any[]>;

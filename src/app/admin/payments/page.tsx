@@ -101,12 +101,15 @@ export default function PaymentsManagementPage() {
         try {
             const token = await getAuthToken()
             const currentLastId = isLoadMore ? lastId : '';
-            let url = `/api/admin/payments?lastId=${currentLastId}&limit=20`
+            let url = `/api/admin/payments?lastId=${currentLastId}&limit=20&search=${encodeURIComponent(searchQuery)}&_t=${Date.now()}`
             if (selectedEventId !== 'all') url += `&eventId=${selectedEventId}`
             if (selectedStatus !== 'all') url += `&status=${selectedStatus}`
 
             const res = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Cache-Control': 'no-cache'
+                }
             })
             const data = await res.json()
             if (res.ok) {

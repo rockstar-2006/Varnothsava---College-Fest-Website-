@@ -1,5 +1,6 @@
 import { adminDb, fieldValue, usersCollection, verifyAuthToken } from "@/lib/firebaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
+import { getAdminRole } from "@/lib/admin";
 
 export async function GET(request: NextRequest) {
     try {
@@ -14,8 +15,13 @@ export async function GET(request: NextRequest) {
         }
 
         const userDoc = await usersCollection.doc(verified.uid).get();
+        if (!userDoc.exists) {
+            return NextResponse.json({ message: "User profile not found" }, { status: 404 });
+        }
         const userData = userDoc.data();
-        const role = userData?.role;
+
+        // Use getAdminRole for strict blacklist enforcement
+        const { role } = getAdminRole(verified.email || userData?.email);
 
         if (!role || !['SUPER_ADMIN', 'FINANCE'].includes(role)) {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });
@@ -35,17 +41,18 @@ export async function GET(request: NextRequest) {
         let snapshot: any;
 
         if (search) {
-            // MULTI-FIELD SEARCH (Name, Email)
-            // Since Firestore doesn't support OR on prefix match, we run two queries
+            const capitalizedSearchTerm = search.charAt(0).toUpperCase() + search.slice(1);
             const nameQuery = usersCollection.orderBy('name').startAt(search).endAt(search + '\uf8ff').limit(limit).get();
             const emailQuery = usersCollection.orderBy('email').startAt(search.toLowerCase()).endAt(search.toLowerCase() + '\uf8ff').limit(limit).get();
+            const capNameQuery = usersCollection.orderBy('name').startAt(capitalizedSearchTerm).endAt(capitalizedSearchTerm + '\uf8ff').limit(limit).get();
 
-            const [nameSnap, emailSnap] = await Promise.all([nameQuery, emailQuery]);
+            const [nameSnap, emailSnap, capNameSnap] = await Promise.all([nameQuery, emailQuery, capNameQuery]);
 
             // Merge and deduplicate
             const userMap = new Map();
             nameSnap.docs.forEach(d => userMap.set(d.id, { id: d.id, ...d.data() }));
             emailSnap.docs.forEach(d => userMap.set(d.id, { id: d.id, ...d.data() }));
+            capNameSnap.docs.forEach(d => userMap.set(d.id, { id: d.id, ...d.data() }));
 
             users = Array.from(userMap.values());
             snapshot = { docs: nameSnap.docs }; // Dummy for pagination tracking if needed, though search results are usually small
@@ -87,6 +94,7 @@ export async function GET(request: NextRequest) {
             const isInternal = u.studentType === 'internal' ||
                 college.includes('SMVITM') ||
                 college.includes('SODE') ||
+                college.includes('SHRI MADHWA VADIRAJA') ||
                 email.endsWith('@sode-edu.in');
 
             return {

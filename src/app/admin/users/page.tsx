@@ -451,7 +451,7 @@ export default function UserManagementPage() {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className={`w-10 h-10 rounded-full bg-white/5 border ${u.isBlocked ? 'border-red-500/50' : 'border-white/10'} flex items-center justify-center ${u.isBlocked ? 'text-red-500' : 'text-emerald-500'} font-bold overflow-hidden`}>
-                                                    {u.isBlocked ? <Shield size={18} /> : u.name[0].toUpperCase()}
+                                                    {u.isBlocked ? <Shield size={18} /> : (u.name?.[0]?.toUpperCase() || 'U')}
                                                 </div>
                                                 <div>
                                                     <p className={`font-semibold ${u.isBlocked ? 'text-red-400' : 'text-white'} flex items-center gap-1`}>

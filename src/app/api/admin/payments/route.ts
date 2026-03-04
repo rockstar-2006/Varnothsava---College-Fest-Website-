@@ -1,5 +1,6 @@
 import { adminDb, usersCollection, verifyAuthToken } from "@/lib/firebaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
+import { getAdminRole } from "@/lib/admin";
 
 export async function GET(request: NextRequest) {
     try {
@@ -14,10 +15,16 @@ export async function GET(request: NextRequest) {
         }
 
         const userDoc = await usersCollection.doc(verified.uid).get();
+        if (!userDoc.exists) {
+            return NextResponse.json({ message: "User profile not found" }, { status: 404 });
+        }
         const userData = userDoc.data();
-        const role = userData?.role;
 
-        if (!role || !['SUPER_ADMIN', 'FINANCE', 'COORDINATOR'].includes(role)) {
+        // Use getAdminRole for strict blacklist enforcement
+        const { role } = getAdminRole(verified.email || userData?.email);
+
+        // Fallback to database role only if not blacklisted (getAdminRole handles this)
+        if (!role) {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });
         }
 
@@ -38,14 +45,23 @@ export async function GET(request: NextRequest) {
         // Apply Search (Global Database Search)
         let searchUids: string[] | null = null;
         if (search) {
-            const userSearchSnapshot = await usersCollection
-                .orderBy('name')
-                .startAt(search)
-                .endAt(search + '\uf8ff')
-                .limit(30)
-                .get();
+            // MULTI-FIELD SEARCH (Name, Email) - Following pattern from all-users
+            const nameSearchTerm = search;
+            const capitalizedSearchTerm = search.charAt(0).toUpperCase() + search.slice(1);
 
-            searchUids = userSearchSnapshot.docs.map(d => d.id);
+            const nameQuery = usersCollection.orderBy('name').startAt(nameSearchTerm).endAt(nameSearchTerm + '\uf8ff').limit(30).get();
+            const capitalizedNameQuery = usersCollection.orderBy('name').startAt(capitalizedSearchTerm).endAt(capitalizedSearchTerm + '\uf8ff').limit(30).get();
+            const emailQuery = usersCollection.orderBy('email').startAt(search.toLowerCase()).endAt(search.toLowerCase() + '\uf8ff').limit(30).get();
+
+            const [nameSnap, capNameSnap, emailSnap] = await Promise.all([nameQuery, capitalizedNameQuery, emailQuery]);
+
+            const userMap = new Set<string>();
+            nameSnap.docs.forEach(d => userMap.add(d.id));
+            capNameSnap.docs.forEach(d => userMap.add(d.id));
+            emailSnap.docs.forEach(d => userMap.add(d.id));
+
+            searchUids = Array.from(userMap);
+
             if (searchUids.length === 0) {
                 if (search.startsWith('pay_')) {
                     const singlePay = await adminDb.collection('payments').doc(search).get();
@@ -124,18 +140,49 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        const snapshot = await query.get();
-        const totalCount = s.totalPaymentsCount || s.totalVerifiedPayments || 0;
+        let snapshot: any = null;
+        try {
+            snapshot = await query.get();
+        } catch (error: any) {
+            if (error.message?.includes('index') || error.code === 9) {
+                console.warn("[PaymentsAPI] Missing index fallback triggered:", error.message);
+                // Fallback: Fetch without orderBy 'created_at' to avoid index requirement
+                let fallbackQuery = paymentsQuery.limit(500);
+                const fallbackSnapshot = await fallbackQuery.get();
+                let results = fallbackSnapshot.docs.map((doc: any) => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                // Manual in-memory sort
+                results.sort((a: any, b: any) => {
+                    const dateA = a.created_at || a.paid_at || '';
+                    const dateB = b.created_at || b.paid_at || '';
+                    return dateB.localeCompare(dateA);
+                });
+
+                // Mock snapshot for pagination compatibility
+                snapshot = { docs: results.slice(0, limit) };
+            } else {
+                throw error;
+            }
+        }
+
         const payments = snapshot.docs.map((doc: any) => ({
             id: doc.id,
             ...doc.data()
         }));
 
+        let countForResponse = s.totalPaymentsCount || s.totalVerifiedPayments || 0;
+        if (search) {
+            countForResponse = payments.length;
+        }
+
         const enriched = await enrichPaymentsArray(payments);
 
         return NextResponse.json({
             payments: enriched,
-            totalCount,
+            totalCount: countForResponse,
             lastId: snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1].id : null,
             hasMore: snapshot.docs.length === limit
         });

@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
         const userDoc = await usersCollection.doc(verified.uid).get();
         const userData = userDoc.data();
-        const { role: userRole, eventId: userEventId } = getAdminRole(userData?.email);
+        const { role: userRole, eventId: userEventId } = getAdminRole(verified.email || userData?.email);
 
 
         if (!userRole || !['SUPER_ADMIN', 'COORDINATOR', 'VOLUNTEER'].includes(userRole)) {

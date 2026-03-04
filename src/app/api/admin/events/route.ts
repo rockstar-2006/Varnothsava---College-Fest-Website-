@@ -1,5 +1,6 @@
 import { adminDb, usersCollection, verifyAuthToken } from "@/lib/firebaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
+import { getAdminRole } from "@/lib/admin";
 
 export async function GET(request: NextRequest) {
     try {
@@ -13,13 +14,15 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 
-        // Fetch user data from Firestore to check role
+        // Fetch user data from Firestore to get email for role check
         const userDoc = await usersCollection.doc(verified.uid).get();
         if (!userDoc.exists) {
             return NextResponse.json({ message: "User profile not found" }, { status: 404 });
         }
         const userData = userDoc.data();
-        const role = userData?.role;
+
+        // Use getAdminRole which includes the strict Blacklist
+        const { role, eventId } = getAdminRole(verified.email || userData?.email);
 
         if (!role) {
             return NextResponse.json({ message: "Forbidden: No administrative access" }, { status: 403 });

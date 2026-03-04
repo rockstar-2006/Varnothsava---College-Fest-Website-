@@ -69,6 +69,7 @@ export default function ParticipantsManagementPage() {
     const [totalRegCount, setTotalRegCount] = useState(adminCache.totalRegCount || 0)
     const [totalInternalRegs, setTotalInternalRegs] = useState(adminCache.totalInternalRegs || 0)
     const [totalExternalRegs, setTotalExternalRegs] = useState(adminCache.totalExternalRegs || 0)
+    const [totalParticipants, setTotalParticipants] = useState(adminCache.totalParticipants || 0)
     const [lastId, setLastId] = useState<string | null>(null)
     const [isInitialMount, setIsInitialMount] = useState(true)
 
@@ -103,6 +104,7 @@ export default function ParticipantsManagementPage() {
                 setTotalRegCount(data.totalCount)
                 setTotalInternalRegs(data.internalCount || 0)
                 setTotalExternalRegs(data.externalCount || 0)
+                setTotalParticipants(data.totalParticipants || 0)
 
                 // If it's just a sync (not load more), update cache
                 if (!isLoadMore) {
@@ -110,6 +112,7 @@ export default function ParticipantsManagementPage() {
                     updateAdminCache('totalRegCount', data.totalCount)
                     updateAdminCache('totalInternalRegs', data.internalCount || 0)
                     updateAdminCache('totalExternalRegs', data.externalCount || 0)
+                    updateAdminCache('totalParticipants', data.totalParticipants || 0)
                 }
             }
         } catch (error) {
@@ -311,21 +314,30 @@ export default function ParticipantsManagementPage() {
 
                 {/* Stats Summary */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-[#111] p-4 rounded-2xl border border-white/5">
-                        <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1 text-[8px]">Database Total</p>
+                    <div className="bg-[#111] p-4 rounded-2xl border border-white/5 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-2 opacity-5">
+                            <Users size={40} />
+                        </div>
+                        <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1 text-[8px]">Teams Registered</p>
                         <p className="text-2xl font-black text-white italic">{totalRegCount}</p>
                     </div>
-                    <div className="bg-[#111] p-4 rounded-2xl border border-white/5">
-                        <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1">Pending</p>
-                        <p className="text-2xl font-bold text-amber-500">{registrations.filter(r => r.status === 'pending' || !r.status).length}</p>
+                    <div className="bg-[#111] p-4 rounded-2xl border border-white/5 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-2 opacity-5">
+                            <User size={40} />
+                        </div>
+                        <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1 text-[8px]">Total Participants</p>
+                        <p className="text-2xl font-black text-emerald-500 italic">{totalParticipants}</p>
                     </div>
                     <div className="bg-[#111] p-4 rounded-2xl border border-white/5">
-                        <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1">Approved</p>
-                        <p className="text-2xl font-bold text-emerald-500">{registrations.filter(r => r.status === 'approved').length}</p>
+                        <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1 text-[8px]">Pending Approval</p>
+                        <p className="text-2xl font-bold text-amber-500 italic">{registrations.filter(r => r.status === 'pending' || !r.status).length}</p>
                     </div>
-                    <div className="bg-[#111] p-4 rounded-2xl border border-white/5 border-l-amber-500">
-                        <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1">Unpaid</p>
-                        <p className="text-2xl font-bold text-red-500">{registrations.filter(r => r.paymentStatus === 'Unpaid').length}</p>
+                    <div className="bg-[#111] p-4 rounded-2xl border border-white/5 border-l-amber-500 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-2 opacity-5">
+                            <CreditCard size={40} />
+                        </div>
+                        <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1 text-[8px]">Unpaid Teams</p>
+                        <p className="text-2xl font-bold text-red-500 italic">{registrations.filter(r => r.paymentStatus === 'Unpaid').length}</p>
                     </div>
                 </div>
 
