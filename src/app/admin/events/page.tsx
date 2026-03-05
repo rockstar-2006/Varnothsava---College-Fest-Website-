@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useApp } from '@/context/AppContext'
 import {
     Plus,
@@ -44,6 +44,7 @@ interface AdminEvent {
         total: number;
         internal: number;
         external: number;
+        participants: number;
     };
 }
 
@@ -144,9 +145,19 @@ export default function EventManagementPage() {
         }
     }
 
-    // Use manual sync only - no automatic fetch on mount
+    const isInitialMount = useRef(true)
+
+    // Only fetch automatically if cache is empty
     useEffect(() => {
-        // fetchEvents() and fetchStaff() are now triggered by users manually
+        if (isInitialMount.current) {
+            if (!adminCache.events || adminCache.events.length === 0) {
+                fetchEvents()
+            }
+            if (!adminCache.staff || adminCache.staff.length === 0) {
+                fetchStaff()
+            }
+            isInitialMount.current = false
+        }
     }, [])
 
     const handleOpenModal = (event: AdminEvent | null = null) => {
@@ -228,39 +239,53 @@ export default function EventManagementPage() {
     const [showRegistrations, setShowRegistrations] = useState(false)
     const [selectedEventForReg, setSelectedEventForReg] = useState<AdminEvent | null>(null)
     const [eventRegs, setEventRegs] = useState<any[]>([])
+    const [eventRegsTotalCount, setEventRegsTotalCount] = useState(0)
+    const [eventRegsHasMore, setEventRegsHasMore] = useState(false)
+    const [eventRegsLastId, setEventRegsLastId] = useState<string | null>(null)
     const [loadingRegs, setLoadingRegs] = useState(false)
     const [eventSearchQuery, setEventSearchQuery] = useState('')
 
-    const fetchEventRegistrations = async (eventId: string, searchInput?: string, forceRefresh: boolean = false) => {
-        console.log(`[Frontend] Fetching registrations for: ${eventId}, Search: ${searchInput}`);
+    const fetchEventRegistrations = async (eventId: string, searchInput?: string, forceRefresh: boolean = false, isLoadMore: boolean = false) => {
+        console.log(`[Frontend] Fetching registrations for: ${eventId}, Search: ${searchInput}, LoadMore: ${isLoadMore}`);
 
-        // Cache Check
-        if (!forceRefresh && !searchInput && adminCache.eventRegMap?.[eventId]) {
+        // Cache Check (only for initial load, not load-more)
+        if (!forceRefresh && !searchInput && !isLoadMore && adminCache.eventRegMap?.[eventId]) {
             console.log(`[Frontend] Using cached registrations for: ${eventId}`);
-            setEventRegs(adminCache.eventRegMap[eventId]);
+            const cached = adminCache.eventRegMap[eventId] as any;
+            const cachedRegs = cached.regs || cached;
+            setEventRegs(Array.isArray(cachedRegs) ? cachedRegs : []);
+            setEventRegsTotalCount(cached.totalCount || cachedRegs.length || 0);
+            setEventRegsHasMore(cached.hasMore || false);
+            setEventRegsLastId(cached.lastId || null);
             return;
         }
 
         setLoadingRegs(true)
         try {
             const token = await getAuthToken()
-            let url = `/api/admin/registrations?eventId=${eventId}`
+            const currentLastId = isLoadMore ? eventRegsLastId : '';
+            let url = `/api/admin/registrations?eventId=${eventId}&limit=50&_t=${Date.now()}`
+            if (currentLastId) url += `&lastId=${currentLastId}`
             if (searchInput) url += `&search=${encodeURIComponent(searchInput)}`
 
             const res = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 'Authorization': `Bearer ${token}`, 'Cache-Control': 'no-cache' }
             })
             const data = await res.json()
             if (res.ok) {
-                console.log(`[Frontend] Found ${data.registrations.length} registrations`);
-                setEventRegs(data.registrations)
+                const newRegs = isLoadMore ? [...eventRegs, ...data.registrations] : data.registrations;
+                console.log(`[Frontend] Total: ${data.totalCount}, Fetched: ${data.registrations.length}, HasMore: ${data.hasMore}`);
+                setEventRegs(newRegs)
+                setEventRegsTotalCount(data.totalCount || newRegs.length)
+                setEventRegsHasMore(data.hasMore || false)
+                setEventRegsLastId(data.lastId || null)
 
                 // Update Cache if not a search
                 if (!searchInput) {
                     const currentMap = adminCache.eventRegMap || {};
                     updateAdminCache('eventRegMap', {
                         ...currentMap,
-                        [eventId]: data.registrations
+                        [eventId]: { regs: newRegs, totalCount: data.totalCount, hasMore: data.hasMore, lastId: data.lastId }
                     });
                 }
             }
@@ -284,12 +309,11 @@ export default function EventManagementPage() {
     const handleViewRegistrations = (event: AdminEvent) => {
         setSelectedEventForReg(event)
         setShowRegistrations(true)
-        // Only fetch if not in cache
-        if (!adminCache.eventRegMap?.[event.id]) {
-            fetchEventRegistrations(event.id)
-        } else {
-            setEventRegs(adminCache.eventRegMap[event.id])
-        }
+        setEventRegs([])
+        setEventRegsTotalCount(0)
+        setEventRegsHasMore(false)
+        setEventRegsLastId(null)
+        fetchEventRegistrations(event.id, '', false, false)
     }
 
     const categories = ['All', 'Technical', 'Cultural', 'Business', 'Gaming']
@@ -470,24 +494,30 @@ export default function EventManagementPage() {
 
                                 {/* Metrics Section */}
                                 <div className="mt-auto pt-4 border-t border-white/5 space-y-4">
-                                    <div className="flex justify-between items-center">
+                                    <div className="flex justify-between items-end">
                                         <div className="flex flex-col">
-                                            <span className="text-[7px] text-gray-500 font-black uppercase tracking-widest">Total Squads</span>
+                                            <span className="text-[7px] text-gray-500 font-black uppercase tracking-widest">Team Composition</span>
                                             <span className="text-2xl font-black text-white italic -mt-1">
-                                                {event.metrics?.total || 0}
+                                                {event.metrics?.total || 0} <span className="text-[10px] text-gray-600 not-italic uppercase tracking-tighter">Squads</span>
                                             </span>
                                         </div>
                                         <div className="flex flex-col items-end">
-                                            <span className="text-[7px] text-gray-500 font-black uppercase tracking-widest">Composition</span>
-                                            <div className="flex items-center gap-2 mt-0.5">
-                                                <div className="flex items-center gap-1">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]" />
-                                                    <span className="text-[9px] font-black text-emerald-400">{event.metrics?.internal || 0}</span>
-                                                </div>
-                                                <div className="flex items-center gap-1">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                                                    <span className="text-[9px] font-black text-blue-400">{event.metrics?.external || 0}</span>
-                                                </div>
+                                            <span className="text-[7px] text-gray-500 font-black uppercase tracking-widest text-emerald-500/50">Total Forces</span>
+                                            <span className="text-lg font-black text-emerald-500 italic -mt-1">
+                                                {event.metrics?.participants || 0} <span className="text-[10px] text-emerald-900 not-italic uppercase tracking-tighter">People</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between items-center bg-white/2 p-2 rounded-lg border border-white/5">
+                                        <span className="text-[7px] text-gray-500 font-black uppercase tracking-widest">Demographics</span>
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-1">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]" />
+                                                <span className="text-[9px] font-black text-emerald-400">{event.metrics?.internal || 0}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                                <span className="text-[9px] font-black text-blue-400">{event.metrics?.external || 0}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -682,7 +712,7 @@ export default function EventManagementPage() {
                                                 {selectedEventForReg.title} <span className="text-emerald-500">ROSTER</span>
                                             </h2>
                                             <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">
-                                                {eventRegs.length} Teams Registered • {selectedEventForReg.type}
+                                                {eventRegsTotalCount} Teams Registered • {selectedEventForReg.type}
                                             </p>
                                         </div>
                                     </div>
@@ -698,7 +728,7 @@ export default function EventManagementPage() {
                                             </button>
                                         )}
                                         <button
-                                            onClick={() => fetchEventRegistrations(selectedEventForReg.id, '', true)}
+                                            onClick={() => fetchEventRegistrations(selectedEventForReg.id, '', true, false)}
                                             disabled={loadingRegs}
                                             className="p-2 md:px-4 md:py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 rounded-xl transition-all flex items-center gap-2 group"
                                             title="Sync Participant Data"
@@ -733,9 +763,13 @@ export default function EventManagementPage() {
                                             <span className="text-[10px] text-gray-500 font-bold uppercase">Paid</span>
                                             <span className="text-sm font-black text-emerald-500">{eventRegs.filter(r => r.paymentStatus === 'Paid').length}</span>
                                         </div>
+                                        <div className="flex flex-col items-center px-4 py-1 border-r border-white/5">
+                                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-tight">Internal</span>
+                                            <span className="text-sm font-black text-blue-400">{eventRegs.filter(r => r.studentType === 'internal').length}</span>
+                                        </div>
                                         <div className="flex flex-col items-center px-4 py-1">
-                                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-tight">Total SODE</span>
-                                            <span className="text-sm font-black text-blue-400">{eventRegs.filter(r => r.college?.toLowerCase().includes('sode')).length}</span>
+                                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-tight">Showing</span>
+                                            <span className="text-sm font-black text-white">{eventRegs.length} / {eventRegsTotalCount}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -753,74 +787,87 @@ export default function EventManagementPage() {
                                             <p className="font-bold">No participants registered yet</p>
                                         </div>
                                     ) : (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {eventRegs.map((reg, idx) => (
-                                                <motion.div
-                                                    initial={{ opacity: 0, y: 10 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ delay: idx * 0.05 }}
-                                                    key={reg.id}
-                                                    className="p-4 bg-white/2 border border-white/5 rounded-2xl hover:border-emerald-500/30 transition-all group reg-card"
-                                                >
-                                                    <div className="flex justify-between items-start mb-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-emerald-500 border border-white/5">
-                                                                {reg.eventType === 'SOLO' ? <User size={20} /> : <Users size={20} />}
-                                                            </div>
-                                                            <div>
-                                                                <h4 className="text-white font-bold leading-none">{reg.teamName || reg.leaderName}</h4>
-                                                                <p className="text-[10px] text-gray-500 font-bold mt-1 uppercase tracking-tighter">Leader: {reg.leaderName}</p>
-                                                            </div>
-                                                        </div>
-                                                        <span className={cn(
-                                                            "text-[8px] font-black px-2 py-0.5 rounded shadow-sm border",
-                                                            reg.college?.toLowerCase().includes('sode') || reg.college?.toLowerCase().includes('shri madhwa')
-                                                                ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
-                                                                : "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                                                        )}>
-                                                            {reg.college?.toLowerCase().includes('sode') ? 'INTERNAL' : 'EXTERNAL'}
-                                                        </span>
-                                                    </div>
-
-                                                    <div className="space-y-4 mb-4">
-                                                        <div className="flex items-center gap-2 text-[10px] text-gray-400 bg-black/20 p-2 rounded-lg border border-white/5">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                                            <span className="font-medium truncate">{reg.college}</span>
-                                                        </div>
-
-                                                        {reg.membersDetails && reg.membersDetails.length > 0 && (
-                                                            <div className="space-y-2">
-                                                                <p className="text-[7px] text-gray-600 font-black uppercase tracking-widest px-2">Squad Members</p>
-                                                                <div className="bg-white/1 rounded-xl p-3 border border-white/5 space-y-2">
-                                                                    {reg.membersDetails.map((m: any, i: number) => (
-                                                                        <div key={i} className="text-[10px] text-gray-300 flex justify-between items-center bg-white/2 px-2 py-1.5 rounded-md">
-                                                                            <span className="font-bold uppercase tracking-tight">{m.name}</span>
-                                                                            <span className="font-mono text-emerald-500/40 text-[9px]">{m.usn}</span>
-                                                                        </div>
-                                                                    ))}
+                                        <>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {eventRegs.map((reg, idx) => (
+                                                    <motion.div
+                                                        initial={{ opacity: 0, y: 10 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ delay: idx * 0.05 }}
+                                                        key={reg.id}
+                                                        className="p-4 bg-white/2 border border-white/5 rounded-2xl hover:border-emerald-500/30 transition-all group reg-card"
+                                                    >
+                                                        <div className="flex justify-between items-start mb-4">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-emerald-500 border border-white/5">
+                                                                    {reg.eventType === 'SOLO' ? <User size={20} /> : <Users size={20} />}
+                                                                </div>
+                                                                <div>
+                                                                    <h4 className="text-white font-bold leading-none">{reg.teamName || reg.leaderName}</h4>
+                                                                    <p className="text-[10px] text-gray-500 font-bold mt-1 uppercase tracking-tighter">Leader: {reg.leaderName}</p>
                                                                 </div>
                                                             </div>
-                                                        )}
-                                                    </div>
+                                                            <span className={cn(
+                                                                "text-[8px] font-black px-2 py-0.5 rounded shadow-sm border",
+                                                                reg.studentType === 'internal'
+                                                                    ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                                                                    : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                                                            )}>
+                                                                {reg.studentType === 'internal' ? 'INTERNAL' : 'EXTERNAL'}
+                                                            </span>
+                                                        </div>
 
-                                                    <div className="flex justify-between items-center pt-3 border-t border-white/5">
-                                                        <div className={cn(
-                                                            "text-[8px] font-black uppercase px-2 py-0.5 rounded-full flex items-center gap-1",
-                                                            reg.paymentStatus === 'Paid' ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" : "text-red-500 bg-red-500/10 border-red-500/20"
-                                                        )}>
-                                                            {reg.paymentStatus === 'Paid' ? <Check size={10} /> : <X size={10} />}
-                                                            {reg.paymentStatus}
+                                                        <div className="space-y-4 mb-4">
+                                                            <div className="flex items-center gap-2 text-[10px] text-gray-400 bg-black/20 p-2 rounded-lg border border-white/5">
+                                                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                                                <span className="font-medium truncate">{reg.college}</span>
+                                                            </div>
+
+                                                            {reg.membersDetails && reg.membersDetails.length > 0 && (
+                                                                <div className="space-y-2">
+                                                                    <p className="text-[7px] text-gray-600 font-black uppercase tracking-widest px-2">Squad Members</p>
+                                                                    <div className="bg-white/1 rounded-xl p-3 border border-white/5 space-y-2">
+                                                                        {reg.membersDetails.map((m: any, i: number) => (
+                                                                            <div key={i} className="text-[10px] text-gray-300 flex justify-between items-center bg-white/2 px-2 py-1.5 rounded-md">
+                                                                                <span className="font-bold uppercase tracking-tight">{m.name}</span>
+                                                                                <span className="font-mono text-emerald-500/40 text-[9px]">{m.usn}</span>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <p className="text-[9px] text-gray-600 font-mono">#{reg.id.substring(0, 6)}</p>
-                                                            <button className="p-1 hover:text-white text-gray-700 transition-colors">
-                                                                <Edit2 size={12} />
-                                                            </button>
+
+                                                        <div className="flex justify-between items-center pt-3 border-t border-white/5">
+                                                            <div className={cn(
+                                                                "text-[8px] font-black uppercase px-2 py-0.5 rounded-full flex items-center gap-1",
+                                                                reg.paymentStatus === 'Paid' ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" : "text-red-500 bg-red-500/10 border-red-500/20"
+                                                            )}>
+                                                                {reg.paymentStatus === 'Paid' ? <Check size={10} /> : <X size={10} />}
+                                                                {reg.paymentStatus}
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <p className="text-[9px] text-gray-600 font-mono">#{reg.id.substring(0, 6)}</p>
+                                                                <button className="p-1 hover:text-white text-gray-700 transition-colors">
+                                                                    <Edit2 size={12} />
+                                                                </button>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                </motion.div>
-                                            ))}
-                                        </div>
+                                                    </motion.div>
+                                                ))}
+                                            </div>
+                                            {eventRegsHasMore && (
+                                                <div className="flex justify-center mt-6">
+                                                    <button
+                                                        onClick={() => fetchEventRegistrations(selectedEventForReg!.id, eventSearchQuery || '', false, true)}
+                                                        disabled={loadingRegs}
+                                                        className="px-6 py-2.5 bg-white/5 hover:bg-emerald-500/10 text-white hover:text-emerald-500 text-xs font-black uppercase tracking-widest rounded-xl transition-all border border-white/10 hover:border-emerald-500/30 disabled:opacity-50 flex items-center gap-2"
+                                                    >
+                                                        {loadingRegs ? <Loader2 className="animate-spin" size={14} /> : <>Load More ({eventRegsTotalCount - eventRegs.length} remaining)</>}
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                             </motion.div>
