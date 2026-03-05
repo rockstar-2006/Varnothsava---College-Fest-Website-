@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@google-cloud/firestore": "^8.2.0",
+    "@google/generative-ai": "^0.24.1",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.2",
     "@splinetool/react-spline": "^4.1.0",
@@ -22,8 +23,10 @@
     "@use-gesture/react": "^10.3.1",
     "clsx": "^2.1.1",
     "crypto": "^1.0.1",
+    "dotenv": "^17.3.1",
     "face-api.js": "^0.22.2",
     "firebase": "^12.9.0",
+    "firebase-admin": "^13.7.0",
     "framer-motion": "^12.23.26",
     "google-auth-library": "^10.5.0",
     "gsap": "^3.14.2",
@@ -40,11 +43,14 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-icons": "^5.5.0",
+    "react-markdown": "^10.1.0",
     "react-pageflip": "^2.0.3",
     "react-parallax-tilt": "^1.7.315",
+    "remark-gfm": "^4.0.1",
     "swiper": "^12.0.3",
     "tailwind-merge": "^3.4.0",
     "three": "^0.182.0",
+    "xlsx": "^0.18.5",
     "zod": "^4.3.5"
   },
   "devDependencies": {

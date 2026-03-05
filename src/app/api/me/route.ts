@@ -1,6 +1,7 @@
 import { registrationsCollection, usersCollection, verifyAuthToken } from "@/lib/firebaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 import { checkApiRateLimit, getClientIdentifier } from "@/lib/ratelimit";
+import { getAdminRole } from "@/lib/admin";
 
 export async function GET(request: NextRequest) {
     try {
@@ -45,9 +46,21 @@ export async function GET(request: NextRequest) {
         }
 
         let userData = userDoc.data();
+        if (!userData) {
+            return NextResponse.json({ message: "User profile incomplete." }, { status: 404 });
+        }
+
+        // --- ADMIN ROLE HELPERS ---
+        const { role, eventId } = getAdminRole(userData?.email);
+        if (role) {
+            userData.role = role;
+            userData.eventId = eventId;
+        }
+
+        // ----------------------------------------------
 
         const registrations = await registrationsCollection.where('members', 'array-contains', verified.uid).get();
-        const registeredEvents = registrations.docs.map(doc => ({id: doc.id, data: doc.data()})).map(reg => ({ id: reg.id, eventId: reg.data.eventId, teamName: reg.data.teamName }));
+        const registeredEvents = registrations.docs.map(doc => ({ id: doc.id, data: doc.data() })).map(reg => ({ id: reg.id, eventId: reg.data.eventId, teamName: reg.data.teamName }));
         userData = {
             ...userData,
             hasPaid: userData?.hasPaid === true,
@@ -63,6 +76,15 @@ export async function GET(request: NextRequest) {
         });
     } catch (error: any) {
         console.error("Me API Error:", error);
+
+        // Handle Firebase Quota Exceeded specifically
+        if (error.code === 8 || error.message?.includes('RESOURCE_EXHAUSTED') || error.message?.includes('Quota exceeded')) {
+            return NextResponse.json({
+                message: "System Overloaded (Quota Exceeded)",
+                detail: "The free database limit for today has been reached. Please try again after reset (1:30 PM IST)."
+            }, { status: 503 });
+        }
+
         return NextResponse.json({
             message: "Authentication Error",
             detail: error.message

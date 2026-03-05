@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion'
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { Orbitron, Inter } from 'next/font/google'
 import Image from 'next/image'
 import {
@@ -335,25 +335,10 @@ const HolographicCard = ({ member, index }: { member: any, index: number }) => {
     const cardRef = useRef<HTMLDivElement>(null)
     const [isHovered, setIsHovered] = useState(false)
     const [isMobile, setIsMobile] = useState(false)
-    const rotateX = useMotionValue(0)
-    const rotateY = useMotionValue(0)
 
     useEffect(() => {
         setIsMobile(window.innerWidth < 768)
     }, [])
-
-    const springConfig = { damping: 25, stiffness: 120 }
-    const springRotateX = useSpring(rotateX, springConfig)
-    const springRotateY = useSpring(rotateY, springConfig)
-
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (!cardRef.current || isMobile) return
-        const rect = cardRef.current.getBoundingClientRect()
-        const centerX = rect.left + rect.width / 2
-        const centerY = rect.top + rect.height / 2
-        rotateX.set((e.clientY - centerY) / 6)
-        rotateY.set((centerX - e.clientX) / 6)
-    }
 
     const activeHover = isMobile ? false : isHovered
 
@@ -364,25 +349,22 @@ const HolographicCard = ({ member, index }: { member: any, index: number }) => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: isMobile ? "200px" : "100px" }}
             animate={isMobile ? { opacity: 1, y: 0 } : {
-                y: [0, -15, 0],
-                rotateZ: [0, 0.5, 0, -0.5, 0]
+                y: activeHover ? 0 : [0, -6, 0],
+                rotateZ: activeHover ? 0 : [0, 0.15, 0, -0.15, 0]
             }}
             transition={isMobile ? { duration: 0.2 } : {
-                y: { duration: 6, repeat: Infinity, ease: "easeInOut", delay: index * 0.3 },
-                rotateZ: { duration: 6, repeat: Infinity, ease: "easeInOut", delay: index * 0.3 },
+                y: { duration: 8, repeat: Infinity, ease: "easeInOut", delay: index * 0.3 },
+                rotateZ: { duration: 8, repeat: Infinity, ease: "easeInOut", delay: index * 0.3 },
                 opacity: { duration: 0.8, delay: index * 0.05, type: "spring" }
             }}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={() => { setIsHovered(false); rotateX.set(0); rotateY.set(0); }}
+            onMouseLeave={() => { setIsHovered(false) }}
             onMouseEnter={() => { if (!isMobile) setIsHovered(true); }}
             style={{
-                rotateX: isMobile ? 0 : springRotateX,
-                rotateY: isMobile ? 0 : springRotateY,
-                transformStyle: isMobile ? 'flat' : 'preserve-3d',
+                transformStyle: 'flat',
                 zIndex: activeHover ? 50 : 1,
                 willChange: 'transform, opacity'
             }}
-            className={`group relative w-full overflow-hidden rounded-[2.5rem] bg-[#020504]/90 border-2 border-white/10 ${isMobile ? 'h-auto min-h-[600px] flex flex-col' : 'h-[720px] md:h-[800px] perspective-1000'} transform-gpu shadow-xl`}
+            className={`group relative isolate w-full overflow-hidden rounded-[2.5rem] bg-[#020504]/90 border-2 border-white/10 ${isMobile ? 'h-auto min-h-[600px] flex flex-col' : 'h-[720px] md:h-[800px]'} transform-gpu shadow-xl pointer-events-auto`}
         >
             {/* Pulsing Aura Border - Desktop Only for Performance */}
             {!isMobile && (
@@ -392,7 +374,7 @@ const HolographicCard = ({ member, index }: { member: any, index: number }) => {
                         scale: activeHover ? 1.05 : 1
                     }}
                     transition={{ duration: 3, repeat: Infinity }}
-                    className={`absolute -inset-4 bg-gradient-to-bl ${member.theme} rounded-[3.5rem] blur-3xl`}
+                    className={`absolute -inset-4 bg-gradient-to-bl ${member.theme} rounded-[3.5rem] blur-3xl pointer-events-none`}
                 />
             )}
 
@@ -405,7 +387,7 @@ const HolographicCard = ({ member, index }: { member: any, index: number }) => {
                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12 z-10 pointer-events-none"
                 />
 
-                <div style={isMobile ? {} : { transform: 'translateZ(60px)' }} className="h-full w-full flex flex-col relative z-20">
+                <div className="h-full w-full flex flex-col relative z-20">
 
                     {/* Image Area */}
                     <div className={`relative w-full overflow-hidden ${isMobile ? 'h-[350px] shrink-0' : 'h-[58%]'}`}>
@@ -418,10 +400,10 @@ const HolographicCard = ({ member, index }: { member: any, index: number }) => {
                             priority={index < 4}
                             loading={index < 4 ? "eager" : "lazy"}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#020504] via-transparent to-transparent opacity-90" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#020504] via-transparent to-transparent opacity-90 pointer-events-none" />
 
                         {/* Animated Badge Corner */}
-                        <div className="absolute top-6 right-6 z-40">
+                        <div className="absolute top-6 right-6 z-40 pointer-events-none">
                             <div className="px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/20 rounded-full flex items-center gap-2">
                                 <Wifi className="w-3 h-3 text-emerald-400" />
                                 <span className="text-[9px] font-black tracking-widest text-white uppercase">{member.rank}</span>
@@ -429,7 +411,7 @@ const HolographicCard = ({ member, index }: { member: any, index: number }) => {
                         </div>
 
                         {/* Role Indicator on Image */}
-                        <div className="absolute bottom-6 left-8 z-40">
+                        <div className="absolute bottom-6 left-8 z-40 pointer-events-none">
                             <div className="flex flex-col gap-1">
                                 <span className="text-[9px] font-black text-white/50 tracking-[0.4em] uppercase">{member.department}</span>
                                 <h4 className={`${orbitron.className} text-xl md:text-2xl font-black text-white italic tracking-widest uppercase highlight-text shadow-black drop-shadow-md`} style={{ color: activeHover ? member.color : 'white', textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>
@@ -442,7 +424,7 @@ const HolographicCard = ({ member, index }: { member: any, index: number }) => {
                     {/* Content Area */}
                     <div className="flex-1 p-6 md:p-10 flex flex-col justify-between relative overflow-hidden bg-[#020504]">
                         {/* Static Grid Background */}
-                        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.1)_1px,_transparent_1px)] bg-[size:10px_10px]" />
+                        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.1)_1px,_transparent_1px)] bg-[size:10px_10px] pointer-events-none" />
 
                         <div className="relative z-10 flex flex-col gap-2 mb-4">
                             <div className="flex items-center gap-3 opacity-60">
@@ -460,7 +442,8 @@ const HolographicCard = ({ member, index }: { member: any, index: number }) => {
                         <div className="pt-6 border-t border-white/10 flex items-center justify-between relative z-[60] mt-auto">
                             <div className="flex gap-3">
                                 <a
-                                    href={`tel:${member.phone}`}
+                                    href={`tel:${member.phone.replace(/\s+/g, '')}`}
+                                    onClick={(e) => e.stopPropagation()}
                                     className="p-4 bg-white/10 rounded-xl border border-white/20 active:scale-95 transition-transform relative z-[60] cursor-pointer pointer-events-auto touch-manipulation"
                                     aria-label={`Call ${member.name}`}
                                 >
@@ -470,6 +453,8 @@ const HolographicCard = ({ member, index }: { member: any, index: number }) => {
                                     <a
                                         href={member.instagram}
                                         target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
                                         className="p-4 bg-white/10 rounded-xl border border-white/20 active:scale-95 transition-transform relative z-[60] cursor-pointer pointer-events-auto touch-manipulation"
                                         aria-label={`${member.name} Instagram`}
                                     >

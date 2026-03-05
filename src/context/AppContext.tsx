@@ -4,6 +4,8 @@ import { auth, getAuthToken, getCurrentUser, loginRequired, loginWithEmail, sign
 import { useRouter } from 'next/navigation'
 import React, { createContext, useContext, useState, useEffect } from 'react'
 
+export type AdminRole = 'SUPER_ADMIN' | 'COORDINATOR' | 'FINANCE' | 'VOLUNTEER';
+
 export interface UserData {
     id: string
     name: string
@@ -17,6 +19,9 @@ export interface UserData {
     registeredEvents: { id: string, eventId: string, teamName: string }[]
     avatar: string
     studentType: 'internal' | 'external'
+    role?: AdminRole
+    eventId?: string
+    isBlocked?: boolean
     // Optional fields
     age?: string
     idCardUrl?: string
@@ -44,6 +49,7 @@ interface AppContextType {
     clearCart: () => void
     totalAmount: number
     isLoggedIn: boolean
+    isAdmin: boolean
     isInitializing: boolean
     needsOnboarding: boolean
     userData: UserData | null
@@ -54,11 +60,39 @@ interface AppContextType {
     registerMission: (eventId: string, teamName: string, members: string[]) => Promise<{ success: boolean, registrationId?: string }>
     updateAvatar: (avatarUrl: string) => void,
     updateProfile: (data: { name: string, usn: string, phone: string, collegeName: string }) => Promise<boolean>,
-    mountUser: () => Promise<void>,
+    mountUser: (passedUser?: any) => Promise<void>,
     isSiteLoaded: boolean,
     setIsSiteLoaded: (val: boolean) => void,
     pageTheme: PageTheme | null,
-    setPageTheme: (theme: PageTheme | any) => void
+    setPageTheme: (theme: PageTheme | any) => void,
+    isChatOpen: boolean,
+    setIsChatOpen: (val: boolean) => void,
+    adminCache: {
+        stats?: any;
+        users?: any[];
+        payments?: any[];
+        registrations?: any[];
+        events?: any[];
+        staff?: any[];
+        totalVerifiedPayments?: number;
+        totalRevenue?: number;
+        totalUsersCount?: number;
+        totalPaymentsCount?: number;
+        totalRegCount?: number;
+        paidUsersCount?: number;
+        unpaidUsersCount?: number;
+        internalUsersCount?: number;
+        externalUsersCount?: number;
+        totalInternalRegs?: number;
+        totalExternalRegs?: number;
+        totalParticipants?: number;
+        totalParticipantsPaid?: number;
+        attendance?: any[];
+        eventAttendanceMap?: Record<string, any[]>;
+        eventRegMap?: Record<string, any[]>;
+        _updatedAt?: number;
+    };
+    updateAdminCache: (key: string, data: any) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -66,7 +100,8 @@ const AppContext = createContext<AppContextType | undefined>(undefined)
 async function getUserData(currentUser?: any) {
     let token = null;
     if (currentUser) {
-        token = await currentUser.getIdToken();
+        // Force-refresh=false: reuse cached token (avoids extra network call)
+        token = await currentUser.getIdToken(false);
     } else {
         token = await getAuthToken();
     }
@@ -79,7 +114,8 @@ async function getUserData(currentUser?: any) {
         const response = await fetch('/api/me', {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`,
+                'Cache-Control': 'no-cache'
             }
         });
 
@@ -102,12 +138,36 @@ async function getUserData(currentUser?: any) {
 export function AppProvider({ children }: { children: React.ReactNode }) {
     const [cart, setCart] = useState<Event[]>([])
     const [isLoggedIn, setIsLoggedIn] = useState(false)
+    const [isAdmin, setIsAdmin] = useState(false)
     const [isInitializing, setIsInitializing] = useState(true)
     const [userData, setUserData] = useState<UserData | null>(null)
     const [needsOnboarding, setNeedsOnboarding] = useState(false)
     const [isSiteLoaded, setIsSiteLoaded] = useState(false)
     const [pageTheme, setPageTheme] = useState<PageTheme | null>(null)
+    const [isChatOpen, setIsChatOpen] = useState(false)
+    const [adminCache, setAdminCache] = useState<AppContextType['adminCache']>({})
     const router = useRouter();
+
+    // Hydrate admin cache from localStorage on mount
+    useEffect(() => {
+        const savedCache = localStorage.getItem('admin_gate_cache');
+        if (savedCache) {
+            try {
+                setAdminCache(JSON.parse(savedCache));
+            } catch (e) {
+                console.error("Failed to parse admin cache:", e);
+            }
+        }
+    }, []);
+
+    const updateAdminCache = (key: string, data: any) => {
+        setAdminCache(prev => {
+            const newCache = { ...prev, [key]: data, _updatedAt: Date.now() };
+            // Persist to localStorage
+            localStorage.setItem('admin_gate_cache', JSON.stringify(newCache));
+            return newCache;
+        });
+    }
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -119,10 +179,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             } else {
                 // User logged out - reset all state
                 setIsLoggedIn(false);
+                setIsAdmin(false);
                 setUserData(null);
                 setNeedsOnboarding(false);
                 setIsInitializing(false);
                 setCart([]); // Clear cart on logout
+                setAdminCache({}); // Clear admin cache on logout
+                localStorage.removeItem('admin_gate_cache'); // Clear persisted cache
             }
         });
         return () => unsubscribe();
@@ -134,27 +197,38 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (currentUser) {
             setIsInitializing(true);
             try {
+                // Single API call to /api/me — role, eventId, registrations all returned together.
+                // Avoids separate getIdTokenResult() network roundtrip.
                 const data = await getUserData(currentUser);
+
                 if (data) {
-                    // User has complete profile
+                    if (data.isBlocked) {
+                        alert("Your account has been blocked. Please contact the administrator.");
+                        signOut();
+                        setIsLoggedIn(false);
+                        setUserData(null);
+                        setIsInitializing(false);
+                        return;
+                    }
+                    // role comes directly from /api/me (COORDINATOR_MAP bypass included)
+                    const role = data.role as AdminRole | undefined;
+                    setIsAdmin(!!role);
                     setUserData(data);
                     setIsLoggedIn(true);
                     setNeedsOnboarding(false);
                 } else {
-                    // User is authenticated but no profile in database
-                    // This means they need to complete registration
+                    // Authenticated but no profile in DB → needs onboarding
                     setUserData(null);
                     setIsLoggedIn(true);
                     setNeedsOnboarding(true);
+                    setIsAdmin(false);
 
-                    // If they're on profile page, redirect to login to complete registration
-                    if (window.location.pathname === '/profile') {
+                    if (typeof window !== 'undefined' && window.location.pathname === '/profile') {
                         router.push('/login');
                     }
                 }
             } catch (error) {
                 console.error('Error fetching user data:', error);
-                // On error, assume they need to register
                 setUserData(null);
                 setIsLoggedIn(true);
                 setNeedsOnboarding(true);
@@ -162,8 +236,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                 setIsInitializing(false);
             }
         } else {
-            // No user logged in
             setIsLoggedIn(false);
+            setIsAdmin(false);
             setUserData(null);
             setNeedsOnboarding(false);
             setIsInitializing(false);
@@ -189,24 +263,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             alert("Please enter both email and password.")
             return;
         }
-
         try {
-            const user = await loginWithEmail(email, password);
-            if (user) {
-                const data = await getUserData(user);
-                if (data) {
-                    setUserData(data);
-                    setIsLoggedIn(true);
-                    setNeedsOnboarding(false);
-                } else {
-                    // Authenticated but no user profile in DB
-                    setUserData(null);
-                    setIsLoggedIn(true);
-                    setNeedsOnboarding(true);
-                }
-            } else {
-                alert("Invalid credentials or user not found. Please register.")
-            }
+            // Just authenticate — onAuthStateChanged will fire and call mountUser()
+            // which does the single /api/me call. No double-fetch.
+            await loginWithEmail(email, password);
         } catch (error) {
             console.error("Login failed:", error);
             alert("Login failed. Please check your credentials and try again.")
@@ -219,6 +279,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setUserData(null);
         setNeedsOnboarding(false);
         setCart([]); // Clear cart
+        setAdminCache({}); // Clear admin cache
+        localStorage.removeItem('admin_gate_cache'); // Clear persisted cache
         setIsInitializing(false); // Ensure not stuck in loading
 
         // Redirect to login page
@@ -368,6 +430,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             clearCart,
             totalAmount,
             isLoggedIn,
+            isAdmin,
             isInitializing,
             userData,
             needsOnboarding,
@@ -382,7 +445,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             isSiteLoaded,
             setIsSiteLoaded,
             pageTheme,
-            setPageTheme
+            setPageTheme,
+            isChatOpen,
+            setIsChatOpen,
+            adminCache,
+            updateAdminCache
         }}>
             {children}
         </AppContext.Provider>

@@ -1,4 +1,4 @@
-import { registrationsCollection, usersCollection, verifyAuthToken, adminDb } from "@/lib/firebaseAdmin";
+import { registrationsCollection, usersCollection, verifyAuthToken, adminDb, fieldValue } from "@/lib/firebaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 import { checkApiRateLimit, getClientIdentifier } from "@/lib/ratelimit";
 import { missions } from "@/data/missions";
@@ -76,16 +76,51 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ message: "Team leader must be included in the members list." }, { status: 400 });
         }
 
+        // Find team leader's student type for stats (compute from source data, not just stored field)
+        const leaderDoc = await usersCollection.doc(verified.uid).get();
+        const leaderData = leaderDoc.data();
+
+        // Compute leaderType from actual source data for accuracy
+        const leaderCollege = (leaderData?.collegeName || leaderData?.college || leaderData?.institution || '').toUpperCase();
+        const leaderEmail = (leaderData?.email || verified.email || '').toLowerCase();
+        const leaderIsInternal =
+            leaderCollege.includes('SMVITM') ||
+            leaderCollege.includes('SODE') ||
+            leaderCollege.includes('SHRI MADHWA VADIRAJA') ||
+            leaderCollege.includes('SHRI MADHWA') ||
+            leaderCollege.includes('VADIRAJA') ||
+            leaderEmail.endsWith('@sode-edu.in');
+        const leaderType = leaderIsInternal ? 'internal' : 'external';
+
+        // Auto-correct stored studentType if it doesn't match computed value
+        if (leaderData?.studentType !== leaderType) {
+            usersCollection.doc(verified.uid).update({ studentType: leaderType }).catch(console.error);
+        }
+
         const registrationData = {
             eventId,
             teamName,
             teamLeader: verified.uid,
+            leaderType,
             members: memberIds,
             eventType: isTeamEvent ? "GROUP" : "SOLO",
             registeredAt: new Date().toISOString()
         };
 
-        const registrationDoc = await registrationsCollection.add(registrationData);
+        const registrationRef = registrationsCollection.doc();
+        const statsRef = adminDb.collection('system').doc('stats');
+
+        const batch = adminDb.batch();
+        batch.set(registrationRef, registrationData);
+        batch.set(statsRef, {
+            totalRegistrations: fieldValue.increment(1),
+            [`reg_${eventId}_total`]: fieldValue.increment(1),
+            [`reg_${eventId}_${leaderType}`]: fieldValue.increment(1)
+        }, { merge: true });
+
+        await batch.commit();
+
+        console.log(`Mission registered: ${eventId} for ${verified.uid} type ${leaderType}`);
 
         // Phase 2: Post-Registration Communication (Email)
         const emailHtmlBody = `
@@ -143,7 +178,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
             message: "Mission registration successful.",
-            registrationId: registrationDoc.id
+            registrationId: registrationRef.id
         }, { status: 200 });
 
     } catch (error: any) {

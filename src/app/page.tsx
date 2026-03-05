@@ -19,7 +19,7 @@ import {
     ArrowRight, MapPin, Mail, Phone, Globe,
     Facebook, Instagram, Youtube, Twitter,
     ChevronDown, Plus, Utensils, Gamepad2, Lightbulb, Zap, Activity,
-    Sparkles, Star, Users, Trophy, Mic, Music, Banknote
+    Sparkles, Star, Users, Trophy, Mic, Music, Banknote, Search, Code
 } from 'lucide-react'
 import { TaranaInPixels, OriginalMusic } from '@/components/sections/TaranaSections'
 
@@ -952,7 +952,7 @@ const RealisticAncientBackground = () => {
 
 const HeroSection = ({ shouldRender3D }: { shouldRender3D: boolean }) => {
     const router = useRouter()
-    const { isLoggedIn, userData } = useApp()
+    const { isLoggedIn, isAdmin } = useApp()
     const { scrollY } = useScroll()
     const [isMobile, setIsMobile] = useState(false)
 
@@ -1058,10 +1058,9 @@ const HeroSection = ({ shouldRender3D }: { shouldRender3D: boolean }) => {
                         <ButtonPrimary onClick={() => {
                             if (!isLoggedIn) {
                                 router.push('/login');
-                            } else if (!userData?.hasPaid) {
-                                router.push('/notify');
                             } else {
-                                router.push('/events');
+                                // temp
+                                router.push(isAdmin ? '/admin' : '/profile');
                             }
                         }}>Register Now</ButtonPrimary>
                         <ButtonPrimary onClick={() => router.push('/events')}>Explore Events</ButtonPrimary>
@@ -1759,65 +1758,142 @@ const ContactSection = () => {
                         </motion.div>
                     ))}
                 </div>
+
+                {/* Additional Action Links */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="flex flex-wrap justify-center gap-6 mt-16"
+                >
+                    <Link href="/contact">
+                        <ButtonPrimary>
+                            <Users className="w-5 h-5" /> Student Council
+                        </ButtonPrimary>
+                    </Link>
+                    <Link href="/developers">
+                        <ButtonPrimary>
+                            <Code className="w-5 h-5" /> Developers Team
+                        </ButtonPrimary>
+                    </Link>
+                </motion.div>
             </div>
         </section>
     )
 }
 
 const FAQ = () => {
-    const [activeIndex, setActiveIndex] = useState<number | null>(0)
+    const [activeIndex, setActiveIndex] = useState<number | null>(null)
+    const [searchQuery, setSearchQuery] = useState("")
 
     // ... existing FAQ data ...
     const faqs = [
         { q: "What is Varnothsava?", a: "Varnothsava is the annual National-level techno-cultural fest of SMVITM." },
-        { q: "How do I register?", a: "You can register directly through this website by clicking the 'Register Now' button." },
-        { q: "Is there a specific dress code?", a: "No , but we recommend comfortable clothing." },
+        { q: "How do I create an account?", a: "To create an account: 1. Click Login, 2. Click Create Account, 3. Enter your College Email ID, 4. Create password, 5. Fill details on 'About You' page, 7. Click Finish Hub Setup." },
+        { q: "Can I use any email ID to register?", a: "No, you must use a valid and active college email ID during the registration process." },
+        { q: "What should I do if I forget my password?", a: "Go to the Login page and click on 'Forgot Password' (if available). Enter your registered email ID and follow the instructions sent to reset it." },
+        { q: "Can I edit my profile details after submission?", a: "Yes, if enabled. Log in, go to your Profile Page, click on Edit Profile, update your details, and save the changes." },
+        { q: "Is registration fee mandatory before event registration?", a: "Yes. You must complete the registration payment successfully on your Profile Page before you can register for events." },
+        { q: "What is the registration fee and how do I pay it?", a: "The fee is ₹200 for Internal and ₹300 for External participants (extra ₹300 for Robo Soccer). Pay via UPI/PhonePe/Google Pay by clicking 'Start Payment' on your Profile Page." },
+        { q: "Do I need to pay separately for each event?", a: "No, it's a one-time registration payment for multiple events. Extra payment is only required for Robo Soccer." },
+        { q: "What should I do if payment fails but money is deducted?", a: "Check your bank statement, wait a few minutes, and refresh your profile page. Contact support if the payment is still not reflected." },
+        { q: "How do I register for an event?", a: "Complete payment, go to 'Explore Events', click 'Register' on an event card, and confirm the pop-up message." },
+        { q: "Can I participate in multiple events?", a: "Yes, after completing the registration payment, you can register for any number of events." },
+        { q: "How do I know if my event registration is successful?", a: "Check the confirmation pop-up after registering. The event will appear in your participation record, and a WhatsApp group link will show on the event card." },
+        { q: "Can I cancel my event registration?", a: "Check your registered events section for a cancellation option. If not available, contact the event coordinator." },
+        { q: "How do I register for a group event?", a: "The Team Leader should log in, select the event, click Register, enter the Team Name and the Pass IDs of all team members." },
+        { q: "Who should register for a group event?", a: "Only the Team Leader should register for the group, after collecting Pass IDs of all members." },
+        { q: "What is a Pass ID and where can I find it?", a: "A Pass ID is a unique identifier displayed on your Profile Page after you log in." },
+        { q: "What happens if I enter a wrong Pass ID?", a: "The registration may fail. Please recheck the ID carefully and retry. Contact support if issues persist." },
+        { q: "How do I join the WhatsApp group of an event?", a: "After successful registration, a WhatsApp button will appear on the event card. Click it to join the official group." },
+        { q: "Why is the WhatsApp button not visible?", a: "Ensure you have successfully registered for the event. Try refreshing the page or logging out and back in." },
+        { q: "The website is stuck on loading. What should I do?", a: "Try refreshing the page, clearing browser cache, using a different browser (Chrome/Edge), or checking your internet connection." },
+        { q: "The Register button is not working. What should I do?", a: "Make sure your payment is completed. Try refreshing, re-logging, or using a different browser." },
+        { q: "Events are not visible on the Explore Events page. Why?", a: "Check if you have completed the payment, refresh the page, and ensure you have a stable internet connection.Still facing issues then reachout to any of the developers team by clicking on developers Team button in contact us section in home page." },
+        { q: "Can I participate without completing payment?", a: "No, event registration is only possible after completing the registration payment." },
+        { q: "Do external participants receive a Pass ID?", a: "Yes, after creating an account and setting up your profile, a unique Pass ID will be generated on your Profile Page." },
+        { q: "Do I need to show my Pass ID at the venue?", a: "Yes, keep your Pass ID saved and show it at the registration or help desk if required." },
+        { q: "How can I contact the organizers if I face issues?", a: "Check the Contact us section in the home page, use the website Chatbot for assistance, or contact the specific event coordinator." },
+        { q: "Is there a specific dress code?", a: "No, but we recommend comfortable clothing." },
         { q: "Do you provide accommodation?", a: "Yes, accommodation is provided for participants." },
         { q: "Are participation certificates provided?", a: "All participants receive E-participation certificates. Winners receive Merit certificates." }
     ]
+
+    const filteredFaqs = faqs.filter(faq =>
+        faq.q.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        faq.a.toLowerCase().includes(searchQuery.toLowerCase())
+    )
 
     return (
         <section className="py-20 px-4 md:px-6 container mx-auto">
             <div className="max-w-4xl mx-auto">
                 <StaggerTitle title="FAQ" subtitle="Common Queries" />
-                <div className="space-y-4">
-                    {faqs.map((faq, i) => (
-                        <motion.div
-                            key={i}
-                            initial={{ opacity: 0, y: 10 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: i * 0.1 }}
-                            className="border border-white/10 rounded-2xl overflow-hidden bg-white/5 hover:bg-white/10 transition-colors"
+
+                {/* Search Bar */}
+                <div className="relative mb-12">
+                    <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
+                        <Search className="w-5 h-5 text-emerald-500/50" />
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="Search questions or answers..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-16 pr-6 text-white placeholder:text-gray-500 focus:outline-none focus:border-emerald-500/50 focus:bg-white/[0.08] transition-all"
+                    />
+                    {searchQuery && (
+                        <button
+                            onClick={() => setSearchQuery("")}
+                            className="absolute inset-y-0 right-6 flex items-center text-gray-500 hover:text-white transition-colors"
                         >
-                            <button
-                                onClick={() => setActiveIndex(activeIndex === i ? null : i)}
-                                aria-expanded={activeIndex === i}
-                                aria-controls={`faq-answer-${i}`}
-                                className="w-full flex items-center justify-between p-6 text-left"
+                            Clear
+                        </button>
+                    )}
+                </div>
+
+                <div className="space-y-4">
+                    {filteredFaqs.length > 0 ? (
+                        filteredFaqs.map((faq, i) => (
+                            <motion.div
+                                key={i}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: i * 0.05 }}
+                                className="border border-white/10 rounded-2xl overflow-hidden bg-white/5 hover:bg-white/10 transition-colors"
                             >
-                                <span className={`text-lg md:text-xl font-bold font-[family-name:var(--font-inter)] ${activeIndex === i ? 'text-emerald-400' : 'text-white'}`}>
-                                    {faq.q}
-                                </span>
-                                <Plus className={`w-6 h-6 transition-transform duration-300 ${activeIndex === i ? 'rotate-45 text-emerald-500' : 'text-gray-400'}`} />
-                            </button>
-                            <AnimatePresence>
-                                {activeIndex === i && (
-                                    <motion.div
-                                        id={`faq-answer-${i}`}
-                                        initial={{ height: 0, opacity: 0 }}
-                                        animate={{ height: "auto", opacity: 1 }}
-                                        exit={{ height: 0, opacity: 0 }}
-                                        className="overflow-hidden"
-                                    >
-                                        <div className="p-6 pt-0 text-gray-400 leading-relaxed border-t border-white/5">
-                                            {faq.a}
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </motion.div>
-                    ))}
+                                <button
+                                    onClick={() => setActiveIndex(activeIndex === i ? null : i)}
+                                    aria-expanded={activeIndex === i}
+                                    aria-controls={`faq-answer-${i}`}
+                                    className="w-full flex items-center justify-between p-6 text-left"
+                                >
+                                    <span className={`text-lg md:text-xl font-bold font-[family-name:var(--font-inter)] ${activeIndex === i ? 'text-emerald-400' : 'text-white'}`}>
+                                        {faq.q}
+                                    </span>
+                                    <Plus className={`w-6 h-6 transition-transform duration-300 ${activeIndex === i ? 'rotate-45 text-emerald-500' : 'text-gray-400'}`} />
+                                </button>
+                                <AnimatePresence>
+                                    {activeIndex === i && (
+                                        <motion.div
+                                            id={`faq-answer-${i}`}
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: "auto", opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            className="overflow-hidden"
+                                        >
+                                            <div className="p-6 pt-0 text-gray-400 leading-relaxed border-t border-white/5">
+                                                {faq.a}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </motion.div>
+                        ))
+                    ) : (
+                        <div className="text-center py-12 text-gray-500">
+                            No matching questions found for "{searchQuery}"
+                        </div>
+                    )}
                 </div>
             </div>
         </section>

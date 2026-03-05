@@ -1,78 +1,62 @@
-import { Firestore, FieldValue } from '@google-cloud/firestore';
-import { JWT } from 'google-auth-library';
-import path from 'path';
-import fs from 'fs';
+import * as admin from 'firebase-admin';
 
 /**
  * REAL PRODUCTION-GRADE ADMINISTRATIVE ACCESS
- * This implementation uses the Google Cloud SDKs directly.
- * It provides full administrative privileges (bypassing Firestore rules)
- * and uses your service-account.json for authentication.
+ * This implementation uses the official firebase-admin SDK.
  */
 
 let serviceAccount: any = null;
 try {
     if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-        serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-        // Fix for private key decoding error in some environments
+        let keyString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY.trim();
+        // Handle common quoting issues from .env files
+        if ((keyString.startsWith("'") && keyString.endsWith("'")) ||
+            (keyString.startsWith('"') && keyString.endsWith('"'))) {
+            keyString = keyString.substring(1, keyString.length - 1);
+        }
+        serviceAccount = JSON.parse(keyString);
         if (serviceAccount && serviceAccount.private_key) {
             serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
         }
     } else {
-        const fullPath = path.join(process.cwd(), 'src/lib/service-account.json');
-        if (fs.existsSync(fullPath)) {
-            serviceAccount = JSON.parse(fs.readFileSync(fullPath, 'utf8'));
+        // Fallback to local file for convenience
+        try {
+            const fs = require('fs');
+            const path = require('path');
+            const filePath = path.resolve(process.cwd(), 'src/lib/service-account.json');
+            if (fs.existsSync(filePath)) {
+                serviceAccount = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            }
+        } catch (e: any) {
+            console.warn("Could not load service-account.json fallback:", e.message);
         }
     }
 } catch (err) {
     console.error("FATAL: Failed to load service account:", err);
 }
 
-// 1. Initialize Real Admin Firestore
-export const adminDb = new Firestore({
-    projectId: serviceAccount?.project_id,
-    credentials: {
-        client_email: serviceAccount?.client_email,
-        private_key: serviceAccount?.private_key,
-    },
-});
+if (!admin.apps.length && serviceAccount) {
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+    });
+}
 
-// 2. Real Token Verification using Google Auth Library
+// 1. Admin Firestore
+export const adminDb = admin.firestore();
+
+// 2. Auth Utilities
+export const adminAuth = admin.auth();
+
 export async function verifyAuthToken(token: string) {
-    if (!token) {
-        console.error("Auth Verification Error: No token provided");
-        return null;
-    }
-
+    if (!token) return null;
     try {
-        // Verify token via Google's Identity Toolkit REST API (The real production method)
-        const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-        if (!apiKey) {
-            console.error("Auth Verification Error: NEXT_PUBLIC_FIREBASE_API_KEY not set");
-            return null;
-        }
-
-        const response = await fetch(
-            `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idToken: token }),
-            }
-        );
-
-        const data = await response.json();
-        if (!response.ok || !data.users || data.users.length === 0) {
-            console.error("Auth Verification Error:", data.error?.message || "Invalid or expired token");
-            return null;
-        }
-
-        const user = data.users[0];
+        const decodedToken = await adminAuth.verifyIdToken(token);
         return {
-            uid: user.localId,
-            email: user.email,
-            email_verified: user.emailVerified,
-            name: user.displayName,
+            uid: decodedToken.uid,
+            email: decodedToken.email,
+            email_verified: decodedToken.email_verified,
+            name: (decodedToken as any).name,
+            role: decodedToken.role // Extract role claim if present
         };
     } catch (error) {
         console.error("Auth Verification Error:", error);
@@ -80,12 +64,19 @@ export async function verifyAuthToken(token: string) {
     }
 }
 
-// 3. Compatibility Exports
-export const adminAuth = {
-    verifyIdToken: async (token: string) => verifyAuthToken(token),
-};
+// 3. Custom Claims Helper
+export async function setAdminRole(uid: string, role: string) {
+    try {
+        await adminAuth.setCustomUserClaims(uid, { role });
+        return true;
+    } catch (error) {
+        console.error("Error setting custom claims:", error);
+        return false;
+    }
+}
 
+// 4. Compatibility Exports
 export const usersCollection = adminDb.collection('users');
 export const registrationsCollection = adminDb.collection('registrations');
 export const db = adminDb;
-export const fieldValue = FieldValue;
+export const fieldValue = admin.firestore.FieldValue;
