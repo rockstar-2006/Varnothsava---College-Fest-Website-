@@ -72,27 +72,64 @@ export async function GET(request: NextRequest) {
         let externalCount = 0;
         let totalParticipants = 0;
 
-        // Accurate counts based on the scoped countQuery
-        const [totalSnap, internalSnap, participantSnap] = await Promise.all([
-            countQuery.count().get(),
-            countQuery.where('leaderType', '==', 'internal').count().get(),
-            countQuery.select('teamLeader', 'members').get()
-        ]);
+        // Zero-Cost Cache Strategy for Dashboard Header Metrics
+        let fallbackToDatabaseCount = true;
 
-        totalCount = totalSnap.data().count;
-        internalCount = internalSnap.data().count;
+        // Only safely use cache if it's a standard event page load or global view
+        if (userRole === 'SUPER_ADMIN' && !search && (!userEventId || userEventId === 'all' || eventId)) {
+            try {
+                const statsRef = await adminDb.collection('system').doc('stats').get();
+                const globalStats = statsRef.data() || {};
 
-        let headcount = 0;
-        participantSnap.docs.forEach((doc: any) => {
-            const data = doc.data();
-            if (data.teamLeader) headcount += 1;
-            if (data.members) headcount += data.members.length;
-        });
-        totalParticipants = headcount;
+                if (!eventId || eventId === 'all') {
+                    // Global Scope
+                    totalCount = globalStats.totalRegistrations || 0;
+                    totalParticipants = globalStats.totalParticipants || 0;
+                    // For Global Scope internal/external teams we need counts, fallback to count() API which is cheap
+                    fallbackToDatabaseCount = false;
+                    const [totalSnap, internalSnap] = await Promise.all([
+                        countQuery.count().get(),
+                        countQuery.where('leaderType', '==', 'internal').count().get()
+                    ]);
+                    totalCount = totalSnap.data().count;
+                    internalCount = internalSnap.data().count;
+                    externalCount = totalCount - internalCount;
+                } else if (globalStats.eventMetricsCache && globalStats.eventMetricsCache[eventId]) {
+                    // Specific Event Scope found in Cache
+                    const eventCache = globalStats.eventMetricsCache[eventId];
+                    totalCount = eventCache.total;
+                    internalCount = eventCache.internal;
+                    externalCount = eventCache.external;
+                    totalParticipants = eventCache.participants;
+                    fallbackToDatabaseCount = false;
+                }
+            } catch (e) {
+                console.warn("[RegAPI] Failed to parse stats cache, falling back to DB counts");
+            }
+        }
 
-        // For search results, counts are calculated after enrichment
-        // For non-search results, counts from DB are used but may be adjusted
-        externalCount = totalCount - internalCount;
+        // Only explicitly read EVERY registration doc if cache is unavailable or we're doing complex searching
+        if (fallbackToDatabaseCount) {
+            const [totalSnap, internalSnap, participantSnap] = await Promise.all([
+                countQuery.count().get(),
+                countQuery.where('leaderType', '==', 'internal').count().get(),
+                countQuery.select('teamLeader', 'members').get()
+            ]);
+
+            totalCount = totalSnap.data().count;
+            internalCount = internalSnap.data().count;
+            externalCount = totalCount - internalCount;
+
+            const uniqueParticipants = new Set<string>();
+            participantSnap.docs.forEach((doc: any) => {
+                const data = doc.data();
+                if (data.teamLeader) uniqueParticipants.add(data.teamLeader);
+                if (data.members && Array.isArray(data.members)) {
+                    data.members.forEach((m: string) => uniqueParticipants.add(m));
+                }
+            });
+            totalParticipants = uniqueParticipants.size;
+        }
 
         let registrations: any[] = [];
         let snapshot: any = null;
@@ -245,17 +282,21 @@ export async function GET(request: NextRequest) {
         // IMPORTANT: Recalculate internal/external counts from enriched data for accuracy
         // This ensures displayed counts match what's actually shown (enriched studentType > raw leaderType)
         if (search || (!search && enrichedRegistrations.length < limit)) {
-            // If this is a search, or if we got all results, calculate from enriched data
-            const liveInternal = enrichedRegistrations.filter((r: any) => r.studentType === 'internal').length;
-            const liveExternal = enrichedRegistrations.filter((r: any) => r.studentType === 'external').length;
-
-            let searchHeadcount = 0;
+            // Calculate exact unique participants for search/filtering
+            const uniqueSearchParticipants = new Set<string>();
             enrichedRegistrations.forEach((r: any) => {
-                searchHeadcount += 1; // Leader
-                if (r.members && Array.isArray(r.members)) searchHeadcount += r.members.length;
+                if (r.teamLeader) uniqueSearchParticipants.add(r.teamLeader);
+                if (r.members && Array.isArray(r.members)) {
+                    r.members.forEach((m: string) => uniqueSearchParticipants.add(m));
+                }
             });
+            const searchHeadcount = uniqueSearchParticipants.size;
 
             if (search) {
+                // Determine accurate Internal/External based on team assignments (registrations)
+                const liveInternal = enrichedRegistrations.filter((r: any) => r.studentType === 'internal').length;
+                const liveExternal = enrichedRegistrations.filter((r: any) => r.studentType === 'external').length;
+
                 // For search, enriched data IS the full result set
                 internalCount = liveInternal;
                 externalCount = liveExternal;

@@ -84,24 +84,25 @@ export default function EventManagementPage() {
     const fetchEvents = async () => {
         try {
             const token = await getAuthToken()
+            // TRIGGER FULL STATS CACHE FIRST (Calculates EVERYTHING and stores in system/stats)
+            const sRes = await fetch('/api/admin/stats', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const sData = await sRes.json();
+            if (sRes.ok) {
+                setStats(sData.stats);
+                updateAdminCache('stats', sData.stats);
+            }
+
+            // NOW FETCH EVENTS (Virtually 0 extra DB reads because it pulls from system/stats)
             const res = await fetch('/api/admin/events', {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             const data = await res.json()
             if (res.ok) {
                 setEvents(data.events)
-                // Clear map on full sync + update events
                 updateAdminCache('events', data.events)
                 updateAdminCache('eventRegMap', {})
-                // Also trigger a stats refresh
-                const sRes = await fetch('/api/admin/stats', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const sData = await sRes.json();
-                if (sRes.ok) {
-                    setStats(sData.stats);
-                    updateAdminCache('stats', sData.stats);
-                }
             }
         } catch (error) {
             console.error("Failed to fetch events:", error)
@@ -156,8 +157,8 @@ export default function EventManagementPage() {
         if (isInitialMount.current) {
             if (!adminCache.events || adminCache.events.length === 0) {
                 fetchEvents()
-            } else {
-                // If we have events but maybe not stats, fetch stats anyway to be fresh
+            } else if (!adminCache.stats) {
+                // If we have events but no stats, fetch stats to be fresh
                 const tokenPromise = getAuthToken()
                 tokenPromise.then(token => {
                     fetch('/api/admin/stats', { headers: { 'Authorization': `Bearer ${token}` } })

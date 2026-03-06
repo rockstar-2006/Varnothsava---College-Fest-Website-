@@ -133,23 +133,28 @@ export default function UserManagementPage() {
         }
     }
 
-    const isInitialMount = useRef(true)
+    const isFirstMountFilter = useRef(true)
+    const isFirstMountSearch = useRef(true)
 
     // Sync button is now the only trigger for fresh directory data
     // Fetch on filter change
     useEffect(() => {
         // Skip initial fetch if cache is already present
-        if (isInitialMount.current && adminCache.users) {
-            isInitialMount.current = false;
-            return;
+        if (isFirstMountFilter.current) {
+            isFirstMountFilter.current = false;
+            if (adminCache.users && adminCache.users.length > 0) {
+                return;
+            }
         }
         fetchUsers(false)
-        isInitialMount.current = false;
     }, [paymentFilter])
 
     // Fetch on search with debounce
     useEffect(() => {
-        if (isInitialMount.current) return;
+        if (isFirstMountSearch.current) {
+            isFirstMountSearch.current = false;
+            return;
+        }
         const timer = setTimeout(() => {
             fetchUsers(false)
         }, 500)
@@ -171,7 +176,11 @@ export default function UserManagementPage() {
                 body: JSON.stringify({ userId, updates: { [field]: value } })
             })
             if (res.ok) {
-                setUsers(users.map(u => u.id === userId ? { ...u, [field]: value } : u))
+                setUsers(prev => {
+                    const newUsers = prev.map(u => u.id === userId ? { ...u, [field]: value } : u);
+                    updateAdminCache('users', newUsers);
+                    return newUsers;
+                })
             }
         } catch (error) {
             console.error(`Update ${field} failed:`, error)
@@ -196,7 +205,11 @@ export default function UserManagementPage() {
                 body: JSON.stringify({ userId })
             })
             if (res.ok) {
-                setUsers(users.filter(u => u.id !== userId))
+                setUsers(prev => {
+                    const newUsers = prev.filter(u => u.id !== userId);
+                    updateAdminCache('users', newUsers);
+                    return newUsers;
+                })
             } else {
                 const data = await res.json()
                 alert(data.message || "Failed to delete user")
@@ -224,7 +237,11 @@ export default function UserManagementPage() {
                 body: JSON.stringify({ userIds: selectedIds })
             })
             if (res.ok) {
-                setUsers(prev => prev.filter(u => !selectedIds.includes(u.id)))
+                setUsers(prev => {
+                    const newUsers = prev.filter(u => !selectedIds.includes(u.id));
+                    updateAdminCache('users', newUsers);
+                    return newUsers;
+                })
                 setSelectedIds([])
             } else {
                 const data = await res.json()

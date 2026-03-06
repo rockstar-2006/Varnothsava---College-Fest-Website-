@@ -32,10 +32,17 @@ export async function GET(request: NextRequest) {
 
         // RBAC: COORDINATOR only sees assigned events
         if (role === 'COORDINATOR') {
-            eventsQuery = eventsQuery.where('coordinators', 'array-contains', verified.uid);
+            if (eventId && eventId !== 'all') {
+                const assignedEventIds = eventId.split(',').map((id: string) => id.trim());
+                if (assignedEventIds.length > 1) {
+                    eventsQuery = eventsQuery.where('__name__', 'in', assignedEventIds);
+                } else if (assignedEventIds.length === 1) {
+                    eventsQuery = eventsQuery.where('__name__', '==', assignedEventIds[0]);
+                }
+            } else if (eventId !== 'all') { // if they are all, they see all
+                eventsQuery = eventsQuery.where('coordinators', 'array-contains', verified.uid);
+            }
         } else if (role === 'VOLUNTEER') {
-            // Volunteers might see assigned events or all? Requirement says "only assigned events" for Coordinator. 
-            // Usually, Volunteers also work on specific events.
             eventsQuery = eventsQuery.where('volunteers', 'array-contains', verified.uid);
         }
 
@@ -43,39 +50,59 @@ export async function GET(request: NextRequest) {
         console.log(`Fetched ${snapshot.docs.length} events from database`);
 
         const eventDocs = snapshot.docs;
+
+        // Huge Read Optimization: Fetch zero-cost cache from system/stats (cost = 1 read)
+        const statsRef = await adminDb.collection('system').doc('stats').get();
+        const globalStats = statsRef.data() || {};
+        const eventMetricsCache = globalStats.eventMetricsCache || {};
+
         const eventsWithMetrics = await Promise.all(eventDocs.map(async (doc: any) => {
             const data = doc.data();
-            const eventId = doc.id;
 
-            // Live accuracy for individual event metrics
-            const [totalSnap, internalSnap, participantSnap] = await Promise.all([
-                adminDb.collection('registrations').where('eventId', '==', eventId).count().get(),
-                adminDb.collection('registrations').where('eventId', '==', eventId).where('leaderType', '==', 'internal').count().get(),
-                adminDb.collection('registrations').where('eventId', '==', eventId).select('teamLeader', 'members').get()
-            ]);
+            if (role === 'SUPER_ADMIN') {
+                const metrics = eventMetricsCache[doc.id] || { total: 0, internal: 0, external: 0, participants: 0 };
+                return {
+                    id: doc.id,
+                    ...data,
+                    metrics: {
+                        total: metrics.total || 0,
+                        internal: metrics.internal || 0,
+                        external: metrics.external || 0,
+                        participants: metrics.participants || 0
+                    }
+                };
+            } else {
+                // Live calculation for Coordinator's few events to guarantee absolute accuracy
+                const [totalSnap, internalSnap, partSnap] = await Promise.all([
+                    adminDb.collection('registrations').where('eventId', '==', doc.id).count().get(),
+                    adminDb.collection('registrations').where('eventId', '==', doc.id).where('leaderType', '==', 'internal').count().get(),
+                    adminDb.collection('registrations').where('eventId', '==', doc.id).select('teamLeader', 'members').get()
+                ]);
 
-            const total = totalSnap.data().count;
-            const internal = internalSnap.data().count;
-            const external = total - internal;
+                const total = totalSnap.data().count;
+                const internal = internalSnap.data().count;
+                const external = total - internal;
 
-            // Unique people in this specific event
-            const uniqueP = new Set<string>();
-            participantSnap.docs.forEach(doc => {
-                const regData = doc.data();
-                if (regData.teamLeader) uniqueP.add(regData.teamLeader);
-                regData.members?.forEach((m: string) => uniqueP.add(m));
-            });
+                const uniqueP = new Set<string>();
+                partSnap.docs.forEach((rDoc: any) => {
+                    const rData = rDoc.data();
+                    if (rData.teamLeader) uniqueP.add(rData.teamLeader);
+                    if (rData.members && Array.isArray(rData.members)) {
+                        rData.members.forEach((m: string) => uniqueP.add(m));
+                    }
+                });
 
-            return {
-                id: eventId,
-                ...data,
-                metrics: {
-                    total,
-                    internal,
-                    external,
-                    participants: uniqueP.size
-                }
-            };
+                return {
+                    id: doc.id,
+                    ...data,
+                    metrics: {
+                        total,
+                        internal,
+                        external,
+                        participants: uniqueP.size
+                    }
+                };
+            }
         }));
 
         return NextResponse.json({ events: eventsWithMetrics });

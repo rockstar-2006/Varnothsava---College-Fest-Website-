@@ -42,39 +42,37 @@ export async function GET(
             return NextResponse.json({ message: "Forbidden: Not assigned to this event" }, { status: 403 });
         }
 
-        // Strategy 4: Summary Document Fetch
-        const statsRef = adminDb.collection('system').doc('stats');
-        const statsDoc = await statsRef.get();
-        const s = statsDoc.data() || {};
+        // Live calculation for individual event, ignoring stale global cache
+        const [totalSnap, internalSnap, partSnap] = await Promise.all([
+            adminDb.collection('registrations').where('eventId', '==', id).count().get(),
+            adminDb.collection('registrations').where('eventId', '==', id).where('leaderType', '==', 'internal').count().get(),
+            adminDb.collection('registrations').where('eventId', '==', id).select('teamLeader', 'members').get()
+        ]);
 
-        let total = s[`reg_${id}_total`];
-        let internal = s[`reg_${id}_internal`];
-        let external = s[`reg_${id}_external`];
+        const total = totalSnap.data().count;
+        const internal = internalSnap.data().count;
+        const external = total - internal;
 
-        // Strategy 3: count() for fallback if summary document is out of sync or missing fields
-        if (total === undefined) {
-            console.log(`[StatsFallback] No metrics found for ${id}, using count()`);
-            const totalSnap = await adminDb.collection('registrations')
-                .where('eventId', '==', id)
-                .count().get();
-            total = totalSnap.data().count;
+        const uniqueP = new Set<string>();
+        partSnap.docs.forEach((doc: any) => {
+            const data = doc.data();
+            if (data.teamLeader) uniqueP.add(data.teamLeader);
+            if (data.members && Array.isArray(data.members)) {
+                data.members.forEach((m: string) => uniqueP.add(m));
+            }
+        });
 
-            const internalSnap = await adminDb.collection('registrations')
-                .where('eventId', '==', id)
-                .where('leaderType', '==', 'internal')
-                .count().get();
-            internal = internalSnap.data().count;
-            external = total - internal;
-        }
+        const participants = uniqueP.size;
 
         return NextResponse.json({
             event: {
                 id,
                 ...eventData,
                 metrics: {
-                    total: total || 0,
-                    internal: internal || 0,
-                    external: external || 0
+                    total,
+                    internal,
+                    external,
+                    participants
                 }
             }
         });
