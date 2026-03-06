@@ -59,6 +59,7 @@ export default function EventManagementPage() {
     const { userData, isAdmin, adminCache, updateAdminCache } = useApp()
     const [events, setEvents] = useState<AdminEvent[]>(adminCache.events || [])
     const [staff, setStaff] = useState<StaffMember[]>(adminCache.staff || [])
+    const [stats, setStats] = useState<any>(adminCache.stats || null)
     const [loading, setLoading] = useState(!adminCache.events)
     const [searchQuery, setSearchQuery] = useState('')
     const [isModalOpen, setIsModalOpen] = useState(false)
@@ -97,7 +98,10 @@ export default function EventManagementPage() {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const sData = await sRes.json();
-                if (sRes.ok) updateAdminCache('stats', sData.stats);
+                if (sRes.ok) {
+                    setStats(sData.stats);
+                    updateAdminCache('stats', sData.stats);
+                }
             }
         } catch (error) {
             console.error("Failed to fetch events:", error)
@@ -152,6 +156,19 @@ export default function EventManagementPage() {
         if (isInitialMount.current) {
             if (!adminCache.events || adminCache.events.length === 0) {
                 fetchEvents()
+            } else {
+                // If we have events but maybe not stats, fetch stats anyway to be fresh
+                const tokenPromise = getAuthToken()
+                tokenPromise.then(token => {
+                    fetch('/api/admin/stats', { headers: { 'Authorization': `Bearer ${token}` } })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.stats) {
+                                setStats(data.stats);
+                                updateAdminCache('stats', data.stats);
+                            }
+                        })
+                })
             }
             if (!adminCache.staff || adminCache.staff.length === 0) {
                 fetchStaff()
@@ -382,6 +399,124 @@ export default function EventManagementPage() {
                         )}
                     </div>
                 </div>
+
+                {/* Stats Overview Panel */}
+                <AnimatePresence>
+                    {stats && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+                        >
+                            {/* Category Breakdown */}
+                            <div className="bg-[#111] border border-white/5 rounded-3xl p-6 flex flex-col gap-6">
+                                <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+                                    <div className="w-1 h-1 rounded-full bg-emerald-500" /> Category Breakdown
+                                </h3>
+
+                                <div className="space-y-6">
+                                    {['technical', 'cultural'].map(cat => {
+                                        const catData = stats.categoryBreakdown?.[cat] || { totalParticipants: 0, internal: 0, external: 0 };
+                                        const total = catData.totalParticipants || 1;
+                                        const intPer = (catData.internal / total) * 100;
+                                        const extPer = (catData.external / total) * 100;
+
+                                        return (
+                                            <div key={cat} className="space-y-2">
+                                                <div className="flex justify-between items-end">
+                                                    <span className="text-xs font-black uppercase text-white italic">{cat}</span>
+                                                    <span className="text-[10px] font-bold text-gray-400">{catData.totalParticipants} People</span>
+                                                </div>
+                                                <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden flex">
+                                                    <motion.div
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${intPer}%` }}
+                                                        className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]"
+                                                    />
+                                                    <motion.div
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${extPer}%` }}
+                                                        className="h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]"
+                                                    />
+                                                </div>
+                                                <div className="flex justify-between text-[8px] font-black uppercase tracking-widest">
+                                                    <span className="text-emerald-500">Internal {Math.round(intPer)}%</span>
+                                                    <span className="text-blue-500">External {Math.round(extPer)}%</span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* External Participation (Deduplicated) */}
+                            <div className="bg-[#111] border border-white/5 rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden group">
+                                <div className="relative z-10">
+                                    <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                                        <div className="w-1 h-1 rounded-full bg-blue-500" /> Footfall Metrics
+                                    </h3>
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Unique External Participants</p>
+                                            <h4 className="text-4xl font-black text-white italic leading-none">
+                                                {stats.uniqueExternalParticipantsAcrossEvents || 0}
+                                                <span className="text-xs not-italic text-blue-500 ml-2 uppercase font-black">Verified Individual Souls</span>
+                                            </h4>
+                                        </div>
+
+                                        <div className="pt-4 border-t border-white/5">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-[10px] font-bold text-gray-400 uppercase">External Reach</span>
+                                                <span className="text-[10px] font-black text-white italic">
+                                                    {Math.round(((stats.uniqueExternalParticipantsAcrossEvents || 0) / (stats.totalUsers || 1)) * 100)}% of Database
+                                                </span>
+                                            </div>
+                                            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${((stats.uniqueExternalParticipantsAcrossEvents || 0) / (stats.totalUsers || 1)) * 100}%` }}
+                                                    className="h-full bg-gradient-to-r from-blue-600 to-blue-400"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Background Decorative Element */}
+                                <Users size={120} className="absolute -bottom-6 -right-6 text-white/[0.02] -rotate-12 transition-transform group-hover:rotate-0" />
+                            </div>
+
+                            {/* College Distribution */}
+                            <div className="bg-[#111] border border-white/5 rounded-3xl p-6 flex flex-col gap-4">
+                                <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+                                    <div className="w-1 h-1 rounded-full bg-amber-500" /> Geographic Spread
+                                </h3>
+
+                                <div className="space-y-3 overflow-y-auto max-h-40 no-scrollbar pr-2 custom-scrollbar">
+                                    {(stats.collegeDistribution || []).map((col: any, i: number) => (
+                                        <div key={i} className="space-y-1">
+                                            <div className="flex justify-between items-center text-[10px]">
+                                                <span className="font-bold text-white truncate max-w-[150px]">{col.name}</span>
+                                                <span className="font-black text-amber-500">{col.count}</span>
+                                            </div>
+                                            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${(col.count / (stats.totalParticipants || 1)) * 100}%` }}
+                                                    className="h-full bg-amber-500/50"
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {(!stats.collegeDistribution || stats.collegeDistribution.length === 0) && (
+                                        <div className="text-center py-8 text-gray-600 italic text-[10px]">No geographic data synced</div>
+                                    )}
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* Search & Category Tabs */}
                 <div className="space-y-6">
