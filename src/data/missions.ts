@@ -76,7 +76,9 @@ export const missions: Event[] = [
         teamFormate: "Group",
         tags: ['ML', 'Coding', 'Python'],
         team: 'Group',
-        whatsappLink: 'https://chat.whatsapp.com/DrvB6MhNad7HOWq5cAVypu?mode=gi_t'
+        whatsappLink: 'https://chat.whatsapp.com/DrvB6MhNad7HOWq5cAVypu?mode=gi_t',
+        location: "Workshop Lab(Computer Lab -07)"
+
 
     },
     {
@@ -115,7 +117,8 @@ export const missions: Event[] = [
         teamFormate: "Group",
         tags: ['AI', 'Product', 'Prompt Engineering'],
         team: 'Group',
-        whatsappLink: "https://chat.whatsapp.com/KkqtB4iUxlh20khnW9NM6o?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/KkqtB4iUxlh20khnW9NM6o?mode=gi_t",
+        location: "CAED LAB"
     },
     {
         id: "TECH-003",
@@ -146,6 +149,7 @@ export const missions: Event[] = [
         visual: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&q=80",
         date: "11-MARCH",
         time: "2:00 PM",
+        location: "B001 and A&D lab",
         minTeamSize: 2,
         maxTeamSize: 2,
         teamFormate: "Group",
@@ -190,7 +194,8 @@ export const missions: Event[] = [
         teamFormate: "Group",
         tags: ['Robotics', 'Hardware', 'Sensors'],
         team: 'Group',
-        whatsappLink: "https://chat.whatsapp.com/GQpfde9AYbM13EYof2IkMw?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/GQpfde9AYbM13EYof2IkMw?mode=gi_t",
+        location: "Civil and Mechanical block -C 202"
     },
     {
         id: "GAME-001",
@@ -219,7 +224,8 @@ export const missions: Event[] = [
         teamFormate: "Group",
         tags: ['5v5', 'FPS', 'Valorant'],
         team: 'Group',
-        whatsappLink: "https://chat.whatsapp.com/KsswM38wb5r7hy4aTjvdfy?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/KsswM38wb5r7hy4aTjvdfy?mode=gi_t",
+        location: "THIRD FLOOR ADMIN BLOCK LAB 306 & 307"
     },
     {
         id: "TECH-005",
@@ -294,7 +300,8 @@ export const missions: Event[] = [
         teamFormate: "Group",
         tags: ['Cyber', 'Logic', 'Coding'],
         team: 'Group',
-        whatsappLink: "https://chat.whatsapp.com/GW3UgzaaoGjKRgXtZv1cfL?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/GW3UgzaaoGjKRgXtZv1cfL?mode=gi_t",
+        location: "CAED lab"
     },
     {
         id: "TECH-006",
@@ -336,9 +343,8 @@ export const missions: Event[] = [
             "Smart Transportation"
         ],
         team: 'Group',
-        whatsappLink: "https://chat.whatsapp.com/KoZFHTf8i4PINJ3ZwqhagI?mode=hqctswa"
-
-
+        whatsappLink: "https://chat.whatsapp.com/KoZFHTf8i4PINJ3ZwqhagI?mode=hqctswa",
+        location: "Admin block (seminar hall)"
     },
     {
         id: "TECH-007",
@@ -377,7 +383,8 @@ export const missions: Event[] = [
         teamFormate: "Group",
         tags: ['Aero', 'Design', 'Physics'],
         team: 'Group',
-        whatsappLink: "https://chat.whatsapp.com/EX4UXPyxREQ8P6fOgwGRjd?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/EX4UXPyxREQ8P6fOgwGRjd?mode=gi_t",
+        location: "NEAR MECHANICAL WORKSHOP"
     },
     {
         id: "TECH-008",
@@ -417,7 +424,8 @@ export const missions: Event[] = [
         teamFormate: "Group",
         tags: ['Robotics', 'Sports', 'Mechanics'],
         team: 'Group',
-        whatsappLink: "https://chat.whatsapp.com/KidSfxcStJS2mBtawXhM97?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/KidSfxcStJS2mBtawXhM97?mode=gi_t",
+        location: "ME & CVE LOBBY"
     },
     {
         id: "GAME-002",
@@ -448,7 +456,8 @@ export const missions: Event[] = [
         teamFormate: "Group",
         tags: ['Squad', 'Mobile', 'BGMI'],
         team: 'Group',
-        whatsappLink: "https://chat.whatsapp.com/Gvgtq2CsGFDC6vHEAbMX5I?mode=gi_c"
+        whatsappLink: "https://chat.whatsapp.com/Gvgtq2CsGFDC6vHEAbMX5I?mode=gi_c",
+        location: "SECOND FLOOR ADMIN BLOCK (A201 & A202)"
     },
     {
         id: "MBA-001",
@@ -478,7 +487,8 @@ export const missions: Event[] = [
         maxTeamSize: 2,
         teamFormate: "Group",
         team: 'Group',
-        whatsappLink: "https://chat.whatsapp.com/IJ526vnuh8o7by4eBY7Ets"
+        whatsappLink: "https://chat.whatsapp.com/IJ526vnuh8o7by4eBY7Ets",
+        location:"GB01"
     },
     {
         id: "MBA-002",
@@ -508,7 +518,8 @@ export const missions: Event[] = [
         maxTeamSize: 3,
         teamFormate: "Group",
         team: 'Group',
-        whatsappLink: "https://chat.whatsapp.com/J4m8JwBiU0hIXcDXNX5Rf3?mode=gi_t"
+        whatsappLink: "https://chat.whatsapp.com/J4m8JwBiU0hIXcDXNX5Rf3?mode=gi_t",
+        location:"GB02"
     },
     {
         id: "MBA-003",
@@ -538,7 +549,8 @@ export const missions: Event[] = [
         maxTeamSize: 3,
         teamFormate: "Group",
         team: 'Group',
-        whatsappLink: "https://chat.whatsapp.com/IohwECqGg6pCGaH5kqsGqW"
+        whatsappLink: "https://chat.whatsapp.com/IohwECqGg6pCGaH5kqsGqW",
+        location: "GB04"
     },
     // --- CULTURAL EVENTS ---
 
