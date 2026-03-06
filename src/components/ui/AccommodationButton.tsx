@@ -12,15 +12,18 @@ interface AccommodationButtonProps {
     themeRgb: string
 }
 
-export function AccommodationButton({ isMobile, themeRgb }: AccommodationButtonProps) {
+export function AccommodationButton({ isMobile: isMobileProp, themeRgb }: AccommodationButtonProps) {
     const [accomLabelIndex, setAccomLabelIndex] = useState(0)
+    const [mounted, setMounted] = useState(false)
 
     useEffect(() => {
+        setMounted(true)
         const timer = setInterval(() => {
             setAccomLabelIndex((prev) => (prev + 1) % ACCOM_LABELS.length)
         }, 2500)
         return () => clearInterval(timer)
     }, [])
+    const isMobile = mounted ? isMobileProp : false
 
     return (
         <div className="absolute left-0 bottom-[110px] md:bottom-[-20px] md:left-[-110px] xl:left-[-130px] flex flex-col items-center gap-3 pointer-events-auto z-40">
