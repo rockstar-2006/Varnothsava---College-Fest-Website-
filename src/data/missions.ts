@@ -77,7 +77,7 @@ export const missions: Event[] = [
         tags: ['ML', 'Coding', 'Python'],
         team: 'Group',
         whatsappLink: 'https://chat.whatsapp.com/DrvB6MhNad7HOWq5cAVypu?mode=gi_t',
-        location: "Workshop Lab(Computer Lab -07)"
+        location: "Workshop Lab (Computer Lab -07)"
 
 
     },

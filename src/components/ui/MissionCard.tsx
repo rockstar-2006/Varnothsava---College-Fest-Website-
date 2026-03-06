@@ -320,10 +320,12 @@ export const MissionCard = memo(({
                                 e.stopPropagation();
                                 if (!isLoggedIn) {
                                     router.push('/login');
-                                } else if (!hasPaid) {
-                                    router.push('/notify');
                                 } else if (isRegistered && event.whatsappLink) {
                                     window.open(event.whatsappLink, '_blank');
+                                } else if (isRegistered) {
+                                    onRegister(event);
+                                } else if (!hasPaid) {
+                                    router.push('/notify');
                                 } else {
                                     onRegister(event);
                                 }
@@ -332,7 +334,7 @@ export const MissionCard = memo(({
                             style={{ clipPath: 'polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px)' }}
                         >
                             {isRegistered && event.whatsappLink ? <MessageCircle className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-                            {!isLoggedIn ? 'LOGIN' : (!hasPaid ? 'PAY FOR PASS' : (isRegistered ? (event.whatsappLink ? 'WHATSAPP' : 'REGISTERED') : 'REGISTER'))}
+                            {!isLoggedIn ? 'LOGIN' : (isRegistered ? (event.whatsappLink ? 'WHATSAPP' : 'REGISTERED') : (!hasPaid ? 'PAY FOR PASS' : 'REGISTER'))}
                         </button>
                         <button onClick={(e) => { e.stopPropagation(); router.push(`/events/${event.id}`); }} className={`relative py-4 md:py-3 text-xs font-black uppercase tracking-widest transition-all duration-300 overflow-hidden group/btn border-2 ${event.type === 'Cultural' ? 'border-amber-500 text-amber-500' : event.type === 'Business' ? 'border-sky-500 text-sky-500' : 'border-emerald-500 text-emerald-500'} bg-black/40 active:scale-95 flex items-center justify-center gap-2 touch-manipulation min-h-[48px]`} style={{ clipPath: 'polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px)' }}>
                             DETAILS
