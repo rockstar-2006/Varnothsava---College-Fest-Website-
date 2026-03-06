@@ -5,66 +5,74 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Hotel } from 'lucide-react'
 
 const ACCOMMODATION_URL = 'https://forms.gle/8hxLvddT7a9GuARm6'
+const ACCOM_LABELS = ["BOOK NOW", "STAY", "ROOMS"]
 
-const LABELS = ["BOOK NOW", "ACCOMMODATION", "CLICK HERE"]
+interface AccommodationButtonProps {
+    isMobile: boolean
+    themeRgb: string
+}
 
-export function AccommodationButton() {
-    const [labelIndex, setLabelIndex] = useState(0)
+export function AccommodationButton({ isMobile: isMobileProp, themeRgb }: AccommodationButtonProps) {
+    const [accomLabelIndex, setAccomLabelIndex] = useState(0)
+    const [mounted, setMounted] = useState(false)
 
     useEffect(() => {
+        setMounted(true)
         const timer = setInterval(() => {
-            setLabelIndex(prev => (prev + 1) % LABELS.length)
+            setAccomLabelIndex((prev) => (prev + 1) % ACCOM_LABELS.length)
         }, 2500)
         return () => clearInterval(timer)
     }, [])
+    const isMobile = mounted ? isMobileProp : false
 
     return (
-        <div className="fixed bottom-6 left-6 z-9998 flex items-center gap-3 pointer-events-none">
-            {/* FAB Button */}
-            <motion.a
+        <div className="absolute left-0 bottom-[110px] md:bottom-[-20px] md:left-[-110px] xl:left-[-130px] flex flex-col items-center gap-3 pointer-events-auto z-40">
+            {/* Hint label */}
+            <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="hidden xl:block px-4 py-2 bg-black/60 backdrop-blur-3xl border border-[rgba(var(--theme-rgb),0.2)] rounded-2xl shadow-2xl relative"
+            >
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-black/60 border-r border-b border-[rgba(var(--theme-rgb),0.2)] rotate-45" />
+                <div className="flex flex-col items-center">
+                    <AnimatePresence mode="wait">
+                        <motion.span
+                            key={ACCOM_LABELS[accomLabelIndex]}
+                            initial={{ opacity: 0, y: 4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -4 }}
+                            transition={{ duration: 0.25 }}
+                            className="text-[rgb(var(--theme-rgb))] text-[10px] font-black tracking-[0.2em] uppercase"
+                        >
+                            {ACCOM_LABELS[accomLabelIndex]}
+                        </motion.span>
+                    </AnimatePresence>
+                    <span className="text-white/40 text-[8px] font-medium uppercase tracking-widest whitespace-nowrap">Accommodation</span>
+                </div>
+            </motion.div>
+
+            {/* Button */}
+            <a
                 href={ACCOMMODATION_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                whileHover={{ scale: 1.08 }}
-                whileTap={{ scale: 0.94 }}
-                className="relative w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-[#0a0a0a] border border-emerald-500/30 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_0_1px_rgba(16,185,129,0.1)] flex items-center justify-center hover:border-emerald-500/60 hover:shadow-[0_8px_40px_rgba(16,185,129,0.15)] transition-all duration-300 group pointer-events-auto"
-                aria-label="Accommodation Details"
+                className="block relative group"
+                aria-label="Book Accommodation"
             >
-                <motion.span
-                    animate={{ scale: [1, 1.8], opacity: [0.6, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" }}
-                    className="absolute inset-0 rounded-full border-2 border-emerald-500"
-                />
-                <motion.span
-                    animate={{ scale: [1, 1.4], opacity: [0.8, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut", delay: 0.5 }}
-                    className="absolute inset-0 rounded-full border border-emerald-500"
-                />
-                <Hotel className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400 group-hover:text-emerald-300 transition-colors relative z-10" />
-            </motion.a>
-
-            {/* Cycling Label */}
-            <AnimatePresence mode="wait">
                 <motion.div
-                    key={LABELS[labelIndex]}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    transition={{ duration: 0.3 }}
-                    className="flex items-center gap-2 sm:gap-3 pointer-events-none"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="p-4 md:p-5 bg-black/60 backdrop-blur-3xl border border-[rgba(var(--theme-rgb),0.3)] rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden relative"
                 >
-                    <div
-                        className="h-px w-6 sm:w-8"
-                        style={{ backgroundColor: '#10b981', boxShadow: '0 0 5px #10b981' }}
-                    />
-                    <span
-                        className="font-black tracking-[0.2em] uppercase text-[10px] sm:text-xs font-mono"
-                        style={{ color: '#10b981', textShadow: '0 0 10px rgba(16,185,129,0.8)' }}
-                    >
-                        {LABELS[labelIndex]}
-                    </span>
+                    <Hotel size={isMobile ? 22 : 24} className="text-[rgb(var(--theme-rgb))]" />
+                    <span className="absolute top-2 right-2 w-4 h-4 bg-emerald-500 rounded-full border-2 border-[#050805] animate-bounce shadow-[0_0_10px_rgba(16,185,129,0.8)]" />
                 </motion.div>
-            </AnimatePresence>
+
+                {/* Mobile label */}
+                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 xl:hidden whitespace-nowrap">
+                    <span className="text-[rgb(var(--theme-rgb))] text-[8px] font-black uppercase tracking-widest opacity-80 bg-black/20 px-2 py-0.5 rounded-full">Stay</span>
+                </div>
+            </a>
         </div>
     )
 }

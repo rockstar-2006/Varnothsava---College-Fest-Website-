@@ -635,7 +635,7 @@ export default function EventDetailsPage() {
                     <TechStatCard
                         icon={MapPin}
                         label="LOCATION"
-                        value={mission.location}
+                        value={mission.location || 'VENUE_TBA'}
                         theme={twTheme}
                     />
 
