@@ -88,21 +88,46 @@ export async function GET(request: NextRequest) {
         }
 
         // Enrichment & Code-Level Filtering (Source of Truth)
+        const correctionBatch = adminDb.batch();
+        let hasCorrectionsToPush = false;
+
         let filteredUsers = users.map((u: any) => {
-            const college = (u.collegeName || u.college || u.institution || '').toUpperCase();
+            const rawCollege = (u.collegeName || u.college || u.institution || '').toUpperCase();
             const email = (u.email || '').toLowerCase();
-            const isInternal = u.studentType === 'internal' ||
-                college.includes('SMVITM') ||
-                college.includes('SODE') ||
-                college.includes('SHRI MADHWA VADIRAJA') ||
+            const isInternal =
+                rawCollege.includes('SMVITM') ||
+                rawCollege.includes('SODE') ||
+                rawCollege.includes('SHRI MADHWA VADIRAJA') ||
+                rawCollege.includes('SHRI MADHWA') ||
+                rawCollege.includes('VADIRAJA') ||
                 email.endsWith('@sode-edu.in');
+
+            const correctStudentType = isInternal ? 'internal' : (u.studentType || 'external');
+            const needsCollegeNameFix = isInternal && (rawCollege === '' || rawCollege.includes('OUTSIDE') || rawCollege === 'N/A');
+
+            // If the DB value doesn't match, queue a correction
+            if ((u.studentType !== correctStudentType || needsCollegeNameFix) && u.id) {
+                const updates: any = { studentType: correctStudentType };
+                if (needsCollegeNameFix) {
+                    updates.college = 'SMVITM (Bantakal)';
+                    updates.institution = 'SMVITM (Bantakal)'; // Keep both in sync if both exist
+                }
+                correctionBatch.update(usersCollection.doc(u.id), updates);
+                hasCorrectionsToPush = true;
+            }
 
             return {
                 ...u,
-                studentType: isInternal ? 'internal' : 'external',
+                studentType: correctStudentType,
+                college: (isInternal && needsCollegeNameFix) ? 'SMVITM (Bantakal)' : (u.college || u.institution || 'Outside College'),
                 hasPaid: !!u.hasPaid
             };
         });
+
+        // Commit corrections asynchronously to not block the response
+        if (hasCorrectionsToPush) {
+            correctionBatch.commit().catch((e: any) => console.error('[Users] Failed to correct studentType:', e));
+        }
 
         // Apply filters in code if it was a search result (since search bypasses DB filter for indexes)
         if (search && status && status !== 'all') {
@@ -123,10 +148,18 @@ export async function GET(request: NextRequest) {
         ]);
 
         const totalCount = usersSnap.data().count;
-        const internalCount = internalSnap.data().count;
         const paidCount = paidSnap.data().count;
-        const externalCount = totalCount - internalCount;
         const unpaidCount = totalCount - paidCount;
+
+        // Use the DB count for internal (corrections above will fix future queries)
+        // but add any corrections found on this page
+        const dbInternalCount = internalSnap.data().count;
+        const correctedOnPage = filteredUsers.filter((u: any) => u.studentType === 'internal').length;
+        const uncorrectedOnPage = users.filter((u: any) => u.studentType === 'internal').length;
+        const internalCount = dbInternalCount + (correctedOnPage - uncorrectedOnPage);
+        const externalCount = totalCount - Math.max(0, internalCount);
+
+
 
         return NextResponse.json({
             users: filteredUsers,

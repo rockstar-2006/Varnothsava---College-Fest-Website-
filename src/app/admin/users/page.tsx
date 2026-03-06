@@ -97,6 +97,15 @@ export default function UserManagementPage() {
                 updateAdminCache('unpaidUsersCount', data.unpaidCount)
                 updateAdminCache('internalUsersCount', data.internalCount)
                 updateAdminCache('externalUsersCount', data.externalCount)
+
+                // Refresh global stats too
+                const sRes = await fetch(`/api/admin/stats?_t=${Date.now()}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (sRes.ok) {
+                    const sData = await sRes.json();
+                    updateAdminCache('stats', sData.stats);
+                }
             }
         } catch (error) {
             console.error("Failed to fetch users:", error)
@@ -124,18 +133,23 @@ export default function UserManagementPage() {
         }
     }
 
+    const isInitialMount = useRef(true)
+
     // Sync button is now the only trigger for fresh directory data
     // Fetch on filter change
     useEffect(() => {
-        // ONLY auto-fetch if we change filters OR if the cache is empty
-        if (users.length === 0 || paymentFilter !== 'all') {
-            fetchUsers(false)
+        // Skip initial fetch if cache is already present
+        if (isInitialMount.current && adminCache.users) {
+            isInitialMount.current = false;
+            return;
         }
+        fetchUsers(false)
+        isInitialMount.current = false;
     }, [paymentFilter])
 
     // Fetch on search with debounce
     useEffect(() => {
-        if (!searchQuery && users.length > 0) return; // Don't fetch on empty search if we have data
+        if (isInitialMount.current) return;
         const timer = setTimeout(() => {
             fetchUsers(false)
         }, 500)
@@ -281,7 +295,10 @@ export default function UserManagementPage() {
                                 <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Paid?</span>
                             </button>
 
-                            <button onClick={() => fetchUsers(false)}
+                            <button onClick={() => {
+                                setLastId(null)
+                                fetchUsers(false)
+                            }}
                                 className="bg-[#111] border border-white/10 hover:border-emerald-500/50 text-white px-3 py-2 rounded-xl transition-all group flex items-center gap-2 h-10 shadow-xl"
                             >
                                 <RefreshCcw size={16} className={cn("text-emerald-500 transition-transform group-hover:rotate-180", loading && "animate-spin")} />
@@ -466,7 +483,7 @@ export default function UserManagementPage() {
                                             No users found matching your search.
                                         </td>
                                     </tr>
-                                ) : filteredUsers.slice(0, users.length).map((u) => (
+                                ) : filteredUsers.map((u) => (
                                     <tr key={u.id} className={cn(
                                         "hover:bg-white/2 transition-colors group",
                                         selectedIds.includes(u.id) && "bg-white/5"

@@ -100,7 +100,7 @@ const GamingPulse = React.memo(({ scrollProgress, isMobile }: { scrollProgress: 
                 )}
 
                 {/* Energy Sparks */}
-                {sparks.map((s) => (
+                {mounted && sparks.map((s) => (
                     <motion.div
                         key={`spark-${s.id}`}
                         className="absolute w-[1.5px] h-[1.5px] bg-white rounded-full shadow-[0_0_10px_white]"

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useApp } from '@/context/AppContext'
 import {
     Search,
@@ -113,6 +113,15 @@ export default function ParticipantsManagementPage() {
                     updateAdminCache('totalInternalRegs', data.internalCount || 0)
                     updateAdminCache('totalExternalRegs', data.externalCount || 0)
                     updateAdminCache('totalParticipants', data.totalParticipants || 0)
+
+                    // Refresh global stats too
+                    const sRes = await fetch(`/api/admin/stats?_t=${Date.now()}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (sRes.ok) {
+                        const sData = await sRes.json();
+                        updateAdminCache('stats', sData.stats);
+                    }
                 }
             }
         } catch (error) {
@@ -146,21 +155,23 @@ export default function ParticipantsManagementPage() {
         setExpandedIds(newSet);
     }
 
+    const isInitialMountRef = useRef(true)
+
     // Fetch on filter change
     useEffect(() => {
-        if (isInitialMount && registrations.length > 0) {
-            setIsInitialMount(false);
+        // Skip initial fetch if cache is already present
+        if (isInitialMountRef.current && adminCache.registrations) {
+            isInitialMountRef.current = false;
             return;
         }
         fetchRegistrations(selectedEventId, false)
         if (events.length === 0) fetchEvents()
-        setIsInitialMount(false);
+        isInitialMountRef.current = false;
     }, [selectedEventId, studentType])
 
     // Global Search with debounce
     useEffect(() => {
-        if (isInitialMount) return;
-        if (!searchQuery && registrations.length > 0) return;
+        if (isInitialMountRef.current) return;
         const timer = setTimeout(() => {
             fetchRegistrations(selectedEventId, false)
         }, 500)
@@ -258,7 +269,10 @@ export default function ParticipantsManagementPage() {
 
                         <div className="ml-auto flex items-center gap-2">
                             <button
-                                onClick={() => fetchRegistrations(selectedEventId, false)}
+                                onClick={() => {
+                                    setLastId(null)
+                                    fetchRegistrations(selectedEventId, false)
+                                }}
                                 className="bg-[#111] border border-white/10 hover:border-emerald-500/50 text-white px-3 md:px-5 py-2 rounded-xl transition-all group flex items-center gap-2 shadow-xl"
                             >
                                 <RefreshCcw size={16} className={cn("text-emerald-500 transition-transform group-hover:rotate-180", loading && "animate-spin")} />

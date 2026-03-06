@@ -86,6 +86,10 @@ interface AppContextType {
         totalInternalRegs?: number;
         totalExternalRegs?: number;
         totalParticipants?: number;
+        totalParticipantsPaid?: number;
+        uniqueExternalParticipantsAcrossEvents?: number;
+        categoryBreakdown?: Record<string, { totalTeams: number, internal: number, external: number, totalParticipants: number }>;
+        collegeDistribution?: { name: string, count: number }[];
         attendance?: any[];
         eventAttendanceMap?: Record<string, any[]>;
         eventRegMap?: Record<string, any[]>;

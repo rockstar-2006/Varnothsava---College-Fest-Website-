@@ -173,16 +173,20 @@ export async function GET(request: NextRequest) {
             ...doc.data()
         }));
 
-        let countForResponse = s.totalPaymentsCount || s.totalVerifiedPayments || 0;
+        // Live Accurate Count for the specific filters applied
+        let totalCount = 0;
         if (search) {
-            countForResponse = payments.length;
+            totalCount = payments.length;
+        } else {
+            const countSnap = await paymentsQuery.count().get();
+            totalCount = countSnap.data().count;
         }
 
         const enriched = await enrichPaymentsArray(payments);
 
         return NextResponse.json({
             payments: enriched,
-            totalCount: countForResponse,
+            totalCount: totalCount,
             lastId: snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1].id : null,
             hasMore: snapshot.docs.length === limit
         });
@@ -216,6 +220,8 @@ async function enrichPaymentsArray(payments: any[]) {
             college.includes('SMVITM') ||
             college.includes('SODE') ||
             college.includes('SHRI MADHWA VADIRAJA') ||
+            college.includes('SHRI MADHWA') ||
+            college.includes('VADIRAJA') ||
             email.endsWith('@sode-edu.in');
 
         return {

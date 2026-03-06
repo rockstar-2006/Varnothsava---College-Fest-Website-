@@ -76,6 +76,7 @@ export default function PaymentsManagementPage() {
     const [visibleCount, setVisibleCount] = useState(20)
     const [updatingId, setUpdatingId] = useState<string | null>(null)
     const [totalPaidPeople, setTotalPaidPeople] = useState<number | null>(adminCache.totalVerifiedPayments || null)
+    const [totalPaidParticipants, setTotalPaidParticipants] = useState<number | null>(adminCache.totalParticipantsPaid || null)
     const [loadingTotal, setLoadingTotal] = useState(false)
     const [hasMore, setHasMore] = useState(false)
     const [totalPaymentsCount, setTotalPaymentsCount] = useState(adminCache.totalPaymentsCount || 0)
@@ -104,6 +105,7 @@ export default function PaymentsManagementPage() {
             let url = `/api/admin/payments?lastId=${currentLastId}&limit=20&search=${encodeURIComponent(searchQuery)}&_t=${Date.now()}`
             if (selectedEventId !== 'all') url += `&eventId=${selectedEventId}`
             if (selectedStatus !== 'all') url += `&status=${selectedStatus}`
+            if (selectedType !== 'all') url += `&studentType=${selectedType}`
 
             const res = await fetch(url, {
                 headers: {
@@ -120,6 +122,17 @@ export default function PaymentsManagementPage() {
                 setTotalPaymentsCount(data.totalCount)
                 updateAdminCache('payments', newPayments)
                 updateAdminCache('totalPaymentsCount', data.totalCount)
+
+                if (!isLoadMore) {
+                    // Refresh global stats too
+                    const sRes = await fetch(`/api/admin/stats?_t=${Date.now()}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (sRes.ok) {
+                        const sData = await sRes.json();
+                        updateAdminCache('stats', sData.stats);
+                    }
+                }
             }
         } catch (error) {
             console.error("Failed to fetch payments:", error)
@@ -138,12 +151,24 @@ export default function PaymentsManagementPage() {
             const data = await res.json()
             if (res.ok) {
                 setTotalPaidPeople(data.totalPayments)
+                setTotalPaidParticipants(data.totalParticipantsPaid)
                 setTotalRevenue(data.totalAmount)
                 setTotalPaymentsCount(data.transactionCount)
 
                 updateAdminCache('totalVerifiedPayments', data.totalPayments)
+                updateAdminCache('totalParticipantsPaid', data.totalParticipantsPaid)
                 updateAdminCache('totalRevenue', data.totalAmount)
                 updateAdminCache('totalPaymentsCount', data.transactionCount)
+
+                // Refresh global stats too
+                const sRes = await fetch(`/api/admin/stats?_t=${Date.now()}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (sRes.ok) {
+                    const sData = await sRes.json();
+                    updateAdminCache('stats', sData.stats);
+                    if (sData.stats.paidParticipants) setTotalPaidParticipants(sData.stats.paidParticipants)
+                }
             }
         } catch (error) {
             console.error("Failed to fetch total amount:", error)
@@ -168,16 +193,23 @@ export default function PaymentsManagementPage() {
         }
     }
 
-    // Fetch on filter change
+    const isInitialMount = useRef(true)
+
+    // Fetch on filter change - selectedType is server-side for accurate counts
     useEffect(() => {
-        if (payments.length === 0 || selectedStatus !== 'all' || selectedEventId !== 'all') {
-            fetchPayments(false)
+        // Skip initial fetch if cache is already present
+        if (isInitialMount.current && adminCache.payments) {
+            isInitialMount.current = false;
+            return;
         }
+        fetchPayments(false)
+        if (events.length === 0) fetchEvents()
+        isInitialMount.current = false;
     }, [selectedStatus, selectedEventId, selectedType])
 
     // Fetch on search with debounce
     useEffect(() => {
-        if (!searchQuery && payments.length > 0) return;
+        if (isInitialMount.current) return;
         const timer = setTimeout(() => {
             fetchPayments(false)
         }, 500)
@@ -312,74 +344,82 @@ export default function PaymentsManagementPage() {
         <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'FINANCE', 'COORDINATOR']}>
             <div className="space-y-6">
                 {/* Header */}
-                <div className="flex flex-col gap-3">
-                    <div>
-                        <h1 className="text-xl md:text-2xl font-bold text-white">Payments Management</h1>
-                        <p className="text-gray-400 text-sm">{totalPaymentsCount} payment logs</p>
-                    </div>
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-xl md:text-2xl font-black text-white uppercase italic tracking-tighter">Payments Management</h1>
+                    <p className="text-gray-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                        <CreditCard size={14} className="text-blue-500/50" />
+                        {totalPaidPeople || 0} people paid · {totalPaymentsCount} payment logs
+                    </p>
+                </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                    <AnimatePresence>
+                        {selectedIds.length > 0 && userData?.role === 'SUPER_ADMIN' && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.9 }}
+                                className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-full"
+                            >
+                                <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">{selectedIds.length} Selected</span>
+                                <button onClick={handleBulkDelete} className="bg-red-500 text-white text-[10px] font-black uppercase tracking-tighter px-2 py-1 rounded-full hover:bg-red-600 transition-colors flex items-center gap-1">
+                                    <Trash2 size={10} /> Delete
+                                </button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    <div className="ml-auto flex items-center gap-2 flex-wrap">
                         <AnimatePresence>
-                            {selectedIds.length > 0 && userData?.role === 'SUPER_ADMIN' && (
+                            {totalPaidPeople !== null && (
                                 <motion.div
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.9 }}
-                                    className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-full"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    className="bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-xl flex items-center gap-3"
                                 >
-                                    <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">{selectedIds.length} Selected</span>
-                                    <button onClick={handleBulkDelete} className="bg-red-500 text-white text-[10px] font-black uppercase tracking-tighter px-2 py-1 rounded-full hover:bg-red-600 transition-colors flex items-center gap-1">
-                                        <Trash2 size={10} /> Delete
-                                    </button>
+                                    <div>
+                                        <p className="text-[8px] font-black uppercase tracking-tighter text-blue-500 leading-none mb-0.5">Revenue</p>
+                                        <p className="text-sm font-black text-white italic">₹{totalRevenue?.toLocaleString()}</p>
+                                    </div>
+                                    <div className="border-l border-white/10 pl-3">
+                                        <p className="text-[8px] font-black uppercase tracking-tighter text-blue-500 leading-none mb-0.5">Paid</p>
+                                        <p className="text-sm font-black text-white italic">{totalPaidPeople}</p>
+                                    </div>
+                                    <div className="border-l border-white/10 pl-3">
+                                        <p className="text-[8px] font-black uppercase tracking-tighter text-blue-500 leading-none mb-0.5">People</p>
+                                        <p className="text-sm font-black text-white italic">{totalPaidParticipants}</p>
+                                    </div>
                                 </motion.div>
                             )}
                         </AnimatePresence>
 
-                        <div className="ml-auto flex items-center gap-2 flex-wrap">
-                            <AnimatePresence>
-                                {totalPaidPeople !== null && (
-                                    <motion.div
-                                        initial={{ opacity: 0, x: 20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        className="bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-xl flex items-center gap-3"
-                                    >
-                                        <div>
-                                            <p className="text-[8px] font-black uppercase tracking-tighter text-blue-500 leading-none mb-0.5">Revenue</p>
-                                            <p className="text-sm font-black text-white italic">₹{totalRevenue?.toLocaleString()}</p>
-                                        </div>
-                                        <div className="border-l border-white/10 pl-3">
-                                            <p className="text-[8px] font-black uppercase tracking-tighter text-blue-500 leading-none mb-0.5">Paid</p>
-                                            <p className="text-sm font-black text-white italic">{totalPaidPeople}</p>
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-
-                            {(userData?.role === 'SUPER_ADMIN' || userData?.role === 'FINANCE') && (
-                                <button onClick={fetchTotalAmount} disabled={loadingTotal}
-                                    className="bg-[#111] border border-white/10 hover:border-blue-500/50 text-white px-3 py-2 rounded-xl transition-all group flex items-center gap-2 h-10"
-                                >
-                                    <CreditCard size={16} className={cn("text-blue-500", loadingTotal && "animate-spin")} />
-                                    <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Total</span>
-                                </button>
-                            )}
-
-                            <button onClick={() => fetchPayments(false)}
-                                className="bg-[#111] border border-white/10 hover:border-emerald-500/50 text-white px-3 py-2 rounded-xl transition-all group flex items-center gap-2 h-10"
+                        {(userData?.role === 'SUPER_ADMIN' || userData?.role === 'FINANCE') && (
+                            <button onClick={fetchTotalAmount} disabled={loadingTotal}
+                                className="bg-[#111] border border-white/10 hover:border-blue-500/50 text-white px-3 py-2 rounded-xl transition-all group flex items-center gap-2 h-10"
                             >
-                                <RefreshCcw size={16} className={cn("text-emerald-500 transition-transform group-hover:rotate-180", loading && "animate-spin")} />
-                                <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Sync</span>
+                                <CreditCard size={16} className={cn("text-blue-500", loadingTotal && "animate-spin")} />
+                                <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Total</span>
                             </button>
+                        )}
 
-                            {userData?.role === 'SUPER_ADMIN' && (
-                                <button onClick={() => fetchAndDownload('payments', `Payments_${selectedStatus}_${selectedEventId}`, getAuthToken, { eventId: selectedEventId, status: selectedStatus })}
-                                    className="bg-blue-500/10 border border-blue-500/20 hover:border-blue-500/50 text-blue-500 px-3 py-2 rounded-xl transition-all group flex items-center gap-2 h-10"
-                                >
-                                    <FileSpreadsheet size={16} />
-                                    <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Export</span>
-                                </button>
-                            )}
-                        </div>
+                        <button onClick={() => {
+                            setLastId(null)
+                            fetchPayments(false)
+                        }}
+                            className="bg-[#111] border border-white/10 hover:border-emerald-500/50 text-white px-3 py-2 rounded-xl transition-all group flex items-center gap-2 h-10"
+                        >
+                            <RefreshCcw size={16} className={cn("text-emerald-500 transition-transform group-hover:rotate-180", loading && "animate-spin")} />
+                            <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Sync</span>
+                        </button>
+
+                        {userData?.role === 'SUPER_ADMIN' && (
+                            <button onClick={() => fetchAndDownload('payments', `Payments_${selectedStatus}_${selectedEventId}`, getAuthToken, { eventId: selectedEventId, status: selectedStatus })}
+                                className="bg-blue-500/10 border border-blue-500/20 hover:border-blue-500/50 text-blue-500 px-3 py-2 rounded-xl transition-all group flex items-center gap-2 h-10"
+                            >
+                                <FileSpreadsheet size={16} />
+                                <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Export</span>
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -526,7 +566,7 @@ export default function PaymentsManagementPage() {
                                             No transactions found matching your criteria.
                                         </td>
                                     </tr>
-                                ) : filteredPayments.slice(0, payments.length).map((payment) => (
+                                ) : filteredPayments.map((payment) => (
                                     <tr key={payment.id} className={cn(
                                         "hover:bg-white/2 transition-colors group",
                                         selectedIds.includes(payment.id) && "bg-white/5"

@@ -13,7 +13,7 @@ export function ContactNavbar() {
     const pathname = usePathname()
     const { pageTheme, isAdmin } = useApp()
 
-    const labels = ["MENU", "CONTACT", "TEAM"]
+    const labels = ["MENU", "CONTACT", "SPONSORS", "TEAM"]
 
     // Auto-close on path change
     useEffect(() => {
@@ -142,7 +142,22 @@ export function ContactNavbar() {
                             Contact
                         </Link>
 
-                        <div className="w-full h-[1px] bg-white/10 sm:w-1.5 sm:h-1.5 sm:rounded-full sm:bg-white/50 sm:my-0 my-1" style={{ boxShadow: `0 0 4px ${themeColor}40` }} />
+                        <div className="w-full h-px bg-white/10 sm:w-1.5 sm:h-1.5 sm:rounded-full sm:bg-white/50 sm:my-0 my-1" style={{ boxShadow: `0 0 4px ${themeColor}40` }} />
+
+                        <Link
+                            href="/sponsors"
+                            className="text-[15px] sm:text-sm font-extrabold tracking-[0.18em] text-white/90 hover:text-white transition-all duration-150 uppercase text-center hover:scale-[1.04] active:scale-95"
+                            style={{
+                                color: themeColor,
+                                textShadow: `0 0 10px ${themeColor}70, 0 0 2px #000`,
+                                letterSpacing: '0.18em',
+                            }}
+                            onClick={() => setIsOpen(false)}
+                        >
+                            Sponsors
+                        </Link>
+
+                        <div className="w-full h-px bg-white/10 sm:w-1.5 sm:h-1.5 sm:rounded-full sm:bg-white/50 sm:my-0 my-1" style={{ boxShadow: `0 0 4px ${themeColor}40` }} />
 
                         <Link
                             href="/developers"

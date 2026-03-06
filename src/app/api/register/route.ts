@@ -75,7 +75,9 @@ export async function POST(request: NextRequest) {
         const isInternal = email.endsWith('@sode-edu.in') ||
             nCollege.includes('SMVITM') ||
             nCollege.includes('SODE') ||
-            nCollege.includes('SHRI MADHWA VADIRAJA');
+            nCollege.includes('SHRI MADHWA VADIRAJA') ||
+            nCollege.includes('SHRI MADHWA') ||
+            nCollege.includes('VADIRAJA');
 
         const studentType = isInternal ? 'internal' : 'external';
 
