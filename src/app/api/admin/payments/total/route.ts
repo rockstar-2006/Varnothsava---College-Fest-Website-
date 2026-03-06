@@ -56,16 +56,19 @@ export async function GET(request: NextRequest) {
         allCapturedPayments.docs.forEach((doc: any) => uniquePaidUserIds.add(doc.data().user_id));
         const totalPaidPeople = uniquePaidUserIds.size;
 
-        // Calculate Headcount for Paid People (Sum of members in paid teams) in scoped regs
+        // Calculate unique Headcount for Paid People (Unique leaders and members in paid teams) in scoped regs
         const allRegs = await regQuery.select('teamLeader', 'members').get();
-        let participantPaidHeadcount = 0;
+        const uniquePaidParticipants = new Set<string>();
         allRegs.docs.forEach((doc: any) => {
             const data = doc.data();
             if (data.teamLeader && uniquePaidUserIds.has(data.teamLeader)) {
-                participantPaidHeadcount += 1;
-                if (data.members) participantPaidHeadcount += data.members.length;
+                uniquePaidParticipants.add(data.teamLeader);
+                if (data.members && Array.isArray(data.members)) {
+                    data.members.forEach((m: string) => uniquePaidParticipants.add(m));
+                }
             }
         });
+        const participantPaidHeadcount = uniquePaidParticipants.size;
 
         // Only sync to global stats doc if it's a full summary (SUPER_ADMIN or FINANCE)
         if (adminRole === 'SUPER_ADMIN' || adminRole === 'FINANCE') {

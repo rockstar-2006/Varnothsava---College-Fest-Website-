@@ -155,23 +155,28 @@ export default function ParticipantsManagementPage() {
         setExpandedIds(newSet);
     }
 
-    const isInitialMountRef = useRef(true)
+    const isFirstMountFilter = useRef(true)
+    const isFirstMountSearch = useRef(true)
 
     // Fetch on filter change
     useEffect(() => {
         // Skip initial fetch if cache is already present
-        if (isInitialMountRef.current && adminCache.registrations) {
-            isInitialMountRef.current = false;
-            return;
+        if (isFirstMountFilter.current) {
+            isFirstMountFilter.current = false;
+            if (adminCache.registrations && adminCache.registrations.length > 0) {
+                return;
+            }
         }
         fetchRegistrations(selectedEventId, false)
-        if (events.length === 0) fetchEvents()
-        isInitialMountRef.current = false;
+        if (events.length === 0 && !adminCache.events) fetchEvents()
     }, [selectedEventId, studentType])
 
     // Global Search with debounce
     useEffect(() => {
-        if (isInitialMountRef.current) return;
+        if (isFirstMountSearch.current) {
+            isFirstMountSearch.current = false;
+            return;
+        }
         const timer = setTimeout(() => {
             fetchRegistrations(selectedEventId, false)
         }, 500)
@@ -192,9 +197,13 @@ export default function ParticipantsManagementPage() {
             })
 
             if (res.ok) {
-                setRegistrations(prev => prev.map(reg =>
-                    reg.id === id ? { ...reg, status } : reg
-                ))
+                setRegistrations(prev => {
+                    const newRegs = prev.map(reg =>
+                        reg.id === id ? { ...reg, status } : reg
+                    );
+                    updateAdminCache('registrations', newRegs);
+                    return newRegs;
+                })
             } else {
                 const data = await res.json()
                 alert(data.message || "Failed to update status")
@@ -233,7 +242,9 @@ export default function ParticipantsManagementPage() {
                         <h1 className="text-xl md:text-2xl font-bold text-white uppercase tracking-tighter italic">REGISTRATIONS</h1>
                         <p className="text-gray-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
                             <FileText size={14} className="text-emerald-500/50" />
-                            {selectedEventId === 'all' ? `${totalRegCount} teams · ${totalParticipants} participants` : `Signals for selected sector`}
+                            {selectedEventId === 'all'
+                                ? `${totalRegCount} Total Teams · ${totalParticipants} Participants`
+                                : `${totalRegCount} Registered Teams · ${totalParticipants} Participants`}
                         </p>
                     </div>
 

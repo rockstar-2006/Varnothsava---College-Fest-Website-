@@ -193,23 +193,28 @@ export default function PaymentsManagementPage() {
         }
     }
 
-    const isInitialMount = useRef(true)
+    const isFirstMountFilter = useRef(true)
+    const isFirstMountSearch = useRef(true)
 
     // Fetch on filter change - selectedType is server-side for accurate counts
     useEffect(() => {
         // Skip initial fetch if cache is already present
-        if (isInitialMount.current && adminCache.payments) {
-            isInitialMount.current = false;
-            return;
+        if (isFirstMountFilter.current) {
+            isFirstMountFilter.current = false;
+            if (adminCache.payments && adminCache.payments.length > 0) {
+                return;
+            }
         }
         fetchPayments(false)
-        if (events.length === 0) fetchEvents()
-        isInitialMount.current = false;
+        if (events.length === 0 && !adminCache.events) fetchEvents()
     }, [selectedStatus, selectedEventId, selectedType])
 
     // Fetch on search with debounce
     useEffect(() => {
-        if (isInitialMount.current) return;
+        if (isFirstMountSearch.current) {
+            isFirstMountSearch.current = false;
+            return;
+        }
         const timer = setTimeout(() => {
             fetchPayments(false)
         }, 500)
@@ -230,9 +235,13 @@ export default function PaymentsManagementPage() {
             })
 
             if (res.ok) {
-                setPayments(prev => prev.map(p =>
-                    p.id === id ? { ...p, notes: { ...p.notes, verification_status: status } } : p
-                ))
+                setPayments(prev => {
+                    const newPayments = prev.map(p =>
+                        p.id === id ? { ...p, notes: { ...p.notes, verification_status: status } } : p
+                    );
+                    updateAdminCache('payments', newPayments);
+                    return newPayments;
+                })
             } else {
                 const data = await res.json()
                 alert(data.message || "Failed to update verification")
@@ -259,7 +268,11 @@ export default function PaymentsManagementPage() {
             })
 
             if (res.ok) {
-                setPayments(prev => prev.filter(p => p.id !== id))
+                setPayments(prev => {
+                    const newPayments = prev.filter(p => p.id !== id);
+                    updateAdminCache('payments', newPayments);
+                    return newPayments;
+                });
             } else {
                 const data = await res.json()
                 alert(data.message || "Failed to delete payment")
@@ -384,10 +397,6 @@ export default function PaymentsManagementPage() {
                                     <div className="border-l border-white/10 pl-3">
                                         <p className="text-[8px] font-black uppercase tracking-tighter text-blue-500 leading-none mb-0.5">Paid</p>
                                         <p className="text-sm font-black text-white italic">{totalPaidPeople}</p>
-                                    </div>
-                                    <div className="border-l border-white/10 pl-3">
-                                        <p className="text-[8px] font-black uppercase tracking-tighter text-blue-500 leading-none mb-0.5">People</p>
-                                        <p className="text-sm font-black text-white italic">{totalPaidParticipants}</p>
                                     </div>
                                 </motion.div>
                             )}
