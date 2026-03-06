@@ -1,96 +1,75 @@
-"use client";
+'use client'
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Hotel } from "lucide-react";
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Hotel } from 'lucide-react'
 
 const ACCOMMODATION_URL = 'https://forms.gle/8hxLvddT7a9GuARm6'
-const LABELS = ["BOOK NOW", "ACCOMMODATION", "CLICK HERE"];
+const ACCOM_LABELS = ["BOOK NOW", "STAY", "ROOMS"]
 
-export function AccommodationButton() {
-  const [labelIndex, setLabelIndex] = useState(0);
-  const [visible, setVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+interface AccommodationButtonProps {
+    isMobile: boolean
+    themeRgb: string
+}
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setLabelIndex((prev) => (prev + 1) % LABELS.length);
-    }, 2500);
-    return () => clearInterval(timer);
-  }, []);
+export function AccommodationButton({ isMobile, themeRgb }: AccommodationButtonProps) {
+    const [accomLabelIndex, setAccomLabelIndex] = useState(0)
 
-  // Hide with navbar on scroll down
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > lastScrollY && window.scrollY > 100) {
-        setVisible(false); // scrolling down
-      } else {
-        setVisible(true); // scrolling up
-      }
-      setLastScrollY(window.scrollY);
-    };
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setAccomLabelIndex((prev) => (prev + 1) % ACCOM_LABELS.length)
+        }, 2500)
+        return () => clearInterval(timer)
+    }, [])
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY]);
-
-  return (
-    <AnimatePresence>
-      {visible && (
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 30 }}
-          className="fixed bottom-30 md:bottom-9 left-6 z-9999 flex items-center pointer-events-none"
-        >
-          {/* FAB */}
-          <motion.a
-            href={ACCOMMODATION_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.94 }}
-            className="relative w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-[#0a0a0a] border border-emerald-500/30 shadow-[0_8px_32px_rgba(0,0,0,0.6)] flex items-center justify-center hover:border-emerald-500/60 transition-all duration-300 group pointer-events-auto"
-          >
-            <motion.span
-              animate={{ scale: [1, 1.8], opacity: [0.6, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-              className="absolute inset-0 rounded-full border-2 border-emerald-500"
-            />
-
-            <Hotel className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400 relative z-10" />
-          </motion.a>
-
-          {/* Label */}
-          <AnimatePresence mode="wait">
+    return (
+        <div className="absolute left-0 bottom-[110px] md:bottom-[-20px] md:left-[-110px] xl:left-[-130px] flex flex-col items-center gap-3 pointer-events-auto z-40">
+            {/* Hint label */}
             <motion.div
-              key={LABELS[labelIndex]}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 10 }}
-              transition={{ duration: 0.3 }}
-              className="flex items-center gap-2 sm:gap-3 pointer-events-none"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="hidden xl:block px-4 py-2 bg-black/60 backdrop-blur-3xl border border-[rgba(var(--theme-rgb),0.2)] rounded-2xl shadow-2xl relative"
             >
-              <div
-                className="h-px w-6 sm:w-8"
-                style={{
-                  backgroundColor: "#10b981",
-                  boxShadow: "0 0 5px #10b981",
-                }}
-              />
-              <span
-                className="font-black tracking-[0.2em] uppercase text-[10px] sm:text-xs font-mono"
-                style={{
-                  color: "#10b981",
-                  textShadow: "0 0 10px rgba(16,185,129,0.8)",
-                }}
-              >
-                {LABELS[labelIndex]}
-              </span>
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-black/60 border-r border-b border-[rgba(var(--theme-rgb),0.2)] rotate-45" />
+                <div className="flex flex-col items-center">
+                    <AnimatePresence mode="wait">
+                        <motion.span
+                            key={ACCOM_LABELS[accomLabelIndex]}
+                            initial={{ opacity: 0, y: 4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -4 }}
+                            transition={{ duration: 0.25 }}
+                            className="text-[rgb(var(--theme-rgb))] text-[10px] font-black tracking-[0.2em] uppercase"
+                        >
+                            {ACCOM_LABELS[accomLabelIndex]}
+                        </motion.span>
+                    </AnimatePresence>
+                    <span className="text-white/40 text-[8px] font-medium uppercase tracking-widest whitespace-nowrap">Accommodation</span>
+                </div>
             </motion.div>
-          </AnimatePresence>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
+
+            {/* Button */}
+            <a
+                href={ACCOMMODATION_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block relative group"
+                aria-label="Book Accommodation"
+            >
+                <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="p-4 md:p-5 bg-black/60 backdrop-blur-3xl border border-[rgba(var(--theme-rgb),0.3)] rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden relative"
+                >
+                    <Hotel size={isMobile ? 22 : 24} className="text-[rgb(var(--theme-rgb))]" />
+                    <span className="absolute top-2 right-2 w-4 h-4 bg-emerald-500 rounded-full border-2 border-[#050805] animate-bounce shadow-[0_0_10px_rgba(16,185,129,0.8)]" />
+                </motion.div>
+
+                {/* Mobile label */}
+                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 xl:hidden whitespace-nowrap">
+                    <span className="text-[rgb(var(--theme-rgb))] text-[8px] font-black uppercase tracking-widest opacity-80 bg-black/20 px-2 py-0.5 rounded-full">Stay</span>
+                </div>
+            </a>
+        </div>
+    )
 }
