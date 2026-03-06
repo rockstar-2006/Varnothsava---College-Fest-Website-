@@ -6,7 +6,7 @@ import Tilt from 'react-parallax-tilt'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { CheckCircle2, UserPlus, Loader2, MessageCircle } from 'lucide-react'
-import { Event } from '@/data/missions'
+import { Event, missions } from '@/data/missions'
 
 export interface ThemeConfig {
     primary: string
@@ -304,19 +304,13 @@ export const MissionCard = memo(({
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent " />
                 </div>
 
-                <div
-                    className={`px-6 z-10 w-full mt-auto mb-4
-  ${event.type === 'Technical'
-                            ? 'grid grid-cols-3 items-center gap-4 border-y border-white/5 py-3 bg-white/[0.02] overflow-hidden'
-                            : 'flex justify-between items-center'
-                        }`}
-                >
+                <div className="px-6 z-10 w-full mt-auto mb-4 flex justify-between items-center">
                     <div className="flex flex-col gap-0.5"><span className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">DATE</span><span className="text-sm font-extrabold text-white tracking-wide whitespace-nowrap">
                         {event.date}
                     </span>
                     </div>
                     <div className="flex flex-col gap-0.5 items-center"><span className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">GROUP</span><span className="text-xs font-extrabold text-white uppercase truncate w-full text-center tracking-tight">{event.teamFormate || 'SOLO'}</span></div>
-                    <div className="flex flex-col items-end gap-0.5"><span className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">TIME</span><span className="text-sm text-white font-black italic tracking-tighter">{'TBA'}</span></div>
+                    <div className="flex flex-col items-end gap-0.5"><span className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">TIME</span><span className="text-sm text-white font-black italic tracking-tighter">{event.time || 'TBA'}</span></div>
                 </div>
 
                 <div className={`px-8 pb-8 z-20 w-full mt-auto`}>
