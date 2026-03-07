@@ -60,17 +60,17 @@ export default function BusinessCarnivalPage() {
     if (!isMounted) return null
 
     const handleRegisterClick = (event: Event) => {
-    if (!isLoggedIn) {
-        router.push('/login')
-        return
+        if (!isLoggedIn) {
+            router.push('/login')
+            return
+        }
+        if (!userData?.hasPaid) {
+            router.push('/notify');
+            return
+        }
+        setSelectedEvent(event)
+        setIsRegModalOpen(true)  // Opens modal for team/member details
     }
-    if (!userData?.hasPaid) {
-        router.push('/notify');
-        return
-    }
-    setSelectedEvent(event)
-    setIsRegModalOpen(true)  // Opens modal for team/member details
-}
 
     return (
         <main className="min-h-screen relative bg-black text-white">
