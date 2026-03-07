@@ -27,6 +27,7 @@ import ProEventBackground from '@/components/ui/ProEventBackground'
 import { MissionCard } from '@/components/ui/MissionCard'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
+import { RegistrationModal } from '@/components/ui/RegistrationModal'
 
 // Helper to get theme
 const getTheme = (type: string) => {
@@ -143,10 +144,11 @@ const TechContentCard = ({ children, theme }: any) => {
 export default function EventDetailsPage() {
     const { id } = useParams()
     const router = useRouter()
-    const { userData, addToCart, cart, isAdmin } = useApp()
+    const { userData, addToCart, cart, isAdmin, registerMission } = useApp()
 
     const [mission, setMission] = useState<any | null>(null)
     const [isVideoPlaying, setIsVideoPlaying] = useState(false)
+    const [isRegModalOpen, setIsRegModalOpen] = useState(false)
     const { scrollYProgress } = useScroll()
     // Transform scroll progress to percentage for the progress bar width
     const scrollBarWidth = useTransform(scrollYProgress, [0, 1], ['0%', '100%'])
@@ -179,11 +181,23 @@ export default function EventDetailsPage() {
                 router.push('/notify?addon=robo-soccer');
                 return
             }
-        } else if (!userData?.hasPaid) {
+        } else if (!isAdded && !userData?.hasPaid) {
             router.push('/notify');
 
             return
         }
+
+        setIsRegModalOpen(true)
+    }
+
+    const handleConfirmRegistration = async (data: { teamName: string, members: string[] }) => {
+        const result = await registerMission(mission.id, data.teamName, data.members)
+
+        if (result.success) {
+            console.log(`Successfully registered: ${result.registrationId}`)
+        }
+
+        return result
     }
     const formatForWhatsApp = (phone: string) => {
         return phone.replace(/\D/g, '') // removes +, spaces, hyphens
@@ -635,7 +649,7 @@ export default function EventDetailsPage() {
                     <TechStatCard
                         icon={MapPin}
                         label="LOCATION"
-                        value={mission.location}
+                        value={mission.location || 'VENUE_TBA'}
                         theme={twTheme}
                     />
 
@@ -656,6 +670,16 @@ export default function EventDetailsPage() {
 
             {/* Custom Bottom Border / Footer Glimpse */}
             <div className={`fixed bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-${twTheme}-500/50 to-transparent opacity-50`} />
+
+            {userData && mission && (
+                <RegistrationModal
+                    isOpen={isRegModalOpen}
+                    onClose={() => setIsRegModalOpen(false)}
+                    event={mission}
+                    userData={userData}
+                    onConfirm={handleConfirmRegistration}
+                />
+            )}
         </main>
     )
 }

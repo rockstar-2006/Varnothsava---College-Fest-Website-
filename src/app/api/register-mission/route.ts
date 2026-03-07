@@ -76,10 +76,26 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ message: "Team leader must be included in the members list." }, { status: 400 });
         }
 
-        // Find team leader's student type for stats
+        // Find team leader's student type for stats (compute from source data, not just stored field)
         const leaderDoc = await usersCollection.doc(verified.uid).get();
         const leaderData = leaderDoc.data();
-        const leaderType = leaderData?.studentType || 'external';
+
+        // Compute leaderType from actual source data for accuracy
+        const leaderCollege = (leaderData?.collegeName || leaderData?.college || leaderData?.institution || '').toUpperCase();
+        const leaderEmail = (leaderData?.email || verified.email || '').toLowerCase();
+        const leaderIsInternal =
+            leaderCollege.includes('SMVITM') ||
+            leaderCollege.includes('SODE') ||
+            leaderCollege.includes('SHRI MADHWA VADIRAJA') ||
+            leaderCollege.includes('SHRI MADHWA') ||
+            leaderCollege.includes('VADIRAJA') ||
+            leaderEmail.endsWith('@sode-edu.in');
+        const leaderType = leaderIsInternal ? 'internal' : 'external';
+
+        // Auto-correct stored studentType if it doesn't match computed value
+        if (leaderData?.studentType !== leaderType) {
+            usersCollection.doc(verified.uid).update({ studentType: leaderType }).catch(console.error);
+        }
 
         const registrationData = {
             eventId,

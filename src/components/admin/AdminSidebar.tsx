@@ -36,7 +36,13 @@ const navItems: NavItem[] = [
         label: 'Payments',
         href: '/admin/payments',
         icon: CreditCard,
-        roles: ['SUPER_ADMIN', 'FINANCE', 'COORDINATOR']
+        roles: ['SUPER_ADMIN', 'FINANCE']
+    },
+    {
+        label: 'Attendance',
+        href: '/admin/attendance',
+        icon: CheckSquare,
+        roles: ['SUPER_ADMIN', 'COORDINATOR', 'VOLUNTEER']
     },
     {
         label: 'Events Management',

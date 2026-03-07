@@ -1,5 +1,6 @@
 import { adminDb, fieldValue, usersCollection, verifyAuthToken } from "@/lib/firebaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
+import { getAdminRole } from "@/lib/admin";
 
 export async function GET(request: NextRequest) {
     try {
@@ -14,8 +15,13 @@ export async function GET(request: NextRequest) {
         }
 
         const userDoc = await usersCollection.doc(verified.uid).get();
+        if (!userDoc.exists) {
+            return NextResponse.json({ message: "User profile not found" }, { status: 404 });
+        }
         const userData = userDoc.data();
-        const role = userData?.role;
+
+        // Use getAdminRole for strict blacklist enforcement
+        const { role } = getAdminRole(verified.email || userData?.email);
 
         if (!role || !['SUPER_ADMIN', 'FINANCE'].includes(role)) {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });
@@ -35,17 +41,18 @@ export async function GET(request: NextRequest) {
         let snapshot: any;
 
         if (search) {
-            // MULTI-FIELD SEARCH (Name, Email)
-            // Since Firestore doesn't support OR on prefix match, we run two queries
+            const capitalizedSearchTerm = search.charAt(0).toUpperCase() + search.slice(1);
             const nameQuery = usersCollection.orderBy('name').startAt(search).endAt(search + '\uf8ff').limit(limit).get();
             const emailQuery = usersCollection.orderBy('email').startAt(search.toLowerCase()).endAt(search.toLowerCase() + '\uf8ff').limit(limit).get();
+            const capNameQuery = usersCollection.orderBy('name').startAt(capitalizedSearchTerm).endAt(capitalizedSearchTerm + '\uf8ff').limit(limit).get();
 
-            const [nameSnap, emailSnap] = await Promise.all([nameQuery, emailQuery]);
+            const [nameSnap, emailSnap, capNameSnap] = await Promise.all([nameQuery, emailQuery, capNameQuery]);
 
             // Merge and deduplicate
             const userMap = new Map();
             nameSnap.docs.forEach(d => userMap.set(d.id, { id: d.id, ...d.data() }));
             emailSnap.docs.forEach(d => userMap.set(d.id, { id: d.id, ...d.data() }));
+            capNameSnap.docs.forEach(d => userMap.set(d.id, { id: d.id, ...d.data() }));
 
             users = Array.from(userMap.values());
             snapshot = { docs: nameSnap.docs }; // Dummy for pagination tracking if needed, though search results are usually small
@@ -81,20 +88,46 @@ export async function GET(request: NextRequest) {
         }
 
         // Enrichment & Code-Level Filtering (Source of Truth)
+        const correctionBatch = adminDb.batch();
+        let hasCorrectionsToPush = false;
+
         let filteredUsers = users.map((u: any) => {
-            const college = (u.collegeName || u.college || u.institution || '').toUpperCase();
+            const rawCollege = (u.collegeName || u.college || u.institution || '').toUpperCase();
             const email = (u.email || '').toLowerCase();
-            const isInternal = u.studentType === 'internal' ||
-                college.includes('SMVITM') ||
-                college.includes('SODE') ||
+            const isInternal =
+                rawCollege.includes('SMVITM') ||
+                rawCollege.includes('SODE') ||
+                rawCollege.includes('SHRI MADHWA VADIRAJA') ||
+                rawCollege.includes('SHRI MADHWA') ||
+                rawCollege.includes('VADIRAJA') ||
                 email.endsWith('@sode-edu.in');
+
+            const correctStudentType = isInternal ? 'internal' : (u.studentType || 'external');
+            const needsCollegeNameFix = isInternal && (rawCollege === '' || rawCollege.includes('OUTSIDE') || rawCollege === 'N/A');
+
+            // If the DB value doesn't match, queue a correction
+            if ((u.studentType !== correctStudentType || needsCollegeNameFix) && u.id) {
+                const updates: any = { studentType: correctStudentType };
+                if (needsCollegeNameFix) {
+                    updates.college = 'SMVITM (Bantakal)';
+                    updates.institution = 'SMVITM (Bantakal)'; // Keep both in sync if both exist
+                }
+                correctionBatch.update(usersCollection.doc(u.id), updates);
+                hasCorrectionsToPush = true;
+            }
 
             return {
                 ...u,
-                studentType: isInternal ? 'internal' : 'external',
+                studentType: correctStudentType,
+                college: (isInternal && needsCollegeNameFix) ? 'SMVITM (Bantakal)' : (u.college || u.institution || 'Outside College'),
                 hasPaid: !!u.hasPaid
             };
         });
+
+        // Commit corrections asynchronously to not block the response
+        if (hasCorrectionsToPush) {
+            correctionBatch.commit().catch((e: any) => console.error('[Users] Failed to correct studentType:', e));
+        }
 
         // Apply filters in code if it was a search result (since search bypasses DB filter for indexes)
         if (search && status && status !== 'all') {
@@ -107,13 +140,34 @@ export async function GET(request: NextRequest) {
             });
         }
 
+        // LIVE ACCURATE COUNTS (Fast for <10k users)
+        const [usersSnap, internalSnap, paidSnap] = await Promise.all([
+            usersCollection.count().get(),
+            usersCollection.where('studentType', '==', 'internal').count().get(),
+            usersCollection.where('hasPaid', '==', true).count().get()
+        ]);
+
+        const totalCount = usersSnap.data().count;
+        const paidCount = paidSnap.data().count;
+        const unpaidCount = totalCount - paidCount;
+
+        // Use the DB count for internal (corrections above will fix future queries)
+        // but add any corrections found on this page
+        const dbInternalCount = internalSnap.data().count;
+        const correctedOnPage = filteredUsers.filter((u: any) => u.studentType === 'internal').length;
+        const uncorrectedOnPage = users.filter((u: any) => u.studentType === 'internal').length;
+        const internalCount = dbInternalCount + (correctedOnPage - uncorrectedOnPage);
+        const externalCount = totalCount - Math.max(0, internalCount);
+
+
+
         return NextResponse.json({
             users: filteredUsers,
-            totalCount: s.totalUsers || 0,
-            paidCount: s.paidUsers || 0,
-            unpaidCount: s.unpaidUsers || 0,
-            internalCount: s.internalUsers || 0,
-            externalCount: s.externalUsers || 0,
+            totalCount,
+            paidCount,
+            unpaidCount,
+            internalCount,
+            externalCount,
             lastId: snapshot?.docs && snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1].id : null,
             hasMore: snapshot?.docs ? snapshot.docs.length === limit : false
         });

@@ -54,6 +54,8 @@ export default function UserManagementPage() {
     const [totalUsersCount, setTotalUsersCount] = useState(adminCache.totalUsersCount || 0)
     const [paidUsersCount, setPaidUsersCount] = useState(adminCache.paidUsersCount || 0)
     const [unpaidUsersCount, setUnpaidUsersCount] = useState(adminCache.unpaidUsersCount || 0)
+    const [internalUsersCount, setInternalUsersCount] = useState(adminCache.internalUsersCount || 0)
+    const [externalUsersCount, setExternalUsersCount] = useState(adminCache.externalUsersCount || 0)
     const [lastId, setLastId] = useState<string | null>(null)
 
     const toggleSelect = (id: string) => {
@@ -87,10 +89,23 @@ export default function UserManagementPage() {
                 setTotalUsersCount(data.totalCount)
                 setPaidUsersCount(data.paidCount)
                 setUnpaidUsersCount(data.unpaidCount)
+                setInternalUsersCount(data.internalCount)
+                setExternalUsersCount(data.externalCount)
                 updateAdminCache('users', newUsers)
                 updateAdminCache('totalUsersCount', data.totalCount)
                 updateAdminCache('paidUsersCount', data.paidCount)
                 updateAdminCache('unpaidUsersCount', data.unpaidCount)
+                updateAdminCache('internalUsersCount', data.internalCount)
+                updateAdminCache('externalUsersCount', data.externalCount)
+
+                // Refresh global stats too
+                const sRes = await fetch(`/api/admin/stats?_t=${Date.now()}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (sRes.ok) {
+                    const sData = await sRes.json();
+                    updateAdminCache('stats', sData.stats);
+                }
             }
         } catch (error) {
             console.error("Failed to fetch users:", error)
@@ -118,18 +133,28 @@ export default function UserManagementPage() {
         }
     }
 
+    const isFirstMountFilter = useRef(true)
+    const isFirstMountSearch = useRef(true)
+
     // Sync button is now the only trigger for fresh directory data
     // Fetch on filter change
     useEffect(() => {
-        // ONLY auto-fetch if we change filters OR if the cache is empty
-        if (users.length === 0 || paymentFilter !== 'all') {
-            fetchUsers(false)
+        // Skip initial fetch if cache is already present
+        if (isFirstMountFilter.current) {
+            isFirstMountFilter.current = false;
+            if (adminCache.users && adminCache.users.length > 0) {
+                return;
+            }
         }
+        fetchUsers(false)
     }, [paymentFilter])
 
     // Fetch on search with debounce
     useEffect(() => {
-        if (!searchQuery && users.length > 0) return; // Don't fetch on empty search if we have data
+        if (isFirstMountSearch.current) {
+            isFirstMountSearch.current = false;
+            return;
+        }
         const timer = setTimeout(() => {
             fetchUsers(false)
         }, 500)
@@ -151,7 +176,11 @@ export default function UserManagementPage() {
                 body: JSON.stringify({ userId, updates: { [field]: value } })
             })
             if (res.ok) {
-                setUsers(users.map(u => u.id === userId ? { ...u, [field]: value } : u))
+                setUsers(prev => {
+                    const newUsers = prev.map(u => u.id === userId ? { ...u, [field]: value } : u);
+                    updateAdminCache('users', newUsers);
+                    return newUsers;
+                })
             }
         } catch (error) {
             console.error(`Update ${field} failed:`, error)
@@ -176,7 +205,11 @@ export default function UserManagementPage() {
                 body: JSON.stringify({ userId })
             })
             if (res.ok) {
-                setUsers(users.filter(u => u.id !== userId))
+                setUsers(prev => {
+                    const newUsers = prev.filter(u => u.id !== userId);
+                    updateAdminCache('users', newUsers);
+                    return newUsers;
+                })
             } else {
                 const data = await res.json()
                 alert(data.message || "Failed to delete user")
@@ -204,7 +237,11 @@ export default function UserManagementPage() {
                 body: JSON.stringify({ userIds: selectedIds })
             })
             if (res.ok) {
-                setUsers(prev => prev.filter(u => !selectedIds.includes(u.id)))
+                setUsers(prev => {
+                    const newUsers = prev.filter(u => !selectedIds.includes(u.id));
+                    updateAdminCache('users', newUsers);
+                    return newUsers;
+                })
                 setSelectedIds([])
             } else {
                 const data = await res.json()
@@ -225,173 +262,209 @@ export default function UserManagementPage() {
     return (
         <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'FINANCE']}>
             <div className="space-y-6">
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div className="flex flex-col gap-3">
                     <div>
-                        <h1 className="text-4xl font-black text-white italic tracking-tighter uppercase mb-1">
+                        <h1 className="text-2xl md:text-4xl font-black text-white italic tracking-tighter uppercase mb-1">
                             USER <span className="text-emerald-500">DIRECTORY</span>
                         </h1>
                         <p className="text-gray-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
                             <Fingerprint size={14} className="text-emerald-500/50" />
-                            {paymentFilter === 'all' && `Access all ${totalUsersCount} registered users`}
-                            {paymentFilter === 'paid' && `Access ${paidUsersCount} verified paid participants`}
-                            {paymentFilter === 'unpaid' && `View ${unpaidUsersCount} pending enrollment records`}
-                            {paymentFilter === 'internal' && `Viewing internal SODE students`}
-                            {paymentFilter === 'external' && `Viewing external participants`}
+                            {paymentFilter === 'all' && `${totalUsersCount} registered users`}
+                            {paymentFilter === 'paid' && `${paidUsersCount} verified paid`}
+                            {paymentFilter === 'unpaid' && `${unpaidUsersCount} pending`}
+                            {paymentFilter === 'internal' && `Internal SODE students`}
+                            {paymentFilter === 'external' && `External participants`}
                         </p>
                     </div>
 
-                    <div className="flex flex-col md:flex-row md:items-center gap-4">
+                    <div className="flex flex-wrap items-center gap-2">
                         <AnimatePresence>
                             {totalPaidCount !== null && (
-                                <motion.div
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    className="bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-xl"
+                                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
+                                    className="bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-xl"
                                 >
-                                    <p className="text-[8px] font-black uppercase tracking-tighter text-blue-500 leading-none mb-1">People Paid</p>
+                                    <p className="text-[8px] font-black uppercase tracking-tighter text-blue-500 leading-none mb-0.5">People Paid</p>
                                     <p className="text-sm font-black text-white italic">{totalPaidCount}</p>
                                 </motion.div>
                             )}
                         </AnimatePresence>
 
-                        <button
-                            onClick={fetchTotalAmount}
-                            disabled={loadingTotal}
-                            className="bg-[#111] border border-white/10 hover:border-blue-500/50 text-white px-5 py-3 rounded-xl transition-all group flex items-center gap-3 h-12 shadow-xl"
-                        >
-                            <CreditCard size={18} className={cn("text-blue-500 transition-transform group-hover:scale-110", loadingTotal && "animate-spin")} />
-                            <div className="text-left">
-                                <p className="text-[9px] font-black uppercase tracking-wider text-gray-500 leading-none mb-1">Financial Check</p>
-                                <p className="text-xs font-bold uppercase tracking-widest text-white leading-none">Check Total</p>
-                            </div>
-                        </button>
-
-                        <AnimatePresence>
-                            {selectedIds.length > 0 && userData?.role === 'SUPER_ADMIN' && (
-                                <motion.div
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: 20 }}
-                                    className="flex items-center gap-3"
-                                >
-                                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">{selectedIds.length} Selected</span>
-                                    <button
-                                        onClick={handleBulkDelete}
-                                        className="px-4 py-2 bg-red-500 text-white rounded-xl text-xs font-black uppercase italic shadow-lg shadow-red-500/20 hover:bg-red-600 transition-all flex items-center gap-2"
+                        <div className="ml-auto flex items-center gap-2 flex-wrap">
+                            <AnimatePresence>
+                                {selectedIds.length > 0 && userData?.role === 'SUPER_ADMIN' && (
+                                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
+                                        className="flex items-center gap-2"
                                     >
-                                        <Trash2 size={14} /> Bulk Delete
-                                    </button>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">{selectedIds.length} Selected</span>
+                                        <button onClick={handleBulkDelete}
+                                            className="px-3 py-2 bg-red-500 text-white rounded-xl text-xs font-black uppercase italic shadow-lg shadow-red-500/20 hover:bg-red-600 transition-all flex items-center gap-1"
+                                        >
+                                            <Trash2 size={12} /> Delete
+                                        </button>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
 
-                        <button
-                            onClick={() => fetchUsers(false)}
-                            className="bg-[#111] border border-white/10 hover:border-emerald-500/50 text-white px-5 py-3 rounded-xl transition-all group flex items-center gap-3 h-12 shadow-xl"
-                        >
-                            <RefreshCcw size={18} className={cn("text-emerald-500 transition-transform group-hover:rotate-180", loading && "animate-spin")} />
-                            <div className="text-left">
-                                <p className="text-[9px] font-black uppercase tracking-wider text-gray-500 leading-none mb-1">Live Directory</p>
-                                <p className="text-xs font-bold uppercase tracking-widest text-white leading-none">Sync Users</p>
-                            </div>
-                        </button>
-
-                        {userData?.role === 'SUPER_ADMIN' && (
-                            <button
-                                onClick={() => fetchAndDownload('users', `Users_${paymentFilter}`, getAuthToken, { status: paymentFilter })}
-                                className="bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/50 text-emerald-500 px-5 py-3 rounded-xl transition-all group flex items-center gap-3 h-12 shadow-xl"
-                                title="Download All Users (Excel)"
+                            <button onClick={fetchTotalAmount} disabled={loadingTotal}
+                                className="bg-[#111] border border-white/10 hover:border-blue-500/50 text-white px-3 py-2 rounded-xl transition-all group flex items-center gap-2 h-10 shadow-xl"
                             >
-                                <FileSpreadsheet size={18} className="transition-transform group-hover:scale-110" />
-                                <div className="text-left">
-                                    <p className="text-[9px] font-black uppercase tracking-wider text-emerald-500/50 leading-none mb-1">Directory</p>
-                                    <p className="text-xs font-bold uppercase tracking-widest text-emerald-500 leading-none font-mono">EXPORT</p>
-                                </div>
+                                <CreditCard size={16} className={cn("text-blue-500", loadingTotal && "animate-spin")} />
+                                <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Paid?</span>
                             </button>
-                        )}
+
+                            <button onClick={() => {
+                                setLastId(null)
+                                fetchUsers(false)
+                            }}
+                                className="bg-[#111] border border-white/10 hover:border-emerald-500/50 text-white px-3 py-2 rounded-xl transition-all group flex items-center gap-2 h-10 shadow-xl"
+                            >
+                                <RefreshCcw size={16} className={cn("text-emerald-500 transition-transform group-hover:rotate-180", loading && "animate-spin")} />
+                                <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Sync</span>
+                            </button>
+
+                            {userData?.role === 'SUPER_ADMIN' && (
+                                <button onClick={() => fetchAndDownload('users', `Users_${paymentFilter}`, getAuthToken, { status: paymentFilter })}
+                                    className="bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/50 text-emerald-500 px-3 py-2 rounded-xl transition-all group flex items-center gap-2 h-10 shadow-xl"
+                                >
+                                    <FileSpreadsheet size={16} className="transition-transform group-hover:scale-110" />
+                                    <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Export</span>
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
 
                 {/* Filters */}
-                <div className="flex flex-col md:flex-row gap-6">
+                <div className="flex flex-col sm:flex-row gap-4">
                     <div className="relative flex-1 group">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-emerald-500 transition-colors" size={20} />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-emerald-500 transition-colors" size={18} />
                         <input
                             type="text"
                             placeholder="Search by name, USN, or email..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-[#111] border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-emerald-500/50 transition-all font-medium shadow-xl"
+                            className="w-full bg-[#111] border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-emerald-500/50 transition-all font-medium shadow-xl text-sm"
                         />
                     </div>
 
-                    <div className="flex bg-[#111] p-1.5 rounded-2xl border border-white/5 h-14 items-center">
-                        <button
-                            onClick={() => setPaymentFilter('all')}
-                            className={cn(
-                                "flex-1 px-4 h-full rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap flex items-center justify-center gap-2",
-                                paymentFilter === 'all'
-                                    ? 'bg-white/10 text-white shadow-lg'
-                                    : 'text-gray-500 hover:text-gray-300'
-                            )}
-                        >
-                            All Users
-                            <span className="text-[9px] bg-white/5 px-1.5 py-0.5 rounded-md text-gray-400">{totalUsersCount}</span>
-                        </button>
-                        <button
-                            onClick={() => setPaymentFilter('paid')}
-                            className={cn(
-                                "flex-1 px-4 h-full rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap flex items-center justify-center gap-2",
-                                paymentFilter === 'paid'
-                                    ? 'bg-emerald-500/10 text-emerald-500 shadow-lg shadow-emerald-500/10'
-                                    : 'text-gray-500 hover:text-gray-300'
-                            )}
-                        >
-                            <CheckCircle size={14} />
-                            Paid
-                            <span className="text-[9px] bg-emerald-500/10 px-1.5 py-0.5 rounded-md text-emerald-500">{paidUsersCount}</span>
-                        </button>
-                        <button
-                            onClick={() => setPaymentFilter('unpaid')}
-                            className={cn(
-                                "flex-1 px-4 h-full rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap flex items-center justify-center gap-2",
-                                paymentFilter === 'unpaid'
-                                    ? 'bg-red-500/10 text-red-500 shadow-lg shadow-red-500/10'
-                                    : 'text-gray-500 hover:text-gray-300'
-                            )}
-                        >
-                            <XCircle size={14} />
-                            Unpaid
-                        </button>
-
-                        <button
-                            onClick={() => setPaymentFilter('internal')}
-                            className={cn(
-                                "flex-1 px-4 h-full rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap flex items-center justify-center gap-2 border-l border-white/5",
-                                paymentFilter === 'internal'
-                                    ? 'bg-blue-500/10 text-blue-400 shadow-lg'
-                                    : 'text-gray-500 hover:text-gray-300'
-                            )}
-                        >
-                            Internal
-                        </button>
-
-                        <button
-                            onClick={() => setPaymentFilter('external')}
-                            className={cn(
-                                "flex-1 px-4 h-full rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap flex items-center justify-center gap-2 border-l border-white/5",
-                                paymentFilter === 'external'
-                                    ? 'bg-purple-500/10 text-purple-400 shadow-lg'
-                                    : 'text-gray-500 hover:text-gray-300'
-                            )}
-                        >
-                            External
-                        </button>
+                    <div className="flex bg-[#111] p-1 rounded-2xl border border-white/5 h-12 items-center overflow-x-auto">
+                        {[
+                            { key: 'all', label: 'All', count: totalUsersCount, color: 'white' },
+                            { key: 'paid', label: 'Paid', count: paidUsersCount, color: 'emerald' },
+                            { key: 'unpaid', label: 'Unpaid', count: null, color: 'red' },
+                            { key: 'internal', label: 'Int', count: internalUsersCount, color: 'blue' },
+                            { key: 'external', label: 'Ext', count: externalUsersCount, color: 'purple' },
+                        ].map(({ key, label, count, color }) => (
+                            <button key={key}
+                                onClick={() => setPaymentFilter(key as any)}
+                                className={cn(
+                                    "flex-shrink-0 px-3 h-full rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap flex items-center justify-center gap-1.5",
+                                    paymentFilter === key
+                                        ? `bg-${color}-500/10 text-${color}-${color === 'white' ? '200' : '400'} shadow-lg`
+                                        : 'text-gray-500 hover:text-gray-300'
+                                )}
+                            >
+                                {label}
+                                {count !== null && <span className="text-[9px] opacity-70">{count}</span>}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
-                {/* Users List */}
-                <div className="bg-[#111] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+                {/* Mobile Cards */}
+                <div className="md:hidden space-y-3">
+                    {loading && users.length === 0 ? (
+                        <div className="bg-[#111] rounded-2xl p-8 flex flex-col items-center gap-2 border border-white/5">
+                            <Loader2 className="animate-spin text-emerald-500" size={24} />
+                            <span className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">Loading...</span>
+                        </div>
+                    ) : filteredUsers.length === 0 ? (
+                        <div className="bg-[#111] rounded-2xl p-8 text-center text-gray-500 italic text-sm border border-white/5">
+                            No users found.
+                        </div>
+                    ) : filteredUsers.map((u) => (
+                        <div key={u.id} className={cn(
+                            "bg-[#111] border rounded-2xl p-4 space-y-3",
+                            selectedIds.includes(u.id) ? "border-emerald-500/30 bg-emerald-500/5" : "border-white/5"
+                        )}>
+                            <div className="flex items-start justify-between gap-2">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-full bg-white/5 border ${u.isBlocked ? 'border-red-500/50' : 'border-white/10'} flex items-center justify-center ${u.isBlocked ? 'text-red-500' : 'text-emerald-500'} font-bold flex-shrink-0`}>
+                                        {u.isBlocked ? <Shield size={16} /> : (u.name?.[0]?.toUpperCase() || 'U')}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className={`font-semibold ${u.isBlocked ? 'text-red-400' : 'text-white'} text-sm`}>
+                                            {u.name}
+                                            {u.isBlocked && <span className="text-[9px] bg-red-500/10 px-1.5 py-0.5 rounded text-red-500 font-bold ml-1 uppercase">Blocked</span>}
+                                        </p>
+                                        <p className="text-xs text-gray-500 truncate">{u.email}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-1.5 flex-shrink-0">
+                                    <span className={`h-2 w-2 rounded-full flex-shrink-0 ${u.hasPaid ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                                    <span className={cn(
+                                        "px-2 py-0.5 rounded-full text-[9px] font-black uppercase border",
+                                        u.studentType === 'internal'
+                                            ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                                            : "bg-white/5 text-gray-500 border-white/10"
+                                    )}>
+                                        {u.studentType === 'internal' ? 'Int' : 'Ext'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="text-xs text-gray-500 font-mono">{u.usn || 'No USN'} · {u.college || 'N/A'}</div>
+                            {(!u.role || u.role === 'USER') && (
+                                <div className="flex gap-2">
+                                    <button
+                                        title={u.hasPaid ? "Mark Unpaid" : "Mark Paid"}
+                                        disabled={isUpdating === `${u.id}-hasPaid`}
+                                        onClick={() => handleUpdateField(u.id, 'hasPaid', !u.hasPaid)}
+                                        className={`flex-1 py-2 rounded-xl text-xs font-black uppercase transition-all flex items-center justify-center gap-1.5 ${u.hasPaid
+                                            ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                                            : 'bg-white/5 text-gray-400 border border-white/10'
+                                            }`}
+                                    >
+                                        {isUpdating === `${u.id}-hasPaid` ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+                                        {u.hasPaid ? 'Paid' : 'Unpaid'}
+                                    </button>
+                                    {(userData?.role === 'SUPER_ADMIN' || userData?.role === 'FINANCE') && (
+                                        <button
+                                            title={u.isBlocked ? "Unblock" : "Block"}
+                                            disabled={isUpdating === `${u.id}-isBlocked`}
+                                            onClick={() => { if (u.isBlocked || confirm(`Block ${u.name}?`)) { handleUpdateField(u.id, 'isBlocked', !u.isBlocked) } }}
+                                            className={`px-4 py-2 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-1.5 ${u.isBlocked
+                                                ? 'bg-red-500 text-white'
+                                                : 'bg-red-500/10 text-red-500 border border-red-500/20'
+                                                }`}
+                                        >
+                                            {isUpdating === `${u.id}-isBlocked` ? <Loader2 size={14} className="animate-spin" /> : <Ban size={14} />}
+                                        </button>
+                                    )}
+                                    {userData?.role === 'SUPER_ADMIN' && (
+                                        <button
+                                            title="Delete"
+                                            disabled={isUpdating === u.id}
+                                            onClick={() => handleDeleteUser(u.id, u.name)}
+                                            className="px-4 py-2 bg-white/5 text-gray-500 hover:bg-red-500 hover:text-white rounded-xl transition-all border border-white/5"
+                                        >
+                                            {isUpdating === u.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                    {hasMore && (
+                        <button onClick={() => fetchUsers(true)} disabled={loading}
+                            className="w-full py-3 bg-[#111] hover:bg-white/5 text-white text-xs font-bold uppercase tracking-widest rounded-2xl transition-all border border-white/10 hover:border-emerald-500/50 disabled:opacity-50"
+                        >
+                            {loading ? <Loader2 className="animate-spin text-emerald-500 mx-auto" size={16} /> : 'Load More'}
+                        </button>
+                    )}
+                </div>
+
+                {/* Desktop Table */}
+                <div className="hidden md:block bg-[#111] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead>
@@ -427,7 +500,7 @@ export default function UserManagementPage() {
                                             No users found matching your search.
                                         </td>
                                     </tr>
-                                ) : filteredUsers.slice(0, users.length).map((u) => (
+                                ) : filteredUsers.map((u) => (
                                     <tr key={u.id} className={cn(
                                         "hover:bg-white/2 transition-colors group",
                                         selectedIds.includes(u.id) && "bg-white/5"
@@ -443,7 +516,7 @@ export default function UserManagementPage() {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className={`w-10 h-10 rounded-full bg-white/5 border ${u.isBlocked ? 'border-red-500/50' : 'border-white/10'} flex items-center justify-center ${u.isBlocked ? 'text-red-500' : 'text-emerald-500'} font-bold overflow-hidden`}>
-                                                    {u.isBlocked ? <Shield size={18} /> : u.name[0].toUpperCase()}
+                                                    {u.isBlocked ? <Shield size={18} /> : (u.name?.[0]?.toUpperCase() || 'U')}
                                                 </div>
                                                 <div>
                                                     <p className={`font-semibold ${u.isBlocked ? 'text-red-400' : 'text-white'} flex items-center gap-1`}>

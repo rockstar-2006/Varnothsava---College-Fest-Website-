@@ -9,7 +9,7 @@ import GridScan from '@/components/ui/GridScan'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import ElectricBorder from '@/components/ui/ElectricBorder'
-import { createUserWithEmail, loginWithEmail, loginWithGoogle, onUserSignedIn } from '@/lib/firebaseClient'
+import { createUserWithEmail, loginWithEmail, loginWithGoogle, handleGoogleRedirectResult, onUserSignedIn } from '@/lib/firebaseClient'
 import { NetworkPoints } from '@/components/ui/NeuralNetworkBackground'
 
 // --- COLLEGES DATA ---
@@ -172,6 +172,16 @@ function LoginContent() {
         }
     }, [isLoggedIn, needsOnboarding, isInitializing, userData, router])
 
+    // Handle Google redirect result (fires after browser blocks popup and redirects)
+    useEffect(() => {
+        handleGoogleRedirectResult().then((user) => {
+            if (user) {
+                // mountUser will trigger onboarding check or redirect
+                mountUser(user)
+            }
+        })
+    }, [])
+
     const filteredColleges = useMemo(() => COLLEGES.filter(c =>
         c.toLowerCase().includes(collegeSearch.toLowerCase())
     ), [collegeSearch])
@@ -222,15 +232,17 @@ function LoginContent() {
             }
         } catch (error: any) {
             console.error("Google login failed:", error)
-            if (error.code === 'auth/popup-blocked') {
-                alert("The login popup was blocked by your browser. Please allow popups for this site and try again.")
+            if (error.code === 'auth/redirect-started') {
+                // Redirect has been initiated — keep loading state, page will reload
+                // Do NOT setIsLoading(false) or show an error
+                return
             } else if (error.code === 'auth/cancelled-popup-request') {
                 console.log("Popup request cancelled.")
+                setIsLoading(false)
             } else {
-                alert("Google login failed: " + error.message)
+                alert("Google login failed: " + (error.message || 'Unknown error'))
+                setIsLoading(false)
             }
-        } finally {
-            setIsLoading(false)
         }
     }
 

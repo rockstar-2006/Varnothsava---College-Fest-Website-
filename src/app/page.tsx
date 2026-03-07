@@ -11,7 +11,7 @@ import Link from 'next/link'
 const quickLinks = [
     { label: "About Us", href: "#about" },
     { label: "Events", href: "/events" },
-    { label: "Sponsors", href: "#sponsors" },
+    { label: "Sponsors", href: "/sponsors" },
     { label: "Contact", href: "/contact" },
 ];
 
@@ -1809,11 +1809,11 @@ const FAQ = () => {
         { q: "Why is the WhatsApp button not visible?", a: "Ensure you have successfully registered for the event. Try refreshing the page or logging out and back in." },
         { q: "The website is stuck on loading. What should I do?", a: "Try refreshing the page, clearing browser cache, using a different browser (Chrome/Edge), or checking your internet connection." },
         { q: "The Register button is not working. What should I do?", a: "Make sure your payment is completed. Try refreshing, re-logging, or using a different browser." },
-        { q: "Events are not visible on the Explore Events page. Why?", a: "Check if you have completed the payment, refresh the page, and ensure you have a stable internet connection.Still facing issues then reachout to any of the developers team by clicking on developers Team button in contact us section in home page." },
+        { q: "Events are not visible on the Explore Events page. Why?", a: "Check if you have completed the payment, refresh the page, and ensure you have a stable internet connection. Still facing issues? Reach out to the Developers Team by clicking the 'Developers Team' button in the 'Contact Us' section on the homepage." },
         { q: "Can I participate without completing payment?", a: "No, event registration is only possible after completing the registration payment." },
         { q: "Do external participants receive a Pass ID?", a: "Yes, after creating an account and setting up your profile, a unique Pass ID will be generated on your Profile Page." },
         { q: "Do I need to show my Pass ID at the venue?", a: "Yes, keep your Pass ID saved and show it at the registration or help desk if required." },
-        { q: "How can I contact the organizers if I face issues?", a: "Check the Contact us section in the home page, use the website Chatbot for assistance, or contact the specific event coordinator." },
+        { q: "How can I contact the organizers if I face issues?", a: "Check the 'Contact Us' section on the homepage, use the website Chatbot for assistance, or contact the specific event coordinator." },
         { q: "Is there a specific dress code?", a: "No, but we recommend comfortable clothing." },
         { q: "Do you provide accommodation?", a: "Yes, accommodation is provided for participants." },
         { q: "Are participation certificates provided?", a: "All participants receive E-participation certificates. Winners receive Merit certificates." }

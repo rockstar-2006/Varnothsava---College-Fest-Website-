@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { registerUserSchema } from "@/lib/validation";
 import { handleApiError, ApiError } from "@/lib/errorHandler";
 import { checkRegistrationRateLimit, getClientIdentifier } from "@/lib/ratelimit";
+import { getAdminRole } from "@/lib/admin";
 
 export async function POST(request: NextRequest) {
     try {
@@ -69,8 +70,16 @@ export async function POST(request: NextRequest) {
             throw new ApiError(500, "Database service unavailable", "DB_UNAVAILABLE");
         }
 
-        // 5. Determine student type based on email domain
-        const studentType = email.endsWith('@sode-edu.in') ? 'internal' : 'external';
+        // 5. Determine student type based on email domain AND college name
+        const nCollege = (collegeName || "").toUpperCase();
+        const isInternal = email.endsWith('@sode-edu.in') ||
+            nCollege.includes('SMVITM') ||
+            nCollege.includes('SODE') ||
+            nCollege.includes('SHRI MADHWA VADIRAJA') ||
+            nCollege.includes('SHRI MADHWA') ||
+            nCollege.includes('VADIRAJA');
+
+        const studentType = isInternal ? 'internal' : 'external';
 
         // 6. Create user profile (isolated by UID only)
         const userProfile: any = {
@@ -91,10 +100,10 @@ export async function POST(request: NextRequest) {
         };
 
         // --- ADMIN ROLE INJECTION ---
-        if (email === 'admin@varnothsava.in' || email === 'abhishree621@gmail.com') {
-            userProfile.role = 'SUPER_ADMIN';
-        } else if (email === 'coordinator@varnothsava.in') {
-            userProfile.role = 'COORDINATOR';
+        const { role, eventId: assignedEventId } = getAdminRole(email);
+        if (role) {
+            userProfile.role = role;
+            if (assignedEventId) userProfile.eventId = assignedEventId;
         }
         // ----------------------------
 

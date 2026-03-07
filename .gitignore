@@ -37,6 +37,7 @@ yarn-error.log*
 # Environment variables (contain secrets)
 .env*
 !.env.local.example
+.
 
 # Firebase service accounts (contain private keys)
 service-account.json

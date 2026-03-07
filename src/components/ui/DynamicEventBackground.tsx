@@ -146,7 +146,7 @@ const DynamicEventBackground = ({ theme = 'emerald' }: { theme?: 'emerald' | 'am
             )}
 
             <div className="absolute inset-0">
-                {particles.map((p) => (
+                {mounted && particles.map((p) => (
                     <motion.div
                         key={p.id}
                         className={`absolute rounded-full ${isAmber ? 'bg-amber-400/30' :

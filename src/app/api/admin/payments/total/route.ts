@@ -1,6 +1,7 @@
-import { adminDb, verifyAuthToken } from "@/lib/firebaseAdmin";
+import { adminDb, verifyAuthToken, usersCollection } from "@/lib/firebaseAdmin";
 import * as admin from 'firebase-admin';
 import { NextRequest, NextResponse } from "next/server";
+import { getAdminRole } from "@/lib/admin";
 
 export async function GET(request: NextRequest) {
     try {
@@ -14,45 +15,78 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 
-        const userDoc = await adminDb.collection('users').doc(verified.uid).get();
-        const role = userDoc.data()?.role;
+        const userDoc = await usersCollection.doc(verified.uid).get();
+        const userEmail = userDoc.data()?.email;
+        const { role: adminRole, eventId: userEventId } = getAdminRole(userEmail);
 
-        if (!role || !['SUPER_ADMIN', 'FINANCE'].includes(role)) {
+        if (!adminRole || !['SUPER_ADMIN', 'FINANCE', 'COORDINATOR'].includes(adminRole)) {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });
         }
 
+        // Scope queries based on role
+        let payQuery: any = adminDb.collection('payments').where('status', '==', 'captured');
+        let regQuery: any = adminDb.collection('registrations');
+
+        if (adminRole === 'COORDINATOR' && userEventId && userEventId !== 'all') {
+            const coordinatorEventIds = userEventId.split(',').map((id: string) => id.trim());
+            if (coordinatorEventIds.length > 1) {
+                payQuery = payQuery.where('eventId', 'in', coordinatorEventIds);
+                regQuery = regQuery.where('eventId', 'in', coordinatorEventIds);
+            } else {
+                payQuery = payQuery.where('eventId', '==', coordinatorEventIds[0]);
+                regQuery = regQuery.where('eventId', '==', coordinatorEventIds[0]);
+            }
+        }
+
         // Strategy 3: Aggregation for actual Sum and Transaction Count
-        const paymentsSnap = await adminDb.collection('payments')
-            .where('status', '==', 'captured')
-            .aggregate({
-                totalAmount: admin.firestore.AggregateField.sum('amount'),
-                count: admin.firestore.AggregateField.count()
-            })
+        const paymentsSnap = await payQuery.aggregate({
+            totalAmount: admin.firestore.AggregateField.sum('amount'),
+            count: admin.firestore.AggregateField.count()
+        })
             .get();
 
         const totalAmountRaw = paymentsSnap.data().totalAmount || 0;
         const totalTransactions = paymentsSnap.data().count || 0;
         const totalAmountInRupees = totalAmountRaw / 100;
 
-        // Also get count of unique paid users for the "People Paid" metric
-        const paidUsersSnap = await adminDb.collection('users')
-            .where('hasPaid', '==', true)
-            .count().get();
-        const totalPaidPeople = paidUsersSnap.data().count;
+        // Also get count of unique paid users from the scoped payments for consistency
+        const allCapturedPayments = await payQuery.select('user_id').get();
 
-        // Strategy 4: Atomic Sync with Stats Document
-        const statsRef = adminDb.collection('system').doc('stats');
-        await statsRef.set({
-            totalRevenue: totalAmountInRupees,
-            paidUsers: totalPaidPeople,
-            totalVerifiedPayments: totalPaidPeople, // Unique participants
-            totalPaymentsCount: totalTransactions,   // Transaction records
-            lastTotalSync: new Date().toISOString()
-        }, { merge: true });
+        const uniquePaidUserIds = new Set<string>();
+        allCapturedPayments.docs.forEach((doc: any) => uniquePaidUserIds.add(doc.data().user_id));
+        const totalPaidPeople = uniquePaidUserIds.size;
+
+        // Calculate unique Headcount for Paid People (Unique leaders and members in paid teams) in scoped regs
+        const allRegs = await regQuery.select('teamLeader', 'members').get();
+        const uniquePaidParticipants = new Set<string>();
+        allRegs.docs.forEach((doc: any) => {
+            const data = doc.data();
+            if (data.teamLeader && uniquePaidUserIds.has(data.teamLeader)) {
+                uniquePaidParticipants.add(data.teamLeader);
+                if (data.members && Array.isArray(data.members)) {
+                    data.members.forEach((m: string) => uniquePaidParticipants.add(m));
+                }
+            }
+        });
+        const participantPaidHeadcount = uniquePaidParticipants.size;
+
+        // Only sync to global stats doc if it's a full summary (SUPER_ADMIN or FINANCE)
+        if (adminRole === 'SUPER_ADMIN' || adminRole === 'FINANCE') {
+            const statsRef = adminDb.collection('system').doc('stats');
+            await statsRef.set({
+                totalRevenue: totalAmountInRupees,
+                paidUsers: totalPaidPeople,
+                totalVerifiedPayments: totalPaidPeople,
+                totalParticipantsPaid: participantPaidHeadcount,
+                totalPaymentsCount: totalTransactions,
+                lastTotalSync: new Date().toISOString()
+            }, { merge: true });
+        }
 
         return NextResponse.json({
             totalAmount: totalAmountInRupees,
-            totalPayments: totalPaidPeople, // Unique participants (for metric box)
+            totalPayments: totalPaidPeople, // Unique buyers (for matching logs)
+            totalParticipantsPaid: participantPaidHeadcount, // Absolute people count
             transactionCount: totalTransactions // Total records (for subtitle)
         });
 

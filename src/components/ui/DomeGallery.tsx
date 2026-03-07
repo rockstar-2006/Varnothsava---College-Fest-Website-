@@ -156,16 +156,30 @@ export default function DomeGallery({
     const lastTimeRef = useRef(performance.now());
 
     const [isAssembled, setIsAssembled] = React.useState(false);
+    const [mounted, setMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // Generate random explosion offsets for the 'Reverse Blast' entry
     const explosionOffsets = useMemo(() => {
+        if (!mounted) {
+            // Return placeholder offsets that won't change for SSR consistency
+            return items.map(() => ({
+                rx: 0,
+                ry: 0,
+                rz: 1500,
+                scale: 0.15
+            }));
+        }
         return items.map(() => ({
             rx: (Math.random() - 0.5) * 1000,
             ry: (Math.random() - 0.5) * 1000,
             rz: 1500 + Math.random() * 2000,
             scale: Math.random() * 0.3
         }));
-    }, [items]);
+    }, [items, mounted]);
 
     const applyTransform = useCallback((xDeg: number, yDeg: number) => {
         const el = sphereRef.current;
@@ -405,6 +419,8 @@ export default function DomeGallery({
                     <div ref={sphereRef} className="sphere">
                         {items.map((it, i) => {
                             const explode = explosionOffsets[i];
+                            // Use a deterministic delay based on index for hydration consistency
+                            const transitionDelayMs = isAssembled ? `${((i * 73) % 800)}ms` : '0ms';
                             return (
                                 <div
                                     key={`${it.x},${it.y},${i}`}
@@ -423,7 +439,7 @@ export default function DomeGallery({
                                         ['--entry-ry' as any]: `${explode.ry}deg`,
                                         ['--entry-rz' as any]: `${explode.rz}px`,
                                         ['--entry-scale' as any]: explode.scale,
-                                        transitionDelay: isAssembled ? `${Math.random() * 800}ms` : '0ms'
+                                        transitionDelay: transitionDelayMs
                                     }}
                                     data-assembled={isAssembled}
                                     data-dragging={draggingRef.current}

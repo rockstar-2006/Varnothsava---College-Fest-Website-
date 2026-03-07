@@ -8,6 +8,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useApp } from '@/context/AppContext'
 import { Magnetic } from '@/components/ui/Magnetic'
 import { cn } from '@/lib/utils'
+import { AccommodationButton } from '../ui/AccommodationButton'
 
 const MotorcycleIcon = ({ size = 24, className }: { size?: number, className?: string }) => (
     <svg
@@ -249,7 +250,7 @@ export function InnovativeNavbar() {
 
                         <div className="absolute top-0 left-0 w-12 h-12 border-l-2 border-t-2 border-[rgba(var(--theme-rgb),0.4)] rounded-tl-[2.5rem] shadow-[-5px_-5px_15px_rgba(var(--theme-rgb),0.1)]" />
                         <div className="absolute top-0 right-0 w-12 h-12 border-r-2 border-t-2 border-[rgba(var(--theme-rgb),0.4)] rounded-tr-[2.5rem] shadow-[5px_-5px_15px_rgba(var(--theme-rgb),0.1)]" />
-
+                        <AccommodationButton isMobile={isMobile} themeRgb={themeRgb} />
                         {/* ChatBot Button - Replaces Cart as requested */}
                         <div className="absolute right-0 bottom-[110px] md:bottom-[-20px] md:right-[-110px] xl:right-[-130px] flex flex-col items-center gap-3 pointer-events-auto z-40">
                             {/* Informational Hint Label - Now ABOVE the bot icon to avoid overlap */}
