@@ -50,6 +50,19 @@ export default function BusinessCarnivalPage() {
 
     if (!isMounted) return null
 
+    const handleRegisterClick = (event: Event) => {
+    if (!isLoggedIn) {
+        router.push('/login')
+        return
+    }
+    if (!userData?.hasPaid) {
+        router.push('/notify');
+        return
+    }
+    setSelectedEvent(event)
+    setIsRegModalOpen(true)  // Opens modal for team/member details
+}
+
     return (
         <main className="min-h-screen relative bg-black text-white">
             {/* Background */}
@@ -120,7 +133,7 @@ export default function BusinessCarnivalPage() {
                                 isLoggedIn={isLoggedIn}
                                 isRegistered={userData?.registeredEvents?.some(re => re.eventId === event.id)}
                                 // onRegister={() => router.push(isLoggedIn ? '/notify' : '/login')}
-                                onRegister={() => router.push(isLoggedIn ? '/profile' : '/login')}
+                                onRegister={() => handleRegisterClick}
                                 priority={true}
                             />
                         </motion.div>
