@@ -49,29 +49,6 @@ export default function BusinessCarnivalPage() {
         radarColor: 'rgba(14, 165, 233, 0.15)'
     }
 
-    const handleRegisterClick = (event: Event) => {
-        if (!isLoggedIn) {
-            router.push('/login')
-            return
-        }
-
-        const isRegistered = userData?.registeredEvents?.some(re => re.eventId === event.id)
-
-        // Special case for Robo Soccer
-        if (event.id === "TECH-008") {
-            if (!userData?.hasRoboSoccer) {
-                router.push('/notify?addon=robo-soccer');
-                return
-            }
-        } else if (!isRegistered && !userData?.hasPaid) {
-            router.push('/notify');
-            return
-        }
-
-        setSelectedEvent(event)
-        setIsRegModalOpen(true)
-    }
-
     const handleConfirmRegistration = async (data: { teamName: string, members: string[] }) => {
         if (!selectedEvent) return { success: false }
         const result = await registerMission(selectedEvent.id, data.teamName, data.members)
@@ -81,6 +58,19 @@ export default function BusinessCarnivalPage() {
     const complexClip = "polygon(30px 0, 100% 0, 100% 100%, 70% 100%, 65% 94%, 35% 94%, 30% 100%, 0 100%, 0 60%, 10px 60%, 10px 40%, 0 40%, 0 30px)"
 
     if (!isMounted) return null
+
+    const handleRegisterClick = (event: Event) => {
+        if (!isLoggedIn) {
+            router.push('/login')
+            return
+        }
+        if (!userData?.hasPaid) {
+            router.push('/notify');
+            return
+        }
+        setSelectedEvent(event)
+        setIsRegModalOpen(true)  // Opens modal for team/member details
+    }
 
     return (
         <main className="min-h-screen relative bg-black text-white">
