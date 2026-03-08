@@ -488,7 +488,7 @@ export const missions: Event[] = [
         teamFormate: "Group",
         team: 'Group',
         whatsappLink: "https://chat.whatsapp.com/IJ526vnuh8o7by4eBY7Ets",
-        location:"GB01"
+        location: "GB01"
     },
     {
         id: "MBA-002",
@@ -519,7 +519,7 @@ export const missions: Event[] = [
         teamFormate: "Group",
         team: 'Group',
         whatsappLink: "https://chat.whatsapp.com/J4m8JwBiU0hIXcDXNX5Rf3?mode=gi_t",
-        location:"GB02"
+        location: "GB02"
     },
     {
         id: "MBA-003",
@@ -714,7 +714,7 @@ export const missions: Event[] = [
         title: 'Who Am I',
         type: 'Cultural',
         category: 'General',
-        description: 'Short-form video storytelling. Create engaging Reels that capture the vibrant energy of Varnothsava.',
+        description: 'A creative face-painting competition where participants showcase their artistry and imagination by transforming their model’s face into a living canvas. With FDA-approved paints and brushes, competitors must rely solely on their skill to craft unique, cultural, and expressive designs within the given time..',
         rules: [
             "Each participant will get 75 minutes",
             "No assistants are allowed during the competition (only two people are permitted: one competitor and one model for face painting)",
