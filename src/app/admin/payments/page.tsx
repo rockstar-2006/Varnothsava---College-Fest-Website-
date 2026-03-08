@@ -198,18 +198,19 @@ export default function PaymentsManagementPage() {
     const isFirstMountFilter = useRef(true)
     const isFirstMountSearch = useRef(true)
 
-    // Fetch on filter change - selectedType is server-side for accurate counts
+    // Initial fetch only if no cache
     useEffect(() => {
-        // Skip initial fetch if cache is already present
         if (isFirstMountFilter.current) {
             isFirstMountFilter.current = false;
-            if (adminCache.payments && adminCache.payments.length > 0) {
-                return;
+            if (events.length === 0 && !adminCache.events) fetchEvents()
+
+            // Only fetch if cache doesn't exist
+            if (!adminCache.payments) {
+                fetchPayments(false)
             }
         }
-        fetchPayments(false)
-        if (events.length === 0 && !adminCache.events) fetchEvents()
-    }, [selectedStatus, selectedEventId, selectedType, selectedDateFilter])
+        // Deliberately no dependencies to prevent auto-fetch on filter change
+    }, [])
 
     // Fetch on search with debounce
     useEffect(() => {

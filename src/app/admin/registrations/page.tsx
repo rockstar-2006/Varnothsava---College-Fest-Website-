@@ -160,18 +160,19 @@ export default function ParticipantsManagementPage() {
     const isFirstMountFilter = useRef(true)
     const isFirstMountSearch = useRef(true)
 
-    // Fetch on filter change
+    // Initial fetch only if no cache
     useEffect(() => {
-        // Skip initial fetch if cache is already present
         if (isFirstMountFilter.current) {
             isFirstMountFilter.current = false;
-            if (adminCache.registrations && adminCache.registrations.length > 0) {
-                return;
+            if (events.length === 0 && !adminCache.events) fetchEvents()
+
+            // Only fetch if cache doesn't exist
+            if (!adminCache.registrations) {
+                fetchRegistrations(selectedEventId, false)
             }
         }
-        fetchRegistrations(selectedEventId, false)
-        if (events.length === 0 && !adminCache.events) fetchEvents()
-    }, [selectedEventId, studentType, selectedDateFilter])
+        // Deliberately no dependencies to prevent auto-fetch on filter change
+    }, [])
 
     // Global Search with debounce
     useEffect(() => {
