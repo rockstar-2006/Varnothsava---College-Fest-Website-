@@ -425,13 +425,15 @@ export function EventGrid({ missions }: EventGridProps) {
             return
         }
 
+        const isRegistered = userData?.registeredEvents?.some(re => re.eventId === event.id)
+
         // Special case for Robo Soccer
         if (event.id === "TECH-008") {
             if (!userData?.hasRoboSoccer) {
                 router.push('/notify?addon=robo-soccer');
                 return
             }
-        } else if (!userData?.hasPaid) {
+        } else if (!isRegistered && !userData?.hasPaid) {
             router.push('/notify');
             return
         }

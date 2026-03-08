@@ -2,6 +2,7 @@ import { registrationsCollection, usersCollection, verifyAuthToken } from "@/lib
 import { NextRequest, NextResponse } from "next/server";
 import { checkApiRateLimit, getClientIdentifier } from "@/lib/ratelimit";
 import { getAdminRole } from "@/lib/admin";
+import { checkUserPaymentStatus } from "@/lib/paymentService";
 
 export async function GET(request: NextRequest) {
     try {
@@ -50,6 +51,10 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ message: "User profile incomplete." }, { status: 404 });
         }
 
+        // --- PAYMENT STATUS SYNC ---
+        // Fetch source of truth for payments
+        const paymentStatus = await checkUserPaymentStatus(verified.uid);
+
         // --- ADMIN ROLE HELPERS ---
         const { role, eventId } = getAdminRole(userData?.email);
         if (role) {
@@ -63,8 +68,8 @@ export async function GET(request: NextRequest) {
         const registeredEvents = registrations.docs.map(doc => ({ id: doc.id, data: doc.data() })).map(reg => ({ id: reg.id, eventId: reg.data.eventId, teamName: reg.data.teamName }));
         userData = {
             ...userData,
-            hasPaid: userData?.hasPaid === true,
-            hasRoboSoccer: userData?.hasRoboSoccer === true,
+            hasPaid: (userData?.hasPaid === true) || paymentStatus.hasPaid,
+            hasRoboSoccer: (userData?.hasRoboSoccer === true) || paymentStatus.hasRoboSoccer,
             registeredEvents: registeredEvents
         };
 
