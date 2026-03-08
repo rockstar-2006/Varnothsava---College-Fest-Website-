@@ -102,6 +102,7 @@ Status legend:
     - Added lightweight pagination mode (`skipCounts=1`) to users/payments/registrations admin APIs.
     - Reduced repeated frontend hits by removing auto-refresh `/api/admin/stats` calls from users/payments/registrations pages.
     - Switched `src/app/api/admin/events/route.ts` to cached metrics by default (optional live mode via `fresh=1`).
+    - Enforced cache lifetime for event metrics in `src/app/api/admin/events/route.ts` using TTL (`ADMIN_EVENT_METRICS_CACHE_TTL_MS`, fallback `ADMIN_STATS_CACHE_TTL_MS`) with live fallback when stale.
     - Added cached totals short-circuit to `src/app/api/admin/payments/total/route.ts`.
 
 - [ ] **P1-04: Review smooth-scroll lifecycle cost**
@@ -149,3 +150,4 @@ Status legend:
 
 - 2026-03-08: Created initial `improvements.md` with prioritized backlog and validated baseline.
 - 2026-03-08: Task 1 started and partially completed for admin Firebase read optimization (API caching + frontend request reduction + paginated count skipping).
+- 2026-03-08: Added TTL-based lifetime enforcement for admin event metrics cache to prevent stale indefinite reuse.
