@@ -59,9 +59,20 @@ export async function POST(request: NextRequest) {
             )
         }
 
+        const now = Date.now()
+        const CLOSING_TIME = new Date('2026-03-09T23:59:59+05:30').getTime()
+        const REOPENING_TIME = new Date('2026-03-11T08:00:00+05:30').getTime()
+
+        if (now > CLOSING_TIME && now < REOPENING_TIME) {
+            return NextResponse.json(
+                { error: 'Registration Closed', message: 'The online registration is closed and the registration will reopen on March 11.' },
+                { status: 403 }
+            )
+        }
+
         // 4. Determine amount based on email domain and Robo Soccer selection
-        // Base Fee: sode-edu.in = ₹200 (20000 paise), others = ₹300 (30000 paise)
-        // Robo Soccer Fee: + ₹300 (30000 paise)
+        // Base Fee: After March 11 8 AM = ₹350, otherwise sode-edu.in = ₹200, others = ₹300
+        // Robo Soccer Fee: + ₹300
         const isSodeStudent = userEmail.toLowerCase().endsWith('@sode-edu.in')
 
         let amountInRupees = 0
@@ -73,7 +84,7 @@ export async function POST(request: NextRequest) {
             }
         } else {
             // New registration
-            amountInRupees = isSodeStudent ? 200 : 300
+            amountInRupees = now >= REOPENING_TIME ? 350 : (isSodeStudent ? 200 : 300)
             if (includeRoboSoccer) {
                 amountInRupees += 300
             }

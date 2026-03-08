@@ -72,6 +72,7 @@ export default function PaymentsManagementPage() {
     const [selectedEventId, setSelectedEventId] = useState<string>('all')
     const [selectedStatus, setSelectedStatus] = useState<string>('all')
     const [selectedType, setSelectedType] = useState<'all' | 'internal' | 'external'>('all')
+    const [selectedDateFilter, setSelectedDateFilter] = useState<'all' | 'new'>('all')
     const [isDeleting, setIsDeleting] = useState(false)
     const [visibleCount, setVisibleCount] = useState(20)
     const [updatingId, setUpdatingId] = useState<string | null>(null)
@@ -106,6 +107,7 @@ export default function PaymentsManagementPage() {
             if (selectedEventId !== 'all') url += `&eventId=${selectedEventId}`
             if (selectedStatus !== 'all') url += `&status=${selectedStatus}`
             if (selectedType !== 'all') url += `&studentType=${selectedType}`
+            if (selectedDateFilter !== 'all') url += `&dateFilter=${selectedDateFilter}`
 
             const res = await fetch(url, {
                 headers: {
@@ -207,7 +209,7 @@ export default function PaymentsManagementPage() {
         }
         fetchPayments(false)
         if (events.length === 0 && !adminCache.events) fetchEvents()
-    }, [selectedStatus, selectedEventId, selectedType])
+    }, [selectedStatus, selectedEventId, selectedType, selectedDateFilter])
 
     // Fetch on search with debounce
     useEffect(() => {
@@ -433,7 +435,7 @@ export default function PaymentsManagementPage() {
                 </div>
 
                 {/* Filters */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 bg-[#111] p-3 md:p-4 rounded-2xl border border-white/5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 bg-[#111] p-3 md:p-4 rounded-2xl border border-white/5">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
                         <input
@@ -443,6 +445,14 @@ export default function PaymentsManagementPage() {
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-9 pr-4 text-white focus:outline-none focus:border-emerald-500/50 transition-all text-sm"
                         />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Clock size={16} className="text-gray-500 flex-shrink-0" />
+                        <select value={selectedDateFilter} onChange={(e) => setSelectedDateFilter(e.target.value as any)}
+                            className="w-full bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3 py-2 text-emerald-500 focus:outline-none focus:border-emerald-500/80 text-sm font-bold tracking-tight">
+                            <option value="all">All Dates</option>
+                            <option value="new">From March 11 (New)</option>
+                        </select>
                     </div>
                     <div className="flex items-center gap-2">
                         <Zap size={16} className="text-gray-500 flex-shrink-0" />

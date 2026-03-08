@@ -63,6 +63,7 @@ export default function ParticipantsManagementPage() {
         (userData?.role === 'COORDINATOR' && userData?.eventId && userData.eventId !== 'all') ? userData.eventId : 'all'
     )
     const [studentType, setStudentType] = useState<string>('all') // 'all', 'internal', 'external'
+    const [selectedDateFilter, setSelectedDateFilter] = useState<'all' | 'new'>('all')
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
     const [updatingId, setUpdatingId] = useState<string | null>(null)
     const [hasMore, setHasMore] = useState(false)
@@ -87,6 +88,7 @@ export default function ParticipantsManagementPage() {
             let url = `/api/admin/registrations?lastId=${currentLastId}&limit=20&_t=${Date.now()}`
             if (targetEventId && targetEventId !== 'all') url += `&eventId=${targetEventId}`
             if (studentType !== 'all') url += `&studentType=${studentType}`
+            if (selectedDateFilter !== 'all') url += `&dateFilter=${selectedDateFilter}`
             if (searchQuery) url += `&search=${encodeURIComponent(searchQuery)}`
 
             const res = await fetch(url, {
@@ -169,7 +171,7 @@ export default function ParticipantsManagementPage() {
         }
         fetchRegistrations(selectedEventId, false)
         if (events.length === 0 && !adminCache.events) fetchEvents()
-    }, [selectedEventId, studentType])
+    }, [selectedEventId, studentType, selectedDateFilter])
 
     // Global Search with debounce
     useEffect(() => {
@@ -315,6 +317,17 @@ export default function ParticipantsManagementPage() {
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-9 pr-4 text-white focus:outline-none focus:border-emerald-500/50 transition-all font-medium text-sm"
                         />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Clock size={16} className="text-gray-500 flex-shrink-0" />
+                        <select
+                            value={selectedDateFilter}
+                            onChange={(e) => setSelectedDateFilter(e.target.value as any)}
+                            className="w-full bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3 py-2 text-emerald-500 focus:outline-none focus:border-emerald-500/80 text-sm font-bold tracking-tight"
+                        >
+                            <option value="all">All Dates</option>
+                            <option value="new">From March 11 (New)</option>
+                        </select>
                     </div>
                     <div className="flex items-center gap-2">
                         <Filter size={16} className="text-gray-500 flex-shrink-0" />

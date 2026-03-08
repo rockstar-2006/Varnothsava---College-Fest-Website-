@@ -131,6 +131,12 @@ export async function GET(request: NextRequest) {
             paymentsQuery = paymentsQuery.where('status', '==', status);
         }
 
+        const dateFilter = searchParams.get('dateFilter');
+        if (dateFilter === 'new') {
+            // Fetch payments from March 11th 2026 onwards
+            paymentsQuery = paymentsQuery.where('created_at', '>=', '2026-03-11T00:00:00.000Z');
+        }
+
         let query = paymentsQuery.orderBy('created_at', 'desc').limit(limit);
 
         if (lastId) {

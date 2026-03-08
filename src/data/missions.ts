@@ -606,7 +606,7 @@ export const missions: Event[] = [
         // tags: ['Dance', 'Group', 'Grooxe'],
         videoUrl: 'https://cdn.pixabay.com/video/2021/08/04/83949-584736183_tiny.mp4',
         location: 'Open Air Auditorium',
-        minTeamSize: 7,
+        minTeamSize: 2,
         maxTeamSize: 7,
         teamFormate: 'Group',
         time: "10:30 AM",

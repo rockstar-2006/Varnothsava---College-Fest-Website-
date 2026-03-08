@@ -39,7 +39,7 @@ const navItems: NavItem[] = [
         roles: ['SUPER_ADMIN', 'FINANCE']
     },
     {
-        label: 'Attendance',
+        label: 'Scanner Details',
         href: '/admin/attendance',
         icon: CheckSquare,
         roles: ['SUPER_ADMIN', 'COORDINATOR', 'VOLUNTEER']

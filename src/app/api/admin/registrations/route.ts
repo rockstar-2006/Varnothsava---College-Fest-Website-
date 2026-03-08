@@ -67,6 +67,12 @@ export async function GET(request: NextRequest) {
             queryBase = queryBase.where('leaderType', '==', studentType);
         }
 
+        const dateFilter = searchParams.get('dateFilter');
+        if (dateFilter === 'new') {
+            queryBase = queryBase.where('registeredAt', '>=', '2026-03-11T00:00:00.000Z');
+            countQuery = countQuery.where('registeredAt', '>=', '2026-03-11T00:00:00.000Z');
+        }
+
         let totalCount = 0;
         let internalCount = 0;
         let externalCount = 0;

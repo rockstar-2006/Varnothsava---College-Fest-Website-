@@ -10,19 +10,33 @@ import Link from 'next/link'
 import { Orbitron } from 'next/font/google'
 import { useApp } from '@/context/AppContext'
 import { useRazorpayPayment } from '@/hooks/useRazorpayPayment'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { Suspense } from 'react'
+import RegistrationClosedMessage from '@/components/ui/RegistrationClosedMessage'
+import CountdownTimer from '@/components/ui/CountdownTimer'
 
 const orbitron = Orbitron({
     subsets: ['latin'],
     weight: ['400', '900'],
 })
 
+const CLOSING_TIME = new Date('2026-03-09T23:59:59+05:30').getTime();
+const REOPENING_TIME = new Date('2026-03-11T08:00:00+05:30').getTime();
+
 function RegisterContent() {
     const { userData, isLoggedIn, isInitializing } = useApp()
     const router = useRouter()
     const searchParams = useSearchParams()
     const { initiatePayment, checkPaymentStatus, isLoading, error, clearError } = useRazorpayPayment()
+
+    const [currentTime, setCurrentTime] = useState(Date.now());
+
+    useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(Date.now()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    const isClosed = currentTime > CLOSING_TIME && currentTime < REOPENING_TIME;
 
     // Live Registration is now open for all verified users
 
@@ -68,6 +82,7 @@ function RegisterContent() {
     // Calculate amount based on email and Robo Soccer selection
     const getBaseAmount = () => {
         if (!userData) return 300
+        if (currentTime >= REOPENING_TIME) return 350
         return userData.email.toLowerCase().endsWith('@sode-edu.in') ? 200 : 300
     }
 
@@ -161,250 +176,259 @@ function RegisterContent() {
             </div>
 
             <div className="max-w-4xl w-full relative z-10">
-                {/* Main Card */}
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8 }}
-                    className="relative bg-[#0a0a0a]/95 backdrop-blur-2xl rounded-[1.8rem] md:rounded-[2.5rem] shadow-[0_0_80px_rgba(16,185,129,0.15)] border border-emerald-500/20 overflow-hidden isolate"
-                >
-                    {/* Header Section */}
-                    <div className="relative p-6 sm:p-10 md:p-16 text-center overflow-hidden">
-                        {/* Scanline Effect */}
-                        <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.03)_1px,transparent_1px)] bg-[size:100%_4px] pointer-events-none" />
-
+                {isClosed ? (
+                    <RegistrationClosedMessage />
+                ) : (
+                    <>
+                        {currentTime < CLOSING_TIME && (
+                            <CountdownTimer targetDate={CLOSING_TIME} title="ONLINE REGISTRATION CLOSES IN:" />
+                        )}
+                        {/* Main Card */}
                         <motion.div
-                            initial={{ scale: 0, rotate: -180 }}
-                            animate={{ scale: 1, rotate: 0 }}
-                            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                            className="inline-flex items-center justify-center w-16 h-16 sm:w-24 sm:h-24 bg-emerald-500/10 backdrop-blur-md rounded-full mb-6 relative border-2 border-emerald-500/30"
-                        >
-                            <CreditCard className="w-8 h-8 sm:w-12 sm:h-12 text-emerald-400" />
-                        </motion.div>
-
-                        <motion.h1
-                            initial={{ opacity: 0, y: 20 }}
+                            initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.3 }}
-                            className={`${orbitron.className} text-[1.75rem] xs:text-3xl sm:text-5xl md:text-7xl font-black text-white mb-4 tracking-tighter leading-[1.1] sm:leading-[0.9]`}
+                            transition={{ duration: 0.8 }}
+                            className="relative bg-[#0a0a0a]/95 backdrop-blur-2xl rounded-[1.8rem] md:rounded-[2.5rem] shadow-[0_0_80px_rgba(16,185,129,0.15)] border border-emerald-500/20 overflow-hidden isolate"
                         >
-                            <span className="bg-gradient-to-r from-white via-emerald-200 to-white bg-clip-text text-transparent block">
-                                REGISTER NOW
-                            </span>
-                            <span className="text-emerald-400 mt-1 sm:mt-0 block"> FOR VARNOTHSAVA</span>
-                        </motion.h1>
+                            {/* Header Section */}
+                            <div className="relative p-6 sm:p-10 md:p-16 text-center overflow-hidden">
+                                {/* Scanline Effect */}
+                                <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.03)_1px,transparent_1px)] bg-[size:100%_4px] pointer-events-none" />
 
-                        <motion.div
-                            initial={{ scaleX: 0 }}
-                            animate={{ scaleX: 1 }}
-                            transition={{ delay: 0.5, duration: 0.8 }}
-                            className="h-1 w-24 sm:w-48 mx-auto bg-gradient-to-r from-transparent via-emerald-500 to-transparent mb-6"
-                        />
-                    </div>
-
-                    {/* Content Section */}
-                    <div className="p-5 sm:p-10 md:p-12 pt-0">
-                        {/* Pricing & Selection */}
-                        {isLoggedIn && userData && (
-                            <div className="space-y-6 mb-8">
-                                {/* Base Registration Card */}
                                 <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.6 }}
-                                    className={`p-5 sm:p-6 border rounded-2xl md:rounded-[2rem] relative overflow-hidden group transition-all ${paymentStatus?.hasPaid
-                                        ? 'bg-emerald-500/5 border-emerald-500/20 opacity-80'
-                                        : 'bg-white/[0.03] border-white/10'}`}
+                                    initial={{ scale: 0, rotate: -180 }}
+                                    animate={{ scale: 1, rotate: 0 }}
+                                    transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                                    className="inline-flex items-center justify-center w-16 h-16 sm:w-24 sm:h-24 bg-emerald-500/10 backdrop-blur-md rounded-full mb-6 relative border-2 border-emerald-500/30"
                                 >
-                                    <div className="flex flex-col sm:flex-row items-center sm:items-end justify-between gap-4 text-center sm:text-left relative z-10">
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-2 justify-center sm:justify-start">
-                                                <p className="text-[10px] text-emerald-500 font-black uppercase tracking-[0.2em]">
-                                                    Individual Entry Pass
-                                                </p>
-                                                {paymentStatus?.hasPaid && (
-                                                    <span className="bg-emerald-500 text-black text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
-                                                        Purchased
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className={`text-4xl sm:text-5xl font-black leading-none ${paymentStatus?.hasPaid ? 'text-gray-400' : 'text-white'}`}>
-                                                ₹{getBaseAmount()}
-                                            </p>
-                                            <p className="text-[10px] text-gray-500 mt-3 font-bold uppercase tracking-widest">
-                                                Verified: {getStudentType()}
-                                            </p>
-                                        </div>
-                                        <div className={`flex items-center gap-2 px-4 py-2 rounded-full border ${paymentStatus?.hasPaid ? 'bg-emerald-500/20 border-emerald-500/30' : 'bg-emerald-500/10 border-emerald-500/20'}`}>
-                                            {paymentStatus?.hasPaid ? <CheckCircle className="w-4 h-4 text-emerald-400" /> : <Shield className="w-4 h-4 text-emerald-400" />}
-                                            <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">
-                                                {paymentStatus?.hasPaid ? 'Active Node' : 'Secured'}
-                                            </span>
-                                        </div>
-                                    </div>
+                                    <CreditCard className="w-8 h-8 sm:w-12 sm:h-12 text-emerald-400" />
                                 </motion.div>
 
-                                {/* Robo Soccer Add-on Selection */}
-                                <motion.div
+                                <motion.h1
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.7 }}
-                                    onClick={() => {
-                                        if (!paymentStatus?.hasRoboSoccer) {
-                                            setIncludeRoboSoccer(!includeRoboSoccer)
-                                        }
-                                    }}
-                                    className={`p-5 sm:p-6 rounded-2xl md:rounded-[2rem] border transition-all relative overflow-hidden ${paymentStatus?.hasRoboSoccer
-                                        ? 'bg-emerald-500/5 border-emerald-500/20 opacity-80 cursor-default'
-                                        : includeRoboSoccer
-                                            ? 'bg-emerald-500/10 border-emerald-500/50 shadow-[0_0_30px_rgba(16,185,129,0.1)] cursor-pointer'
-                                            : 'bg-white/[0.03] border-white/10 hover:border-emerald-500/30 cursor-pointer'
-                                        }`}
+                                    transition={{ delay: 0.3 }}
+                                    className={`${orbitron.className} text-[1.75rem] xs:text-3xl sm:text-5xl md:text-7xl font-black text-white mb-4 tracking-tighter leading-[1.1] sm:leading-[0.9]`}
                                 >
-                                    <div className="flex items-center justify-between gap-4 relative z-10">
-                                        <div className="flex items-center gap-4">
-                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${paymentStatus?.hasRoboSoccer || includeRoboSoccer ? 'bg-emerald-500 text-black' : 'bg-white/5 text-gray-400'
-                                                }`}>
-                                                <Zap className="w-6 h-6" />
-                                            </div>
-                                            <div>
-                                                <div className="flex items-center gap-2">
-                                                    <h3 className={`font-bold text-lg leading-tight ${paymentStatus?.hasRoboSoccer ? 'text-gray-400' : 'text-white'}`}>Robo Soccer (Team)</h3>
-                                                    {paymentStatus?.hasRoboSoccer && (
-                                                        <span className="bg-emerald-500 text-black text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
-                                                            Registered
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <p className="text-gray-500 text-xs">Register your team for Robo Soccer</p>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className={`text-xl font-black ${includeRoboSoccer && !paymentStatus?.hasRoboSoccer ? 'text-emerald-400' : 'text-gray-400'}`}>+ ₹300</p>
-                                            <div className={`mt-1 inline-block w-4 h-4 rounded-full border-2 transition-all ${paymentStatus?.hasRoboSoccer || includeRoboSoccer ? 'bg-emerald-500 border-none scale-110' : 'border-white/20'
-                                                }`}>
-                                                {(paymentStatus?.hasRoboSoccer || includeRoboSoccer) && <CheckCircle className="w-4 h-4 text-black" />}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {includeRoboSoccer && !paymentStatus?.hasRoboSoccer && (
+                                    <span className="bg-gradient-to-r from-white via-emerald-200 to-white bg-clip-text text-transparent block">
+                                        REGISTER NOW
+                                    </span>
+                                    <span className="text-emerald-400 mt-1 sm:mt-0 block"> FOR VARNOTHSAVA</span>
+                                </motion.h1>
+
+                                <motion.div
+                                    initial={{ scaleX: 0 }}
+                                    animate={{ scaleX: 1 }}
+                                    transition={{ delay: 0.5, duration: 0.8 }}
+                                    className="h-1 w-24 sm:w-48 mx-auto bg-gradient-to-r from-transparent via-emerald-500 to-transparent mb-6"
+                                />
+                            </div>
+
+                            {/* Content Section */}
+                            <div className="p-5 sm:p-10 md:p-12 pt-0">
+                                {/* Pricing & Selection */}
+                                {isLoggedIn && userData && (
+                                    <div className="space-y-6 mb-8">
+                                        {/* Base Registration Card */}
                                         <motion.div
-                                            initial={{ opacity: 0, height: 0 }}
-                                            animate={{ opacity: 1, height: 'auto' }}
-                                            className="mt-4 pt-4 border-t border-emerald-500/20"
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.6 }}
+                                            className={`p-5 sm:p-6 border rounded-2xl md:rounded-[2rem] relative overflow-hidden group transition-all ${paymentStatus?.hasPaid
+                                                ? 'bg-emerald-500/5 border-emerald-500/20 opacity-80'
+                                                : 'bg-white/[0.03] border-white/10'}`}
                                         >
-                                            <p className="text-[10px] text-emerald-400/80 font-bold uppercase tracking-wider flex items-center gap-2">
-                                                <Sparkles className="w-3 h-3" />
-                                                Team Leader Payment: This covers the entire team fee.
+                                            <div className="flex flex-col sm:flex-row items-center sm:items-end justify-between gap-4 text-center sm:text-left relative z-10">
+                                                <div>
+                                                    <div className="flex items-center gap-2 mb-2 justify-center sm:justify-start">
+                                                        <p className="text-[10px] text-emerald-500 font-black uppercase tracking-[0.2em]">
+                                                            Individual Entry Pass
+                                                        </p>
+                                                        {paymentStatus?.hasPaid && (
+                                                            <span className="bg-emerald-500 text-black text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
+                                                                Purchased
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <p className={`text-4xl sm:text-5xl font-black leading-none ${paymentStatus?.hasPaid ? 'text-gray-400' : 'text-white'}`}>
+                                                        ₹{getBaseAmount()}
+                                                    </p>
+                                                    <p className="text-[10px] text-gray-500 mt-3 font-bold uppercase tracking-widest">
+                                                        Verified: {getStudentType()}
+                                                    </p>
+                                                </div>
+                                                <div className={`flex items-center gap-2 px-4 py-2 rounded-full border ${paymentStatus?.hasPaid ? 'bg-emerald-500/20 border-emerald-500/30' : 'bg-emerald-500/10 border-emerald-500/20'}`}>
+                                                    {paymentStatus?.hasPaid ? <CheckCircle className="w-4 h-4 text-emerald-400" /> : <Shield className="w-4 h-4 text-emerald-400" />}
+                                                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">
+                                                        {paymentStatus?.hasPaid ? 'Active Node' : 'Secured'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+
+                                        {/* Robo Soccer Add-on Selection */}
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.7 }}
+                                            onClick={() => {
+                                                if (!paymentStatus?.hasRoboSoccer) {
+                                                    setIncludeRoboSoccer(!includeRoboSoccer)
+                                                }
+                                            }}
+                                            className={`p-5 sm:p-6 rounded-2xl md:rounded-[2rem] border transition-all relative overflow-hidden ${paymentStatus?.hasRoboSoccer
+                                                ? 'bg-emerald-500/5 border-emerald-500/20 opacity-80 cursor-default'
+                                                : includeRoboSoccer
+                                                    ? 'bg-emerald-500/10 border-emerald-500/50 shadow-[0_0_30px_rgba(16,185,129,0.1)] cursor-pointer'
+                                                    : 'bg-white/[0.03] border-white/10 hover:border-emerald-500/30 cursor-pointer'
+                                                }`}
+                                        >
+                                            <div className="flex items-center justify-between gap-4 relative z-10">
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${paymentStatus?.hasRoboSoccer || includeRoboSoccer ? 'bg-emerald-500 text-black' : 'bg-white/5 text-gray-400'
+                                                        }`}>
+                                                        <Zap className="w-6 h-6" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <h3 className={`font-bold text-lg leading-tight ${paymentStatus?.hasRoboSoccer ? 'text-gray-400' : 'text-white'}`}>Robo Soccer (Team)</h3>
+                                                            {paymentStatus?.hasRoboSoccer && (
+                                                                <span className="bg-emerald-500 text-black text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
+                                                                    Registered
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-gray-500 text-xs">Register your team for Robo Soccer</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className={`text-xl font-black ${includeRoboSoccer && !paymentStatus?.hasRoboSoccer ? 'text-emerald-400' : 'text-gray-400'}`}>+ ₹300</p>
+                                                    <div className={`mt-1 inline-block w-4 h-4 rounded-full border-2 transition-all ${paymentStatus?.hasRoboSoccer || includeRoboSoccer ? 'bg-emerald-500 border-none scale-110' : 'border-white/20'
+                                                        }`}>
+                                                        {(paymentStatus?.hasRoboSoccer || includeRoboSoccer) && <CheckCircle className="w-4 h-4 text-black" />}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {includeRoboSoccer && !paymentStatus?.hasRoboSoccer && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, height: 0 }}
+                                                    animate={{ opacity: 1, height: 'auto' }}
+                                                    className="mt-4 pt-4 border-t border-emerald-500/20"
+                                                >
+                                                    <p className="text-[10px] text-emerald-400/80 font-bold uppercase tracking-wider flex items-center gap-2">
+                                                        <Sparkles className="w-3 h-3" />
+                                                        Team Leader Payment: This covers the entire team fee.
+                                                    </p>
+                                                </motion.div>
+                                            )}
+                                        </motion.div>
+
+                                        {/* Total Amount Summary */}
+                                        <motion.div
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            className="flex items-center justify-between px-6 pt-4"
+                                        >
+                                            <p className="text-sm text-gray-400 font-bold tracking-widest uppercase">
+                                                {paymentStatus?.hasPaid ? 'Upgrade Total' : 'Total Checkout'}
                                             </p>
+                                            <p className="text-3xl font-black text-white">₹{getTotalAmount()}</p>
+                                        </motion.div>
+                                    </div>
+                                )}
+
+                                {/* Error Display */}
+                                <AnimatePresence>
+                                    {error && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -10 }}
+                                            className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3"
+                                        >
+                                            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                                            <div className="flex-1">
+                                                <p className="text-red-400 text-sm font-medium">{error}</p>
+                                            </div>
+                                            <button
+                                                onClick={clearError}
+                                                className="text-red-400 hover:text-red-300 transition-colors"
+                                            >
+                                                ×
+                                            </button>
                                         </motion.div>
                                     )}
-                                </motion.div>
+                                </AnimatePresence>
 
-                                {/* Total Amount Summary */}
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    className="flex items-center justify-between px-6 pt-4"
+                                {/* Register Button */}
+                                <motion.button
+                                    onClick={handleRegisterClick}
+                                    disabled={isLoading}
+                                    whileHover={{ scale: isLoading ? 1 : 1.01 }}
+                                    whileTap={{ scale: isLoading ? 1 : 0.99 }}
+                                    className="relative w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-black font-bold py-5 sm:py-6 px-6 rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:shadow-[0_0_50px_rgba(16,185,129,0.5)] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden group isolate"
                                 >
-                                    <p className="text-sm text-gray-400 font-bold tracking-widest uppercase">
-                                        {paymentStatus?.hasPaid ? 'Upgrade Total' : 'Total Checkout'}
-                                    </p>
-                                    <p className="text-3xl font-black text-white">₹{getTotalAmount()}</p>
-                                </motion.div>
-                            </div>
-                        )}
+                                    <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    {isLoading ? (
+                                        <>
+                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                            <span className="text-lg tracking-wide uppercase">Processing...</span>
+                                        </>
+                                    ) : (paymentStatus?.hasPaid && (paymentStatus.hasRoboSoccer || !includeRoboSoccer)) ? (
+                                        <>
+                                            <CheckCircle className="w-5 h-5" />
+                                            <span className="text-lg tracking-wide uppercase">Already Registered</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="text-lg tracking-wide uppercase">
+                                                {!isLoggedIn
+                                                    ? 'LOGIN TO REGISTER'
+                                                    : paymentStatus?.hasPaid
+                                                        ? 'UPGRADE TO ROBO SOCCER'
+                                                        : 'PAY NOW'}
+                                            </span>
+                                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                        </>
+                                    )}
+                                </motion.button>
 
-                        {/* Error Display */}
-                        <AnimatePresence>
-                            {error && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: -10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3"
-                                >
-                                    <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                                    <div className="flex-1">
-                                        <p className="text-red-400 text-sm font-medium">{error}</p>
-                                    </div>
-                                    <button
-                                        onClick={clearError}
-                                        className="text-red-400 hover:text-red-300 transition-colors"
+                                <p className="text-xs text-gray-500 text-center mt-4 flex items-center justify-center gap-2">
+                                    <Sparkles className="w-3 h-3" />
+                                    Powered by Razorpay - Secure & Trusted
+                                </p>
+
+                                {/* Back to Home Link */}
+                                <div className="mt-8 pt-6 border-t border-white/5 text-center">
+                                    <Link
+                                        href="/"
+                                        className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-emerald-400 font-medium transition-colors group"
                                     >
-                                        ×
-                                    </button>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                                        <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" />
+                                        Back to Home
+                                    </Link>
+                                </div>
 
-                        {/* Register Button */}
-                        <motion.button
-                            onClick={handleRegisterClick}
-                            disabled={isLoading}
-                            whileHover={{ scale: isLoading ? 1 : 1.01 }}
-                            whileTap={{ scale: isLoading ? 1 : 0.99 }}
-                            className="relative w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-black font-bold py-5 sm:py-6 px-6 rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:shadow-[0_0_50px_rgba(16,185,129,0.5)] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden group isolate"
-                        >
-                            <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            {isLoading ? (
-                                <>
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                    <span className="text-lg tracking-wide uppercase">Processing...</span>
-                                </>
-                            ) : (paymentStatus?.hasPaid && (paymentStatus.hasRoboSoccer || !includeRoboSoccer)) ? (
-                                <>
-                                    <CheckCircle className="w-5 h-5" />
-                                    <span className="text-lg tracking-wide uppercase">Already Registered</span>
-                                </>
-                            ) : (
-                                <>
-                                    <span className="text-lg tracking-wide uppercase">
-                                        {!isLoggedIn
-                                            ? 'LOGIN TO REGISTER'
-                                            : paymentStatus?.hasPaid
-                                                ? 'UPGRADE TO ROBO SOCCER'
-                                                : 'PAY NOW'}
-                                    </span>
-                                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                                </>
-                            )}
-                        </motion.button>
-
-                        <p className="text-xs text-gray-500 text-center mt-4 flex items-center justify-center gap-2">
-                            <Sparkles className="w-3 h-3" />
-                            Powered by Razorpay - Secure & Trusted
-                        </p>
-
-                        {/* Back to Home Link */}
-                        <div className="mt-8 pt-6 border-t border-white/5 text-center">
-                            <Link
-                                href="/"
-                                className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-emerald-400 font-medium transition-colors group"
-                            >
-                                <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" />
-                                Back to Home
-                            </Link>
-                        </div>
-
-                        {/* Footer Links */}
-                        <div className="pt-6 mt-6 border-t border-white/5">
-                            <div className="flex flex-wrap justify-center gap-4 text-xs text-gray-500">
-                                <Link href="/terms" className="hover:text-emerald-400 transition-colors">
-                                    Terms of Service
-                                </Link>
-                                <span className="text-gray-700">•</span>
-                                <Link href="/privacy" className="hover:text-emerald-400 transition-colors">
-                                    Privacy Policy
-                                </Link>
-                                <span className="text-gray-700">•</span>
-                                <Link href="/refund-policy" className="hover:text-emerald-400 transition-colors">
-                                    Refund Policy
-                                </Link>
+                                {/* Footer Links */}
+                                <div className="pt-6 mt-6 border-t border-white/5">
+                                    <div className="flex flex-wrap justify-center gap-4 text-xs text-gray-500">
+                                        <Link href="/terms" className="hover:text-emerald-400 transition-colors">
+                                            Terms of Service
+                                        </Link>
+                                        <span className="text-gray-700">•</span>
+                                        <Link href="/privacy" className="hover:text-emerald-400 transition-colors">
+                                            Privacy Policy
+                                        </Link>
+                                        <span className="text-gray-700">•</span>
+                                        <Link href="/refund-policy" className="hover:text-emerald-400 transition-colors">
+                                            Refund Policy
+                                        </Link>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                </motion.div>
+                        </motion.div>
+                    </>
+                )}
             </div>
 
             {/* Success Modal */}
