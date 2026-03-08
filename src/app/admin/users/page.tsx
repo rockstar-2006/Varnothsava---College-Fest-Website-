@@ -77,7 +77,8 @@ export default function UserManagementPage() {
             const token = await getAuthToken()
 
             const currentLastId = isLoadMore ? lastId : '';
-            const res = await fetch(`/api/admin/all-users?search=${searchQuery}&lastId=${currentLastId}&limit=20&status=${paymentFilter}`, {
+            const skipCountsParam = isLoadMore ? '&skipCounts=1' : '';
+            const res = await fetch(`/api/admin/all-users?search=${searchQuery}&lastId=${currentLastId}&limit=20&status=${paymentFilter}${skipCountsParam}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             const data = await res.json()
@@ -86,25 +87,26 @@ export default function UserManagementPage() {
                 setUsers(newUsers)
                 setHasMore(data.hasMore)
                 setLastId(data.lastId)
-                setTotalUsersCount(data.totalCount)
-                setPaidUsersCount(data.paidCount)
-                setUnpaidUsersCount(data.unpaidCount)
-                setInternalUsersCount(data.internalCount)
-                setExternalUsersCount(data.externalCount)
                 updateAdminCache('users', newUsers)
-                updateAdminCache('totalUsersCount', data.totalCount)
-                updateAdminCache('paidUsersCount', data.paidCount)
-                updateAdminCache('unpaidUsersCount', data.unpaidCount)
-                updateAdminCache('internalUsersCount', data.internalCount)
-                updateAdminCache('externalUsersCount', data.externalCount)
-
-                // Refresh global stats too
-                const sRes = await fetch(`/api/admin/stats?_t=${Date.now()}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (sRes.ok) {
-                    const sData = await sRes.json();
-                    updateAdminCache('stats', sData.stats);
+                if (typeof data.totalCount === 'number') {
+                    setTotalUsersCount(data.totalCount)
+                    updateAdminCache('totalUsersCount', data.totalCount)
+                }
+                if (typeof data.paidCount === 'number') {
+                    setPaidUsersCount(data.paidCount)
+                    updateAdminCache('paidUsersCount', data.paidCount)
+                }
+                if (typeof data.unpaidCount === 'number') {
+                    setUnpaidUsersCount(data.unpaidCount)
+                    updateAdminCache('unpaidUsersCount', data.unpaidCount)
+                }
+                if (typeof data.internalCount === 'number') {
+                    setInternalUsersCount(data.internalCount)
+                    updateAdminCache('internalUsersCount', data.internalCount)
+                }
+                if (typeof data.externalCount === 'number') {
+                    setExternalUsersCount(data.externalCount)
+                    updateAdminCache('externalUsersCount', data.externalCount)
                 }
             }
         } catch (error) {

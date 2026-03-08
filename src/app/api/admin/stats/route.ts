@@ -23,6 +23,26 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });
         }
 
+        const forceRefresh = request.nextUrl.searchParams.get('force') === '1'
+            || request.nextUrl.searchParams.get('refresh') === '1';
+        const cacheTtlMs = Number(process.env.ADMIN_STATS_CACHE_TTL_MS || '120000');
+        const statsRef = adminDb.collection('system').doc('stats');
+
+        // Serve cached global stats when possible to avoid expensive full-scan recalculation.
+        if (adminRole !== 'COORDINATOR' && !forceRefresh) {
+            const cachedDoc = await statsRef.get();
+            if (cachedDoc.exists) {
+                const cachedStats = cachedDoc.data() || {};
+                const updatedAtMs = typeof cachedStats.updatedAt === 'string'
+                    ? Date.parse(cachedStats.updatedAt)
+                    : NaN;
+
+                if (Number.isFinite(updatedAtMs) && (Date.now() - updatedAtMs) < cacheTtlMs) {
+                    return NextResponse.json({ stats: cachedStats, cached: true });
+                }
+            }
+        }
+
         // Scope queries based on role
         let regQuery: any = adminDb.collection('registrations');
         let payQuery: any = adminDb.collection('payments').where('status', '==', 'captured');
@@ -58,9 +78,11 @@ export async function GET(request: NextRequest) {
 
         // Map events by category for category-wise stats
         const eventCategoryMap: Record<string, string> = {};
+        const eventTitleMap: Record<string, string> = {};
         eventsSnap.docs.forEach((doc: any) => {
             const data = doc.data();
             eventCategoryMap[doc.id] = (data.type || 'Other').toLowerCase();
+            eventTitleMap[doc.id] = data.title || doc.id;
         });
 
         // Initialize advanced stats
@@ -255,6 +277,7 @@ export async function GET(request: NextRequest) {
             paidParticipants: uniquePaidParticipants.size, // Unique paid headcount
             totalRevenue,
             eventMetricsCache: cleanEventMetrics, // Cached individual event stats for O(1) reads
+            eventTitleMap,
             categoryBreakdown: categoryStats,
             collegeDistribution: Object.entries(collegeParticipantMap)
                 .map(([name, set]) => ({ name, count: set.size }))
@@ -263,8 +286,10 @@ export async function GET(request: NextRequest) {
             updatedAt: new Date().toISOString()
         };
 
-        // Also update the stats doc for background tasks/performance elsewhere
-        await adminDb.collection('system').doc('stats').set(liveStats);
+        // Persist only global stats. Coordinator-scoped stats must never overwrite shared cache.
+        if (adminRole !== 'COORDINATOR') {
+            await statsRef.set(liveStats, { merge: true });
+        }
 
         return NextResponse.json({ stats: liveStats });
 

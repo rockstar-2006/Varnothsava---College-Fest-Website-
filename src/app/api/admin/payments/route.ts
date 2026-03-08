@@ -34,11 +34,7 @@ export async function GET(request: NextRequest) {
         const search = searchParams.get('search') || '';
         const lastId = searchParams.get('lastId') || '';
         const limit = parseInt(searchParams.get('limit') || '20');
-
-        // Strategy 4: Summary Document Fetch
-        const statsRef = adminDb.collection('system').doc('stats');
-        const statsDoc = await statsRef.get();
-        const s = statsDoc.data() || {};
+        const skipCounts = searchParams.get('skipCounts') === '1';
 
         let paymentsQuery: any = adminDb.collection('payments');
 
@@ -179,13 +175,15 @@ export async function GET(request: NextRequest) {
             ...doc.data()
         }));
 
-        // Live Accurate Count for the specific filters applied
-        let totalCount = 0;
-        if (search) {
-            totalCount = payments.length;
-        } else {
-            const countSnap = await paymentsQuery.count().get();
-            totalCount = countSnap.data().count;
+        // Optional count: skip on paginated load-more requests to cut read volume.
+        let totalCount: number | null = null;
+        if (!skipCounts) {
+            if (search) {
+                totalCount = payments.length;
+            } else {
+                const countSnap = await paymentsQuery.count().get();
+                totalCount = countSnap.data().count;
+            }
         }
 
         const enriched = await enrichPaymentsArray(payments);

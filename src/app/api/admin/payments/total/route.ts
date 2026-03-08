@@ -23,6 +23,35 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });
         }
 
+        const forceRefresh = request.nextUrl.searchParams.get('force') === '1';
+        const cacheTtlMs = Number(process.env.ADMIN_STATS_CACHE_TTL_MS || '120000');
+        const statsRef = adminDb.collection('system').doc('stats');
+
+        // Reuse global cached totals for non-scoped roles to avoid repeated heavy scans.
+        if (adminRole !== 'COORDINATOR' && !forceRefresh) {
+            const statsDoc = await statsRef.get();
+            if (statsDoc.exists) {
+                const cached = statsDoc.data() || {};
+                const updatedAtMs = typeof cached.updatedAt === 'string'
+                    ? Date.parse(cached.updatedAt)
+                    : NaN;
+                const hasSummary = typeof cached.totalRevenue === 'number'
+                    && typeof cached.totalVerifiedPayments === 'number'
+                    && typeof cached.totalParticipantsPaid === 'number'
+                    && typeof cached.totalPaymentsCount === 'number';
+
+                if (hasSummary && Number.isFinite(updatedAtMs) && (Date.now() - updatedAtMs) < cacheTtlMs) {
+                    return NextResponse.json({
+                        totalAmount: cached.totalRevenue,
+                        totalPayments: cached.totalVerifiedPayments,
+                        totalParticipantsPaid: cached.totalParticipantsPaid,
+                        transactionCount: cached.totalPaymentsCount,
+                        cached: true,
+                    });
+                }
+            }
+        }
+
         // Scope queries based on role
         let payQuery: any = adminDb.collection('payments').where('status', '==', 'captured');
         let regQuery: any = adminDb.collection('registrations');
@@ -72,13 +101,13 @@ export async function GET(request: NextRequest) {
 
         // Only sync to global stats doc if it's a full summary (SUPER_ADMIN or FINANCE)
         if (adminRole === 'SUPER_ADMIN' || adminRole === 'FINANCE') {
-            const statsRef = adminDb.collection('system').doc('stats');
             await statsRef.set({
                 totalRevenue: totalAmountInRupees,
                 paidUsers: totalPaidPeople,
                 totalVerifiedPayments: totalPaidPeople,
                 totalParticipantsPaid: participantPaidHeadcount,
                 totalPaymentsCount: totalTransactions,
+                updatedAt: new Date().toISOString(),
                 lastTotalSync: new Date().toISOString()
             }, { merge: true });
         }

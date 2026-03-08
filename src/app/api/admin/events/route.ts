@@ -28,6 +28,13 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ message: "Forbidden: No administrative access" }, { status: 403 });
         }
 
+        const forceLive = request.nextUrl.searchParams.get('fresh') === '1';
+        const cacheTtlMs = Number(
+            process.env.ADMIN_EVENT_METRICS_CACHE_TTL_MS
+            || process.env.ADMIN_STATS_CACHE_TTL_MS
+            || '120000'
+        );
+
         let eventsQuery: any = adminDb.collection('events');
 
         // RBAC: COORDINATOR only sees assigned events
@@ -47,63 +54,92 @@ export async function GET(request: NextRequest) {
         }
 
         const snapshot = await eventsQuery.get();
-        console.log(`Fetched ${snapshot.docs.length} events from database`);
 
         const eventDocs = snapshot.docs;
 
-        // Huge Read Optimization: Fetch zero-cost cache from system/stats (cost = 1 read)
-        const statsRef = await adminDb.collection('system').doc('stats').get();
-        const globalStats = statsRef.data() || {};
+        // Huge Read Optimization: Fetch cached metrics from system/stats (cost = 1 read)
+        const statsDoc = await adminDb.collection('system').doc('stats').get();
+        const globalStats = statsDoc.data() || {};
         const eventMetricsCache = globalStats.eventMetricsCache || {};
+        const metricsUpdatedAtSource = typeof globalStats.eventMetricsUpdatedAt === 'string'
+            ? globalStats.eventMetricsUpdatedAt
+            : globalStats.updatedAt;
+        const metricsUpdatedAtMs = typeof metricsUpdatedAtSource === 'string'
+            ? Date.parse(metricsUpdatedAtSource)
+            : NaN;
+        const isCacheFresh = Number.isFinite(metricsUpdatedAtMs)
+            && (Date.now() - metricsUpdatedAtMs) < cacheTtlMs;
+        const canUseCachedMetrics = !forceLive && isCacheFresh;
+
+        const refreshedMetrics: Record<string, {
+            total: number;
+            internal: number;
+            external: number;
+            participants: number;
+        }> = {};
 
         const eventsWithMetrics = await Promise.all(eventDocs.map(async (doc: any) => {
             const data = doc.data();
 
-            if (role === 'SUPER_ADMIN') {
-                const metrics = eventMetricsCache[doc.id] || { total: 0, internal: 0, external: 0, participants: 0 };
+            const cachedMetrics = canUseCachedMetrics ? eventMetricsCache[doc.id] : null;
+            if (cachedMetrics) {
                 return {
                     id: doc.id,
                     ...data,
                     metrics: {
-                        total: metrics.total || 0,
-                        internal: metrics.internal || 0,
-                        external: metrics.external || 0,
-                        participants: metrics.participants || 0
-                    }
-                };
-            } else {
-                // Live calculation for Coordinator's few events to guarantee absolute accuracy
-                const [totalSnap, internalSnap, partSnap] = await Promise.all([
-                    adminDb.collection('registrations').where('eventId', '==', doc.id).count().get(),
-                    adminDb.collection('registrations').where('eventId', '==', doc.id).where('leaderType', '==', 'internal').count().get(),
-                    adminDb.collection('registrations').where('eventId', '==', doc.id).select('teamLeader', 'members').get()
-                ]);
-
-                const total = totalSnap.data().count;
-                const internal = internalSnap.data().count;
-                const external = total - internal;
-
-                const uniqueP = new Set<string>();
-                partSnap.docs.forEach((rDoc: any) => {
-                    const rData = rDoc.data();
-                    if (rData.teamLeader) uniqueP.add(rData.teamLeader);
-                    if (rData.members && Array.isArray(rData.members)) {
-                        rData.members.forEach((m: string) => uniqueP.add(m));
-                    }
-                });
-
-                return {
-                    id: doc.id,
-                    ...data,
-                    metrics: {
-                        total,
-                        internal,
-                        external,
-                        participants: uniqueP.size
+                        total: cachedMetrics.total || 0,
+                        internal: cachedMetrics.internal || 0,
+                        external: cachedMetrics.external || 0,
+                        participants: cachedMetrics.participants || 0
                     }
                 };
             }
+
+            // Live fallback when cache is stale/missing or explicitly requested.
+            const [totalSnap, internalSnap, partSnap] = await Promise.all([
+                adminDb.collection('registrations').where('eventId', '==', doc.id).count().get(),
+                adminDb.collection('registrations').where('eventId', '==', doc.id).where('leaderType', '==', 'internal').count().get(),
+                adminDb.collection('registrations').where('eventId', '==', doc.id).select('teamLeader', 'members').get()
+            ]);
+
+            const total = totalSnap.data().count;
+            const internal = internalSnap.data().count;
+            const external = total - internal;
+
+            const uniqueP = new Set<string>();
+            partSnap.docs.forEach((rDoc: any) => {
+                const rData = rDoc.data();
+                if (rData.teamLeader) uniqueP.add(rData.teamLeader);
+                if (rData.members && Array.isArray(rData.members)) {
+                    rData.members.forEach((m: string) => uniqueP.add(m));
+                }
+            });
+
+            const liveMetrics = {
+                total,
+                internal,
+                external,
+                participants: uniqueP.size
+            };
+            refreshedMetrics[doc.id] = liveMetrics;
+
+            return {
+                id: doc.id,
+                ...data,
+                metrics: liveMetrics
+            };
         }));
+
+        // Persist refreshed metrics only for global roles to avoid partial coordinator cache overwrites.
+        if (Object.keys(refreshedMetrics).length > 0 && role !== 'COORDINATOR' && role !== 'VOLUNTEER') {
+            await adminDb.collection('system').doc('stats').set({
+                eventMetricsCache: {
+                    ...(globalStats.eventMetricsCache || {}),
+                    ...refreshedMetrics
+                },
+                eventMetricsUpdatedAt: new Date().toISOString()
+            }, { merge: true });
+        }
 
         return NextResponse.json({ events: eventsWithMetrics });
     } catch (error: any) {

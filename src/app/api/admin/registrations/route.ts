@@ -29,8 +29,7 @@ export async function GET(request: NextRequest) {
         const studentType = searchParams.get('studentType'); // 'internal' or 'external'
         const lastId = searchParams.get('lastId') || '';
         const limit = parseInt(searchParams.get('limit') || '20');
-
-        console.log(`[RegAPI] Fetching. Role: ${userRole}, EventId: ${eventId}, Search: ${search}, Type: ${studentType}`);
+        const skipCounts = searchParams.get('skipCounts') === '1';
 
         // Apply Search Filter implicitly via queryBase if simple (like event scope)
         // Global coordinator filters
@@ -79,27 +78,32 @@ export async function GET(request: NextRequest) {
         let totalParticipants = 0;
 
         // Zero-Cost Cache Strategy for Dashboard Header Metrics
-        let fallbackToDatabaseCount = true;
+        let fallbackToDatabaseCount = !skipCounts;
+        let cachedEventTitleMap: Record<string, string> = {};
 
         // Only safely use cache if it's a standard event page load or global view
         if (userRole === 'SUPER_ADMIN' && !search && (!userEventId || userEventId === 'all' || eventId)) {
             try {
                 const statsRef = await adminDb.collection('system').doc('stats').get();
                 const globalStats = statsRef.data() || {};
+                cachedEventTitleMap = globalStats.eventTitleMap || {};
 
                 if (!eventId || eventId === 'all') {
                     // Global Scope
                     totalCount = globalStats.totalRegistrations || 0;
                     totalParticipants = globalStats.totalParticipants || 0;
-                    // For Global Scope internal/external teams we need counts, fallback to count() API which is cheap
                     fallbackToDatabaseCount = false;
-                    const [totalSnap, internalSnap] = await Promise.all([
-                        countQuery.count().get(),
-                        countQuery.where('leaderType', '==', 'internal').count().get()
-                    ]);
-                    totalCount = totalSnap.data().count;
-                    internalCount = internalSnap.data().count;
-                    externalCount = totalCount - internalCount;
+
+                    // For first-page loads, return accurate team internal/external split.
+                    if (!skipCounts) {
+                        const [totalSnap, internalSnap] = await Promise.all([
+                            countQuery.count().get(),
+                            countQuery.where('leaderType', '==', 'internal').count().get()
+                        ]);
+                        totalCount = totalSnap.data().count;
+                        internalCount = internalSnap.data().count;
+                        externalCount = totalCount - internalCount;
+                    }
                 } else if (globalStats.eventMetricsCache && globalStats.eventMetricsCache[eventId]) {
                     // Specific Event Scope found in Cache
                     const eventCache = globalStats.eventMetricsCache[eventId];
@@ -232,9 +236,11 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        const eventsSnapshot = await adminDb.collection('events').get();
-        const eventMap: Record<string, string> = {};
-        eventsSnapshot.docs.forEach(doc => { eventMap[doc.id] = doc.data().title || doc.id; });
+        const eventMap: Record<string, string> = { ...cachedEventTitleMap };
+        if (Object.keys(eventMap).length === 0) {
+            const eventsSnapshot = await adminDb.collection('events').get();
+            eventsSnapshot.docs.forEach(doc => { eventMap[doc.id] = doc.data().title || doc.id; });
+        }
 
         const regCorrectionBatch = adminDb.batch();
         let hasRegCorrections = false;
