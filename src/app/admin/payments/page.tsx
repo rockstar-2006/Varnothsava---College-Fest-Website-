@@ -103,11 +103,12 @@ export default function PaymentsManagementPage() {
         try {
             const token = await getAuthToken()
             const currentLastId = isLoadMore ? lastId : '';
-            let url = `/api/admin/payments?lastId=${currentLastId}&limit=20&search=${encodeURIComponent(searchQuery)}&_t=${Date.now()}`
+            let url = `/api/admin/payments?lastId=${currentLastId}&limit=20&search=${encodeURIComponent(searchQuery)}`
             if (selectedEventId !== 'all') url += `&eventId=${selectedEventId}`
             if (selectedStatus !== 'all') url += `&status=${selectedStatus}`
             if (selectedType !== 'all') url += `&studentType=${selectedType}`
             if (selectedDateFilter !== 'all') url += `&dateFilter=${selectedDateFilter}`
+            if (isLoadMore) url += `&skipCounts=1`
 
             const res = await fetch(url, {
                 headers: {
@@ -121,19 +122,10 @@ export default function PaymentsManagementPage() {
                 setPayments(newPayments)
                 setHasMore(data.hasMore)
                 setLastId(data.lastId)
-                setTotalPaymentsCount(data.totalCount)
                 updateAdminCache('payments', newPayments)
-                updateAdminCache('totalPaymentsCount', data.totalCount)
-
-                if (!isLoadMore) {
-                    // Refresh global stats too
-                    const sRes = await fetch(`/api/admin/stats?_t=${Date.now()}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    if (sRes.ok) {
-                        const sData = await sRes.json();
-                        updateAdminCache('stats', sData.stats);
-                    }
+                if (typeof data.totalCount === 'number') {
+                    setTotalPaymentsCount(data.totalCount)
+                    updateAdminCache('totalPaymentsCount', data.totalCount)
                 }
             }
         } catch (error) {
@@ -161,16 +153,6 @@ export default function PaymentsManagementPage() {
                 updateAdminCache('totalParticipantsPaid', data.totalParticipantsPaid)
                 updateAdminCache('totalRevenue', data.totalAmount)
                 updateAdminCache('totalPaymentsCount', data.transactionCount)
-
-                // Refresh global stats too
-                const sRes = await fetch(`/api/admin/stats?_t=${Date.now()}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (sRes.ok) {
-                    const sData = await sRes.json();
-                    updateAdminCache('stats', sData.stats);
-                    if (sData.stats.paidParticipants) setTotalPaidParticipants(sData.stats.paidParticipants)
-                }
             }
         } catch (error) {
             console.error("Failed to fetch total amount:", error)

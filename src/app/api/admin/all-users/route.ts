@@ -31,11 +31,7 @@ export async function GET(request: NextRequest) {
         const limit = parseInt(request.nextUrl.searchParams.get('limit') || '20');
         const status = request.nextUrl.searchParams.get('status') || 'all';
         const search = request.nextUrl.searchParams.get('search') || '';
-
-        // Strategy 4: Summary Document Fetch for fast metadata
-        const statsRef = adminDb.collection('system').doc('stats');
-        const statsDoc = await statsRef.get();
-        const s = statsDoc.data() || {};
+        const skipCounts = request.nextUrl.searchParams.get('skipCounts') === '1';
 
         let users: any[] = [];
         let snapshot: any;
@@ -140,24 +136,54 @@ export async function GET(request: NextRequest) {
             });
         }
 
-        // LIVE ACCURATE COUNTS (Fast for <10k users)
-        const [usersSnap, internalSnap, paidSnap] = await Promise.all([
-            usersCollection.count().get(),
-            usersCollection.where('studentType', '==', 'internal').count().get(),
-            usersCollection.where('hasPaid', '==', true).count().get()
-        ]);
+        let totalCount: number | null = null;
+        let paidCount: number | null = null;
+        let unpaidCount: number | null = null;
+        let internalCount: number | null = null;
+        let externalCount: number | null = null;
 
-        const totalCount = usersSnap.data().count;
-        const paidCount = paidSnap.data().count;
-        const unpaidCount = totalCount - paidCount;
+        // Counts are expensive on every paginated request. Skip when caller requests.
+        if (!skipCounts) {
+            const statsDoc = await adminDb.collection('system').doc('stats').get();
+            const statsData = statsDoc.data() || {};
 
-        // Use the DB count for internal (corrections above will fix future queries)
-        // but add any corrections found on this page
-        const dbInternalCount = internalSnap.data().count;
-        const correctedOnPage = filteredUsers.filter((u: any) => u.studentType === 'internal').length;
-        const uncorrectedOnPage = users.filter((u: any) => u.studentType === 'internal').length;
-        const internalCount = dbInternalCount + (correctedOnPage - uncorrectedOnPage);
-        const externalCount = totalCount - Math.max(0, internalCount);
+            const hasCachedSummary = typeof statsData.totalUsers === 'number'
+                && typeof statsData.paidUsers === 'number'
+                && typeof statsData.internalUsers === 'number';
+
+            if (hasCachedSummary && !search && status === 'all') {
+                const cachedTotal = statsData.totalUsers as number;
+                const cachedPaid = statsData.paidUsers as number;
+                const cachedInternal = statsData.internalUsers as number;
+
+                totalCount = cachedTotal;
+                paidCount = cachedPaid;
+                unpaidCount = typeof statsData.unpaidUsers === 'number'
+                    ? statsData.unpaidUsers
+                    : cachedTotal - cachedPaid;
+                internalCount = cachedInternal;
+                externalCount = typeof statsData.externalUsers === 'number'
+                    ? statsData.externalUsers
+                    : cachedTotal - cachedInternal;
+            } else {
+                const [usersSnap, internalSnap, paidSnap] = await Promise.all([
+                    usersCollection.count().get(),
+                    usersCollection.where('studentType', '==', 'internal').count().get(),
+                    usersCollection.where('hasPaid', '==', true).count().get()
+                ]);
+
+                totalCount = usersSnap.data().count;
+                paidCount = paidSnap.data().count;
+                unpaidCount = totalCount - paidCount;
+
+                // Use DB counts, adjusted by corrections discovered in this payload.
+                const dbInternalCount = internalSnap.data().count;
+                const correctedOnPage = filteredUsers.filter((u: any) => u.studentType === 'internal').length;
+                const uncorrectedOnPage = users.filter((u: any) => u.studentType === 'internal').length;
+                internalCount = dbInternalCount + (correctedOnPage - uncorrectedOnPage);
+                externalCount = totalCount - Math.max(0, internalCount);
+            }
+        }
 
 
 

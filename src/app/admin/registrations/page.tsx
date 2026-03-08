@@ -85,11 +85,12 @@ export default function ParticipantsManagementPage() {
                 targetEventId = userData.eventId;
             }
 
-            let url = `/api/admin/registrations?lastId=${currentLastId}&limit=20&_t=${Date.now()}`
+            let url = `/api/admin/registrations?lastId=${currentLastId}&limit=20`
             if (targetEventId && targetEventId !== 'all') url += `&eventId=${targetEventId}`
             if (studentType !== 'all') url += `&studentType=${studentType}`
             if (selectedDateFilter !== 'all') url += `&dateFilter=${selectedDateFilter}`
             if (searchQuery) url += `&search=${encodeURIComponent(searchQuery)}`
+            if (isLoadMore) url += `&skipCounts=1`
 
             const res = await fetch(url, {
                 headers: {
@@ -103,27 +104,18 @@ export default function ParticipantsManagementPage() {
                 setRegistrations(newRegs)
                 setHasMore(data.hasMore)
                 setLastId(data.lastId)
-                setTotalRegCount(data.totalCount)
-                setTotalInternalRegs(data.internalCount || 0)
-                setTotalExternalRegs(data.externalCount || 0)
-                setTotalParticipants(data.totalParticipants || 0)
+                if (typeof data.totalCount === 'number') setTotalRegCount(data.totalCount)
+                if (typeof data.internalCount === 'number') setTotalInternalRegs(data.internalCount)
+                if (typeof data.externalCount === 'number') setTotalExternalRegs(data.externalCount)
+                if (typeof data.totalParticipants === 'number') setTotalParticipants(data.totalParticipants)
 
                 // If it's just a sync (not load more), update cache
                 if (!isLoadMore) {
                     updateAdminCache('registrations', newRegs)
-                    updateAdminCache('totalRegCount', data.totalCount)
-                    updateAdminCache('totalInternalRegs', data.internalCount || 0)
-                    updateAdminCache('totalExternalRegs', data.externalCount || 0)
-                    updateAdminCache('totalParticipants', data.totalParticipants || 0)
-
-                    // Refresh global stats too
-                    const sRes = await fetch(`/api/admin/stats?_t=${Date.now()}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    if (sRes.ok) {
-                        const sData = await sRes.json();
-                        updateAdminCache('stats', sData.stats);
-                    }
+                    if (typeof data.totalCount === 'number') updateAdminCache('totalRegCount', data.totalCount)
+                    if (typeof data.internalCount === 'number') updateAdminCache('totalInternalRegs', data.internalCount)
+                    if (typeof data.externalCount === 'number') updateAdminCache('totalExternalRegs', data.externalCount)
+                    if (typeof data.totalParticipants === 'number') updateAdminCache('totalParticipants', data.totalParticipants)
                 }
             }
         } catch (error) {

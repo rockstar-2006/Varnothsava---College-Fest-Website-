@@ -28,6 +28,8 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ message: "Forbidden: No administrative access" }, { status: 403 });
         }
 
+        const forceLive = request.nextUrl.searchParams.get('fresh') === '1';
+
         let eventsQuery: any = adminDb.collection('events');
 
         // RBAC: COORDINATOR only sees assigned events
@@ -47,7 +49,6 @@ export async function GET(request: NextRequest) {
         }
 
         const snapshot = await eventsQuery.get();
-        console.log(`Fetched ${snapshot.docs.length} events from database`);
 
         const eventDocs = snapshot.docs;
 
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
         const eventsWithMetrics = await Promise.all(eventDocs.map(async (doc: any) => {
             const data = doc.data();
 
-            if (role === 'SUPER_ADMIN') {
+            if (!forceLive) {
                 const metrics = eventMetricsCache[doc.id] || { total: 0, internal: 0, external: 0, participants: 0 };
                 return {
                     id: doc.id,
@@ -71,38 +72,38 @@ export async function GET(request: NextRequest) {
                         participants: metrics.participants || 0
                     }
                 };
-            } else {
-                // Live calculation for Coordinator's few events to guarantee absolute accuracy
-                const [totalSnap, internalSnap, partSnap] = await Promise.all([
-                    adminDb.collection('registrations').where('eventId', '==', doc.id).count().get(),
-                    adminDb.collection('registrations').where('eventId', '==', doc.id).where('leaderType', '==', 'internal').count().get(),
-                    adminDb.collection('registrations').where('eventId', '==', doc.id).select('teamLeader', 'members').get()
-                ]);
-
-                const total = totalSnap.data().count;
-                const internal = internalSnap.data().count;
-                const external = total - internal;
-
-                const uniqueP = new Set<string>();
-                partSnap.docs.forEach((rDoc: any) => {
-                    const rData = rDoc.data();
-                    if (rData.teamLeader) uniqueP.add(rData.teamLeader);
-                    if (rData.members && Array.isArray(rData.members)) {
-                        rData.members.forEach((m: string) => uniqueP.add(m));
-                    }
-                });
-
-                return {
-                    id: doc.id,
-                    ...data,
-                    metrics: {
-                        total,
-                        internal,
-                        external,
-                        participants: uniqueP.size
-                    }
-                };
             }
+
+            // Optional live fallback when explicitly requested.
+            const [totalSnap, internalSnap, partSnap] = await Promise.all([
+                adminDb.collection('registrations').where('eventId', '==', doc.id).count().get(),
+                adminDb.collection('registrations').where('eventId', '==', doc.id).where('leaderType', '==', 'internal').count().get(),
+                adminDb.collection('registrations').where('eventId', '==', doc.id).select('teamLeader', 'members').get()
+            ]);
+
+            const total = totalSnap.data().count;
+            const internal = internalSnap.data().count;
+            const external = total - internal;
+
+            const uniqueP = new Set<string>();
+            partSnap.docs.forEach((rDoc: any) => {
+                const rData = rDoc.data();
+                if (rData.teamLeader) uniqueP.add(rData.teamLeader);
+                if (rData.members && Array.isArray(rData.members)) {
+                    rData.members.forEach((m: string) => uniqueP.add(m));
+                }
+            });
+
+            return {
+                id: doc.id,
+                ...data,
+                metrics: {
+                    total,
+                    internal,
+                    external,
+                    participants: uniqueP.size
+                }
+            };
         }));
 
         return NextResponse.json({ events: eventsWithMetrics });
