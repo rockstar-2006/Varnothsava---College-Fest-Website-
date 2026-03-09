@@ -64,13 +64,14 @@ export async function GET(request: NextRequest) {
         });
 
         // Initialize advanced stats
-        const categoryStats: Record<string, { totalTeams: number, internal: number, external: number, totalParticipants: number, uniqueInternal?: Set<string>, uniqueExternal?: Set<string> }> = {
-            technical: { totalTeams: 0, internal: 0, external: 0, totalParticipants: 0, uniqueInternal: new Set(), uniqueExternal: new Set() },
-            cultural: { totalTeams: 0, internal: 0, external: 0, totalParticipants: 0, uniqueInternal: new Set(), uniqueExternal: new Set() },
-            other: { totalTeams: 0, internal: 0, external: 0, totalParticipants: 0, uniqueInternal: new Set(), uniqueExternal: new Set() }
+        const categoryStats: Record<string, { totalTeams: number, internalTeams: number, externalTeams: number, internal: number, external: number, totalParticipants: number, uniqueInternal?: Set<string>, uniqueExternal?: Set<string> }> = {
+            technical: { totalTeams: 0, internalTeams: 0, externalTeams: 0, internal: 0, external: 0, totalParticipants: 0, uniqueInternal: new Set(), uniqueExternal: new Set() },
+            cultural: { totalTeams: 0, internalTeams: 0, externalTeams: 0, internal: 0, external: 0, totalParticipants: 0, uniqueInternal: new Set(), uniqueExternal: new Set() },
+            other: { totalTeams: 0, internalTeams: 0, externalTeams: 0, internal: 0, external: 0, totalParticipants: 0, uniqueInternal: new Set(), uniqueExternal: new Set() }
         };
 
         const collegeParticipantMap: Record<string, Set<string>> = {};
+        const collegeRegistrationMap: Record<string, number> = {};
         const uniqueExternalParticipants = new Set<string>();
         const uniquePaidUsers = new Set<string>();
 
@@ -96,14 +97,22 @@ export async function GET(request: NextRequest) {
             if (low.includes('canara')) return "Canara Engineering College";
             if (low.includes('sahyadri')) return "Sahyadri, Mangalore";
             if (low.includes('bearys') || low.includes('bit')) return "BIT, Mangalore";
-            if (low.includes('yenepoya') || low.includes('yit')) return "YIT, Moodabidri";
+            if (low.includes('yenepoya') || low.includes('yit') || low.includes('yene')) return "Yenepoya Institute, Mangalore";
             if (low.includes('vivekananda') || low.includes('vcet')) return "VCET, Puttur";
+            if (low.includes('mangalore institute') || low.includes('mite')) return "MITE, Moodabidri";
+            if (low.includes('jawaharlal nehru') || low.includes('jnnce')) return "JNNCE, Shivamogga";
+            if (low.includes('karavali')) return "Karavali, Mangalore";
+            if (low.includes('alva')) return "Alva's, Moodubidire";
 
             // Clean up common suffix clutter for others
             return name.replace(/^(the|a)\s+/i, '')
                 .replace(/\(.*\)/, '')
                 .replace(/,/g, '')
-                .trim();
+                .replace(/\.com/i, '')
+                .trim()
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(' ');
         };
 
         allUsersSnap.docs.forEach((doc: any) => {
@@ -132,6 +141,8 @@ export async function GET(request: NextRequest) {
             const cat = categoryStats[category] ? category : 'other';
 
             categoryStats[cat].totalTeams += 1;
+            if (reg.leaderType === 'internal') categoryStats[cat].internalTeams += 1;
+            else categoryStats[cat].externalTeams += 1;
 
             // Ensure event cache exists
             if (eId && !eventSpecificMetrics[eId]) {
@@ -159,15 +170,16 @@ export async function GET(request: NextRequest) {
                 }
 
                 if (isPaid) {
-                    paidParticipantsHeadcount += 1;
                     uniquePaidParticipants.add(reg.teamLeader);
                 }
 
                 // Track unique people per college with normalization
-                const rawCol = uInfo?.college || 'Unknown';
-                const normCol = normalizeCollegeName(rawCol);
+                const normCol = uInfo?.college || 'Unknown';
                 if (!collegeParticipantMap[normCol]) collegeParticipantMap[normCol] = new Set();
                 collegeParticipantMap[normCol].add(reg.teamLeader);
+
+                // Track registration per college
+                collegeRegistrationMap[normCol] = (collegeRegistrationMap[normCol] || 0) + 1;
             }
 
             // Process Members
@@ -187,13 +199,11 @@ export async function GET(request: NextRequest) {
                     }
 
                     if (isPaid) {
-                        paidParticipantsHeadcount += 1;
                         uniquePaidParticipants.add(mId);
                     }
 
                     // Track unique people per col with normalization
-                    const rawCol = mInfo?.college || 'Unknown';
-                    const normCol = normalizeCollegeName(rawCol);
+                    const normCol = mInfo?.college || 'Unknown';
                     if (!collegeParticipantMap[normCol]) collegeParticipantMap[normCol] = new Set();
                     collegeParticipantMap[normCol].add(mId);
                 });
@@ -251,24 +261,47 @@ export async function GET(request: NextRequest) {
             paidUsers: uniquePaidUsers.size,
             unpaidUsers: totalUsers - uniquePaidUsers.size,
             totalRegistrations: registrationsSnap.size,
-            totalParticipants: uniqueTotalParticipants.size, // Changed to unique individuals across all events
-            paidParticipants: uniquePaidParticipants.size, // Unique paid headcount
+            totalParticipants: uniqueTotalParticipants.size,
+            paidParticipants: uniquePaidParticipants.size,
             totalRevenue,
+            totalColleges: Object.keys(collegeParticipantMap).filter(c => c !== 'Unknown').length,
             eventMetricsCache: cleanEventMetrics, // Cached individual event stats for O(1) reads
             categoryBreakdown: categoryStats,
             collegeDistribution: Object.entries(collegeParticipantMap)
-                .map(([name, set]) => ({ name, count: set.size }))
-                .sort((a, b) => b.count - a.count)
-                .slice(0, 10),
+                .map(([name, set]) => ({
+                    name,
+                    participants: set.size,
+                    registrations: collegeRegistrationMap[name] || 0
+                }))
+                .sort((a, b) => b.registrations - a.registrations)
+                .slice(0, 50),
             updatedAt: new Date().toISOString()
         };
 
         // Also update the stats doc for background tasks/performance elsewhere
         await adminDb.collection('system').doc('stats').set(liveStats);
 
-        return NextResponse.json({ stats: liveStats });
+        // One-stop shop: If user wants events too, return them in the same payload
+        let eventsResult = undefined;
+        if (request.nextUrl.searchParams.get('includeEvents') === 'true') {
+            eventsResult = eventsSnap.docs.map((doc: any) => {
+                const data = doc.data();
+                const metrics = cleanEventMetrics[doc.id] || { total: 0, internal: 0, external: 0, participants: 0 };
+                return {
+                    id: doc.id,
+                    ...data,
+                    metrics
+                };
+            });
+        }
+
+        return NextResponse.json({
+            stats: liveStats,
+            events: eventsResult
+        });
 
     } catch (error: any) {
+        console.error("Admin Stats GET Error:", error);
         return NextResponse.json({ message: error.message }, { status: 500 });
     }
 }
