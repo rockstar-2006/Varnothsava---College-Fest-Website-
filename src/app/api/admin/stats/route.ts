@@ -5,7 +5,7 @@ import { ADMIN_BLACKLIST, getAdminRole } from "@/lib/admin";
 
 export async function GET(request: NextRequest) {
     try {
-        const STATS_SCHEMA_VERSION = 3;
+        const STATS_SCHEMA_VERSION = 4;
         const authHeader = request.headers.get('Authorization') || '';
         if (!authHeader.startsWith('Bearer ')) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
         };
 
         const collegeParticipantMap: Record<string, Set<string>> = {};
-        const collegeRegistrationMap: Record<string, number> = {};
+        const collegeRegistrationMap: Record<string, Set<string>> = {};
         const uniqueExternalParticipants = new Set<string>();
         const uniquePaidUsers = new Set<string>();
 
@@ -256,6 +256,7 @@ export async function GET(request: NextRequest) {
         const eventSpecificMetrics: Record<string, { total: number, internal: number, external: number, uniqueP: Set<string> }> = {};
 
         registrationsSnap.docs.forEach((doc: any) => {
+            const regId = doc.id;
             const reg = doc.data();
             const eId = reg.eventId;
             const category = (eventCategoryMap[reg.eventId] || 'other').toLowerCase();
@@ -299,8 +300,9 @@ export async function GET(request: NextRequest) {
                 if (!collegeParticipantMap[normCol]) collegeParticipantMap[normCol] = new Set();
                 collegeParticipantMap[normCol].add(reg.teamLeader);
 
-                // Track registration per college
-                collegeRegistrationMap[normCol] = (collegeRegistrationMap[normCol] || 0) + 1;
+                // Track unique squads represented by each college.
+                if (!collegeRegistrationMap[normCol]) collegeRegistrationMap[normCol] = new Set();
+                collegeRegistrationMap[normCol].add(regId);
             }
 
             // Process Members
@@ -327,6 +329,10 @@ export async function GET(request: NextRequest) {
                     const normCol = mInfo?.college || 'Unknown';
                     if (!collegeParticipantMap[normCol]) collegeParticipantMap[normCol] = new Set();
                     collegeParticipantMap[normCol].add(mId);
+
+                    // Count this squad for member colleges too (deduped by registration ID).
+                    if (!collegeRegistrationMap[normCol]) collegeRegistrationMap[normCol] = new Set();
+                    collegeRegistrationMap[normCol].add(regId);
                 });
             }
 
@@ -383,7 +389,7 @@ export async function GET(request: NextRequest) {
         const collegeDistribution = collegeKeys
             .map((name) => {
                 const participants = collegeParticipantMap[name]?.size || 0;
-                const registrations = collegeRegistrationMap[name] || 0;
+                const registrations = collegeRegistrationMap[name]?.size || 0;
                 return {
                     name,
                     registrations,
