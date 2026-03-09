@@ -67,7 +67,8 @@ export async function GET(request: NextRequest) {
             regQuery.get(),
             adminDb.collection('events').get(),
             payQuery.aggregate({
-                totalAmount: admin.firestore.AggregateField.sum('amount')
+                totalAmount: admin.firestore.AggregateField.sum('amount'),
+                count: admin.firestore.AggregateField.count()
             }).get()
         ]);
 
@@ -75,6 +76,7 @@ export async function GET(request: NextRequest) {
         let internalUsersCount = internalUsersSnapRef.data().count;
         let externalUsersCount = totalUsers - internalUsersCount;
         const totalRevenue = (paymentsSnap.data().totalAmount || 0) / 100;
+        const totalPaymentsCount = paymentsSnap.data().count || 0;
 
         // Map events by category for category-wise stats
         const eventCategoryMap: Record<string, string> = {};
@@ -271,11 +273,14 @@ export async function GET(request: NextRequest) {
             uniqueExternalParticipantsAcrossEvents: uniqueExternalParticipants.size,
             uniqueTotalParticipantsAcrossEvents: uniqueTotalParticipants.size,
             paidUsers: uniquePaidUsers.size,
+            totalVerifiedPayments: uniquePaidUsers.size,
             unpaidUsers: totalUsers - uniquePaidUsers.size,
             totalRegistrations: registrationsSnap.size,
             totalParticipants: uniqueTotalParticipants.size, // Changed to unique individuals across all events
             paidParticipants: uniquePaidParticipants.size, // Unique paid headcount
+            totalParticipantsPaid: uniquePaidParticipants.size,
             totalRevenue,
+            totalPaymentsCount,
             eventMetricsCache: cleanEventMetrics, // Cached individual event stats for O(1) reads
             eventTitleMap,
             categoryBreakdown: categoryStats,

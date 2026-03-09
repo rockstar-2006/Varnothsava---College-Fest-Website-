@@ -35,6 +35,8 @@ export async function GET(request: NextRequest) {
         const lastId = searchParams.get('lastId') || '';
         const limit = parseInt(searchParams.get('limit') || '20');
         const skipCounts = searchParams.get('skipCounts') === '1';
+        const studentType = searchParams.get('studentType');
+        const dateFilter = searchParams.get('dateFilter');
 
         let paymentsQuery: any = adminDb.collection('payments');
 
@@ -74,63 +76,101 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        // Handle Coordinator scope and Event filtering
-        let eventUserIds: string[] | null = null;
-        if (role === 'COORDINATOR' || (eventId && eventId !== 'all')) {
-            let assignedEventIds: string[] = [];
-            if (role === 'COORDINATOR') {
-                const eventsSnapshot = await adminDb.collection('events')
-                    .where('coordinators', 'array-contains', verified.uid)
-                    .get();
-                assignedEventIds = eventsSnapshot.docs.map(doc => doc.id);
+        // Scope by event directly so payment counts stay aligned with payments/total and stats.
+        let scopedEventIds: string[] | null = null;
+        if (role === 'COORDINATOR') {
+            const eventsSnapshot = await adminDb.collection('events')
+                .where('coordinators', 'array-contains', verified.uid)
+                .get();
+            const assignedEventIds = eventsSnapshot.docs.map(doc => doc.id);
+
+            if (assignedEventIds.length === 0) {
+                return NextResponse.json({ payments: [], totalCount: 0, hasMore: false });
             }
 
-            let regQuery: any = adminDb.collection('registrations');
             if (eventId && eventId !== 'all') {
-                if (role === 'COORDINATOR' && !assignedEventIds.includes(eventId)) {
+                if (!assignedEventIds.includes(eventId)) {
                     return NextResponse.json({ message: "Forbidden: Not assigned to this event" }, { status: 403 });
                 }
-                regQuery = regQuery.where('eventId', '==', eventId);
-            } else if (role === 'COORDINATOR') {
-                if (assignedEventIds.length === 0) return NextResponse.json({ payments: [], totalCount: 0 });
-                regQuery = regQuery.where('eventId', 'in', assignedEventIds);
+                scopedEventIds = [eventId];
+            } else {
+                scopedEventIds = assignedEventIds;
             }
-
-            const regSnapshot = await regQuery.get();
-            eventUserIds = Array.from(new Set(regSnapshot.docs.flatMap((doc: any) => {
-                const d = doc.data();
-                return [d.teamLeader, ...(d.members || [])];
-            })));
-
-            if (eventUserIds.length === 0) {
-                return NextResponse.json({ payments: [], totalCount: 0 });
-            }
+        } else if (eventId && eventId !== 'all') {
+            scopedEventIds = [eventId];
         }
 
-        // Strategy: Combine all UID filters into ONE 'in' query
-        // Firestore limit: 30 items for 'in'
-        let finalFilterUids: string[] | null = null;
-        if (searchUids && eventUserIds) {
-            finalFilterUids = searchUids.filter(id => eventUserIds!.includes(id)).slice(0, 30);
-            if (finalFilterUids.length === 0) return NextResponse.json({ payments: [], totalCount: 0, hasMore: false });
-        } else if (searchUids) {
-            finalFilterUids = searchUids.slice(0, 30);
-        } else if (eventUserIds) {
-            finalFilterUids = eventUserIds.slice(0, 30);
-        }
-
-        if (finalFilterUids) {
-            paymentsQuery = paymentsQuery.where('user_id', 'in', finalFilterUids);
+        if (scopedEventIds && scopedEventIds.length > 0 && scopedEventIds.length <= 30) {
+            if (scopedEventIds.length === 1) {
+                paymentsQuery = paymentsQuery.where('eventId', '==', scopedEventIds[0]);
+            } else {
+                paymentsQuery = paymentsQuery.where('eventId', 'in', scopedEventIds);
+            }
         }
 
         if (status && status !== 'all') {
             paymentsQuery = paymentsQuery.where('status', '==', status);
         }
 
-        const dateFilter = searchParams.get('dateFilter');
         if (dateFilter === 'new') {
             // Fetch payments from March 11th 2026 onwards
             paymentsQuery = paymentsQuery.where('created_at', '>=', '2026-03-11T00:00:00.000Z');
+        }
+
+        const hasStudentTypeFilter = studentType === 'internal' || studentType === 'external';
+        const requiresManualFiltering = hasStudentTypeFilter
+            || (searchUids !== null && searchUids.length > 30)
+            || (scopedEventIds !== null && scopedEventIds.length > 30);
+
+        // Fast path for simple search filters within Firestore 'in' limits.
+        if (!requiresManualFiltering && searchUids && searchUids.length > 0) {
+            paymentsQuery = paymentsQuery.where('user_id', 'in', searchUids);
+        }
+
+        // Complex filter fallback (large coordinator event scopes or studentType filter).
+        if (requiresManualFiltering) {
+            const broadSnapshot = await paymentsQuery.get();
+            let allPayments = broadSnapshot.docs.map((doc: any) => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+
+            if (scopedEventIds && scopedEventIds.length > 30) {
+                const allowedEvents = new Set(scopedEventIds);
+                allPayments = allPayments.filter((p: any) => allowedEvents.has(p.eventId));
+            }
+
+            if (searchUids) {
+                const allowedUids = new Set(searchUids);
+                allPayments = allPayments.filter((p: any) => allowedUids.has(p.user_id));
+            }
+
+            let enrichedAll = await enrichPaymentsArray(allPayments);
+
+            if (hasStudentTypeFilter) {
+                enrichedAll = enrichedAll.filter((p: any) => p.studentType === studentType);
+            }
+
+            enrichedAll.sort((a: any, b: any) => {
+                const dateA = a.created_at || a.paid_at || '';
+                const dateB = b.created_at || b.paid_at || '';
+                return dateB.localeCompare(dateA);
+            });
+
+            let startIndex = 0;
+            if (lastId) {
+                const prevIndex = enrichedAll.findIndex((p: any) => p.id === lastId);
+                if (prevIndex !== -1) startIndex = prevIndex + 1;
+            }
+
+            const paged = enrichedAll.slice(startIndex, startIndex + limit);
+
+            return NextResponse.json({
+                payments: paged,
+                totalCount: skipCounts ? null : enrichedAll.length,
+                lastId: paged.length > 0 ? paged[paged.length - 1].id : null,
+                hasMore: (startIndex + limit) < enrichedAll.length
+            });
         }
 
         let query = paymentsQuery.orderBy('created_at', 'desc').limit(limit);
@@ -178,12 +218,8 @@ export async function GET(request: NextRequest) {
         // Optional count: skip on paginated load-more requests to cut read volume.
         let totalCount: number | null = null;
         if (!skipCounts) {
-            if (search) {
-                totalCount = payments.length;
-            } else {
-                const countSnap = await paymentsQuery.count().get();
-                totalCount = countSnap.data().count;
-            }
+            const countSnap = await paymentsQuery.count().get();
+            totalCount = countSnap.data().count;
         }
 
         const enriched = await enrichPaymentsArray(payments);
