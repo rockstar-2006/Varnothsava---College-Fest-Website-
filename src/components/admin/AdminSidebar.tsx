@@ -48,7 +48,7 @@ const navItems: NavItem[] = [
         label: 'Events Management',
         href: '/admin/events',
         icon: Calendar,
-        roles: ['SUPER_ADMIN']
+        roles: ['SUPER_ADMIN', 'COORDINATOR']
     },
     {
         label: 'User Directory',
