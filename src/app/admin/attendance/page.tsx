@@ -84,13 +84,46 @@ export default function ScannerDetailsPage() {
         return () => {
             if (scannerRef.current) {
                 scannerRef.current.clear().catch(e => console.error(e))
+                scannerRef.current = null
             }
         }
     }, [isScanning])
 
+    const handleStartScanning = async () => {
+        setErrorMsg(null)
+
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        if (!window.isSecureContext && !isLocalhost) {
+            setErrorMsg('Camera access requires HTTPS (or localhost). Open this admin page on https:// or localhost and try again.')
+            return
+        }
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            setErrorMsg('This browser does not support camera access. Try Chrome/Edge on a secure context.')
+            return
+        }
+
+        try {
+            // Prompt/verify camera permission first so failures are surfaced clearly.
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+            stream.getTracks().forEach((track) => track.stop())
+            setIsScanning(true)
+        } catch (err: any) {
+            const name = err?.name || ''
+            if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+                setErrorMsg('Camera permission was denied. Allow camera access in your browser/site settings and retry.')
+            } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+                setErrorMsg('No camera device was found on this system.')
+            } else {
+                setErrorMsg('Unable to initialize camera. Ensure no other app is using it and try again.')
+            }
+        }
+    }
+
     const onScanSuccess = async (decodedText: string) => {
         if (scannerRef.current) {
             await scannerRef.current.clear()
+            scannerRef.current = null
         }
         setIsScanning(false)
         setIsLoading(true)
@@ -173,7 +206,7 @@ export default function ScannerDetailsPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     {/* Left: Scanner Module & Live Result */}
                     <div className="lg:col-span-5 space-y-6">
-                        <div className="bg-[#111] border border-emerald-500/20 rounded-[2rem] p-6 shadow-2xl relative overflow-hidden group">
+                        <div className="bg-[#111] border border-emerald-500/20 rounded-4xl p-6 shadow-2xl relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-[50px] pointer-events-none" />
 
                             <div className="flex items-center justify-between mb-6">
@@ -189,7 +222,7 @@ export default function ScannerDetailsPage() {
 
                             {!isScanning && !isLoading && (
                                 <button
-                                    onClick={() => setIsScanning(true)}
+                                    onClick={handleStartScanning}
                                     className="w-full h-40 border-2 border-dashed border-emerald-500/30 rounded-2xl flex flex-col items-center justify-center gap-3 hover:border-emerald-500 hover:bg-emerald-500/5 transition-all text-emerald-500 group-hover:shadow-[0_0_30px_rgba(16,185,129,0.1)] active:scale-95"
                                 >
                                     <QrCode size={40} className="opacity-80 group-hover:scale-110 transition-transform" />
@@ -199,7 +232,7 @@ export default function ScannerDetailsPage() {
 
                             {isLoading && (
                                 <div className="w-full h-40 border-2 border-emerald-500/20 rounded-2xl bg-emerald-500/5 flex flex-col items-center justify-center gap-4 relative overflow-hidden">
-                                    <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.1)_1px,transparent_1px)] bg-[size:100%_4px] animate-scan pointer-events-none" />
+                                    <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.1)_1px,transparent_1px)] bg-size-[100%_4px] animate-scan pointer-events-none" />
                                     <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin relative z-10" />
                                     <span className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500 relative z-10 animate-pulse">Decrypting Node Data...</span>
                                 </div>
@@ -221,7 +254,7 @@ export default function ScannerDetailsPage() {
 
                             {errorMsg && (
                                 <div className="mt-4 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3 text-red-400 animate-in slide-in-from-top-2">
-                                    <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
+                                    <AlertCircle size={18} className="shrink-0 mt-0.5" />
                                     <div>
                                         <p className="text-xs font-bold uppercase tracking-wider">Verification Failed</p>
                                         <p className="text-[10px] font-medium opacity-80 mt-1">{errorMsg}</p>
@@ -236,7 +269,7 @@ export default function ScannerDetailsPage() {
                                 <motion.div
                                     initial={{ opacity: 0, y: 20, scale: 0.95 }}
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    className="bg-[#111] border-2 border-emerald-500/40 rounded-[2rem] p-6 md:p-8 shadow-[0_0_50px_rgba(16,185,129,0.15)] relative overflow-hidden"
+                                    className="bg-[#111] border-2 border-emerald-500/40 rounded-4xl p-6 md:p-8 shadow-[0_0_50px_rgba(16,185,129,0.15)] relative overflow-hidden"
                                 >
                                     <div className="absolute -top-32 -right-32 w-64 h-64 bg-emerald-500/10 blur-[80px]" />
 
@@ -277,7 +310,7 @@ export default function ScannerDetailsPage() {
                                         {currentScan.registrations.length === 0 ? (
                                             <p className="p-4 rounded-xl bg-white/5 border border-white/5 text-xs text-slate-500 font-medium italic text-center">No active event registrations found for this profile.</p>
                                         ) : (
-                                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                            <div className="space-y-3 max-h-75 overflow-y-auto pr-2 custom-scrollbar">
                                                 {currentScan.registrations.map(reg => (
                                                     <div key={reg.registrationId} className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl space-y-3">
                                                         <div className="flex justify-between items-start">
@@ -320,9 +353,9 @@ export default function ScannerDetailsPage() {
                     </div>
 
                     {/* Right: Local State Scanner Database View */}
-                    <div className="lg:col-span-7 h-full flex flex-col min-h-[500px]">
-                        <div className="bg-[#111] border border-white/10 rounded-[2rem] shadow-2xl flex-1 flex flex-col overflow-hidden">
-                            <div className="p-6 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-emerald-500/5 to-transparent">
+                    <div className="lg:col-span-7 h-full flex flex-col min-h-125">
+                        <div className="bg-[#111] border border-white/10 rounded-4xl shadow-2xl flex-1 flex flex-col overflow-hidden">
+                            <div className="p-6 border-b border-white/5 flex items-center justify-between bg-linear-to-r from-emerald-500/5 to-transparent">
                                 <div>
                                     <h2 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
                                         <Database className="text-emerald-500" size={16} /> Local Scan Log

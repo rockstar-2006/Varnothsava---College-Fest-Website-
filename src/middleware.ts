@@ -74,7 +74,8 @@ export function middleware(request: NextRequest) {
     response.headers.set('X-Content-Type-Options', 'nosniff');
     response.headers.set('X-XSS-Protection', '1; mode=block');
     response.headers.set('Referrer-Policy', 'origin-when-cross-origin');
-    response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    // Allow camera on same-origin pages (needed for admin QR scanner), keep other sensors restricted.
+    response.headers.set('Permissions-Policy', 'camera=(self), microphone=(), geolocation=()');
 
     // Cross-Origin-Opener-Policy: Allow OAuth popups (Google Sign-In)
     // Using 'same-origin-allow-popups' instead of 'same-origin' for OAuth compatibility

@@ -164,9 +164,7 @@ export default function EventManagementPage() {
             if (!adminCache.events || adminCache.events.length === 0) {
                 fetchEvents()
             }
-            if (!adminCache.stats) {
-                fetchStats(false)
-            }
+            fetchStats(false)
             if (!adminCache.staff || adminCache.staff.length === 0) {
                 fetchStaff()
             }
@@ -388,7 +386,7 @@ export default function EventManagementPage() {
                                 setLoading(true)
                                 fetchEvents()
                                 fetchStaff()
-                                fetchStats(false)
+                                fetchStats(true)
                             }}
                             className="bg-[#111] border border-white/10 hover:border-emerald-500/50 text-white px-5 py-2.5 rounded-xl transition-all group flex items-center gap-3 shadow-xl h-11"
                         >

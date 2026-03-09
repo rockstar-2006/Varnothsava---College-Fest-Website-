@@ -5,6 +5,7 @@ import { getAdminRole } from "@/lib/admin";
 
 export async function GET(request: NextRequest) {
     try {
+        const STATS_SCHEMA_VERSION = 2;
         const authHeader = request.headers.get('Authorization') || '';
         if (!authHeader.startsWith('Bearer ')) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -36,8 +37,15 @@ export async function GET(request: NextRequest) {
                 const updatedAtMs = typeof cachedStats.updatedAt === 'string'
                     ? Date.parse(cachedStats.updatedAt)
                     : NaN;
+                const cachedSchemaVersion = typeof cachedStats.schemaVersion === 'number'
+                    ? cachedStats.schemaVersion
+                    : 1;
 
-                if (Number.isFinite(updatedAtMs) && (Date.now() - updatedAtMs) < cacheTtlMs) {
+                if (
+                    cachedSchemaVersion === STATS_SCHEMA_VERSION
+                    && Number.isFinite(updatedAtMs)
+                    && (Date.now() - updatedAtMs) < cacheTtlMs
+                ) {
                     return NextResponse.json({ stats: cachedStats, cached: true });
                 }
             }
@@ -96,8 +104,11 @@ export async function GET(request: NextRequest) {
         const uniqueExternalParticipants = new Set<string>();
         const uniquePaidUsers = new Set<string>();
 
-        // Fetch users to map UID -> studentType and College for registration processing
-        const allUsersSnap = await usersCollection.select('studentType', 'collegeName').get();
+        // Fetch users to map UID -> studentType and college for registration processing.
+        // Include all known college field variants to avoid over-grouping into Unknown.
+        const allUsersSnap = await usersCollection
+            .select('studentType', 'collegeName', 'college', 'institution', 'email')
+            .get();
         const userTypeMap: Record<string, { type: string, college: string }> = {};
 
         const normalizeCollegeName = (name: string): string => {
@@ -128,11 +139,31 @@ export async function GET(request: NextRequest) {
                 .trim();
         };
 
+        const resolveStudentType = (data: any): 'internal' | 'external' => {
+            const explicitType = typeof data.studentType === 'string' ? data.studentType.toLowerCase() : '';
+            if (explicitType === 'internal' || explicitType === 'external') {
+                return explicitType;
+            }
+
+            const college = `${data.collegeName || data.college || data.institution || ''}`.toUpperCase();
+            const email = `${data.email || ''}`.toLowerCase();
+
+            const isInternal =
+                college.includes('SMVITM') ||
+                college.includes('SODE') ||
+                college.includes('SHRI MADHWA VADIRAJA') ||
+                college.includes('SHRI MADHWA') ||
+                college.includes('VADIRAJA') ||
+                email.endsWith('@sode-edu.in');
+
+            return isInternal ? 'internal' : 'external';
+        };
+
         allUsersSnap.docs.forEach((doc: any) => {
             const data = doc.data();
             userTypeMap[doc.id] = {
-                type: data.studentType || 'external',
-                college: normalizeCollegeName(data.collegeName || 'Unknown')
+                type: resolveStudentType(data),
+                college: normalizeCollegeName(data.collegeName || data.college || data.institution || 'Unknown')
             };
         });
 
@@ -231,8 +262,7 @@ export async function GET(request: NextRequest) {
                 }
 
                 // Track unique people per college with normalization
-                const rawCol = uInfo?.college || 'Unknown';
-                const normCol = normalizeCollegeName(rawCol);
+                const normCol = uInfo?.college || 'Unknown';
                 if (!collegeParticipantMap[normCol]) collegeParticipantMap[normCol] = new Set();
                 collegeParticipantMap[normCol].add(reg.teamLeader);
             }
@@ -259,8 +289,7 @@ export async function GET(request: NextRequest) {
                     }
 
                     // Track unique people per col with normalization
-                    const rawCol = mInfo?.college || 'Unknown';
-                    const normCol = normalizeCollegeName(rawCol);
+                    const normCol = mInfo?.college || 'Unknown';
                     if (!collegeParticipantMap[normCol]) collegeParticipantMap[normCol] = new Set();
                     collegeParticipantMap[normCol].add(mId);
                 });
@@ -331,6 +360,7 @@ export async function GET(request: NextRequest) {
                 .map(([name, set]) => ({ name, count: set.size }))
                 .sort((a, b) => b.count - a.count)
                 .slice(0, 10),
+            schemaVersion: STATS_SCHEMA_VERSION,
             updatedAt: new Date().toISOString()
         };
 
