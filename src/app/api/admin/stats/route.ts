@@ -1,10 +1,11 @@
 import { adminDb, verifyAuthToken, usersCollection } from "@/lib/firebaseAdmin";
 import * as admin from 'firebase-admin';
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminRole } from "@/lib/admin";
+import { ADMIN_BLACKLIST, getAdminRole } from "@/lib/admin";
 
 export async function GET(request: NextRequest) {
     try {
+        const STATS_SCHEMA_VERSION = 4;
         const authHeader = request.headers.get('Authorization') || '';
         if (!authHeader.startsWith('Bearer ')) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -16,8 +17,31 @@ export async function GET(request: NextRequest) {
         }
 
         const userDoc = await usersCollection.doc(verified.uid).get();
-        const userEmail = userDoc.data()?.email;
-        const { role: adminRole, eventId: userEventId } = getAdminRole(userEmail);
+        const userData = userDoc.data() || {};
+        const userEmail = (verified.email || userData?.email || '').toLowerCase();
+
+        if (ADMIN_BLACKLIST.includes(userEmail)) {
+            return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+        }
+
+        const mappedAccess = getAdminRole(userEmail);
+        let adminRole = mappedAccess.role as 'SUPER_ADMIN' | 'COORDINATOR' | 'FINANCE' | null;
+        let userEventId = mappedAccess.eventId;
+
+        // Fallback to profile role so dashboard APIs stay aligned with ProtectedRoute role gating.
+        if (!adminRole) {
+            const profileRole = typeof userData?.role === 'string' ? userData.role.toUpperCase() : '';
+            if (profileRole === 'SUPER_ADMIN' || profileRole === 'FINANCE' || profileRole === 'COORDINATOR') {
+                adminRole = profileRole as 'SUPER_ADMIN' | 'COORDINATOR' | 'FINANCE';
+                if (adminRole === 'COORDINATOR') {
+                    userEventId = typeof userData?.eventId === 'string' && userData.eventId.trim().length > 0
+                        ? userData.eventId
+                        : null;
+                } else {
+                    userEventId = 'all';
+                }
+            }
+        }
 
         if (!adminRole || !['SUPER_ADMIN', 'FINANCE', 'COORDINATOR'].includes(adminRole)) {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });
@@ -36,8 +60,15 @@ export async function GET(request: NextRequest) {
                 const updatedAtMs = typeof cachedStats.updatedAt === 'string'
                     ? Date.parse(cachedStats.updatedAt)
                     : NaN;
+                const cachedSchemaVersion = typeof cachedStats.schemaVersion === 'number'
+                    ? cachedStats.schemaVersion
+                    : 1;
 
-                if (Number.isFinite(updatedAtMs) && (Date.now() - updatedAtMs) < cacheTtlMs) {
+                if (
+                    cachedSchemaVersion === STATS_SCHEMA_VERSION
+                    && Number.isFinite(updatedAtMs)
+                    && (Date.now() - updatedAtMs) < cacheTtlMs
+                ) {
                     return NextResponse.json({ stats: cachedStats, cached: true });
                 }
             }
@@ -93,12 +124,15 @@ export async function GET(request: NextRequest) {
         };
 
         const collegeParticipantMap: Record<string, Set<string>> = {};
-        const collegeRegistrationMap: Record<string, number> = {};
+        const collegeRegistrationMap: Record<string, Set<string>> = {};
         const uniqueExternalParticipants = new Set<string>();
         const uniquePaidUsers = new Set<string>();
 
-        // Fetch users to map UID -> studentType and College for registration processing
-        const allUsersSnap = await usersCollection.select('studentType', 'collegeName').get();
+        // Fetch users to map UID -> studentType and college for registration processing.
+        // Include all known college field variants to avoid over-grouping into Unknown.
+        const allUsersSnap = await usersCollection
+            .select('studentType', 'collegeName', 'college', 'institution', 'email')
+            .get();
         const userTypeMap: Record<string, { type: string, college: string }> = {};
 
         const normalizeCollegeName = (name: string): string => {
@@ -137,11 +171,31 @@ export async function GET(request: NextRequest) {
                 .join(' ');
         };
 
+        const resolveStudentType = (data: any): 'internal' | 'external' => {
+            const explicitType = typeof data.studentType === 'string' ? data.studentType.toLowerCase() : '';
+            if (explicitType === 'internal' || explicitType === 'external') {
+                return explicitType;
+            }
+
+            const college = `${data.collegeName || data.college || data.institution || ''}`.toUpperCase();
+            const email = `${data.email || ''}`.toLowerCase();
+
+            const isInternal =
+                college.includes('SMVITM') ||
+                college.includes('SODE') ||
+                college.includes('SHRI MADHWA VADIRAJA') ||
+                college.includes('SHRI MADHWA') ||
+                college.includes('VADIRAJA') ||
+                email.endsWith('@sode-edu.in');
+
+            return isInternal ? 'internal' : 'external';
+        };
+
         allUsersSnap.docs.forEach((doc: any) => {
             const data = doc.data();
             userTypeMap[doc.id] = {
-                type: data.studentType || 'external',
-                college: normalizeCollegeName(data.collegeName || 'Unknown')
+                type: resolveStudentType(data),
+                college: normalizeCollegeName(data.collegeName || data.college || data.institution || 'Unknown')
             };
         });
 
@@ -202,6 +256,7 @@ export async function GET(request: NextRequest) {
         const eventSpecificMetrics: Record<string, { total: number, internal: number, external: number, uniqueP: Set<string> }> = {};
 
         registrationsSnap.docs.forEach((doc: any) => {
+            const regId = doc.id;
             const reg = doc.data();
             const eId = reg.eventId;
             const category = (eventCategoryMap[reg.eventId] || 'other').toLowerCase();
@@ -245,8 +300,9 @@ export async function GET(request: NextRequest) {
                 if (!collegeParticipantMap[normCol]) collegeParticipantMap[normCol] = new Set();
                 collegeParticipantMap[normCol].add(reg.teamLeader);
 
-                // Track registration per college
-                collegeRegistrationMap[normCol] = (collegeRegistrationMap[normCol] || 0) + 1;
+                // Track unique squads represented by each college.
+                if (!collegeRegistrationMap[normCol]) collegeRegistrationMap[normCol] = new Set();
+                collegeRegistrationMap[normCol].add(regId);
             }
 
             // Process Members
@@ -273,6 +329,10 @@ export async function GET(request: NextRequest) {
                     const normCol = mInfo?.college || 'Unknown';
                     if (!collegeParticipantMap[normCol]) collegeParticipantMap[normCol] = new Set();
                     collegeParticipantMap[normCol].add(mId);
+
+                    // Count this squad for member colleges too (deduped by registration ID).
+                    if (!collegeRegistrationMap[normCol]) collegeRegistrationMap[normCol] = new Set();
+                    collegeRegistrationMap[normCol].add(regId);
                 });
             }
 
@@ -319,6 +379,30 @@ export async function GET(request: NextRequest) {
             };
         });
 
+        const collegeKeys = Array.from(
+            new Set([
+                ...Object.keys(collegeParticipantMap),
+                ...Object.keys(collegeRegistrationMap)
+            ])
+        );
+
+        const collegeDistribution = collegeKeys
+            .map((name) => {
+                const participants = collegeParticipantMap[name]?.size || 0;
+                const registrations = collegeRegistrationMap[name]?.size || 0;
+                return {
+                    name,
+                    registrations,
+                    participants,
+                    count: participants
+                };
+            })
+            .sort((a, b) => {
+                if (b.registrations !== a.registrations) return b.registrations - a.registrations;
+                return b.participants - a.participants;
+            })
+            .slice(0, 10);
+
         const liveStats = {
             totalUsers,
             internalUsers: internalUsersCount,
@@ -338,14 +422,8 @@ export async function GET(request: NextRequest) {
             eventMetricsCache: cleanEventMetrics, // Cached individual event stats for O(1) reads
             eventTitleMap,
             categoryBreakdown: categoryStats,
-            collegeDistribution: Object.entries(collegeParticipantMap)
-                .map(([name, set]) => ({
-                    name,
-                    participants: set.size,
-                    registrations: collegeRegistrationMap[name] || 0
-                }))
-                .sort((a, b) => b.registrations - a.registrations)
-                .slice(0, 50),
+            collegeDistribution,
+            schemaVersion: STATS_SCHEMA_VERSION,
             updatedAt: new Date().toISOString()
         };
 

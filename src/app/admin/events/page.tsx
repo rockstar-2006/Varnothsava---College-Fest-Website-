@@ -173,9 +173,7 @@ export default function EventManagementPage() {
             if (!adminCache.events || adminCache.events.length === 0) {
                 fetchEvents()
             }
-            if (!adminCache.stats) {
-                fetchStats(false)
-            }
+            fetchStats(false)
             if (!adminCache.staff || adminCache.staff.length === 0) {
                 fetchStaff()
             }
@@ -397,7 +395,7 @@ export default function EventManagementPage() {
                                 setLoading(true)
                                 fetchEvents()
                                 fetchStaff()
-                                fetchStats(false)
+                                fetchStats(true)
                             }}
                             className="bg-[#111] border border-white/10 hover:border-emerald-500/50 text-white px-5 py-2.5 rounded-xl transition-all group flex items-center gap-3 shadow-xl h-11"
                         >
@@ -520,24 +518,29 @@ export default function EventManagementPage() {
                                 </h3>
 
                                 <div className="space-y-3 overflow-y-auto max-h-40 no-scrollbar pr-2 custom-scrollbar">
-                                    {(stats.collegeDistribution || []).map((col: any, i: number) => (
-                                        <div key={i} className="space-y-1 group/item">
-                                            <div className="flex justify-between items-center text-[10px]">
-                                                <span className="font-bold text-white truncate max-w-[150px] group-hover/item:text-amber-400 transition-colors">{col.name}</span>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-black text-amber-500">{col.registrations} <span className="text-[8px] text-gray-600 font-bold uppercase">Squads</span></span>
-                                                    <span className="text-[8px] text-gray-500 font-bold">/ {col.participants} P</span>
+                                    {(stats.collegeDistribution || []).map((col: any, i: number) => {
+                                        const registrations = Number(col?.registrations ?? col?.count ?? 0)
+                                        const participants = Number(col?.participants ?? col?.count ?? 0)
+
+                                        return (
+                                            <div key={i} className="space-y-1 group/item">
+                                                <div className="flex justify-between items-center text-[10px]">
+                                                    <span className="font-bold text-white truncate max-w-[150px] group-hover/item:text-amber-400 transition-colors">{col.name}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-black text-amber-500">{registrations} <span className="text-[8px] text-gray-600 font-bold uppercase">Squads</span></span>
+                                                        <span className="text-[8px] text-gray-500 font-bold">/ {participants} P</span>
+                                                    </div>
+                                                </div>
+                                                <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                                                    <motion.div
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${(registrations / (stats.totalRegistrations || 1)) * 100}%` }}
+                                                        className="h-full bg-amber-500/50"
+                                                    />
                                                 </div>
                                             </div>
-                                            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                                                <motion.div
-                                                    initial={{ width: 0 }}
-                                                    animate={{ width: `${(col.registrations / (stats.totalRegistrations || 1)) * 100}%` }}
-                                                    className="h-full bg-amber-500/50"
-                                                />
-                                            </div>
-                                        </div>
-                                    ))}
+                                        )
+                                    })}
                                     {(!stats.collegeDistribution || stats.collegeDistribution.length === 0) && (
                                         <div className="text-center py-8 text-gray-600 italic text-[10px]">No geographic data synced</div>
                                     )}
@@ -638,19 +641,12 @@ export default function EventManagementPage() {
                                     </div>
                                     <h3 className="text-white font-black text-xl leading-tight group-hover:text-emerald-400 transition-colors uppercase italic mb-4">{event.title}</h3>
 
-                                    <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-1 gap-3">
                                         <div className="bg-white/2 p-2 rounded-xl border border-white/5">
                                             <p className="text-[7px] text-gray-500 font-bold uppercase tracking-widest mb-1">Schedule</p>
                                             <div className="flex items-center gap-1.5 text-[9px] text-gray-300 font-medium">
                                                 <Calendar size={10} className="text-emerald-500/50" />
                                                 {event.date || 'TBA'}
-                                            </div>
-                                        </div>
-                                        <div className="bg-white/2 p-2 rounded-xl border border-white/5">
-                                            <p className="text-[7px] text-gray-500 font-bold uppercase tracking-widest mb-1">Entry Fee</p>
-                                            <div className="flex items-center gap-1.5 text-[9px] text-emerald-400 font-black">
-                                                <Tag size={10} className="text-emerald-500/50" />
-                                                ₹{event.fee || 0}
                                             </div>
                                         </div>
                                     </div>
