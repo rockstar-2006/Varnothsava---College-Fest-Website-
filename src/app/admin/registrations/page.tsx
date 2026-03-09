@@ -430,15 +430,35 @@ export default function ParticipantsManagementPage() {
                                 <span className="text-xs font-bold uppercase tracking-widest text-white hidden sm:block">Sync</span>
                             </button>
 
-                            {userData?.role === 'SUPER_ADMIN' && (
-                                <button
-                                    onClick={() => fetchAndDownload('registrations', `Registrations_${selectedEventId}`, getAuthToken, { eventId: selectedEventId })}
-                                    className="bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/50 text-emerald-500 px-3 md:px-5 py-2 rounded-xl transition-all group flex items-center gap-2 shadow-xl"
-                                    title="Export"
-                                >
-                                    <FileSpreadsheet size={16} className="transition-transform group-hover:scale-110" />
-                                    <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Export</span>
-                                </button>
+                            {(userData?.role === 'SUPER_ADMIN' || userData?.role === 'COORDINATOR') && (
+                                <>
+                                    <button
+                                        onClick={() => {
+                                            const eventObj = events.find(e => e.id === selectedEventId);
+                                            fetchAndDownload(
+                                                'registrations',
+                                                `Roster_${selectedEventId}`,
+                                                getAuthToken,
+                                                { eventId: selectedEventId },
+                                                'word',
+                                                eventObj ? { title: eventObj.title, date: '11-MARCH-2026' } : undefined
+                                            );
+                                        }}
+                                        className="bg-blue-500/10 border border-blue-500/20 hover:border-blue-500/50 text-blue-500 px-3 md:px-5 py-2 rounded-xl transition-all group flex items-center gap-2 shadow-xl"
+                                        title="Download Roster (Word)"
+                                    >
+                                        <FileText size={16} className="transition-transform group-hover:scale-110" />
+                                        <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Word</span>
+                                    </button>
+                                    <button
+                                        onClick={() => fetchAndDownload('registrations', `Data_${selectedEventId}`, getAuthToken, { eventId: selectedEventId }, 'excel')}
+                                        className="bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/50 text-emerald-500 px-3 md:px-5 py-2 rounded-xl transition-all group flex items-center gap-2 shadow-xl"
+                                        title="Download Data (Excel)"
+                                    >
+                                        <FileSpreadsheet size={16} className="transition-transform group-hover:scale-110" />
+                                        <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Excel</span>
+                                    </button>
+                                </>
                             )}
                         </div>
                     </div>

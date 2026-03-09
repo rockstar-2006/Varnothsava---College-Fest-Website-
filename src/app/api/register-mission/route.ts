@@ -41,6 +41,14 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ message: "Invalid mission ID." }, { status: 400 });
         }
 
+        // Deadline Check
+        if (eventId === "TECH-002") {
+            const deadline = new Date("2026-03-10T10:00:00+05:30");
+            if (new Date() >= deadline) {
+                return NextResponse.json({ message: "Registration for this event has closed." }, { status: 400 });
+            }
+        }
+
         const isTeamEvent = (mission.maxTeamSize ?? 1) > 1;
         const minSize = mission.minTeamSize ?? 1;
         const maxSize = mission.maxTeamSize ?? 1;
