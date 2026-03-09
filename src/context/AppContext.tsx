@@ -76,6 +76,10 @@ interface AppContextType {
         staff?: any[];
         totalVerifiedPayments?: number;
         totalRevenue?: number;
+        internalRevenue?: number;
+        externalRevenue?: number;
+        internalPaidUsers?: number;
+        externalPaidUsers?: number;
         totalUsersCount?: number;
         totalPaymentsCount?: number;
         totalRegCount?: number;
