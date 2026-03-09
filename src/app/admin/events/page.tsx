@@ -636,19 +636,12 @@ export default function EventManagementPage() {
                                     </div>
                                     <h3 className="text-white font-black text-xl leading-tight group-hover:text-emerald-400 transition-colors uppercase italic mb-4">{event.title}</h3>
 
-                                    <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-1 gap-3">
                                         <div className="bg-white/2 p-2 rounded-xl border border-white/5">
                                             <p className="text-[7px] text-gray-500 font-bold uppercase tracking-widest mb-1">Schedule</p>
                                             <div className="flex items-center gap-1.5 text-[9px] text-gray-300 font-medium">
                                                 <Calendar size={10} className="text-emerald-500/50" />
                                                 {event.date || 'TBA'}
-                                            </div>
-                                        </div>
-                                        <div className="bg-white/2 p-2 rounded-xl border border-white/5">
-                                            <p className="text-[7px] text-gray-500 font-bold uppercase tracking-widest mb-1">Entry Fee</p>
-                                            <div className="flex items-center gap-1.5 text-[9px] text-emerald-400 font-black">
-                                                <Tag size={10} className="text-emerald-500/50" />
-                                                ₹{event.fee || 0}
                                             </div>
                                         </div>
                                     </div>
