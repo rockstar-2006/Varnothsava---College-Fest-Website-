@@ -51,10 +51,8 @@ export async function GET(request: NextRequest) {
             const coordinatorEventIds = userEventId.split(',').map((id: string) => id.trim());
             if (coordinatorEventIds.length > 1) {
                 regQuery = regQuery.where('eventId', 'in', coordinatorEventIds);
-                payQuery = payQuery.where('eventId', 'in', coordinatorEventIds);
             } else {
                 regQuery = regQuery.where('eventId', '==', coordinatorEventIds[0]);
-                payQuery = payQuery.where('eventId', '==', coordinatorEventIds[0]);
             }
         }
 
@@ -75,8 +73,8 @@ export async function GET(request: NextRequest) {
         let totalUsers = usersSnapRef.data().count;
         let internalUsersCount = internalUsersSnapRef.data().count;
         let externalUsersCount = totalUsers - internalUsersCount;
-        const totalRevenue = (paymentsSnap.data().totalAmount || 0) / 100;
-        const totalPaymentsCount = paymentsSnap.data().count || 0;
+        let totalRevenue = (paymentsSnap.data().totalAmount || 0) / 100;
+        let totalPaymentsCount = paymentsSnap.data().count || 0;
 
         // Map events by category for category-wise stats
         const eventCategoryMap: Record<string, string> = {};
@@ -138,9 +136,54 @@ export async function GET(request: NextRequest) {
             };
         });
 
-        // Get captured payments for unique paid users
-        const captures = await payQuery.select('user_id').get();
-        captures.docs.forEach((doc: any) => uniquePaidUsers.add(doc.data().user_id));
+        // Get captured payments for unique paid users. Coordinator scope is derived via team leaders.
+        let captureRows: Array<{ user_id?: string; amount?: number }> = [];
+
+        if (adminRole === 'COORDINATOR') {
+            const scopedLeaderIdSet = new Set<string>();
+            registrationsSnap.docs.forEach((doc: any) => {
+                const leaderId = doc.data()?.teamLeader;
+                if (typeof leaderId === 'string' && leaderId.length > 0) {
+                    scopedLeaderIdSet.add(leaderId);
+                }
+            });
+
+            const scopedLeaderIds = Array.from(scopedLeaderIdSet);
+
+            if (scopedLeaderIds.length === 0) {
+                totalRevenue = 0;
+                totalPaymentsCount = 0;
+            } else {
+                const leaderIdChunks: string[][] = [];
+                for (let i = 0; i < scopedLeaderIds.length; i += 30) {
+                    leaderIdChunks.push(scopedLeaderIds.slice(i, i + 30));
+                }
+
+                const scopedPaymentSnaps = await Promise.all(
+                    leaderIdChunks.map((chunk) =>
+                        payQuery.where('user_id', 'in', chunk).select('user_id', 'amount').get()
+                    )
+                );
+
+                const dedupedPayments = new Map<string, { user_id?: string; amount?: number }>();
+                scopedPaymentSnaps.forEach((snap: any) => {
+                    snap.docs.forEach((doc: any) => {
+                        dedupedPayments.set(doc.id, doc.data());
+                    });
+                });
+
+                captureRows = Array.from(dedupedPayments.values());
+                totalPaymentsCount = dedupedPayments.size;
+                totalRevenue = captureRows.reduce((sum, p) => sum + (p.amount || 0), 0) / 100;
+            }
+        } else {
+            const captures = await payQuery.select('user_id').get();
+            captureRows = captures.docs.map((doc: any) => doc.data());
+        }
+
+        captureRows.forEach((row) => {
+            if (row.user_id) uniquePaidUsers.add(row.user_id);
+        });
 
         let totalHeadcount = 0;
         let paidParticipantsHeadcount = 0;
