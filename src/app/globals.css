@@ -105,6 +105,17 @@ body.modal-open .innovative-navbar {
     transform: translateY(120%) !important;
 }
 
+/* Keep native dropdown menus readable on dark admin UIs (not white-on-white). */
+.admin-select {
+    color-scheme: dark;
+}
+
+.admin-select option,
+.admin-select optgroup {
+    background-color: #0b0b0c;
+    color: #f8fafc;
+}
+
 /* --- UTILITIES --- */
 
 /* Performance optimization for off-screen sections */

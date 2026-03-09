@@ -90,7 +90,23 @@ interface AppContextType {
         totalInternalRegs?: number;
         totalExternalRegs?: number;
         totalParticipants?: number;
+        totalInternalParticipants?: number;
+        totalExternalParticipants?: number;
         totalParticipantsPaid?: number;
+        paymentFilterCounts?: {
+            status: {
+                all: number;
+                captured: number;
+                failed: number;
+                authorized: number;
+                other: number;
+            };
+            type: {
+                all: number;
+                internal: number;
+                external: number;
+            };
+        };
         uniqueExternalParticipantsAcrossEvents?: number;
         categoryBreakdown?: Record<string, { totalTeams: number, internal: number, external: number, totalParticipants: number }>;
         collegeDistribution?: { name: string, count: number }[];

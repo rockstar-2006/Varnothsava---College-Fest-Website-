@@ -29,21 +29,33 @@ export async function GET(request: NextRequest) {
         let data: any[] = [];
 
         if (type === 'users') {
-            const status = searchParams.get('status'); // all, paid, unpaid, internal, external
+            const legacyStatus = searchParams.get('status') || 'all'; // all, paid, unpaid, internal, external
+            const paymentStatusParam = searchParams.get('paymentStatus') || '';
+            const studentTypeParam = searchParams.get('studentType') || '';
+
+            const paymentStatus = ['all', 'paid', 'unpaid'].includes(paymentStatusParam)
+                ? paymentStatusParam
+                : (legacyStatus === 'paid' || legacyStatus === 'unpaid' ? legacyStatus : 'all');
+
+            const studentType = ['all', 'internal', 'external'].includes(studentTypeParam)
+                ? studentTypeParam
+                : (legacyStatus === 'internal' || legacyStatus === 'external' ? legacyStatus : 'all');
+
             let query: any = usersCollection;
 
-            if (status === 'paid') {
+            // Keep Firestore query index-safe by applying at most one DB-level filter.
+            if (paymentStatus === 'paid') {
                 query = query.where('hasPaid', '==', true);
-            } else if (status === 'unpaid') {
+            } else if (paymentStatus === 'unpaid') {
                 query = query.where('hasPaid', '==', false);
-            } else if (status === 'internal') {
+            } else if (studentType === 'internal') {
                 query = query.where('studentType', '==', 'internal');
-            } else if (status === 'external') {
+            } else if (studentType === 'external') {
                 query = query.where('studentType', '==', 'external');
             }
 
             const snapshot = await query.get();
-            data = snapshot.docs.map((doc: any) => {
+            let users = snapshot.docs.map((doc: any) => {
                 const u = doc.data();
                 return {
                     id: doc.id,
@@ -57,6 +69,16 @@ export async function GET(request: NextRequest) {
                     role: u.role
                 };
             });
+
+            if (paymentStatus !== 'all') {
+                users = users.filter((u: any) => u.paymentStatus.toLowerCase() === paymentStatus);
+            }
+
+            if (studentType !== 'all') {
+                users = users.filter((u: any) => u.studentType === studentType);
+            }
+
+            data = users;
         } else if (type === 'registrations') {
             if (!eventId || eventId === 'all') {
                 return NextResponse.json({ message: "Event ID is required for registration roster" }, { status: 400 });
