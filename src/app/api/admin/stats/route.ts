@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
         }
 
         const forceRefresh = request.nextUrl.searchParams.get('force') === '1'
-            || request.nextUrl.searchParams.get('refresh') === '1';
+            || request.nextUrl.searchParams.get('refresh') === 'true';
         const cacheTtlMs = Number(process.env.ADMIN_STATS_CACHE_TTL_MS || '120000');
         const statsRef = adminDb.collection('system').doc('stats');
 
