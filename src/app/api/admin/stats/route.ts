@@ -1,7 +1,7 @@
 import { adminDb, verifyAuthToken, usersCollection } from "@/lib/firebaseAdmin";
 import * as admin from 'firebase-admin';
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminRole } from "@/lib/admin";
+import { ADMIN_BLACKLIST, getAdminRole } from "@/lib/admin";
 
 export async function GET(request: NextRequest) {
     try {
@@ -17,8 +17,31 @@ export async function GET(request: NextRequest) {
         }
 
         const userDoc = await usersCollection.doc(verified.uid).get();
-        const userEmail = userDoc.data()?.email;
-        const { role: adminRole, eventId: userEventId } = getAdminRole(userEmail);
+        const userData = userDoc.data() || {};
+        const userEmail = (verified.email || userData?.email || '').toLowerCase();
+
+        if (ADMIN_BLACKLIST.includes(userEmail)) {
+            return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+        }
+
+        const mappedAccess = getAdminRole(userEmail);
+        let adminRole = mappedAccess.role as 'SUPER_ADMIN' | 'COORDINATOR' | 'FINANCE' | null;
+        let userEventId = mappedAccess.eventId;
+
+        // Fallback to profile role so dashboard APIs stay aligned with ProtectedRoute role gating.
+        if (!adminRole) {
+            const profileRole = typeof userData?.role === 'string' ? userData.role.toUpperCase() : '';
+            if (profileRole === 'SUPER_ADMIN' || profileRole === 'FINANCE' || profileRole === 'COORDINATOR') {
+                adminRole = profileRole as 'SUPER_ADMIN' | 'COORDINATOR' | 'FINANCE';
+                if (adminRole === 'COORDINATOR') {
+                    userEventId = typeof userData?.eventId === 'string' && userData.eventId.trim().length > 0
+                        ? userData.eventId
+                        : null;
+                } else {
+                    userEventId = 'all';
+                }
+            }
+        }
 
         if (!adminRole || !['SUPER_ADMIN', 'FINANCE', 'COORDINATOR'].includes(adminRole)) {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });
