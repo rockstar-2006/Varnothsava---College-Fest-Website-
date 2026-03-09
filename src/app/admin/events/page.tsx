@@ -82,6 +82,23 @@ export default function EventManagementPage() {
 
     const isSuperAdmin = userData?.role === 'SUPER_ADMIN'
 
+    const fetchStats = async (force = false) => {
+        try {
+            const token = await getAuthToken()
+            const url = force ? '/api/admin/stats?force=1' : '/api/admin/stats'
+            const sRes = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            const sData = await sRes.json()
+            if (sRes.ok && sData?.stats) {
+                setStats(sData.stats)
+                updateAdminCache('stats', sData.stats)
+            }
+        } catch (error) {
+            console.error("Failed to fetch stats:", error)
+        }
+    }
+
     const fetchEvents = async () => {
         setLoading(true)
         try {
@@ -91,7 +108,6 @@ export default function EventManagementPage() {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
-
             if (res.ok) {
                 if (data.stats) {
                     setStats(data.stats);
@@ -156,19 +172,9 @@ export default function EventManagementPage() {
         if (isInitialMount.current) {
             if (!adminCache.events || adminCache.events.length === 0) {
                 fetchEvents()
-            } else if (!adminCache.stats) {
-                // If we have events but no stats, fetch stats to be fresh
-                const tokenPromise = getAuthToken()
-                tokenPromise.then(token => {
-                    fetch('/api/admin/stats', { headers: { 'Authorization': `Bearer ${token}` } })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.stats) {
-                                setStats(data.stats);
-                                updateAdminCache('stats', data.stats);
-                            }
-                        })
-                })
+            }
+            if (!adminCache.stats) {
+                fetchStats(false)
             }
             if (!adminCache.staff || adminCache.staff.length === 0) {
                 fetchStaff()
@@ -261,13 +267,11 @@ export default function EventManagementPage() {
     const [eventRegsLastId, setEventRegsLastId] = useState<string | null>(null)
     const [loadingRegs, setLoadingRegs] = useState(false)
     const [eventSearchQuery, setEventSearchQuery] = useState('')
+    const lastEventModalSearchRef = useRef<string>('')
 
     const fetchEventRegistrations = async (eventId: string, searchInput?: string, forceRefresh: boolean = false, isLoadMore: boolean = false) => {
-        console.log(`[Frontend] Fetching registrations for: ${eventId}, Search: ${searchInput}, LoadMore: ${isLoadMore}`);
-
         // Cache Check (only for initial load, not load-more)
         if (!forceRefresh && !searchInput && !isLoadMore && adminCache.eventRegMap?.[eventId]) {
-            console.log(`[Frontend] Using cached registrations for: ${eventId}`);
             const cached = adminCache.eventRegMap[eventId] as any;
             const cachedRegs = cached.regs || cached;
             setEventRegs(Array.isArray(cachedRegs) ? cachedRegs : []);
@@ -281,9 +285,10 @@ export default function EventManagementPage() {
         try {
             const token = await getAuthToken()
             const currentLastId = isLoadMore ? eventRegsLastId : '';
-            let url = `/api/admin/registrations?eventId=${eventId}&limit=50&_t=${Date.now()}`
+            let url = `/api/admin/registrations?eventId=${eventId}&limit=50`
             if (currentLastId) url += `&lastId=${currentLastId}`
             if (searchInput) url += `&search=${encodeURIComponent(searchInput)}`
+            if (isLoadMore) url += `&skipCounts=1`
 
             const res = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}`, 'Cache-Control': 'no-cache' }
@@ -291,18 +296,27 @@ export default function EventManagementPage() {
             const data = await res.json()
             if (res.ok) {
                 const newRegs = isLoadMore ? [...eventRegs, ...data.registrations] : data.registrations;
-                console.log(`[Frontend] Total: ${data.totalCount}, Fetched: ${data.registrations.length}, HasMore: ${data.hasMore}`);
+                lastEventModalSearchRef.current = searchInput || ''
                 setEventRegs(newRegs)
-                setEventRegsTotalCount(data.totalCount || newRegs.length)
+                if (typeof data.totalCount === 'number') {
+                    setEventRegsTotalCount(data.totalCount)
+                } else if (!isLoadMore) {
+                    setEventRegsTotalCount(newRegs.length)
+                }
                 setEventRegsHasMore(data.hasMore || false)
                 setEventRegsLastId(data.lastId || null)
 
                 // Update Cache if not a search
                 if (!searchInput) {
-                    const currentMap = adminCache.eventRegMap || {};
+                    const currentMap = (adminCache.eventRegMap || {}) as Record<string, any>;
                     updateAdminCache('eventRegMap', {
                         ...currentMap,
-                        [eventId]: { regs: newRegs, totalCount: data.totalCount, hasMore: data.hasMore, lastId: data.lastId }
+                        [eventId]: {
+                            regs: newRegs,
+                            totalCount: typeof data.totalCount === 'number' ? data.totalCount : (currentMap[eventId]?.totalCount || newRegs.length),
+                            hasMore: data.hasMore,
+                            lastId: data.lastId
+                        }
                     });
                 }
             }
@@ -316,8 +330,11 @@ export default function EventManagementPage() {
     // Debounced search for event participant modal
     useEffect(() => {
         if (showRegistrations && selectedEventForReg) {
+            const normalizedSearch = eventSearchQuery.trim()
+            if (lastEventModalSearchRef.current === normalizedSearch) return
+
             const timer = setTimeout(() => {
-                fetchEventRegistrations(selectedEventForReg.id, eventSearchQuery)
+                fetchEventRegistrations(selectedEventForReg.id, normalizedSearch)
             }, 500)
             return () => clearTimeout(timer)
         }
@@ -326,6 +343,8 @@ export default function EventManagementPage() {
     const handleViewRegistrations = (event: AdminEvent) => {
         setSelectedEventForReg(event)
         setShowRegistrations(true)
+        setEventSearchQuery('')
+        lastEventModalSearchRef.current = ''
         setEventRegs([])
         setEventRegsTotalCount(0)
         setEventRegsHasMore(false)
@@ -378,6 +397,7 @@ export default function EventManagementPage() {
                                 setLoading(true)
                                 fetchEvents()
                                 fetchStaff()
+                                fetchStats(false)
                             }}
                             className="bg-[#111] border border-white/10 hover:border-emerald-500/50 text-white px-5 py-2.5 rounded-xl transition-all group flex items-center gap-3 shadow-xl h-11"
                         >

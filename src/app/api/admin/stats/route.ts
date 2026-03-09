@@ -23,6 +23,26 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });
         }
 
+        const forceRefresh = request.nextUrl.searchParams.get('force') === '1'
+            || request.nextUrl.searchParams.get('refresh') === '1';
+        const cacheTtlMs = Number(process.env.ADMIN_STATS_CACHE_TTL_MS || '120000');
+        const statsRef = adminDb.collection('system').doc('stats');
+
+        // Serve cached global stats when possible to avoid expensive full-scan recalculation.
+        if (adminRole !== 'COORDINATOR' && !forceRefresh) {
+            const cachedDoc = await statsRef.get();
+            if (cachedDoc.exists) {
+                const cachedStats = cachedDoc.data() || {};
+                const updatedAtMs = typeof cachedStats.updatedAt === 'string'
+                    ? Date.parse(cachedStats.updatedAt)
+                    : NaN;
+
+                if (Number.isFinite(updatedAtMs) && (Date.now() - updatedAtMs) < cacheTtlMs) {
+                    return NextResponse.json({ stats: cachedStats, cached: true });
+                }
+            }
+        }
+
         // Scope queries based on role
         let regQuery: any = adminDb.collection('registrations');
         let payQuery: any = adminDb.collection('payments').where('status', '==', 'captured');
@@ -31,10 +51,8 @@ export async function GET(request: NextRequest) {
             const coordinatorEventIds = userEventId.split(',').map((id: string) => id.trim());
             if (coordinatorEventIds.length > 1) {
                 regQuery = regQuery.where('eventId', 'in', coordinatorEventIds);
-                payQuery = payQuery.where('eventId', 'in', coordinatorEventIds);
             } else {
                 regQuery = regQuery.where('eventId', '==', coordinatorEventIds[0]);
-                payQuery = payQuery.where('eventId', '==', coordinatorEventIds[0]);
             }
         }
 
@@ -47,20 +65,24 @@ export async function GET(request: NextRequest) {
             regQuery.get(),
             adminDb.collection('events').get(),
             payQuery.aggregate({
-                totalAmount: admin.firestore.AggregateField.sum('amount')
+                totalAmount: admin.firestore.AggregateField.sum('amount'),
+                count: admin.firestore.AggregateField.count()
             }).get()
         ]);
 
         let totalUsers = usersSnapRef.data().count;
         let internalUsersCount = internalUsersSnapRef.data().count;
         let externalUsersCount = totalUsers - internalUsersCount;
-        const totalRevenue = (paymentsSnap.data().totalAmount || 0) / 100;
+        let totalRevenue = (paymentsSnap.data().totalAmount || 0) / 100;
+        let totalPaymentsCount = paymentsSnap.data().count || 0;
 
         // Map events by category for category-wise stats
         const eventCategoryMap: Record<string, string> = {};
+        const eventTitleMap: Record<string, string> = {};
         eventsSnap.docs.forEach((doc: any) => {
             const data = doc.data();
             eventCategoryMap[doc.id] = (data.type || 'Other').toLowerCase();
+            eventTitleMap[doc.id] = data.title || doc.id;
         });
 
         // Initialize advanced stats
@@ -123,9 +145,54 @@ export async function GET(request: NextRequest) {
             };
         });
 
-        // Get captured payments for unique paid users
-        const captures = await payQuery.select('user_id').get();
-        captures.docs.forEach((doc: any) => uniquePaidUsers.add(doc.data().user_id));
+        // Get captured payments for unique paid users. Coordinator scope is derived via team leaders.
+        let captureRows: Array<{ user_id?: string; amount?: number }> = [];
+
+        if (adminRole === 'COORDINATOR') {
+            const scopedLeaderIdSet = new Set<string>();
+            registrationsSnap.docs.forEach((doc: any) => {
+                const leaderId = doc.data()?.teamLeader;
+                if (typeof leaderId === 'string' && leaderId.length > 0) {
+                    scopedLeaderIdSet.add(leaderId);
+                }
+            });
+
+            const scopedLeaderIds = Array.from(scopedLeaderIdSet);
+
+            if (scopedLeaderIds.length === 0) {
+                totalRevenue = 0;
+                totalPaymentsCount = 0;
+            } else {
+                const leaderIdChunks: string[][] = [];
+                for (let i = 0; i < scopedLeaderIds.length; i += 30) {
+                    leaderIdChunks.push(scopedLeaderIds.slice(i, i + 30));
+                }
+
+                const scopedPaymentSnaps = await Promise.all(
+                    leaderIdChunks.map((chunk) =>
+                        payQuery.where('user_id', 'in', chunk).select('user_id', 'amount').get()
+                    )
+                );
+
+                const dedupedPayments = new Map<string, { user_id?: string; amount?: number }>();
+                scopedPaymentSnaps.forEach((snap: any) => {
+                    snap.docs.forEach((doc: any) => {
+                        dedupedPayments.set(doc.id, doc.data());
+                    });
+                });
+
+                captureRows = Array.from(dedupedPayments.values());
+                totalPaymentsCount = dedupedPayments.size;
+                totalRevenue = captureRows.reduce((sum, p) => sum + (p.amount || 0), 0) / 100;
+            }
+        } else {
+            const captures = await payQuery.select('user_id').get();
+            captureRows = captures.docs.map((doc: any) => doc.data());
+        }
+
+        captureRows.forEach((row) => {
+            if (row.user_id) uniquePaidUsers.add(row.user_id);
+        });
 
         let totalHeadcount = 0;
         let paidParticipantsHeadcount = 0;
@@ -259,13 +326,17 @@ export async function GET(request: NextRequest) {
             uniqueExternalParticipantsAcrossEvents: uniqueExternalParticipants.size,
             uniqueTotalParticipantsAcrossEvents: uniqueTotalParticipants.size,
             paidUsers: uniquePaidUsers.size,
+            totalVerifiedPayments: uniquePaidUsers.size,
             unpaidUsers: totalUsers - uniquePaidUsers.size,
             totalRegistrations: registrationsSnap.size,
             totalParticipants: uniqueTotalParticipants.size,
             paidParticipants: uniquePaidParticipants.size,
+            totalParticipantsPaid: uniquePaidParticipants.size,
             totalRevenue,
+            totalPaymentsCount,
             totalColleges: Object.keys(collegeParticipantMap).filter(c => c !== 'Unknown').length,
             eventMetricsCache: cleanEventMetrics, // Cached individual event stats for O(1) reads
+            eventTitleMap,
             categoryBreakdown: categoryStats,
             collegeDistribution: Object.entries(collegeParticipantMap)
                 .map(([name, set]) => ({
@@ -278,8 +349,10 @@ export async function GET(request: NextRequest) {
             updatedAt: new Date().toISOString()
         };
 
-        // Also update the stats doc for background tasks/performance elsewhere
-        await adminDb.collection('system').doc('stats').set(liveStats);
+        // Persist only global stats. Coordinator-scoped stats must never overwrite shared cache.
+        if (adminRole !== 'COORDINATOR') {
+            await statsRef.set(liveStats, { merge: true });
+        }
 
         // One-stop shop: If user wants events too, return them in the same payload
         let eventsResult = undefined;
