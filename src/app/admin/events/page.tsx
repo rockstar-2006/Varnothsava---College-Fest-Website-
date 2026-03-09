@@ -22,7 +22,8 @@ import {
     Users,
     User,
     RefreshCcw,
-    FileSpreadsheet
+    FileSpreadsheet,
+    FileText
 } from 'lucide-react'
 import { fetchAndDownload } from '@/lib/exportUtils'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -99,19 +100,27 @@ export default function EventManagementPage() {
     }
 
     const fetchEvents = async () => {
+        setLoading(true)
         try {
             const token = await getAuthToken()
-            const res = await fetch('/api/admin/events', {
+            // ONE-STOP SHOP: Fetch stats AND events in a single live database read request
+            const res = await fetch(`/api/admin/stats?includeEvents=true&refresh=true&_t=${Date.now()}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
-            })
-            const data = await res.json()
+            });
+            const data = await res.json();
             if (res.ok) {
-                setEvents(data.events)
-                updateAdminCache('events', data.events)
-                updateAdminCache('eventRegMap', {})
+                if (data.stats) {
+                    setStats(data.stats);
+                    updateAdminCache('stats', data.stats);
+                }
+                if (data.events) {
+                    setEvents(data.events);
+                    updateAdminCache('events', data.events);
+                    updateAdminCache('eventRegMap', {});
+                }
             }
         } catch (error) {
-            console.error("Failed to fetch events:", error)
+            console.error("Failed to fetch dashboard data:", error)
         } finally {
             setLoading(false)
         }
@@ -427,16 +436,19 @@ export default function EventManagementPage() {
 
                                 <div className="space-y-6">
                                     {['technical', 'cultural'].map(cat => {
-                                        const catData = stats.categoryBreakdown?.[cat] || { totalParticipants: 0, internal: 0, external: 0 };
-                                        const total = catData.totalParticipants || 1;
-                                        const intPer = (catData.internal / total) * 100;
-                                        const extPer = (catData.external / total) * 100;
+                                        const catData = stats.categoryBreakdown?.[cat] || { totalTeams: 0, internalTeams: 0, externalTeams: 0, totalParticipants: 0, internal: 0, external: 0 };
+                                        const total = catData.totalTeams || 1;
+                                        const intPer = (catData.internalTeams / total) * 100;
+                                        const extPer = (catData.externalTeams / total) * 100;
 
                                         return (
                                             <div key={cat} className="space-y-2">
                                                 <div className="flex justify-between items-end">
                                                     <span className="text-xs font-black uppercase text-white italic">{cat}</span>
-                                                    <span className="text-[10px] font-bold text-gray-400">{catData.totalParticipants} People</span>
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-[10px] font-black text-emerald-500">{catData.totalTeams} Squads</span>
+                                                        <span className="text-[9px] font-bold text-gray-500">{catData.totalParticipants} People</span>
+                                                    </div>
                                                 </div>
                                                 <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden flex">
                                                     <motion.div
@@ -451,8 +463,8 @@ export default function EventManagementPage() {
                                                     />
                                                 </div>
                                                 <div className="flex justify-between text-[8px] font-black uppercase tracking-widest">
-                                                    <span className="text-emerald-500">Internal {Math.round(intPer)}%</span>
-                                                    <span className="text-blue-500">External {Math.round(extPer)}%</span>
+                                                    <span className="text-emerald-500">Internal {catData.internalTeams}</span>
+                                                    <span className="text-blue-500">External {catData.externalTeams}</span>
                                                 </div>
                                             </div>
                                         );
@@ -500,21 +512,27 @@ export default function EventManagementPage() {
 
                             {/* College Distribution */}
                             <div className="bg-[#111] border border-white/5 rounded-3xl p-6 flex flex-col gap-4">
-                                <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
-                                    <div className="w-1 h-1 rounded-full bg-amber-500" /> Geographic Spread
+                                <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1 h-1 rounded-full bg-amber-500" /> Geographic Spread
+                                    </div>
+                                    <span className="text-amber-500/50">{stats.totalColleges || 0} Colleges</span>
                                 </h3>
 
                                 <div className="space-y-3 overflow-y-auto max-h-40 no-scrollbar pr-2 custom-scrollbar">
                                     {(stats.collegeDistribution || []).map((col: any, i: number) => (
-                                        <div key={i} className="space-y-1">
+                                        <div key={i} className="space-y-1 group/item">
                                             <div className="flex justify-between items-center text-[10px]">
-                                                <span className="font-bold text-white truncate max-w-[150px]">{col.name}</span>
-                                                <span className="font-black text-amber-500">{col.count}</span>
+                                                <span className="font-bold text-white truncate max-w-[150px] group-hover/item:text-amber-400 transition-colors">{col.name}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-black text-amber-500">{col.registrations} <span className="text-[8px] text-gray-600 font-bold uppercase">Squads</span></span>
+                                                    <span className="text-[8px] text-gray-500 font-bold">/ {col.participants} P</span>
+                                                </div>
                                             </div>
                                             <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
                                                 <motion.div
                                                     initial={{ width: 0 }}
-                                                    animate={{ width: `${(col.count / (stats.totalParticipants || 1)) * 100}%` }}
+                                                    animate={{ width: `${(col.registrations / (stats.totalRegistrations || 1)) * 100}%` }}
                                                     className="h-full bg-amber-500/50"
                                                 />
                                             </div>
@@ -864,14 +882,31 @@ export default function EventManagementPage() {
                                     </div>
                                     <div className="flex items-center gap-2 md:gap-4">
                                         {userData?.role === 'SUPER_ADMIN' && (
-                                            <button
-                                                onClick={() => fetchAndDownload('registrations', `Roster_${selectedEventForReg.title}`, getAuthToken, { eventId: selectedEventForReg.id })}
-                                                className="p-2 md:px-4 md:py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 rounded-xl transition-all flex items-center gap-2 group"
-                                                title="Download Roster (Excel)"
-                                            >
-                                                <FileSpreadsheet size={18} className="transition-transform group-hover:scale-110" />
-                                                <span className="hidden md:inline text-xs font-bold uppercase tracking-widest">Export</span>
-                                            </button>
+                                            <>
+                                                <button
+                                                    onClick={() => fetchAndDownload(
+                                                        'registrations',
+                                                        `Roster_${selectedEventForReg.title}`,
+                                                        getAuthToken,
+                                                        { eventId: selectedEventForReg.id },
+                                                        'word',
+                                                        { title: selectedEventForReg.title, date: selectedEventForReg.date }
+                                                    )}
+                                                    className="p-2 md:px-4 md:py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 rounded-xl transition-all flex items-center gap-2 group"
+                                                    title="Download Roster (Word)"
+                                                >
+                                                    <FileText size={18} className="transition-transform group-hover:scale-110" />
+                                                    <span className="hidden md:inline text-xs font-bold uppercase tracking-widest">Word</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => fetchAndDownload('registrations', `Data_${selectedEventForReg.title}`, getAuthToken, { eventId: selectedEventForReg.id }, 'excel')}
+                                                    className="p-2 md:px-4 md:py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 rounded-xl transition-all flex items-center gap-2 group"
+                                                    title="Download Data (Excel)"
+                                                >
+                                                    <FileSpreadsheet size={18} className="transition-transform group-hover:scale-110" />
+                                                    <span className="hidden md:inline text-xs font-bold uppercase tracking-widest">Excel</span>
+                                                </button>
+                                            </>
                                         )}
                                         <button
                                             onClick={() => fetchEventRegistrations(selectedEventForReg.id, '', true, false)}
