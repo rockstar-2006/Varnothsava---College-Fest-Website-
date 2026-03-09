@@ -62,8 +62,99 @@ interface Event {
     title: string;
 }
 
+interface PaymentFilterCounts {
+    status: {
+        all: number;
+        captured: number;
+        failed: number;
+        authorized: number;
+        other: number;
+    };
+    type: {
+        all: number;
+        internal: number;
+        external: number;
+    };
+}
+
+interface FilterOption {
+    value: string;
+    label: string;
+}
+
+function DarkFilterSelect({
+    value,
+    options,
+    onChange,
+    className,
+}: {
+    value: string;
+    options: FilterOption[];
+    onChange: (nextValue: string) => void;
+    className?: string;
+}) {
+    const [open, setOpen] = useState(false)
+    const rootRef = useRef<HTMLDivElement | null>(null)
+
+    useEffect(() => {
+        const handlePointerDown = (event: MouseEvent) => {
+            if (!rootRef.current) return
+            if (!rootRef.current.contains(event.target as Node)) {
+                setOpen(false)
+            }
+        }
+
+        document.addEventListener('mousedown', handlePointerDown)
+        return () => document.removeEventListener('mousedown', handlePointerDown)
+    }, [])
+
+    const selectedLabel = options.find((opt) => opt.value === value)?.label || options[0]?.label || 'Select'
+
+    return (
+        <div ref={rootRef} className="relative w-full">
+            <button
+                type="button"
+                onClick={() => setOpen((prev) => !prev)}
+                className={cn(
+                    'w-full rounded-xl border border-white/10 bg-[#0f1012] px-3 py-2 text-left text-sm text-white transition-all hover:border-emerald-500/40 focus:outline-none focus:border-emerald-500/70 flex items-center justify-between gap-2',
+                    className
+                )}
+            >
+                <span className="truncate">{selectedLabel}</span>
+                <span className={cn('text-xs text-gray-400 transition-transform', open && 'rotate-180')}>v</span>
+            </button>
+
+            {open && (
+                <div className="absolute z-40 mt-1 w-full overflow-hidden rounded-xl border border-white/10 bg-[#0b0b0d] shadow-2xl">
+                    <div className="max-h-56 overflow-y-auto py-1">
+                        {options.map((option) => (
+                            <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => {
+                                    onChange(option.value)
+                                    setOpen(false)
+                                }}
+                                className={cn(
+                                    'w-full px-3 py-2 text-left text-sm transition-colors',
+                                    value === option.value
+                                        ? 'bg-emerald-500/15 text-emerald-300'
+                                        : 'text-gray-200 hover:bg-white/10'
+                                )}
+                            >
+                                {option.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}
+
 export default function PaymentsManagementPage() {
     const { userData, adminCache, updateAdminCache } = useApp()
+    const FILTER_DEBOUNCE_MS = 300
     const [payments, setPayments] = useState<Payment[]>(adminCache.payments || [])
     const [events, setEvents] = useState<Event[]>(adminCache.events || [])
     const [loading, setLoading] = useState(!adminCache.payments)
@@ -73,16 +164,14 @@ export default function PaymentsManagementPage() {
     const [selectedStatus, setSelectedStatus] = useState<string>('all')
     const [selectedType, setSelectedType] = useState<'all' | 'internal' | 'external'>('all')
     const [selectedDateFilter, setSelectedDateFilter] = useState<'all' | 'new'>('all')
-    const [isDeleting, setIsDeleting] = useState(false)
-    const [visibleCount, setVisibleCount] = useState(20)
     const [updatingId, setUpdatingId] = useState<string | null>(null)
     const [totalPaidPeople, setTotalPaidPeople] = useState<number | null>(adminCache.totalVerifiedPayments || null)
-    const [totalPaidParticipants, setTotalPaidParticipants] = useState<number | null>(adminCache.totalParticipantsPaid || null)
     const [loadingTotal, setLoadingTotal] = useState(false)
     const [hasMore, setHasMore] = useState(false)
     const [totalPaymentsCount, setTotalPaymentsCount] = useState(adminCache.totalPaymentsCount || 0)
     const [totalRevenue, setTotalRevenue] = useState<number | null>(adminCache.totalRevenue || null)
     const [lastId, setLastId] = useState<string | null>(null)
+    const [filterCounts, setFilterCounts] = useState<PaymentFilterCounts | null>(adminCache.paymentFilterCounts || null)
 
     const toggleSelect = (id: string) => {
         setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
@@ -98,7 +187,27 @@ export default function PaymentsManagementPage() {
 
     const canVerify = userData?.role === 'SUPER_ADMIN' || userData?.role === 'FINANCE'
 
+    const isDefaultView = () => (
+        searchQuery.trim().length === 0 &&
+        selectedEventId === 'all' &&
+        selectedStatus === 'all' &&
+        selectedType === 'all' &&
+        selectedDateFilter === 'all'
+    )
+
     const fetchPayments = async (isLoadMore = false) => {
+        const requestId = latestRequestIdRef.current + 1
+        latestRequestIdRef.current = requestId
+
+        if (!isLoadMore && activeFetchController.current) {
+            activeFetchController.current.abort()
+        }
+
+        const controller = new AbortController()
+        if (!isLoadMore) {
+            activeFetchController.current = controller
+        }
+
         setLoading(true)
         try {
             const token = await getAuthToken()
@@ -114,24 +223,52 @@ export default function PaymentsManagementPage() {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Cache-Control': 'no-cache'
-                }
+                },
+                signal: controller.signal,
             })
             const data = await res.json()
+
+            if (requestId !== latestRequestIdRef.current) {
+                return
+            }
+
             if (res.ok) {
                 const newPayments = isLoadMore ? [...payments, ...data.payments] : data.payments;
+                const shouldPersistDefaultView = !isLoadMore && isDefaultView();
+
                 setPayments(newPayments)
                 setHasMore(data.hasMore)
                 setLastId(data.lastId)
-                updateAdminCache('payments', newPayments)
+
+                if (shouldPersistDefaultView) {
+                    updateAdminCache('payments', newPayments)
+                }
+
                 if (typeof data.totalCount === 'number') {
                     setTotalPaymentsCount(data.totalCount)
-                    updateAdminCache('totalPaymentsCount', data.totalCount)
+
+                    if (shouldPersistDefaultView) {
+                        updateAdminCache('totalPaymentsCount', data.totalCount)
+                    }
+                }
+
+                if (data.filterCounts) {
+                    setFilterCounts(data.filterCounts)
+
+                    if (shouldPersistDefaultView) {
+                        updateAdminCache('paymentFilterCounts', data.filterCounts)
+                    }
                 }
             }
-        } catch (error) {
+        } catch (error: unknown) {
+            if (error instanceof DOMException && error.name === 'AbortError') {
+                return
+            }
             console.error("Failed to fetch payments:", error)
         } finally {
-            setLoading(false)
+            if (requestId === latestRequestIdRef.current) {
+                setLoading(false)
+            }
         }
     }
 
@@ -145,14 +282,11 @@ export default function PaymentsManagementPage() {
             const data = await res.json()
             if (res.ok) {
                 setTotalPaidPeople(data.totalPayments)
-                setTotalPaidParticipants(data.totalParticipantsPaid)
                 setTotalRevenue(data.totalAmount)
-                setTotalPaymentsCount(data.transactionCount)
 
                 updateAdminCache('totalVerifiedPayments', data.totalPayments)
                 updateAdminCache('totalParticipantsPaid', data.totalParticipantsPaid)
                 updateAdminCache('totalRevenue', data.totalAmount)
-                updateAdminCache('totalPaymentsCount', data.transactionCount)
             }
         } catch (error) {
             console.error("Failed to fetch total amount:", error)
@@ -179,6 +313,9 @@ export default function PaymentsManagementPage() {
 
     const isFirstMountFilter = useRef(true)
     const isFirstMountSearch = useRef(true)
+    const isFirstFilterChange = useRef(true)
+    const activeFetchController = useRef<AbortController | null>(null)
+    const latestRequestIdRef = useRef(0)
 
     // Initial fetch only if no cache
     useEffect(() => {
@@ -190,9 +327,27 @@ export default function PaymentsManagementPage() {
             if (!adminCache.payments) {
                 fetchPayments(false)
             }
+
+            if (totalPaidPeople === null || totalRevenue === null) {
+                fetchTotalAmount()
+            }
         }
         // Deliberately no dependencies to prevent auto-fetch on filter change
     }, [])
+
+    useEffect(() => {
+        if (isFirstFilterChange.current) {
+            isFirstFilterChange.current = false;
+            return;
+        }
+
+        setLastId(null)
+        const timer = setTimeout(() => {
+            fetchPayments(false)
+        }, FILTER_DEBOUNCE_MS)
+
+        return () => clearTimeout(timer)
+    }, [selectedEventId, selectedStatus, selectedType, selectedDateFilter])
 
     // Fetch on search with debounce
     useEffect(() => {
@@ -201,10 +356,17 @@ export default function PaymentsManagementPage() {
             return;
         }
         const timer = setTimeout(() => {
+            setLastId(null)
             fetchPayments(false)
         }, 500)
         return () => clearTimeout(timer)
     }, [searchQuery])
+
+    useEffect(() => {
+        return () => {
+            activeFetchController.current?.abort()
+        }
+    }, [])
 
     const handleVerify = async (id: string, status: 'verified' | 'rejected') => {
         setUpdatingId(id)
@@ -298,17 +460,30 @@ export default function PaymentsManagementPage() {
         }
     }
 
-    const filteredPayments = payments.filter(p => {
-        const matchesSearch = p.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.userEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (p.notes?.upi_transaction_id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (p.payment_method_details?.upi_transaction_id || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const filteredPayments = payments
 
-        const matchesType = selectedType === 'all' || p.studentType === selectedType;
+    const dateFilterOptions: FilterOption[] = [
+        { value: 'all', label: 'All Dates' },
+        { value: 'new', label: 'From March 11 (New)' },
+    ]
 
-        return matchesSearch && matchesType;
-    })
+    const statusOptions: FilterOption[] = [
+        { value: 'all', label: `All Status (${filterCounts?.status?.all ?? totalPaymentsCount})` },
+        { value: 'captured', label: `Captured (${filterCounts?.status?.captured ?? 0})` },
+        { value: 'failed', label: `Failed (${filterCounts?.status?.failed ?? 0})` },
+        { value: 'authorized', label: `Authorized (${filterCounts?.status?.authorized ?? 0})` },
+    ]
+
+    const typeOptions: FilterOption[] = [
+        { value: 'all', label: `All Participants (${filterCounts?.type?.all ?? totalPaymentsCount})` },
+        { value: 'internal', label: `Internal (SMVITM) (${filterCounts?.type?.internal ?? 0})` },
+        { value: 'external', label: `External Students (${filterCounts?.type?.external ?? 0})` },
+    ]
+
+    const eventOptions: FilterOption[] = [
+        { value: 'all', label: 'All Events' },
+        ...events.map((event) => ({ value: event.id, label: event.title })),
+    ]
 
     const formatDate = (dateStr: string) => {
         try {
@@ -324,20 +499,6 @@ export default function PaymentsManagementPage() {
         }
     }
 
-    const validPayments = payments.filter(p => p.status === 'captured' || p.notes?.verification_status === 'verified')
-    const uniquePaidUsers = Array.from(new Set(validPayments.map(p => p.user_id)))
-
-    const stats = {
-        totalRevenue: validPayments.reduce((acc, p) => acc + (p.amount / 100), 0),
-
-        // Accurate counts based on unique Users, not Transactions
-        totalInternal: Array.from(new Set(validPayments.filter(p => p.studentType === 'internal').map(p => p.user_id))).length,
-        totalExternal: Array.from(new Set(validPayments.filter(p => p.studentType === 'external').map(p => p.user_id))).length,
-
-        internalRevenue: validPayments.filter(p => p.studentType === 'internal').reduce((acc, p) => acc + (p.amount / 100), 0),
-        externalRevenue: validPayments.filter(p => p.studentType === 'external').reduce((acc, p) => acc + (p.amount / 100), 0),
-    }
-
     return (
         <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'FINANCE', 'COORDINATOR']}>
             <div className="space-y-6">
@@ -346,7 +507,7 @@ export default function PaymentsManagementPage() {
                     <h1 className="text-xl md:text-2xl font-black text-white uppercase italic tracking-tighter">Payments Management</h1>
                     <p className="text-gray-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
                         <CreditCard size={14} className="text-blue-500/50" />
-                        {totalPaidPeople || 0} people paid · {totalPaymentsCount} payment logs
+                        {totalPaidPeople || 0} people paid overall · {totalPaymentsCount} logs in current view
                     </p>
                 </div>
 
@@ -430,41 +591,40 @@ export default function PaymentsManagementPage() {
                         />
                     </div>
                     <div className="flex items-center gap-2">
-                        <Clock size={16} className="text-gray-500 flex-shrink-0" />
-                        <select value={selectedDateFilter} onChange={(e) => setSelectedDateFilter(e.target.value as any)}
-                            className="w-full bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3 py-2 text-emerald-500 focus:outline-none focus:border-emerald-500/80 text-sm font-bold tracking-tight">
-                            <option value="all">All Dates</option>
-                            <option value="new">From March 11 (New)</option>
-                        </select>
+                        <Clock size={16} className="text-gray-500 shrink-0" />
+                        <DarkFilterSelect
+                            value={selectedDateFilter}
+                            options={dateFilterOptions}
+                            onChange={(next) => setSelectedDateFilter(next as 'all' | 'new')}
+                            className="bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold tracking-tight"
+                        />
                     </div>
                     <div className="flex items-center gap-2">
-                        <Zap size={16} className="text-gray-500 flex-shrink-0" />
-                        <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500/50 text-sm">
-                            <option value="all">All Status</option>
-                            <option value="captured">Captured</option>
-                            <option value="failed">Failed</option>
-                            <option value="authorized">Authorized</option>
-                        </select>
+                        <Zap size={16} className="text-gray-500 shrink-0" />
+                        <DarkFilterSelect
+                            value={selectedStatus}
+                            options={statusOptions}
+                            onChange={setSelectedStatus}
+                            className="bg-white/5"
+                        />
                     </div>
                     <div className="flex items-center gap-2">
-                        <School size={16} className="text-gray-500 flex-shrink-0" />
-                        <select value={selectedType} onChange={(e) => setSelectedType(e.target.value as any)}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500/50 text-sm font-semibold">
-                            <option value="all">All Participants</option>
-                            <option value="internal">Internal (SMVITM)</option>
-                            <option value="external">External Students</option>
-                        </select>
+                        <School size={16} className="text-gray-500 shrink-0" />
+                        <DarkFilterSelect
+                            value={selectedType}
+                            options={typeOptions}
+                            onChange={(next) => setSelectedType(next as 'all' | 'internal' | 'external')}
+                            className="bg-white/5 font-semibold"
+                        />
                     </div>
                     <div className="flex items-center gap-2">
-                        <Filter size={16} className="text-gray-500 flex-shrink-0" />
-                        <select value={selectedEventId} onChange={(e) => setSelectedEventId(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500/50 text-sm">
-                            <option value="all">All Events</option>
-                            {events.map(event => (
-                                <option key={event.id} value={event.id}>{event.title}</option>
-                            ))}
-                        </select>
+                        <Filter size={16} className="text-gray-500 shrink-0" />
+                        <DarkFilterSelect
+                            value={selectedEventId}
+                            options={eventOptions}
+                            onChange={setSelectedEventId}
+                            className="bg-white/5"
+                        />
                     </div>
                 </div>
 
@@ -486,7 +646,7 @@ export default function PaymentsManagementPage() {
                                     <p className="font-bold text-white">{payment.userName}</p>
                                     <p className="text-xs text-gray-500 truncate">{payment.userEmail}</p>
                                 </div>
-                                <div className="text-right flex-shrink-0">
+                                <div className="text-right shrink-0">
                                     <p className="text-lg font-black text-white">₹{(payment.amount / 100).toFixed(0)}</p>
                                     <div className={cn(
                                         "inline-flex items-center gap-1 font-black px-2 py-0.5 rounded-full text-[9px] uppercase tracking-tighter",
