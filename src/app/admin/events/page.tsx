@@ -518,24 +518,29 @@ export default function EventManagementPage() {
                                 </h3>
 
                                 <div className="space-y-3 overflow-y-auto max-h-40 no-scrollbar pr-2 custom-scrollbar">
-                                    {(stats.collegeDistribution || []).map((col: any, i: number) => (
-                                        <div key={i} className="space-y-1 group/item">
-                                            <div className="flex justify-between items-center text-[10px]">
-                                                <span className="font-bold text-white truncate max-w-[150px] group-hover/item:text-amber-400 transition-colors">{col.name}</span>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-black text-amber-500">{col.registrations} <span className="text-[8px] text-gray-600 font-bold uppercase">Squads</span></span>
-                                                    <span className="text-[8px] text-gray-500 font-bold">/ {col.participants} P</span>
+                                    {(stats.collegeDistribution || []).map((col: any, i: number) => {
+                                        const registrations = Number(col?.registrations ?? col?.count ?? 0)
+                                        const participants = Number(col?.participants ?? col?.count ?? 0)
+
+                                        return (
+                                            <div key={i} className="space-y-1 group/item">
+                                                <div className="flex justify-between items-center text-[10px]">
+                                                    <span className="font-bold text-white truncate max-w-[150px] group-hover/item:text-amber-400 transition-colors">{col.name}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-black text-amber-500">{registrations} <span className="text-[8px] text-gray-600 font-bold uppercase">Squads</span></span>
+                                                        <span className="text-[8px] text-gray-500 font-bold">/ {participants} P</span>
+                                                    </div>
+                                                </div>
+                                                <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                                                    <motion.div
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${(registrations / (stats.totalRegistrations || 1)) * 100}%` }}
+                                                        className="h-full bg-amber-500/50"
+                                                    />
                                                 </div>
                                             </div>
-                                            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                                                <motion.div
-                                                    initial={{ width: 0 }}
-                                                    animate={{ width: `${(col.registrations / (stats.totalRegistrations || 1)) * 100}%` }}
-                                                    className="h-full bg-amber-500/50"
-                                                />
-                                            </div>
-                                        </div>
-                                    ))}
+                                        )
+                                    })}
                                     {(!stats.collegeDistribution || stats.collegeDistribution.length === 0) && (
                                         <div className="text-center py-8 text-gray-600 italic text-[10px]">No geographic data synced</div>
                                     )}

@@ -109,7 +109,12 @@ interface AppContextType {
         };
         uniqueExternalParticipantsAcrossEvents?: number;
         categoryBreakdown?: Record<string, { totalTeams: number, internal: number, external: number, totalParticipants: number }>;
-        collegeDistribution?: { name: string, count: number }[];
+        collegeDistribution?: {
+            name: string;
+            count?: number;
+            registrations?: number;
+            participants?: number;
+        }[];
         attendance?: any[];
         eventAttendanceMap?: Record<string, any[]>;
         eventRegMap?: Record<string, any[]>;

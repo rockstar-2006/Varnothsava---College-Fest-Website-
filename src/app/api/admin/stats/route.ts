@@ -5,7 +5,7 @@ import { ADMIN_BLACKLIST, getAdminRole } from "@/lib/admin";
 
 export async function GET(request: NextRequest) {
     try {
-        const STATS_SCHEMA_VERSION = 2;
+        const STATS_SCHEMA_VERSION = 3;
         const authHeader = request.headers.get('Authorization') || '';
         if (!authHeader.startsWith('Bearer ')) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -373,6 +373,30 @@ export async function GET(request: NextRequest) {
             };
         });
 
+        const collegeKeys = Array.from(
+            new Set([
+                ...Object.keys(collegeParticipantMap),
+                ...Object.keys(collegeRegistrationMap)
+            ])
+        );
+
+        const collegeDistribution = collegeKeys
+            .map((name) => {
+                const participants = collegeParticipantMap[name]?.size || 0;
+                const registrations = collegeRegistrationMap[name] || 0;
+                return {
+                    name,
+                    registrations,
+                    participants,
+                    count: participants
+                };
+            })
+            .sort((a, b) => {
+                if (b.registrations !== a.registrations) return b.registrations - a.registrations;
+                return b.participants - a.participants;
+            })
+            .slice(0, 10);
+
         const liveStats = {
             totalUsers,
             internalUsers: internalUsersCount,
@@ -392,10 +416,7 @@ export async function GET(request: NextRequest) {
             eventMetricsCache: cleanEventMetrics, // Cached individual event stats for O(1) reads
             eventTitleMap,
             categoryBreakdown: categoryStats,
-            collegeDistribution: Object.entries(collegeParticipantMap)
-                .map(([name, set]) => ({ name, count: set.size }))
-                .sort((a, b) => b.count - a.count)
-                .slice(0, 10),
+            collegeDistribution,
             schemaVersion: STATS_SCHEMA_VERSION,
             updatedAt: new Date().toISOString()
         };
