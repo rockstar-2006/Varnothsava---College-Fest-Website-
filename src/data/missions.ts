@@ -30,6 +30,7 @@ export interface Event {
     themeIdeas?: string[]
     team: string
     whatsappLink?: string
+    registrationDeadline?: string
 }
 
 export const missions: Event[] = [
@@ -118,7 +119,8 @@ export const missions: Event[] = [
         tags: ['AI', 'Product', 'Prompt Engineering'],
         team: 'Group',
         whatsappLink: "https://chat.whatsapp.com/KkqtB4iUxlh20khnW9NM6o?mode=gi_t",
-        location: "CAED LAB"
+        location: "CAED LAB",
+        registrationDeadline: "2026-03-10T10:00:00+05:30"
     },
     {
         id: "TECH-003",
@@ -1160,3 +1162,9 @@ export const missions: Event[] = [
     }
 
 ]
+
+export const isRegClosed = (event: Event | null | undefined) => {
+    // Strictly restrict this logic only to the "Prompt To Product" event as requested
+    if (!event || event.id !== "TECH-002" || !event.registrationDeadline) return false;
+    return new Date() >= new Date(event.registrationDeadline);
+}
