@@ -29,6 +29,12 @@ export async function GET(request: NextRequest) {
         let data: any[] = [];
 
         if (type === 'users') {
+            const isExcludedFromTracking = (roleValue: unknown) => {
+                if (typeof roleValue !== 'string') return false;
+                const normalizedRole = roleValue.trim().toUpperCase();
+                return normalizedRole.length > 0 && normalizedRole !== 'USER';
+            };
+
             const legacyStatus = searchParams.get('status') || 'all'; // all, paid, unpaid, internal, external
             const paymentStatusParam = searchParams.get('paymentStatus') || '';
             const studentTypeParam = searchParams.get('studentType') || '';
@@ -69,6 +75,8 @@ export async function GET(request: NextRequest) {
                     role: u.role
                 };
             });
+
+            users = users.filter((u: any) => !isExcludedFromTracking(u.role));
 
             if (paymentStatus !== 'all') {
                 users = users.filter((u: any) => u.paymentStatus.toLowerCase() === paymentStatus);
