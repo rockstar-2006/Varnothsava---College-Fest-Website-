@@ -138,6 +138,7 @@ export async function GET(request: NextRequest) {
                     membersDetails.push({
                         name: leader.name || 'Unknown',
                         usn: leader.usn || 'N/A',
+                        email: leader.email || 'N/A',
                         phone: leader.phone || 'N/A',
                         college: leader.collegeName || leader.college || leader.institution || 'N/A'
                     });
@@ -150,6 +151,7 @@ export async function GET(request: NextRequest) {
                         membersDetails.push({
                             name: m.name || 'Unknown',
                             usn: m.usn || 'N/A',
+                            email: m.email || 'N/A',
                             phone: m.phone || 'N/A',
                             college: m.collegeName || m.college || m.institution || leader.collegeName || leader.college || 'N/A'
                         });
