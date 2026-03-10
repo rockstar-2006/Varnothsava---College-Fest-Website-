@@ -29,6 +29,9 @@ export async function GET(request: NextRequest) {
         let data: any[] = [];
 
         if (type === 'users') {
+            const isCoordinatorRole = (roleValue: unknown) =>
+                typeof roleValue === 'string' && roleValue.toUpperCase() === 'COORDINATOR';
+
             const legacyStatus = searchParams.get('status') || 'all'; // all, paid, unpaid, internal, external
             const paymentStatusParam = searchParams.get('paymentStatus') || '';
             const studentTypeParam = searchParams.get('studentType') || '';
@@ -69,6 +72,8 @@ export async function GET(request: NextRequest) {
                     role: u.role
                 };
             });
+
+            users = users.filter((u: any) => !isCoordinatorRole(u.role));
 
             if (paymentStatus !== 'all') {
                 users = users.filter((u: any) => u.paymentStatus.toLowerCase() === paymentStatus);

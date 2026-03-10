@@ -279,7 +279,10 @@ export default function UserManagementPage() {
         if (isFirstMountFilter.current) {
             isFirstMountFilter.current = false;
 
-            if (!adminCache.users || adminCache.users.length === 0) {
+            const cachedHasCoordinator = Array.isArray(adminCache.users)
+                && adminCache.users.some((u: any) => ((u?.role || '').toUpperCase() === 'COORDINATOR'))
+
+            if (!adminCache.users || adminCache.users.length === 0 || cachedHasCoordinator) {
                 fetchUsers(false)
             }
         }
@@ -418,8 +421,10 @@ export default function UserManagementPage() {
     }
 
     const filteredUsers = users.filter(u => {
-        if (u.role === 'SUPER_ADMIN') return false;
-        return true;
+        const normalizedRole = (u.role || '').toUpperCase()
+        if (normalizedRole === 'SUPER_ADMIN') return false
+        if (normalizedRole === 'COORDINATOR') return false
+        return true
     })
 
     const paymentOptions: FilterOption[] = [
