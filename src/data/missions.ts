@@ -31,6 +31,7 @@ export interface Event {
     team: string
     whatsappLink?: string
     registrationDeadline?: string
+    registrationStatus?: 'open' | 'closed' | 'full'
 }
 
 export const missions: Event[] = [
@@ -1164,18 +1165,27 @@ export const missions: Event[] = [
 ]
 
 export const isRegClosed = (event: Event | null | undefined) => {
-    // Strictly restrict this logic only to the "Prompt To Product" event as requested
-    if (!event || event.id !== "TECH-002") return false;
+    if (!event) return false;
     
-    // Time-based registration window: 7 PM - 8 PM today (IST)
-    const now = new Date();
-    const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-    const hours = istTime.getHours();
-    const minutes = istTime.getMinutes();
-    const currentTimeInMinutes = hours * 60 + minutes;
-    const openTime = 19 * 60; // 7 PM (1140 minutes)
-    const closeTime = 20 * 60; // 8 PM (1200 minutes)
+    // Check if admin has explicitly closed/filled the event registration
+    if (event.registrationStatus === 'closed' || event.registrationStatus === 'full') {
+        return true;
+    }
     
-    // Return true (closed) if outside the 7 PM - 8 PM window
-    return currentTimeInMinutes < openTime || currentTimeInMinutes >= closeTime;
+    // Time-based registration window for TECH-002 (Prompt to Product): 7 PM - 8 PM today (IST)
+    // This is an additional layer for TECH-002 only
+    if (event.id === "TECH-002" && event.registrationStatus !== 'open') {
+        const now = new Date();
+        const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+        const hours = istTime.getHours();
+        const minutes = istTime.getMinutes();
+        const currentTimeInMinutes = hours * 60 + minutes;
+        const openTime = 19 * 60; // 7 PM (1140 minutes)
+        const closeTime = 20 * 60; // 8 PM (1200 minutes)
+        
+        // Return true (closed) if outside the 7 PM - 8 PM window
+        return currentTimeInMinutes < openTime || currentTimeInMinutes >= closeTime;
+    }
+    
+    return false;
 }

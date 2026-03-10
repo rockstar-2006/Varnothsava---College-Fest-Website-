@@ -155,10 +155,33 @@ export default function EventDetailsPage() {
     const scrollBarWidth = useTransform(scrollYProgress, [0, 1], ['0%', '100%'])
 
     useEffect(() => {
-        const found = missions.find(m => m.id === id)
-        if (found) {
-            setMission(found)
+        const fetchEvent = async () => {
+            try {
+                const res = await fetch('/api/events')
+                if (res.ok) {
+                    const data = await res.json()
+                    const found = data.events?.find((m: any) => m.id === id)
+                    if (found) {
+                        setMission(found)
+                    } else {
+                        // Fallback to static missions if not found in API
+                        const fallback = missions.find(m => m.id === id)
+                        if (fallback) setMission(fallback)
+                    }
+                } else {
+                    // Fallback to static missions
+                    const found = missions.find(m => m.id === id)
+                    if (found) setMission(found)
+                }
+            } catch (error) {
+                console.error('Failed to fetch event:', error)
+                // Fallback to static missions
+                const found = missions.find(m => m.id === id)
+                if (found) setMission(found)
+            }
         }
+
+        fetchEvent()
     }, [id])
 
     const isAdded = userData?.registeredEvents?.some(re => re.eventId === mission?.id) || false
