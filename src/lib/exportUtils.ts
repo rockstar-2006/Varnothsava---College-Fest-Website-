@@ -11,13 +11,15 @@ export const downloadExcel = (data: any[], fileName: string) => {
         return;
     }
 
-    const flatData = data.flatMap((reg: any) => {
+    const flatData = data.flatMap((reg: any, teamIndex: number) => {
         const members = reg.membersDetails || [];
         return members.map((m: any) => ({
+            "TEAM NO.": teamIndex + 1,
             "TEAM": reg.teamName || "Solo",
             "NAME": m.name || "Unknown",
             "USN": m.usn || "N/A",
             "COLLEGE": m.college || reg.college || "N/A",
+            "EMAIL": m.email || reg.email || "N/A",
             "MOBILE NO.": m.phone || reg.phone || "N/A",
             "PAYMENT STATUS": reg.paymentStatus || "N/A",
             "EVENT": reg.event || "N/A",
@@ -31,12 +33,14 @@ export const downloadExcel = (data: any[], fileName: string) => {
 
     // Auto-size columns for professional look
     worksheet["!cols"] = [
+        { wch: 10 }, // TEAM NO.
         { wch: 20 }, // TEAM
         { wch: 25 }, // NAME
         { wch: 15 }, // USN
         { wch: 35 }, // COLLEGE
-        { wch: 20 }, // MOBILE NO
-        { wch: 15 }, // STATUS
+        { wch: 30 }, // EMAIL
+        { wch: 20 }, // MOBILE NO.
+        { wch: 15 }, // PAYMENT STATUS
         { wch: 20 }, // EVENT
         { wch: 25 }  // REGISTERED AT
     ];
@@ -55,8 +59,9 @@ export const downloadWord = async (data: any[], fileName: string, eventInfo?: { 
         return;
     }
 
-    // Strict absolute widths in DXA (1/1440 inch). Total ~9300
-    const COL_WIDTHS = [1200, 2400, 1400, 2000, 1500, 800];
+    // Strict absolute widths in DXA (1/1440 inch). Total = 9300
+    const COL_WIDTHS = [650, 1100, 1600, 1100, 1450, 1600, 1200, 600];
+    const TABLE_WIDTH = COL_WIDTHS.reduce((sum, width) => sum + width, 0);
 
     const tableHeader = (text: string, index: number) => new TableCell({
         children: [new Paragraph({
@@ -73,22 +78,37 @@ export const downloadWord = async (data: any[], fileName: string, eventInfo?: { 
     // Header Row
     tableRows.push(new TableRow({
         children: [
-            tableHeader("TEAM", 0),
-            tableHeader("NAME", 1),
-            tableHeader("USN", 2),
-            tableHeader("COLLEGE", 3),
-            tableHeader("MOBILE", 4),
-            tableHeader("SIGN", 5),
+            tableHeader("TEAM NO.", 0),
+            tableHeader("TEAM", 1),
+            tableHeader("NAME", 2),
+            tableHeader("USN", 3),
+            tableHeader("COLLEGE", 4),
+            tableHeader("EMAIL", 5),
+            tableHeader("MOBILE", 6),
+            tableHeader("SIGN", 7),
         ]
     }));
 
     // Data Rows
-    data.forEach((reg: any) => {
+    data.forEach((reg: any, teamIndex: number) => {
         const members = reg.membersDetails || [];
         const rowSpan = Math.max(1, members.length);
 
         members.forEach((member: any, index: number) => {
             const cells = [];
+
+            // Team serial number
+            if (index === 0) {
+                cells.push(new TableCell({
+                    children: [new Paragraph({
+                        children: [new TextRun({ text: String(teamIndex + 1), bold: true, size: 14 })],
+                        alignment: AlignmentType.CENTER
+                    })],
+                    rowSpan: rowSpan,
+                    verticalAlign: VerticalAlign.CENTER,
+                    width: { size: COL_WIDTHS[0], type: WidthType.DXA },
+                }));
+            }
 
             // Team Name
             if (index === 0) {
@@ -99,7 +119,7 @@ export const downloadWord = async (data: any[], fileName: string, eventInfo?: { 
                     })],
                     rowSpan: rowSpan,
                     verticalAlign: VerticalAlign.CENTER,
-                    width: { size: COL_WIDTHS[0], type: WidthType.DXA },
+                    width: { size: COL_WIDTHS[1], type: WidthType.DXA },
                 }));
             }
 
@@ -109,7 +129,7 @@ export const downloadWord = async (data: any[], fileName: string, eventInfo?: { 
                     children: [new TextRun({ text: member.name, size: 14 })]
                 })],
                 verticalAlign: VerticalAlign.CENTER,
-                width: { size: COL_WIDTHS[1], type: WidthType.DXA },
+                width: { size: COL_WIDTHS[2], type: WidthType.DXA },
                 margins: { left: 50, right: 50 }
             }));
 
@@ -120,7 +140,7 @@ export const downloadWord = async (data: any[], fileName: string, eventInfo?: { 
                     alignment: AlignmentType.CENTER
                 })],
                 verticalAlign: VerticalAlign.CENTER,
-                width: { size: COL_WIDTHS[2], type: WidthType.DXA },
+                width: { size: COL_WIDTHS[3], type: WidthType.DXA },
             }));
 
             // College
@@ -132,7 +152,20 @@ export const downloadWord = async (data: any[], fileName: string, eventInfo?: { 
                     })],
                     rowSpan: rowSpan,
                     verticalAlign: VerticalAlign.CENTER,
-                    width: { size: COL_WIDTHS[3], type: WidthType.DXA },
+                    width: { size: COL_WIDTHS[4], type: WidthType.DXA },
+                }));
+            }
+
+            // Email (Member email)
+            if (index === 0) {
+                cells.push(new TableCell({
+                    children: [new Paragraph({
+                        children: [new TextRun({ text: member.email || reg.email || "N/A", size: 12 })],
+                        alignment: AlignmentType.CENTER
+                    })],
+                    rowSpan: rowSpan,
+                    verticalAlign: VerticalAlign.CENTER,
+                    width: { size: COL_WIDTHS[5], type: WidthType.DXA },
                 }));
             }
 
@@ -143,14 +176,14 @@ export const downloadWord = async (data: any[], fileName: string, eventInfo?: { 
                     alignment: AlignmentType.CENTER
                 })],
                 verticalAlign: VerticalAlign.CENTER,
-                width: { size: COL_WIDTHS[4], type: WidthType.DXA },
+                width: { size: COL_WIDTHS[6], type: WidthType.DXA },
             }));
 
             // Signature
             cells.push(new TableCell({
                 children: [new Paragraph({ children: [new TextRun({ text: "___", size: 8 })], alignment: AlignmentType.CENTER })],
                 verticalAlign: VerticalAlign.BOTTOM,
-                width: { size: COL_WIDTHS[5], type: WidthType.DXA },
+                width: { size: COL_WIDTHS[7], type: WidthType.DXA },
             }));
 
             tableRows.push(new TableRow({ children: cells }));
@@ -185,7 +218,7 @@ export const downloadWord = async (data: any[], fileName: string, eventInfo?: { 
                     ],
                 }),
                 new Table({
-                    width: { size: 9300, type: WidthType.DXA },
+                    width: { size: TABLE_WIDTH, type: WidthType.DXA },
                     layout: TableLayoutType.FIXED,
                     alignment: AlignmentType.CENTER,
                     columnWidths: COL_WIDTHS,
