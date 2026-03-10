@@ -156,7 +156,7 @@ export const downloadWord = async (data: any[], fileName: string, eventInfo?: { 
                 }));
             }
 
-            // Email (team leader email)
+            // Email (Member email)
             if (index === 0) {
                 cells.push(new TableCell({
                     children: [new Paragraph({
