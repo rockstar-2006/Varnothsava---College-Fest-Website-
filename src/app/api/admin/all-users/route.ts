@@ -49,8 +49,11 @@ export async function GET(request: NextRequest) {
         const search = (request.nextUrl.searchParams.get('search') || '').trim();
         const skipCounts = request.nextUrl.searchParams.get('skipCounts') === '1';
 
-        const isCoordinatorRole = (roleValue: unknown) =>
-            typeof roleValue === 'string' && roleValue.toUpperCase() === 'COORDINATOR';
+        const isExcludedFromTracking = (roleValue: unknown) => {
+            if (typeof roleValue !== 'string') return false;
+            const normalizedRole = roleValue.trim().toUpperCase();
+            return normalizedRole.length > 0 && normalizedRole !== 'USER';
+        };
 
         const matchesFilters = (
             paymentFilter: string,
@@ -146,7 +149,7 @@ export async function GET(request: NextRequest) {
             });
 
             const scopedUsers = sortedUsers.filter((u: any) => {
-                if (isCoordinatorRole(u.role)) {
+                if (isExcludedFromTracking(u.role)) {
                     return false;
                 }
 
@@ -214,7 +217,7 @@ export async function GET(request: NextRequest) {
                         ...doc.data(),
                     };
 
-                    if (!isCoordinatorRole(candidate.role)) {
+                    if (!isExcludedFromTracking(candidate.role)) {
                         collectedUsers.push(candidate);
                     }
                 });
@@ -273,24 +276,30 @@ export async function GET(request: NextRequest) {
             const statsDoc = await adminDb.collection('system').doc('stats').get();
             const statsData = statsDoc.data() || {};
 
-            const coordinatorSnap = await usersCollection
-                .where('role', '==', 'COORDINATOR')
-                .select('hasPaid', 'studentType', 'college', 'institution', 'collegeName', 'email')
+            const excludedRoleSnap = await usersCollection
+                .where('role', '!=', 'USER')
+                .select('role', 'hasPaid', 'studentType', 'college', 'institution', 'collegeName', 'email')
                 .get();
 
-            const coordinatorCount = coordinatorSnap.size;
-            let coordinatorPaidCount = 0;
-            let coordinatorInternalCount = 0;
+            let excludedCount = 0;
+            let excludedPaidCount = 0;
+            let excludedInternalCount = 0;
 
-            coordinatorSnap.docs.forEach((doc: any) => {
-                const coordinatorData = doc.data();
-                if (coordinatorData?.hasPaid === true) {
-                    coordinatorPaidCount += 1;
+            excludedRoleSnap.docs.forEach((doc: any) => {
+                const excludedUserData = doc.data();
+                if (!isExcludedFromTracking(excludedUserData?.role)) {
+                    return;
                 }
 
-                const { correctStudentType } = deriveUserProfile(coordinatorData || {});
+                excludedCount += 1;
+
+                if (excludedUserData?.hasPaid === true) {
+                    excludedPaidCount += 1;
+                }
+
+                const { correctStudentType } = deriveUserProfile(excludedUserData || {});
                 if (correctStudentType === 'internal') {
-                    coordinatorInternalCount += 1;
+                    excludedInternalCount += 1;
                 }
             });
 
@@ -303,10 +312,10 @@ export async function GET(request: NextRequest) {
                 const cachedPaid = statsData.paidUsers as number;
                 const cachedInternal = statsData.internalUsers as number;
 
-                totalCount = Math.max(0, cachedTotal - coordinatorCount);
-                paidCount = Math.max(0, cachedPaid - coordinatorPaidCount);
+                totalCount = Math.max(0, cachedTotal - excludedCount);
+                paidCount = Math.max(0, cachedPaid - excludedPaidCount);
                 unpaidCount = Math.max(0, totalCount - paidCount);
-                internalCount = Math.max(0, Math.min(totalCount, cachedInternal - coordinatorInternalCount));
+                internalCount = Math.max(0, Math.min(totalCount, cachedInternal - excludedInternalCount));
                 externalCount = Math.max(0, totalCount - internalCount);
             } else {
                 const [usersSnap, internalSnap, paidSnap] = await Promise.all([
@@ -315,8 +324,8 @@ export async function GET(request: NextRequest) {
                     usersCollection.where('hasPaid', '==', true).count().get()
                 ]);
 
-                totalCount = Math.max(0, usersSnap.data().count - coordinatorCount);
-                paidCount = Math.max(0, paidSnap.data().count - coordinatorPaidCount);
+                totalCount = Math.max(0, usersSnap.data().count - excludedCount);
+                paidCount = Math.max(0, paidSnap.data().count - excludedPaidCount);
                 unpaidCount = Math.max(0, totalCount - paidCount);
 
                 // Use DB counts, adjusted by corrections discovered in this payload.
@@ -324,7 +333,7 @@ export async function GET(request: NextRequest) {
                 const correctedOnPage = filteredUsers.filter((u: any) => u.studentType === 'internal').length;
                 const uncorrectedOnPage = users.filter((u: any) => u.studentType === 'internal').length;
                 const correctedInternal = dbInternalCount + (correctedOnPage - uncorrectedOnPage);
-                internalCount = Math.max(0, Math.min(totalCount, correctedInternal - coordinatorInternalCount));
+                internalCount = Math.max(0, Math.min(totalCount, correctedInternal - excludedInternalCount));
                 externalCount = Math.max(0, totalCount - internalCount);
             }
         }
@@ -349,7 +358,7 @@ export async function GET(request: NextRequest) {
 
                 currentCount = scopedSnap.docs.reduce((count, doc) => {
                     const scopedUser = doc.data();
-                    if (isCoordinatorRole(scopedUser?.role)) {
+                    if (isExcludedFromTracking(scopedUser?.role)) {
                         return count;
                     }
 

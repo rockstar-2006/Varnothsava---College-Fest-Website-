@@ -279,10 +279,13 @@ export default function UserManagementPage() {
         if (isFirstMountFilter.current) {
             isFirstMountFilter.current = false;
 
-            const cachedHasCoordinator = Array.isArray(adminCache.users)
-                && adminCache.users.some((u: any) => ((u?.role || '').toUpperCase() === 'COORDINATOR'))
+            const cachedHasTrackedRole = Array.isArray(adminCache.users)
+                && adminCache.users.some((u: any) => {
+                    const normalizedRole = (u?.role || '').toUpperCase()
+                    return normalizedRole.length > 0 && normalizedRole !== 'USER'
+                })
 
-            if (!adminCache.users || adminCache.users.length === 0 || cachedHasCoordinator) {
+            if (!adminCache.users || adminCache.users.length === 0 || cachedHasTrackedRole) {
                 fetchUsers(false)
             }
         }
@@ -422,8 +425,7 @@ export default function UserManagementPage() {
 
     const filteredUsers = users.filter(u => {
         const normalizedRole = (u.role || '').toUpperCase()
-        if (normalizedRole === 'SUPER_ADMIN') return false
-        if (normalizedRole === 'COORDINATOR') return false
+        if (normalizedRole.length > 0 && normalizedRole !== 'USER') return false
         return true
     })
 
