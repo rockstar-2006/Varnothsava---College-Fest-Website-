@@ -41,18 +41,20 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ message: "Invalid mission ID." }, { status: 400 });
         }
 
-        // Time-based registration window for TECH-002 (Prompt to Product): 7 PM - 8 PM today
+        // Time-based registration window for TECH-002 (Prompt to Product): 7 PM - 8 PM today (IST)
         if (eventId === "TECH-002") {
+            // Get current time in IST (UTC+5:30)
             const now = new Date();
-            const hours = now.getHours();
-            const minutes = now.getMinutes();
+            const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+            const hours = istTime.getHours();
+            const minutes = istTime.getMinutes();
             const currentTimeInMinutes = hours * 60 + minutes;
-            const openTime = 19 * 60; // 7 PM
-            const closeTime = 20 * 60; // 8 PM
+            const openTime = 19 * 60; // 7 PM (1140 minutes)
+            const closeTime = 20 * 60; // 8 PM (1200 minutes)
 
             // Check if current time is within 7 PM - 8 PM
             if (currentTimeInMinutes < openTime || currentTimeInMinutes >= closeTime) {
-                return NextResponse.json({ message: "Registration for this event has closed. Registration opens at 7:00 PM." }, { status: 400 });
+                return NextResponse.json({ message: "Registration for this event has closed. Registration opens at 7:00 PM IST." }, { status: 400 });
             }
 
             // Email domain filtering: Only allow external users (non-sode-edu.in)

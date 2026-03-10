@@ -1,0 +1,6 @@
+tree ea23130d72c434d64ee047e885ed46a10dbcd7ee
+parent 3686c991f66cf1728cbde901df2aa324ed35f5b4
+author tejasnayak25 <arpithanayak900@gmail.com> 1770058901 +0530
+committer tejasnayak25 <arpithanayak900@gmail.com> 1770058901 +0530
+
+fix: adjust padding and margin in ProfilePage layout

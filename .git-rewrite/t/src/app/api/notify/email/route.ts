@@ -1,0 +1,24 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { fieldValue, adminDb } from '@/lib/firebaseAdmin';
+
+export async function POST(req: NextRequest) {
+    try {
+        const { email } = await req.json();
+
+        if (!email) {
+            return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
+        }
+
+        const notifRef = adminDb.collection('varnothsava-2026').doc("notifications");
+        await notifRef.set({
+            emails: fieldValue.arrayUnion(email)
+        }, { merge: true });
+
+        return NextResponse.json({
+            message: 'Notification email added successfully',
+        }, { status: 200 });
+    } catch (error: unknown) {
+        console.log('Error:', error);
+        return NextResponse.json({ message: 'Internal server error', error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
+    }
+}

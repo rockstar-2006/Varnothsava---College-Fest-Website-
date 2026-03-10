@@ -1,0 +1,256 @@
+/* Gaming Card Styles - Cyberpunk Character Theme */
+
+.gaming-card-container {
+    --rarity-primary: 45 100% 50%;
+    /* Default Legendary Gold */
+    --rarity-glow: 45 100% 40%;
+    width: min(100%, 340px);
+    height: auto;
+    perspective: 1000px;
+}
+
+.gaming-card {
+    position: relative;
+    background: #0a0a0c;
+    border: 1px solid hsl(var(--rarity-primary) / 0.3);
+    padding: clamp(1rem, 4vw, 1.5rem);
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    transform-style: preserve-3d;
+    will-change: transform;
+    overflow: hidden;
+}
+
+.gaming-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg,
+            hsl(var(--rarity-primary) / 0.1) 0%,
+            transparent 50%,
+            hsl(var(--rarity-primary) / 0.05) 100%);
+    pointer-events: none;
+}
+
+.gaming-card-hover {
+    transform: translateY(-10px) rotateX(5deg);
+    border-color: hsl(var(--rarity-primary) / 0.8);
+    box-shadow: 0 20px 40px -10px hsl(var(--rarity-primary) / 0.2);
+}
+
+/* Corner Accents */
+.corner-accent {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 2px solid hsl(var(--rarity-primary));
+    opacity: 0.5;
+}
+
+.corner-tl {
+    top: 0;
+    left: 0;
+    border-right: none;
+    border-bottom: none;
+}
+
+.corner-tr {
+    top: 0;
+    right: 0;
+    border-left: none;
+    border-bottom: none;
+}
+
+.corner-bl {
+    bottom: 0;
+    left: 0;
+    border-right: none;
+    border-top: none;
+}
+
+.corner-br {
+    bottom: 0;
+    right: 0;
+    border-left: none;
+    border-top: none;
+}
+
+.gaming-card-hover .corner-accent {
+    opacity: 1;
+    width: 30px;
+    height: 30px;
+}
+
+/* Rarity Badge */
+.rarity-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: hsl(var(--rarity-primary));
+    color: black;
+    padding: 2px 10px;
+    z-index: 20;
+    clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+}
+
+/* Hex Image Container */
+.hex-image-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hex-frame {
+    position: relative;
+    width: 80%;
+    height: 80%;
+    background: hsl(var(--rarity-primary) / 0.2);
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    padding: 3px;
+    animation: hex-float 6s ease-in-out infinite;
+}
+
+@keyframes hex-float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.hex-inner {
+    width: 100%;
+    height: 100%;
+    background: #000;
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    overflow: hidden;
+}
+
+.character-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(0.5);
+    transition: all 0.5s ease;
+}
+
+.gaming-card-hover .character-image {
+    filter: grayscale(0) scale(1.1);
+}
+
+/* Stats */
+.stats-container {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.stat-bar-bg {
+    flex: 1;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.stat-bar {
+    height: 100%;
+    background: currentColor;
+    transition: width 1s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.stat-bar-power {
+    color: #ff4444;
+}
+
+.stat-bar-defense {
+    color: #4444ff;
+}
+
+.stat-bar-speed {
+    color: #ffff44;
+}
+
+.stat-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    width: 24px;
+    text-align: right;
+    color: white;
+}
+
+/* Play Button */
+.play-button {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid hsl(var(--rarity-primary));
+    color: hsl(var(--rarity-primary));
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    letter-spacing: 4px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.play-button:hover {
+    background: hsl(var(--rarity-primary));
+    color: black;
+}
+
+.play-button-shine {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: shine 3s infinite;
+}
+
+@keyframes shine {
+    0% {
+        left: -100%;
+    }
+
+    20% {
+        left: 150%;
+    }
+
+    100% {
+        left: 150%;
+    }
+}
+
+.animated-border {
+    position: absolute;
+    inset: 0;
+    border: 2px solid transparent;
+    background: linear-gradient(90deg, hsl(var(--rarity-primary)), transparent, hsl(var(--rarity-primary))) border-box;
+    mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: destination-out;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.gaming-card-hover .animated-border {
+    opacity: 0.4;
+}

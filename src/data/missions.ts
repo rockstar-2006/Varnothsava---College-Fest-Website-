@@ -1167,10 +1167,11 @@ export const isRegClosed = (event: Event | null | undefined) => {
     // Strictly restrict this logic only to the "Prompt To Product" event as requested
     if (!event || event.id !== "TECH-002") return false;
     
-    // Time-based registration window: 7 PM - 8 PM today
+    // Time-based registration window: 7 PM - 8 PM today (IST)
     const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
+    const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    const hours = istTime.getHours();
+    const minutes = istTime.getMinutes();
     const currentTimeInMinutes = hours * 60 + minutes;
     const openTime = 19 * 60; // 7 PM (1140 minutes)
     const closeTime = 20 * 60; // 8 PM (1200 minutes)
