@@ -644,12 +644,29 @@ export default function EventManagementPage() {
 
                                     <div className="grid grid-cols-1 gap-3">
                                         <div className="bg-white/2 p-2 rounded-xl border border-white/5">
-                                            <p className="text-[7px] text-gray-500 font-bold uppercase tracking-widest mb-1">Schedule</p>
-                                            <div className="flex items-center gap-1.5 text-[9px] text-gray-300 font-medium">
-                                                <Calendar size={10} className="text-emerald-500/50" />
-                                                {event.date || 'TBA'}
+                                            <p className="text-[7px] text-gray-500 font-bold uppercase tracking-widest mb-2">Schedule</p>
+                                            <div className="space-y-1.5">
+                                                <div className="flex items-center gap-1.5 text-[9px] text-gray-300 font-medium">
+                                                    <Calendar size={10} className="text-emerald-500/50" />
+                                                    {event.date || 'TBA'}
+                                                </div>
+                                                {event.time && (
+                                                    <div className="flex items-center gap-1.5 text-[9px] text-gray-300 font-medium">
+                                                        <span className="text-emerald-500/50">⏰</span>
+                                                        {event.time}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
+                                        {event.location && (
+                                            <div className="bg-white/2 p-2 rounded-xl border border-white/5">
+                                                <p className="text-[7px] text-gray-500 font-bold uppercase tracking-widest mb-1">Venue</p>
+                                                <div className="flex items-start gap-1.5 text-[9px] text-gray-300 font-medium">
+                                                    <span className="text-emerald-500/50 mt-0.5">📍</span>
+                                                    <span className="line-clamp-2">{event.location}</span>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
@@ -780,6 +797,26 @@ export default function EventManagementPage() {
                                                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                                                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-emerald-500/50"
                                                 placeholder="11-MARCH"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-gray-400">Time</label>
+                                            <input
+                                                type="text"
+                                                value={formData.time}
+                                                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-emerald-500/50"
+                                                placeholder="10:30 AM"
+                                            />
+                                        </div>
+                                        <div className="space-y-2 md:col-span-2">
+                                            <label className="text-sm font-medium text-gray-400">Location/Venue</label>
+                                            <input
+                                                type="text"
+                                                value={formData.location}
+                                                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-emerald-500/50"
+                                                placeholder="e.g., A206 Room or Open Air Auditorium"
                                             />
                                         </div>
                                         <div className="space-y-2">
