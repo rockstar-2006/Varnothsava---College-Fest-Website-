@@ -49,6 +49,14 @@ firebase-adminsdk*.json
 firebase-config.json
 firebaseConfig.json
 
+# Test files with credentials
+test-*.js
+**/test-*.js
+
+# Error logs
+error.html
+error2.html
+
 # Any JSON files in lib folder (safety net)
 src/lib/*.json
 !src/lib/package.json
