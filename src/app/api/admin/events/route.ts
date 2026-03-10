@@ -1,6 +1,7 @@
 import { adminDb, usersCollection, verifyAuthToken } from "@/lib/firebaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminRole } from "@/lib/admin";
+import { missions } from "@/data/missions";
 
 export async function GET(request: NextRequest) {
     try {
@@ -141,7 +142,22 @@ export async function GET(request: NextRequest) {
             }, { merge: true });
         }
 
-        return NextResponse.json({ events: eventsWithMetrics });
+        // Merge static mission data (date, time, location) with Firestore event data
+        const eventsMerged = eventsWithMetrics.map(fsEvent => {
+            const missionData = missions.find(m => m.id === fsEvent.id);
+            if (missionData) {
+                return {
+                    ...missionData,
+                    ...fsEvent,
+                    metrics: fsEvent.metrics,
+                    // Keep Firestore registration status if it exists, otherwise use 'open'
+                    registrationStatus: fsEvent.registrationStatus || 'open'
+                };
+            }
+            return fsEvent;
+        });
+
+        return NextResponse.json({ events: eventsMerged });
     } catch (error: any) {
         console.error("Admin Events GET Error:", error);
         return NextResponse.json({ message: error.message }, { status: 500 });

@@ -204,7 +204,7 @@ export const downloadWord = async (data: any[], fileName: string, eventInfo?: { 
                 new Paragraph({
                     alignment: AlignmentType.CENTER,
                     children: [
-                        new TextRun({ text: `${eventInfo?.date || '11-MARCH-2026'}${eventInfo?.time ? ', ' + eventInfo.time : ', 9:00 AM TO 3:00 PM'}`, bold: true, size: 20 }),
+                        new TextRun({ text: `${eventInfo?.date}${eventInfo?.time ? ', ' + eventInfo.time : ''}`, bold: true, size: 20 }),
                     ],
                 }),
                 ...(eventInfo?.location ? [new Paragraph({
