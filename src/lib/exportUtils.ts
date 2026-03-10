@@ -19,7 +19,7 @@ export const downloadExcel = (data: any[], fileName: string) => {
             "NAME": m.name || "Unknown",
             "USN": m.usn || "N/A",
             "COLLEGE": m.college || reg.college || "N/A",
-            "EMAIL": m.email || reg.email || "N/A",
+            "EMAIL": m.email || "N/A",
             "MOBILE NO.": m.phone || reg.phone || "N/A",
             "PAYMENT STATUS": reg.paymentStatus || "N/A",
             "EVENT": reg.event || "N/A",
@@ -156,18 +156,15 @@ export const downloadWord = async (data: any[], fileName: string, eventInfo?: { 
                 }));
             }
 
-            // Email (Member email)
-            if (index === 0) {
-                cells.push(new TableCell({
-                    children: [new Paragraph({
-                        children: [new TextRun({ text: member.email || reg.email || "N/A", size: 12 })],
-                        alignment: AlignmentType.CENTER
-                    })],
-                    rowSpan: rowSpan,
-                    verticalAlign: VerticalAlign.CENTER,
-                    width: { size: COL_WIDTHS[5], type: WidthType.DXA },
-                }));
-            }
+            // Email (per member)
+            cells.push(new TableCell({
+                children: [new Paragraph({
+                    children: [new TextRun({ text: member.email || "N/A", size: 12 })],
+                    alignment: AlignmentType.CENTER
+                })],
+                verticalAlign: VerticalAlign.CENTER,
+                width: { size: COL_WIDTHS[5], type: WidthType.DXA },
+            }));
 
             // Phone
             cells.push(new TableCell({
