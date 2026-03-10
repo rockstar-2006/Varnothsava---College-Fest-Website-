@@ -204,18 +204,24 @@ export const downloadWord = async (data: any[], fileName: string, eventInfo?: { 
                 new Paragraph({
                     alignment: AlignmentType.CENTER,
                     children: [
-                        new TextRun({ text: `${eventInfo?.date}${eventInfo?.time ? ', ' + eventInfo.time : ''}`, bold: true, size: 20 }),
+                        new TextRun({ text: eventInfo?.date || "DATE_NOT_SET", bold: true, size: 22 }),
                     ],
                 }),
-                ...(eventInfo?.location ? [new Paragraph({
-                    alignment: AlignmentType.CENTER,
-                    children: [
-                        new TextRun({ text: `Venue: ${eventInfo.location}`, bold: true, size: 18, italics: true }),
-                    ],
-                })] : []),
                 new Paragraph({
                     alignment: AlignmentType.CENTER,
-                    spacing: { before: 100, after: 300 },
+                    children: [
+                        new TextRun({ text: eventInfo?.time || "TIME_NOT_SET", bold: true, size: 20 }),
+                    ],
+                }),
+                new Paragraph({
+                    alignment: AlignmentType.CENTER,
+                    children: [
+                        new TextRun({ text: eventInfo?.location || "VENUE_NOT_SET", bold: true, size: 20, italics: true }),
+                    ],
+                }),
+                new Paragraph({
+                    alignment: AlignmentType.CENTER,
+                    spacing: { before: 200, after: 300 },
                     children: [
                         new TextRun({ text: (eventInfo?.title || "EVENT ROSTER").toUpperCase(), bold: true, size: 24, underline: {} }),
                     ],
