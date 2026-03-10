@@ -18,8 +18,8 @@ export async function GET(request: NextRequest) {
         const userData = userDoc.data();
         const role = userData?.role;
 
-        if (role !== 'SUPER_ADMIN') {
-            return NextResponse.json({ message: "Forbidden: Super Admin access required for exports" }, { status: 403 });
+        if (role !== 'SUPER_ADMIN' && role !== 'COORDINATOR') {
+            return NextResponse.json({ message: "Forbidden: Admin access required for exports" }, { status: 403 });
         }
 
         const { searchParams } = new URL(request.url);

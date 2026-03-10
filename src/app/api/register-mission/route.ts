@@ -41,11 +41,24 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ message: "Invalid mission ID." }, { status: 400 });
         }
 
-        // Deadline Check
+        // Time-based registration window for TECH-002 (Prompt to Product): 7 PM - 8 PM today
         if (eventId === "TECH-002") {
-            const deadline = new Date("2026-03-10T10:00:00+05:30");
-            if (new Date() >= deadline) {
-                return NextResponse.json({ message: "Registration for this event has closed." }, { status: 400 });
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const currentTimeInMinutes = hours * 60 + minutes;
+            const openTime = 19 * 60; // 7 PM
+            const closeTime = 20 * 60; // 8 PM
+
+            // Check if current time is within 7 PM - 8 PM
+            if (currentTimeInMinutes < openTime || currentTimeInMinutes >= closeTime) {
+                return NextResponse.json({ message: "Registration for this event has closed. Registration opens at 7:00 PM." }, { status: 400 });
+            }
+
+            // Email domain filtering: Only allow external users (non-sode-edu.in)
+            const userEmail = (verified.email || '').toLowerCase();
+            if (userEmail.endsWith('@sode-edu.in')) {
+                return NextResponse.json({ message: "Only external participants (non-SODE) can register for this event." }, { status: 400 });
             }
         }
 
@@ -67,6 +80,15 @@ export async function POST(request: NextRequest) {
             if (memberData.hasPaid !== true) {
                 return NextResponse.json({ message: `Member with profile code ${memberCode} has not completed payment.` }, { status: 400 });
             }
+            
+            // Email domain filtering for TECH-002: Only external users
+            if (eventId === "TECH-002") {
+                const memberEmail = (memberData?.email || '').toLowerCase();
+                if (memberEmail.endsWith('@sode-edu.in')) {
+                    return NextResponse.json({ message: `Member with profile code ${memberCode} has an internal email. Only external participants can register for this event.` }, { status: 400 });
+                }
+            }
+            
             if (memberData.id === verified.uid) {
                 if (eventId === "TECH-008" && memberData.hasRoboSoccer !== true) {
                     return NextResponse.json({ message: `Team leader with profile code ${memberCode} has not paid for Robo Soccer registration.` }, { status: 400 });

@@ -42,13 +42,34 @@ export async function GET(request: NextRequest) {
         const userRef = usersCollection.doc(verified.uid);
         const userDoc = await userRef.get();
 
-        if (!userDoc.exists) {
-            return NextResponse.json({ message: "User not found." }, { status: 404 });
-        }
+        let userData = userDoc.exists ? userDoc.data() : null;
 
-        let userData = userDoc.data();
+        const { role, eventId } = getAdminRole(verified.email || '');
+
         if (!userData) {
-            return NextResponse.json({ message: "User profile incomplete." }, { status: 404 });
+            if (role) {
+                // Auto-create profile for Coordinators/Admins
+                userData = {
+                    id: verified.uid,
+                    name: verified.name || 'Staff Member',
+                    email: verified.email,
+                    usn: 'ADMIN',
+                    collegeName: 'Staff',
+                    phone: '',
+                    profileCode: 'ADMIN-' + verified.uid.substring(0, 4).toUpperCase(),
+                    hasPaid: true,
+                    studentType: 'internal',
+                    registeredEvents: [],
+                    avatar: '/avatars/solo_male.png'
+                };
+                await userRef.set({
+                    ...userData,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                });
+            } else {
+                return NextResponse.json({ message: "User not found." }, { status: 404 });
+            }
         }
 
         // --- PAYMENT STATUS SYNC ---
@@ -56,7 +77,6 @@ export async function GET(request: NextRequest) {
         const paymentStatus = await checkUserPaymentStatus(verified.uid);
 
         // --- ADMIN ROLE HELPERS ---
-        const { role, eventId } = getAdminRole(userData?.email);
         if (role) {
             userData.role = role;
             userData.eventId = eventId;
