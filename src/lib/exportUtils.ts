@@ -53,7 +53,7 @@ export const downloadExcel = (data: any[], fileName: string) => {
 /**
  * Word Export with Rigid DXA Layout for Mobile Compatibility
  */
-export const downloadWord = async (data: any[], fileName: string, eventInfo?: { title: string, date: string, time?: string }) => {
+export const downloadWord = async (data: any[], fileName: string, eventInfo?: { title: string, date: string, time?: string, location?: string }) => {
     if (!data || data.length === 0) {
         alert("No data available to download");
         return;
@@ -207,6 +207,12 @@ export const downloadWord = async (data: any[], fileName: string, eventInfo?: { 
                         new TextRun({ text: `${eventInfo?.date || '11-MARCH-2026'}${eventInfo?.time ? ', ' + eventInfo.time : ', 9:00 AM TO 3:00 PM'}`, bold: true, size: 20 }),
                     ],
                 }),
+                ...(eventInfo?.location ? [new Paragraph({
+                    alignment: AlignmentType.CENTER,
+                    children: [
+                        new TextRun({ text: `Venue: ${eventInfo.location}`, bold: true, size: 18, italics: true }),
+                    ],
+                })] : []),
                 new Paragraph({
                     alignment: AlignmentType.CENTER,
                     spacing: { before: 100, after: 300 },
@@ -249,7 +255,7 @@ export const fetchAndDownload = async (
     getAuthToken: () => Promise<string | null>,
     params: Record<string, string | undefined> = {},
     format: 'excel' | 'word' = 'excel',
-    eventInfo?: { title: string, date: string, time?: string }
+    eventInfo?: { title: string, date: string, time?: string, location?: string }
 ) => {
     try {
         const token = await getAuthToken();

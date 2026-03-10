@@ -51,6 +51,9 @@ interface Event {
     id: string;
     title: string;
     type: string;
+    date?: string;
+    time?: string;
+    location?: string;
 }
 
 interface FilterOption {
@@ -441,7 +444,7 @@ export default function ParticipantsManagementPage() {
                                                 getAuthToken,
                                                 { eventId: selectedEventId },
                                                 'word',
-                                                eventObj ? { title: eventObj.title, date: eventObj.date, time: eventObj.time } : undefined
+                                                eventObj ? { title: eventObj.title, date: eventObj.date, time: eventObj.time, location: eventObj.location } : undefined
                                             );
                                         }}
                                         className="bg-blue-500/10 border border-blue-500/20 hover:border-blue-500/50 text-blue-500 px-3 md:px-5 py-2 rounded-xl transition-all group flex items-center gap-2 shadow-xl"

@@ -38,6 +38,7 @@ interface AdminEvent {
     category?: string;
     date: string;
     time?: string;
+    location?: string;
     coordinators?: string[]; // IDs
     registrationStatus?: 'open' | 'closed' | 'full';
     fee?: number;
@@ -886,7 +887,7 @@ export default function EventManagementPage() {
                                                         getAuthToken,
                                                         { eventId: selectedEventForReg.id },
                                                         'word',
-                                                        { title: selectedEventForReg.title, date: selectedEventForReg.date, time: selectedEventForReg.time }
+                                                        { title: selectedEventForReg.title, date: selectedEventForReg.date, time: selectedEventForReg.time, location: selectedEventForReg.location }
                                                     )}
                                                     className="p-2 md:px-4 md:py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 rounded-xl transition-all flex items-center gap-2 group"
                                                     title="Download Roster (Word)"
