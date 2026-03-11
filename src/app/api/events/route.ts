@@ -19,7 +19,7 @@ export async function GET() {
             // Include all other Firestore fields if they exist
             ...Object.keys(adminEventsData[mission.id] || {})
                 .reduce((acc, key) => {
-                    if (key !== 'registrationStatus') {
+                    if (key !== 'registrationStatus' && key !== 'date') {
                         acc[key] = adminEventsData[mission.id][key];
                     }
                     return acc;
