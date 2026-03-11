@@ -2,6 +2,7 @@ import { registrationsCollection, usersCollection, verifyAuthToken } from "@/lib
 import { NextRequest, NextResponse } from "next/server";
 import { checkApiRateLimit, getClientIdentifier } from "@/lib/ratelimit";
 import { getAdminRole } from "@/lib/admin";
+import { checkUserPaymentStatus } from "@/lib/paymentService";
 
 export async function GET(request: NextRequest) {
     try {
@@ -41,17 +42,41 @@ export async function GET(request: NextRequest) {
         const userRef = usersCollection.doc(verified.uid);
         const userDoc = await userRef.get();
 
-        if (!userDoc.exists) {
-            return NextResponse.json({ message: "User not found." }, { status: 404 });
+        let userData = userDoc.exists ? userDoc.data() : null;
+
+        const { role, eventId } = getAdminRole(verified.email || '');
+
+        if (!userData) {
+            if (role) {
+                // Auto-create profile for Coordinators/Admins
+                userData = {
+                    id: verified.uid,
+                    name: verified.name || 'Staff Member',
+                    email: verified.email,
+                    usn: 'ADMIN',
+                    collegeName: 'Staff',
+                    phone: '',
+                    profileCode: 'ADMIN-' + verified.uid.substring(0, 4).toUpperCase(),
+                    hasPaid: true,
+                    studentType: 'internal',
+                    registeredEvents: [],
+                    avatar: '/avatars/solo_male.png'
+                };
+                await userRef.set({
+                    ...userData,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                });
+            } else {
+                return NextResponse.json({ message: "User not found." }, { status: 404 });
+            }
         }
 
-        let userData = userDoc.data();
-        if (!userData) {
-            return NextResponse.json({ message: "User profile incomplete." }, { status: 404 });
-        }
+        // --- PAYMENT STATUS SYNC ---
+        // Fetch source of truth for payments
+        const paymentStatus = await checkUserPaymentStatus(verified.uid);
 
         // --- ADMIN ROLE HELPERS ---
-        const { role, eventId } = getAdminRole(userData?.email);
         if (role) {
             userData.role = role;
             userData.eventId = eventId;
@@ -63,8 +88,8 @@ export async function GET(request: NextRequest) {
         const registeredEvents = registrations.docs.map(doc => ({ id: doc.id, data: doc.data() })).map(reg => ({ id: reg.id, eventId: reg.data.eventId, teamName: reg.data.teamName }));
         userData = {
             ...userData,
-            hasPaid: userData?.hasPaid === true,
-            hasRoboSoccer: userData?.hasRoboSoccer === true,
+            hasPaid: (userData?.hasPaid === true) || paymentStatus.hasPaid,
+            hasRoboSoccer: (userData?.hasRoboSoccer === true) || paymentStatus.hasRoboSoccer,
             registeredEvents: registeredEvents
         };
 

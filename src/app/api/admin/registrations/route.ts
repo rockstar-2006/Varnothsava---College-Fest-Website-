@@ -2,6 +2,99 @@ import { adminDb, registrationsCollection, usersCollection, verifyAuthToken } fr
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminRole } from "@/lib/admin";
 
+interface RegistrationsListResponse {
+    registrations: any[];
+    totalCount: number | null;
+    internalCount: number | null;
+    externalCount: number | null;
+    totalParticipants: number | null;
+    internalParticipants: number | null;
+    externalParticipants: number | null;
+    lastId: string | null;
+    hasMore: boolean;
+}
+
+interface RegistrationsResponseCacheEntry {
+    expiresAt: number;
+    payload: RegistrationsListResponse;
+}
+
+const REGISTRATIONS_RESPONSE_CACHE_TTL_MS = Number(process.env.ADMIN_REGISTRATIONS_RESPONSE_CACHE_TTL_MS || '10000');
+const registrationsResponseCache = new Map<string, RegistrationsResponseCacheEntry>();
+
+const buildRegistrationsCacheKey = (params: {
+    role: string;
+    uid: string;
+    userEventId: string | null | undefined;
+    eventId: string | null;
+    search: string;
+    studentType: string | null;
+    dateFilter: string | null;
+    lastId: string;
+    limit: number;
+    skipCounts: boolean;
+}) => {
+    return [
+        params.role,
+        params.uid,
+        params.userEventId || 'all',
+        params.eventId || 'all',
+        params.search.trim().toLowerCase() || '-',
+        params.studentType || 'all',
+        params.dateFilter || 'all',
+        params.lastId || '-',
+        String(params.limit),
+        params.skipCounts ? 'skip' : 'full',
+    ].join('|');
+};
+
+const getCachedRegistrationsResponse = (key: string): RegistrationsListResponse | null => {
+    const cached = registrationsResponseCache.get(key);
+    if (!cached) return null;
+
+    if (cached.expiresAt < Date.now()) {
+        registrationsResponseCache.delete(key);
+        return null;
+    }
+
+    return cached.payload;
+};
+
+const setCachedRegistrationsResponse = (key: string, payload: RegistrationsListResponse) => {
+    if (registrationsResponseCache.size > 200) {
+        const now = Date.now();
+        for (const [cacheKey, entry] of registrationsResponseCache.entries()) {
+            if (entry.expiresAt < now) registrationsResponseCache.delete(cacheKey);
+        }
+
+        if (registrationsResponseCache.size > 200) {
+            registrationsResponseCache.clear();
+        }
+    }
+
+    registrationsResponseCache.set(key, {
+        expiresAt: Date.now() + REGISTRATIONS_RESPONSE_CACHE_TTL_MS,
+        payload,
+    });
+};
+
+const resolveParticipantType = (user: Record<string, any> | null | undefined): 'internal' | 'external' => {
+    if (!user) return 'external';
+
+    const college = (user.collegeName || user.college || user.institution || '').toUpperCase();
+    const email = (user.email || '').toLowerCase();
+
+    const isInternal = user.studentType === 'internal' ||
+        college.includes('SMVITM') ||
+        college.includes('SODE') ||
+        college.includes('SHRI MADHWA VADIRAJA') ||
+        college.includes('SHRI MADHWA') ||
+        college.includes('VADIRAJA') ||
+        email.endsWith('@sode-edu.in');
+
+    return isInternal ? 'internal' : 'external';
+};
+
 export async function GET(request: NextRequest) {
     try {
         const authHeader = request.headers.get('Authorization') || '';
@@ -29,13 +122,37 @@ export async function GET(request: NextRequest) {
         const studentType = searchParams.get('studentType'); // 'internal' or 'external'
         const lastId = searchParams.get('lastId') || '';
         const limit = parseInt(searchParams.get('limit') || '20');
+        const skipCounts = searchParams.get('skipCounts') === '1';
+        const hasStudentTypeFilter = studentType === 'internal' || studentType === 'external';
+        const dateFilter = searchParams.get('dateFilter');
 
-        console.log(`[RegAPI] Fetching. Role: ${userRole}, EventId: ${eventId}, Search: ${search}, Type: ${studentType}`);
+        const responseCacheKey = (!skipCounts && !lastId)
+            ? buildRegistrationsCacheKey({
+                role: userRole,
+                uid: verified.uid,
+                userEventId,
+                eventId,
+                search,
+                studentType,
+                dateFilter,
+                lastId,
+                limit,
+                skipCounts,
+            })
+            : null;
+
+        if (responseCacheKey) {
+            const cachedResponse = getCachedRegistrationsResponse(responseCacheKey);
+            if (cachedResponse) {
+                return NextResponse.json(cachedResponse);
+            }
+        }
 
         // Apply Search Filter implicitly via queryBase if simple (like event scope)
         // Global coordinator filters
         let queryBase: any = registrationsCollection;
         let countQuery: any = registrationsCollection;
+        let filteredCountQuery: any = registrationsCollection;
         if (userRole === 'COORDINATOR' && userEventId) {
             const coordinatorEventIds = userEventId.split(',').map((id: string) => id.trim());
 
@@ -43,6 +160,7 @@ export async function GET(request: NextRequest) {
                 if (coordinatorEventIds.includes('all') || coordinatorEventIds.includes(eventId)) {
                     queryBase = queryBase.where('eventId', '==', eventId);
                     countQuery = countQuery.where('eventId', '==', eventId);
+                    filteredCountQuery = filteredCountQuery.where('eventId', '==', eventId);
                 } else {
                     return NextResponse.json({ message: "Forbidden: Not assigned to this event" }, { status: 403 });
                 }
@@ -51,48 +169,179 @@ export async function GET(request: NextRequest) {
                     if (coordinatorEventIds.length > 1) {
                         queryBase = queryBase.where('eventId', 'in', coordinatorEventIds);
                         countQuery = countQuery.where('eventId', 'in', coordinatorEventIds);
+                        filteredCountQuery = filteredCountQuery.where('eventId', 'in', coordinatorEventIds);
                     } else {
                         queryBase = queryBase.where('eventId', '==', coordinatorEventIds[0]);
                         countQuery = countQuery.where('eventId', '==', coordinatorEventIds[0]);
+                        filteredCountQuery = filteredCountQuery.where('eventId', '==', coordinatorEventIds[0]);
                     }
                 }
             }
         } else if (eventId && eventId !== 'all') {
             queryBase = queryBase.where('eventId', '==', eventId);
             countQuery = countQuery.where('eventId', '==', eventId);
+            filteredCountQuery = filteredCountQuery.where('eventId', '==', eventId);
         }
 
-        // Apply studentType filter to queryBase for listing, but exclude from primary counts
-        if (studentType === 'internal' || studentType === 'external') {
+        // Student type filter must be reflected in listing and scoped totals.
+        if (hasStudentTypeFilter) {
             queryBase = queryBase.where('leaderType', '==', studentType);
+            filteredCountQuery = filteredCountQuery.where('leaderType', '==', studentType);
+        }
+
+        if (dateFilter === 'new') {
+            queryBase = queryBase.where('registeredAt', '>=', '2026-03-11T00:00:00.000Z');
+            countQuery = countQuery.where('registeredAt', '>=', '2026-03-11T00:00:00.000Z');
+            filteredCountQuery = filteredCountQuery.where('registeredAt', '>=', '2026-03-11T00:00:00.000Z');
         }
 
         let totalCount = 0;
         let internalCount = 0;
         let externalCount = 0;
         let totalParticipants = 0;
+        let internalParticipants = 0;
+        let externalParticipants = 0;
 
-        // Accurate counts based on the scoped countQuery
-        const [totalSnap, internalSnap, participantSnap] = await Promise.all([
-            countQuery.count().get(),
-            countQuery.where('leaderType', '==', 'internal').count().get(),
-            countQuery.select('teamLeader', 'members').get()
-        ]);
+        const addParticipantId = (target: Set<string>, value: unknown) => {
+            if (typeof value !== 'string') return;
+            const normalized = value.trim();
+            if (normalized.length > 0) {
+                target.add(normalized);
+            }
+        };
 
-        totalCount = totalSnap.data().count;
-        internalCount = internalSnap.data().count;
+        const getParticipantTypeCounts = async (participantIds: Set<string>) => {
+            if (participantIds.size === 0) {
+                return { internal: 0, external: 0 };
+            }
 
-        let headcount = 0;
-        participantSnap.docs.forEach((doc: any) => {
-            const data = doc.data();
-            if (data.teamLeader) headcount += 1;
-            if (data.members) headcount += data.members.length;
-        });
-        totalParticipants = headcount;
+            const userMap: Record<string, any> = {};
+            const ids = Array.from(participantIds);
 
-        // For search results, counts are calculated after enrichment
-        // For non-search results, counts from DB are used but may be adjusted
-        externalCount = totalCount - internalCount;
+            for (let i = 0; i < ids.length; i += 10) {
+                const chunk = ids.slice(i, i + 10);
+                if (chunk.length === 0) continue;
+
+                const userSnapshot = await usersCollection.where('__name__', 'in', chunk).get();
+                userSnapshot.docs.forEach((doc) => {
+                    userMap[doc.id] = doc.data();
+                });
+            }
+
+            let internal = 0;
+            let external = 0;
+
+            ids.forEach((id) => {
+                const type = resolveParticipantType(userMap[id]);
+                if (type === 'internal') internal += 1;
+                else external += 1;
+            });
+
+            return { internal, external };
+        };
+
+        // Zero-Cost Cache Strategy for Dashboard Header Metrics
+        let fallbackToDatabaseCount = !skipCounts;
+        let cachedEventTitleMap: Record<string, string> = {};
+
+        // Only safely use cache if it's a standard event page load or global view
+        if (userRole === 'SUPER_ADMIN' && !search && !hasStudentTypeFilter && (!userEventId || userEventId === 'all' || eventId)) {
+            try {
+                const statsRef = await adminDb.collection('system').doc('stats').get();
+                const globalStats = statsRef.data() || {};
+                cachedEventTitleMap = globalStats.eventTitleMap || {};
+
+                if (!eventId || eventId === 'all') {
+                    // Global Scope
+                    totalCount = globalStats.totalRegistrations || 0;
+                    totalParticipants = globalStats.totalParticipants || 0;
+                    const cachedInternalParticipants = globalStats.totalInternalParticipants;
+                    const cachedExternalParticipants = globalStats.totalExternalParticipants;
+
+                    if (typeof cachedInternalParticipants === 'number' && typeof cachedExternalParticipants === 'number') {
+                        internalParticipants = cachedInternalParticipants;
+                        externalParticipants = cachedExternalParticipants;
+                        fallbackToDatabaseCount = false;
+                    }
+
+                    // For first-page loads, return accurate team internal/external split.
+                    if (!skipCounts) {
+                        const [totalSnap, internalSnap] = await Promise.all([
+                            countQuery.count().get(),
+                            countQuery.where('leaderType', '==', 'internal').count().get()
+                        ]);
+                        totalCount = totalSnap.data().count;
+                        internalCount = internalSnap.data().count;
+                        externalCount = totalCount - internalCount;
+                    }
+                } else if (globalStats.eventMetricsCache && globalStats.eventMetricsCache[eventId]) {
+                    // Specific Event Scope found in Cache
+                    const eventCache = globalStats.eventMetricsCache[eventId];
+                    totalCount = eventCache.total;
+                    internalCount = eventCache.internal;
+                    externalCount = eventCache.external;
+                    totalParticipants = eventCache.participants;
+                    if (typeof eventCache.internalParticipants === 'number' && typeof eventCache.externalParticipants === 'number') {
+                        internalParticipants = eventCache.internalParticipants;
+                        externalParticipants = eventCache.externalParticipants;
+                        fallbackToDatabaseCount = false;
+                    }
+                }
+            } catch (e) {
+                console.warn("[RegAPI] Failed to parse stats cache, falling back to DB counts");
+            }
+        }
+
+        // Only explicitly read EVERY registration doc if cache is unavailable or we're doing complex searching
+        if (fallbackToDatabaseCount) {
+            if (hasStudentTypeFilter) {
+                const [totalSnap, participantSnap] = await Promise.all([
+                    filteredCountQuery.count().get(),
+                    filteredCountQuery.select('teamLeader', 'members').get()
+                ]);
+
+                totalCount = totalSnap.data().count;
+                internalCount = studentType === 'internal' ? totalCount : 0;
+                externalCount = studentType === 'external' ? totalCount : 0;
+
+                const uniqueParticipants = new Set<string>();
+                participantSnap.docs.forEach((doc: any) => {
+                    const data = doc.data();
+                    addParticipantId(uniqueParticipants, data.teamLeader);
+                    if (data.members && Array.isArray(data.members)) {
+                        data.members.forEach((m: string) => addParticipantId(uniqueParticipants, m));
+                    }
+                });
+                totalParticipants = uniqueParticipants.size;
+                const participantTypeCounts = await getParticipantTypeCounts(uniqueParticipants);
+                internalParticipants = participantTypeCounts.internal;
+                externalParticipants = participantTypeCounts.external;
+            } else {
+                const [totalSnap, internalSnap, participantSnap] = await Promise.all([
+                    countQuery.count().get(),
+                    countQuery.where('leaderType', '==', 'internal').count().get(),
+                    countQuery.select('teamLeader', 'members').get()
+                ]);
+
+                totalCount = totalSnap.data().count;
+                internalCount = internalSnap.data().count;
+                externalCount = totalCount - internalCount;
+
+                const uniqueParticipants = new Set<string>();
+                participantSnap.docs.forEach((doc: any) => {
+                    const data = doc.data();
+                    addParticipantId(uniqueParticipants, data.teamLeader);
+
+                    if (data.members && Array.isArray(data.members)) {
+                        data.members.forEach((m: string) => addParticipantId(uniqueParticipants, m));
+                    }
+                });
+                totalParticipants = uniqueParticipants.size;
+                const participantTypeCounts = await getParticipantTypeCounts(uniqueParticipants);
+                internalParticipants = participantTypeCounts.internal;
+                externalParticipants = participantTypeCounts.external;
+            }
+        }
 
         let registrations: any[] = [];
         let snapshot: any = null;
@@ -106,7 +355,12 @@ export async function GET(request: NextRequest) {
                 }));
 
                 const uidsForSearch = new Set<string>();
-                results.forEach((reg: any) => uidsForSearch.add(reg.teamLeader));
+                results.forEach((reg: any) => {
+                    addParticipantId(uidsForSearch, reg.teamLeader);
+                    if (Array.isArray(reg.members)) {
+                        reg.members.forEach((memberId: string) => addParticipantId(uidsForSearch, memberId));
+                    }
+                });
 
                 const usersDataMapForSearch: Record<string, any> = {};
                 const uidArray = Array.from(uidsForSearch);
@@ -121,22 +375,45 @@ export async function GET(request: NextRequest) {
                     const leader = usersDataMapForSearch[reg.teamLeader] || {};
                     const leaderNameMatch = leader.name?.toLowerCase().includes(search);
                     const leaderEmailMatch = leader.email?.toLowerCase().includes(search);
+                    const leaderUsnMatch = leader.usn?.toLowerCase().includes(search);
                     const leaderPhoneMatch = leader.phone?.includes(search);
-                    return teamNameMatch || leaderNameMatch || leaderEmailMatch || leaderPhoneMatch;
+
+                    const memberMatch = (reg.members || []).some((memberId: string) => {
+                        const member = usersDataMapForSearch[memberId] || {};
+                        const memberNameMatch = member.name?.toLowerCase().includes(search);
+                        const memberEmailMatch = member.email?.toLowerCase().includes(search);
+                        const memberUsnMatch = member.usn?.toLowerCase().includes(search);
+                        const memberPhoneMatch = member.phone?.includes(search);
+
+                        return memberNameMatch || memberEmailMatch || memberUsnMatch || memberPhoneMatch;
+                    });
+
+                    return teamNameMatch || leaderNameMatch || leaderEmailMatch || leaderUsnMatch || leaderPhoneMatch || memberMatch;
                 });
 
                 results.sort((a: any, b: any) => (b.registeredAt || '').localeCompare(a.registeredAt || ''));
 
                 totalCount = results.length;
-                internalCount = results.filter((r: any) => r.leaderType === 'internal').length;
-                externalCount = totalCount - internalCount;
+                if (hasStudentTypeFilter) {
+                    internalCount = studentType === 'internal' ? totalCount : 0;
+                    externalCount = studentType === 'external' ? totalCount : 0;
+                } else {
+                    internalCount = results.filter((r: any) => r.leaderType === 'internal').length;
+                    externalCount = totalCount - internalCount;
+                }
 
                 const uniqueP = new Set<string>();
                 results.forEach((doc: any) => {
-                    if (doc.teamLeader) uniqueP.add(doc.teamLeader);
-                    if (doc.members) doc.members.forEach((m: string) => uniqueP.add(m));
+                    addParticipantId(uniqueP, doc.teamLeader);
+
+                    if (doc.members) {
+                        doc.members.forEach((m: string) => addParticipantId(uniqueP, m));
+                    }
                 });
                 totalParticipants = uniqueP.size;
+                const participantTypeCounts = await getParticipantTypeCounts(uniqueP);
+                internalParticipants = participantTypeCounts.internal;
+                externalParticipants = participantTypeCounts.external;
 
                 let startIndex = 0;
                 if (lastId) {
@@ -189,9 +466,11 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        const eventsSnapshot = await adminDb.collection('events').get();
-        const eventMap: Record<string, string> = {};
-        eventsSnapshot.docs.forEach(doc => { eventMap[doc.id] = doc.data().title || doc.id; });
+        const eventMap: Record<string, string> = { ...cachedEventTitleMap };
+        if (Object.keys(eventMap).length === 0) {
+            const eventsSnapshot = await adminDb.collection('events').get();
+            eventsSnapshot.docs.forEach(doc => { eventMap[doc.id] = doc.data().title || doc.id; });
+        }
 
         const regCorrectionBatch = adminDb.batch();
         let hasRegCorrections = false;
@@ -242,40 +521,32 @@ export async function GET(request: NextRequest) {
             regCorrectionBatch.commit().catch(e => console.error('[RegAPI] Batch correction failed:', e));
         }
 
-        // IMPORTANT: Recalculate internal/external counts from enriched data for accuracy
-        // This ensures displayed counts match what's actually shown (enriched studentType > raw leaderType)
-        if (search || (!search && enrichedRegistrations.length < limit)) {
-            // If this is a search, or if we got all results, calculate from enriched data
-            const liveInternal = enrichedRegistrations.filter((r: any) => r.studentType === 'internal').length;
-            const liveExternal = enrichedRegistrations.filter((r: any) => r.studentType === 'external').length;
-
-            let searchHeadcount = 0;
-            enrichedRegistrations.forEach((r: any) => {
-                searchHeadcount += 1; // Leader
-                if (r.members && Array.isArray(r.members)) searchHeadcount += r.members.length;
-            });
-
-            if (search) {
-                // For search, enriched data IS the full result set
-                internalCount = liveInternal;
-                externalCount = liveExternal;
-                totalCount = enrichedRegistrations.length;
-                totalParticipants = searchHeadcount;
-            }
-        }
-
         // Calculate the correct lastId for pagination
         const lastDocId = snapshot?.docs?.length > 0 ? snapshot.docs[snapshot.docs.length - 1].id : null;
+        const responseTotalCount = skipCounts ? null : totalCount;
+        const responseInternalCount = skipCounts ? null : internalCount;
+        const responseExternalCount = skipCounts ? null : externalCount;
+        const responseTotalParticipants = skipCounts ? null : totalParticipants;
+        const responseInternalParticipants = skipCounts ? null : internalParticipants;
+        const responseExternalParticipants = skipCounts ? null : externalParticipants;
 
-        return NextResponse.json({
+        const responsePayload: RegistrationsListResponse = {
             registrations: enrichedRegistrations,
-            totalCount,
-            internalCount,
-            externalCount,
-            totalParticipants,
+            totalCount: responseTotalCount,
+            internalCount: responseInternalCount,
+            externalCount: responseExternalCount,
+            totalParticipants: responseTotalParticipants,
+            internalParticipants: responseInternalParticipants,
+            externalParticipants: responseExternalParticipants,
             lastId: lastDocId,
             hasMore: snapshot?.docs?.length === limit
-        });
+        };
+
+        if (responseCacheKey) {
+            setCachedRegistrationsResponse(responseCacheKey, responsePayload);
+        }
+
+        return NextResponse.json(responsePayload);
     } catch (error: any) {
         console.error("Admin Registrations GET Error:", error);
         return NextResponse.json({ message: error.message }, { status: 500 });

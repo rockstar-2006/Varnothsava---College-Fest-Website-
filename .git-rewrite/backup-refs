@@ -1,0 +1,11 @@
+9eac0fa47dc48709cfdb45502845d0e52369dcd8 commit	refs/heads/Admin-page
+92083cb39a7579de62e730b28e36090f93b5ab98 commit	refs/heads/abhishek-changes
+ff390879cfc6ee3b68ae1ae85174e482863b07cf commit	refs/heads/master
+9eac0fa47dc48709cfdb45502845d0e52369dcd8 commit	refs/remotes/origin/Admin-page
+ff390879cfc6ee3b68ae1ae85174e482863b07cf commit	refs/remotes/origin/HEAD
+92083cb39a7579de62e730b28e36090f93b5ab98 commit	refs/remotes/origin/abhishek-changes
+ff390879cfc6ee3b68ae1ae85174e482863b07cf commit	refs/remotes/origin/master
+aa36513afbb152c0d8b5fff3c332cc5cd7e65fae commit	refs/remotes/tejas/HEAD
+5af5967316a319eefa502e58fb791d60814fa301 commit	refs/remotes/tejas/admin
+aa36513afbb152c0d8b5fff3c332cc5cd7e65fae commit	refs/remotes/tejas/master
+798794a6d54ee6155e90a71279fe735faaf7b031 commit	refs/stash

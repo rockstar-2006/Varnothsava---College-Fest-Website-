@@ -51,10 +51,89 @@ interface Event {
     id: string;
     title: string;
     type: string;
+    date?: string;
+    time?: string;
+    location?: string;
+}
+
+interface FilterOption {
+    value: string;
+    label: string;
+}
+
+function DarkFilterSelect({
+    value,
+    options,
+    onChange,
+    className,
+}: {
+    value: string;
+    options: FilterOption[];
+    onChange: (nextValue: string) => void;
+    className?: string;
+}) {
+    const [open, setOpen] = useState(false)
+    const rootRef = useRef<HTMLDivElement | null>(null)
+
+    useEffect(() => {
+        const handlePointerDown = (event: MouseEvent) => {
+            if (!rootRef.current) return
+            if (!rootRef.current.contains(event.target as Node)) {
+                setOpen(false)
+            }
+        }
+
+        document.addEventListener('mousedown', handlePointerDown)
+        return () => document.removeEventListener('mousedown', handlePointerDown)
+    }, [])
+
+    const selectedLabel = options.find((opt) => opt.value === value)?.label || options[0]?.label || 'Select'
+
+    return (
+        <div ref={rootRef} className="relative w-full">
+            <button
+                type="button"
+                onClick={() => setOpen((prev) => !prev)}
+                className={cn(
+                    'w-full rounded-xl border border-white/10 bg-[#0f1012] px-3 py-2 text-left text-sm text-white transition-all hover:border-emerald-500/40 focus:outline-none focus:border-emerald-500/70 flex items-center justify-between gap-2',
+                    className
+                )}
+            >
+                <span className="truncate">{selectedLabel}</span>
+                <span className={cn('text-xs text-gray-400 transition-transform', open && 'rotate-180')}>v</span>
+            </button>
+
+            {open && (
+                <div className="absolute z-40 mt-1 w-full overflow-hidden rounded-xl border border-white/10 bg-[#0b0b0d] shadow-2xl">
+                    <div className="max-h-56 overflow-y-auto py-1">
+                        {options.map((option) => (
+                            <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => {
+                                    onChange(option.value)
+                                    setOpen(false)
+                                }}
+                                className={cn(
+                                    'w-full px-3 py-2 text-left text-sm transition-colors',
+                                    value === option.value
+                                        ? 'bg-emerald-500/15 text-emerald-300'
+                                        : 'text-gray-200 hover:bg-white/10'
+                                )}
+                            >
+                                {option.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    )
 }
 
 export default function ParticipantsManagementPage() {
     const { userData, adminCache, updateAdminCache } = useApp()
+    const FILTER_DEBOUNCE_MS = 300
     const [registrations, setRegistrations] = useState<Registration[]>(adminCache.registrations || [])
     const [events, setEvents] = useState<Event[]>(adminCache.events || [])
     const [loading, setLoading] = useState(false)
@@ -63,17 +142,42 @@ export default function ParticipantsManagementPage() {
         (userData?.role === 'COORDINATOR' && userData?.eventId && userData.eventId !== 'all') ? userData.eventId : 'all'
     )
     const [studentType, setStudentType] = useState<string>('all') // 'all', 'internal', 'external'
+    const [selectedDateFilter, setSelectedDateFilter] = useState<'all' | 'new'>('all')
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
     const [updatingId, setUpdatingId] = useState<string | null>(null)
     const [hasMore, setHasMore] = useState(false)
     const [totalRegCount, setTotalRegCount] = useState(adminCache.totalRegCount || 0)
-    const [totalInternalRegs, setTotalInternalRegs] = useState(adminCache.totalInternalRegs || 0)
-    const [totalExternalRegs, setTotalExternalRegs] = useState(adminCache.totalExternalRegs || 0)
     const [totalParticipants, setTotalParticipants] = useState(adminCache.totalParticipants || 0)
+    const [totalInternalParticipants, setTotalInternalParticipants] = useState(adminCache.totalInternalParticipants || 0)
+    const [totalExternalParticipants, setTotalExternalParticipants] = useState(adminCache.totalExternalParticipants || 0)
     const [lastId, setLastId] = useState<string | null>(null)
-    const [isInitialMount, setIsInitialMount] = useState(true)
+
+    const getDefaultEventId = () => (
+        (userData?.role === 'COORDINATOR' && userData?.eventId && userData.eventId !== 'all')
+            ? userData.eventId
+            : 'all'
+    )
+
+    const isDefaultView = (eventScope: string) => (
+        searchQuery.trim().length === 0 &&
+        studentType === 'all' &&
+        selectedDateFilter === 'all' &&
+        eventScope === getDefaultEventId()
+    )
 
     const fetchRegistrations = async (eventId?: string, isLoadMore = false) => {
+        const requestId = latestRequestIdRef.current + 1
+        latestRequestIdRef.current = requestId
+
+        if (!isLoadMore && activeFetchController.current) {
+            activeFetchController.current.abort()
+        }
+
+        const controller = new AbortController()
+        if (!isLoadMore) {
+            activeFetchController.current = controller
+        }
+
         setLoading(true)
         try {
             const token = await getAuthToken()
@@ -84,50 +188,60 @@ export default function ParticipantsManagementPage() {
                 targetEventId = userData.eventId;
             }
 
-            let url = `/api/admin/registrations?lastId=${currentLastId}&limit=20&_t=${Date.now()}`
+            let url = `/api/admin/registrations?lastId=${currentLastId}&limit=20`
             if (targetEventId && targetEventId !== 'all') url += `&eventId=${targetEventId}`
             if (studentType !== 'all') url += `&studentType=${studentType}`
+            if (selectedDateFilter !== 'all') url += `&dateFilter=${selectedDateFilter}`
             if (searchQuery) url += `&search=${encodeURIComponent(searchQuery)}`
+            if (isLoadMore) url += `&skipCounts=1`
 
             const res = await fetch(url, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Cache-Control': 'no-cache'
-                }
+                },
+                signal: controller.signal,
             })
             const data = await res.json()
+
+            if (requestId !== latestRequestIdRef.current) {
+                return
+            }
+
             if (res.ok) {
                 const newRegs = isLoadMore ? [...registrations, ...data.registrations] : data.registrations;
+                const shouldPersistDefaultView = !isLoadMore && isDefaultView(targetEventId || 'all');
+
                 setRegistrations(newRegs)
                 setHasMore(data.hasMore)
                 setLastId(data.lastId)
-                setTotalRegCount(data.totalCount)
-                setTotalInternalRegs(data.internalCount || 0)
-                setTotalExternalRegs(data.externalCount || 0)
-                setTotalParticipants(data.totalParticipants || 0)
-
-                // If it's just a sync (not load more), update cache
                 if (!isLoadMore) {
-                    updateAdminCache('registrations', newRegs)
-                    updateAdminCache('totalRegCount', data.totalCount)
-                    updateAdminCache('totalInternalRegs', data.internalCount || 0)
-                    updateAdminCache('totalExternalRegs', data.externalCount || 0)
-                    updateAdminCache('totalParticipants', data.totalParticipants || 0)
+                    if (typeof data.totalCount === 'number') setTotalRegCount(data.totalCount)
+                    if (typeof data.totalParticipants === 'number') setTotalParticipants(data.totalParticipants)
+                    if (typeof data.internalParticipants === 'number') setTotalInternalParticipants(data.internalParticipants)
+                    if (typeof data.externalParticipants === 'number') setTotalExternalParticipants(data.externalParticipants)
+                }
 
-                    // Refresh global stats too
-                    const sRes = await fetch(`/api/admin/stats?_t=${Date.now()}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    if (sRes.ok) {
-                        const sData = await sRes.json();
-                        updateAdminCache('stats', sData.stats);
-                    }
+                // Persist only default dashboard scope to avoid filtered values polluting shared totals.
+                if (shouldPersistDefaultView) {
+                    updateAdminCache('registrations', newRegs)
+                    if (typeof data.totalCount === 'number') updateAdminCache('totalRegCount', data.totalCount)
+                    if (typeof data.internalCount === 'number') updateAdminCache('totalInternalRegs', data.internalCount)
+                    if (typeof data.externalCount === 'number') updateAdminCache('totalExternalRegs', data.externalCount)
+                    if (typeof data.totalParticipants === 'number') updateAdminCache('totalParticipants', data.totalParticipants)
+                    if (typeof data.internalParticipants === 'number') updateAdminCache('totalInternalParticipants', data.internalParticipants)
+                    if (typeof data.externalParticipants === 'number') updateAdminCache('totalExternalParticipants', data.externalParticipants)
                 }
             }
-        } catch (error) {
+        } catch (error: unknown) {
+            if (error instanceof DOMException && error.name === 'AbortError') {
+                return
+            }
             console.error("Failed to fetch registrations:", error)
         } finally {
-            setLoading(false)
+            if (requestId === latestRequestIdRef.current) {
+                setLoading(false)
+            }
         }
     }
 
@@ -155,28 +269,58 @@ export default function ParticipantsManagementPage() {
         setExpandedIds(newSet);
     }
 
-    const isInitialMountRef = useRef(true)
+    const isFirstMountFilter = useRef(true)
+    const isFirstMountSearch = useRef(true)
+    const isFirstFilterChange = useRef(true)
+    const activeFetchController = useRef<AbortController | null>(null)
+    const latestRequestIdRef = useRef(0)
 
-    // Fetch on filter change
+    // Initial fetch only if no cache
     useEffect(() => {
-        // Skip initial fetch if cache is already present
-        if (isInitialMountRef.current && adminCache.registrations) {
-            isInitialMountRef.current = false;
+        if (isFirstMountFilter.current) {
+            isFirstMountFilter.current = false;
+            if (events.length === 0 && !adminCache.events) fetchEvents()
+
+            // Only fetch if cache doesn't exist
+            if (!adminCache.registrations) {
+                fetchRegistrations(selectedEventId, false)
+            }
+        }
+        // Deliberately no dependencies to prevent auto-fetch on filter change
+    }, [])
+
+    useEffect(() => {
+        if (isFirstFilterChange.current) {
+            isFirstFilterChange.current = false;
             return;
         }
-        fetchRegistrations(selectedEventId, false)
-        if (events.length === 0) fetchEvents()
-        isInitialMountRef.current = false;
-    }, [selectedEventId, studentType])
+
+        setLastId(null)
+        const timer = setTimeout(() => {
+            fetchRegistrations(selectedEventId, false)
+        }, FILTER_DEBOUNCE_MS)
+
+        return () => clearTimeout(timer)
+    }, [selectedEventId, studentType, selectedDateFilter])
 
     // Global Search with debounce
     useEffect(() => {
-        if (isInitialMountRef.current) return;
+        if (isFirstMountSearch.current) {
+            isFirstMountSearch.current = false;
+            return;
+        }
         const timer = setTimeout(() => {
+            setLastId(null)
             fetchRegistrations(selectedEventId, false)
         }, 500)
         return () => clearTimeout(timer)
     }, [searchQuery])
+
+    useEffect(() => {
+        return () => {
+            activeFetchController.current?.abort()
+        }
+    }, [])
 
     const handleUpdateStatus = async (id: string, status: 'approved' | 'rejected') => {
         setUpdatingId(id)
@@ -192,9 +336,13 @@ export default function ParticipantsManagementPage() {
             })
 
             if (res.ok) {
-                setRegistrations(prev => prev.map(reg =>
-                    reg.id === id ? { ...reg, status } : reg
-                ))
+                setRegistrations(prev => {
+                    const newRegs = prev.map(reg =>
+                        reg.id === id ? { ...reg, status } : reg
+                    );
+                    updateAdminCache('registrations', newRegs);
+                    return newRegs;
+                })
             } else {
                 const data = await res.json()
                 alert(data.message || "Failed to update status")
@@ -205,12 +353,6 @@ export default function ParticipantsManagementPage() {
             setUpdatingId(null)
         }
     }
-
-    const filteredRegs = registrations.filter(reg => {
-        // Server side filtering handled the query, 
-        // local filtering remains for Super Admins if needed but mostly for consistency
-        return true;
-    })
 
     const formatDate = (dateStr: string) => {
         try {
@@ -225,6 +367,16 @@ export default function ParticipantsManagementPage() {
         }
     }
 
+    const dateFilterOptions: FilterOption[] = [
+        { value: 'all', label: 'All Dates' },
+        { value: 'new', label: 'From March 11 (New)' },
+    ]
+
+    const eventOptions: FilterOption[] = [
+        { value: 'all', label: 'All Assigned Events' },
+        ...events.map((event) => ({ value: event.id, label: event.title })),
+    ]
+
     return (
         <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'COORDINATOR']}>
             <div className="space-y-4 md:space-y-6">
@@ -233,7 +385,9 @@ export default function ParticipantsManagementPage() {
                         <h1 className="text-xl md:text-2xl font-bold text-white uppercase tracking-tighter italic">REGISTRATIONS</h1>
                         <p className="text-gray-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
                             <FileText size={14} className="text-emerald-500/50" />
-                            {selectedEventId === 'all' ? `${totalRegCount} teams · ${totalParticipants} participants` : `Signals for selected sector`}
+                            {selectedEventId === 'all'
+                                ? `${totalRegCount} Total Teams · ${totalParticipants} Participants`
+                                : `${totalRegCount} Registered Teams · ${totalParticipants} Participants`}
                         </p>
                     </div>
 
@@ -241,22 +395,22 @@ export default function ParticipantsManagementPage() {
                         <button
                             onClick={() => setStudentType('internal')}
                             className={cn(
-                                "px-3 py-1.5 rounded-xl transition-all border flex flex-col items-center min-w-[55px]",
+                                "px-3 py-1.5 rounded-xl transition-all border flex flex-col items-center min-w-13.75",
                                 studentType === 'internal' ? "bg-emerald-500/20 border-emerald-500/50" : "bg-white/5 border-white/10 hover:border-emerald-500/30"
                             )}
                         >
                             <p className="text-[8px] font-black uppercase tracking-tighter text-emerald-500 leading-none mb-1">Internal</p>
-                            <p className="text-sm font-black text-white italic">{totalInternalRegs}</p>
+                            <p className="text-sm font-black text-white italic">{totalInternalParticipants}</p>
                         </button>
                         <button
                             onClick={() => setStudentType('external')}
                             className={cn(
-                                "px-3 py-1.5 rounded-xl transition-all border flex flex-col items-center min-w-[55px]",
+                                "px-3 py-1.5 rounded-xl transition-all border flex flex-col items-center min-w-13.75",
                                 studentType === 'external' ? "bg-blue-500/20 border-blue-500/50" : "bg-white/5 border-white/10 hover:border-blue-500/30"
                             )}
                         >
                             <p className="text-[8px] font-black uppercase tracking-tighter text-blue-500 leading-none mb-1">External</p>
-                            <p className="text-sm font-black text-white italic">{totalExternalRegs}</p>
+                            <p className="text-sm font-black text-white italic">{totalExternalParticipants}</p>
                         </button>
                         {studentType !== 'all' && (
                             <button
@@ -279,15 +433,38 @@ export default function ParticipantsManagementPage() {
                                 <span className="text-xs font-bold uppercase tracking-widest text-white hidden sm:block">Sync</span>
                             </button>
 
-                            {userData?.role === 'SUPER_ADMIN' && (
-                                <button
-                                    onClick={() => fetchAndDownload('registrations', `Registrations_${selectedEventId}`, getAuthToken, { eventId: selectedEventId })}
-                                    className="bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/50 text-emerald-500 px-3 md:px-5 py-2 rounded-xl transition-all group flex items-center gap-2 shadow-xl"
-                                    title="Export"
-                                >
-                                    <FileSpreadsheet size={16} className="transition-transform group-hover:scale-110" />
-                                    <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Export</span>
-                                </button>
+                            {(userData?.role === 'SUPER_ADMIN' || userData?.role === 'COORDINATOR') && (
+                                <>
+                                    <button
+                                        onClick={() => {
+                                            const eventObj = events.find(e => e.id === selectedEventId);
+                                            const eventMeta = eventObj?.date
+                                                ? { title: eventObj.title, date: eventObj.date, time: eventObj.time, location: eventObj.location }
+                                                : undefined;
+                                            fetchAndDownload(
+                                                'registrations',
+                                                `Roster_${selectedEventId}`,
+                                                getAuthToken,
+                                                { eventId: selectedEventId },
+                                                'word',
+                                                eventMeta
+                                            );
+                                        }}
+                                        className="bg-blue-500/10 border border-blue-500/20 hover:border-blue-500/50 text-blue-500 px-3 md:px-5 py-2 rounded-xl transition-all group flex items-center gap-2 shadow-xl"
+                                        title="Download Roster (Word)"
+                                    >
+                                        <FileText size={16} className="transition-transform group-hover:scale-110" />
+                                        <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Word</span>
+                                    </button>
+                                    <button
+                                        onClick={() => fetchAndDownload('registrations', `Data_${selectedEventId}`, getAuthToken, { eventId: selectedEventId }, 'excel')}
+                                        className="bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/50 text-emerald-500 px-3 md:px-5 py-2 rounded-xl transition-all group flex items-center gap-2 shadow-xl"
+                                        title="Download Data (Excel)"
+                                    >
+                                        <FileSpreadsheet size={16} className="transition-transform group-hover:scale-110" />
+                                        <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Excel</span>
+                                    </button>
+                                </>
                             )}
                         </div>
                     </div>
@@ -306,22 +483,27 @@ export default function ParticipantsManagementPage() {
                         />
                     </div>
                     <div className="flex items-center gap-2">
-                        <Filter size={16} className="text-gray-500 flex-shrink-0" />
-                        <select
+                        <Clock size={16} className="text-gray-500 shrink-0" />
+                        <DarkFilterSelect
+                            value={selectedDateFilter}
+                            options={dateFilterOptions}
+                            onChange={(next) => setSelectedDateFilter(next as 'all' | 'new')}
+                            className="bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold tracking-tight"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Filter size={16} className="text-gray-500 shrink-0" />
+                        <DarkFilterSelect
                             value={selectedEventId}
-                            onChange={(e) => setSelectedEventId(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500/50 text-sm"
-                        >
-                            <option value="all">All Assigned Events</option>
-                            {events.map(event => (
-                                <option key={event.id} value={event.id}>{event.title}</option>
-                            ))}
-                        </select>
+                            options={eventOptions}
+                            onChange={setSelectedEventId}
+                            className="bg-white/5"
+                        />
                     </div>
                 </div>
 
                 {/* Stats Summary */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-2 gap-3">
                     <div className="bg-[#111] p-3 md:p-4 rounded-2xl border border-white/5 relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-2 opacity-5"><Users size={40} /></div>
                         <p className="text-gray-500 text-[9px] uppercase font-bold tracking-wider mb-1">Teams Registered</p>
@@ -331,15 +513,6 @@ export default function ParticipantsManagementPage() {
                         <div className="absolute top-0 right-0 p-2 opacity-5"><User size={40} /></div>
                         <p className="text-gray-500 text-[9px] uppercase font-bold tracking-wider mb-1">Total Participants</p>
                         <p className="text-xl md:text-2xl font-black text-emerald-500 italic">{totalParticipants}</p>
-                    </div>
-                    <div className="bg-[#111] p-3 md:p-4 rounded-2xl border border-white/5">
-                        <p className="text-gray-500 text-[9px] uppercase font-bold tracking-wider mb-1">Pending Approval</p>
-                        <p className="text-xl md:text-2xl font-bold text-amber-500 italic">{registrations.filter(r => r.status === 'pending' || !r.status).length}</p>
-                    </div>
-                    <div className="bg-[#111] p-3 md:p-4 rounded-2xl border border-white/5 border-l-amber-500 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-2 opacity-5"><CreditCard size={40} /></div>
-                        <p className="text-gray-500 text-[9px] uppercase font-bold tracking-wider mb-1">Unpaid Teams</p>
-                        <p className="text-xl md:text-2xl font-bold text-red-500 italic">{registrations.filter(r => r.paymentStatus === 'Unpaid').length}</p>
                     </div>
                 </div>
 
@@ -362,7 +535,7 @@ export default function ParticipantsManagementPage() {
                                     <p className="text-xs text-emerald-500 font-mono">{reg.teamName}</p>
                                 </div>
                                 <div className={cn(
-                                    "flex items-center gap-1 font-black px-2 py-1 rounded-lg text-[9px] uppercase tracking-widest border flex-shrink-0",
+                                    "flex items-center gap-1 font-black px-2 py-1 rounded-lg text-[9px] uppercase tracking-widest border shrink-0",
                                     reg.paymentStatus === 'Paid' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-red-500/10 text-red-500 border-red-500/20"
                                 )}>
                                     {reg.paymentStatus === 'Paid' ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
@@ -399,7 +572,7 @@ export default function ParticipantsManagementPage() {
                                         <div className="mt-2 space-y-2">
                                             {reg.membersDetails.map((m, i) => (
                                                 <div key={i} className="bg-white/5 rounded-xl p-2 text-xs flex items-center gap-2">
-                                                    <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center text-[10px] font-black text-gray-400 flex-shrink-0">
+                                                    <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center text-[10px] font-black text-gray-400 shrink-0">
                                                         {m.name?.[0]?.toUpperCase()}
                                                     </div>
                                                     <div>
@@ -492,7 +665,7 @@ export default function ParticipantsManagementPage() {
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2 text-gray-400">
                                                     <School size={16} className="text-gray-600" />
-                                                    <span className="truncate max-w-[150px] text-xs font-medium" title={reg.college}>{reg.college}</span>
+                                                    <span className="truncate max-w-37.5 text-xs font-medium" title={reg.college}>{reg.college}</span>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-center">
@@ -579,7 +752,7 @@ export default function ParticipantsManagementPage() {
                         </table>
                     </div>
                     {/* Pagination */}
-                    <div className="p-6 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4 bg-white/[0.01]">
+                    <div className="p-6 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4 bg-white/1">
                         <div className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                             Showing <span className="text-white">{registrations.length}</span> / <span className="text-white">{totalRegCount}</span> Sector Signals

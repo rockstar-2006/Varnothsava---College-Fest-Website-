@@ -19,14 +19,16 @@ import {
     Mail,
     Globe,
     Clock,
-    MessageCircle
+    MessageCircle,
+    AlertTriangle
 } from 'lucide-react'
-import { missions } from '@/data/missions'
+import { missions, isRegClosed } from '@/data/missions'
 import { useApp } from '@/context/AppContext'
 import ProEventBackground from '@/components/ui/ProEventBackground'
 import { MissionCard } from '@/components/ui/MissionCard'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
+import { RegistrationModal } from '@/components/ui/RegistrationModal'
 
 // Helper to get theme
 const getTheme = (type: string) => {
@@ -143,22 +145,47 @@ const TechContentCard = ({ children, theme }: any) => {
 export default function EventDetailsPage() {
     const { id } = useParams()
     const router = useRouter()
-    const { userData, addToCart, cart, isAdmin } = useApp()
+    const { userData, addToCart, cart, isAdmin, registerMission } = useApp()
 
     const [mission, setMission] = useState<any | null>(null)
     const [isVideoPlaying, setIsVideoPlaying] = useState(false)
+    const [isRegModalOpen, setIsRegModalOpen] = useState(false)
     const { scrollYProgress } = useScroll()
     // Transform scroll progress to percentage for the progress bar width
     const scrollBarWidth = useTransform(scrollYProgress, [0, 1], ['0%', '100%'])
 
     useEffect(() => {
-        const found = missions.find(m => m.id === id)
-        if (found) {
-            setMission(found)
+        const fetchEvent = async () => {
+            try {
+                const res = await fetch('/api/events')
+                if (res.ok) {
+                    const data = await res.json()
+                    const found = data.events?.find((m: any) => m.id === id)
+                    if (found) {
+                        setMission(found)
+                    } else {
+                        // Fallback to static missions if not found in API
+                        const fallback = missions.find(m => m.id === id)
+                        if (fallback) setMission(fallback)
+                    }
+                } else {
+                    // Fallback to static missions
+                    const found = missions.find(m => m.id === id)
+                    if (found) setMission(found)
+                }
+            } catch (error) {
+                console.error('Failed to fetch event:', error)
+                // Fallback to static missions
+                const found = missions.find(m => m.id === id)
+                if (found) setMission(found)
+            }
         }
+
+        fetchEvent()
     }, [id])
 
     const isAdded = userData?.registeredEvents?.some(re => re.eventId === mission?.id) || false
+    const isRegClosedFlag = isRegClosed(mission)
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'instant' })
@@ -179,11 +206,23 @@ export default function EventDetailsPage() {
                 router.push('/notify?addon=robo-soccer');
                 return
             }
-        } else if (!userData?.hasPaid) {
+        } else if (!isAdded && !userData?.hasPaid) {
             router.push('/notify');
 
             return
         }
+
+        setIsRegModalOpen(true)
+    }
+
+    const handleConfirmRegistration = async (data: { teamName: string, members: string[] }) => {
+        const result = await registerMission(mission.id, data.teamName, data.members)
+
+        if (result.success) {
+            console.log(`Successfully registered: ${result.registrationId}`)
+        }
+
+        return result
     }
     const formatForWhatsApp = (phone: string) => {
         return phone.replace(/\D/g, '') // removes +, spaces, hyphens
@@ -313,20 +352,44 @@ export default function EventDetailsPage() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.6, delay: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
                         >
+                            {isRegClosedFlag && (
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    className="col-span-2 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 mb-2"
+                                >
+                                    <AlertTriangle className="text-red-500 shrink-0" size={20} />
+                                    <p className="text-red-400 text-xs md:text-sm font-bold uppercase tracking-wider leading-tight">
+                                        Registration for this event has closed. We hope to see you at our other events!
+                                    </p>
+                                </motion.div>
+                            )}
                             <motion.button
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ duration: 0.5, delay: 0.5 }}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => handleRegisterClick(mission)}
-                                className={`col-span-2 py-4 md:py-5 rounded-xl flex items-center justify-center gap-3 transition-all duration-300 font-black uppercase tracking-widest border text-sm md:text-base ${isAdded
-                                    ? `bg-${twTheme}-600 border-${twTheme}-500 text-white`
-                                    : `bg-${twTheme}-500 border-${twTheme}-400 text-black hover:bg-${twTheme}-400`
+                                whileHover={isRegClosedFlag ? {} : { scale: 1.02 }}
+                                whileTap={isRegClosedFlag ? {} : { scale: 0.98 }}
+                                onClick={() => !isRegClosedFlag && handleRegisterClick(mission)}
+                                className={`col-span-2 py-4 md:py-5 rounded-xl flex items-center justify-center gap-3 transition-all duration-300 font-black uppercase tracking-widest border text-sm md:text-base ${isRegClosedFlag
+                                    ? "bg-red-500/20 border-red-500/50 text-red-500 cursor-not-allowed opacity-70 shadow-none hover:bg-red-500/20"
+                                    : isAdded
+                                        ? `bg-${twTheme}-600 border-${twTheme}-500 text-white`
+                                        : `bg-${twTheme}-500 border-${twTheme}-400 text-black hover:bg-${twTheme}-400`
                                     }`}
+                                disabled={isRegClosedFlag}
                             >
-                                <ShoppingCart size={18} />
-                                {isAdded ? 'REGISTERED' : 'REGISTER NOW'}
+                                {isRegClosedFlag ? (
+                                    <>
+                                        <Info size={18} />
+                                        REGISTRATION CLOSED
+                                    </>
+                                ) : (
+                                    <>
+                                        <ShoppingCart size={18} />
+                                        {isAdded ? 'REGISTERED' : 'REGISTER NOW'}
+                                    </>
+                                )}
                             </motion.button>
                             {isAdded && mission.whatsappLink && (
                                 <motion.a
@@ -656,6 +719,18 @@ export default function EventDetailsPage() {
 
             {/* Custom Bottom Border / Footer Glimpse */}
             <div className={`fixed bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-${twTheme}-500/50 to-transparent opacity-50`} />
+
+            {
+                userData && mission && (
+                    <RegistrationModal
+                        isOpen={isRegModalOpen}
+                        onClose={() => setIsRegModalOpen(false)}
+                        event={mission}
+                        userData={userData}
+                        onConfirm={handleConfirmRegistration}
+                    />
+                )
+            }
         </main>
     )
 }

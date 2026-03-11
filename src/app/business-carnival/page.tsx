@@ -10,12 +10,15 @@ import DynamicEventBackground from '@/components/ui/DynamicEventBackground'
 import { ChevronDown, ArrowLeft, TrendingUp, ShieldCheck, Zap } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import Link from 'next/link'
+import { RegistrationModal } from '@/components/ui/RegistrationModal'
 
 export default function BusinessCarnivalPage() {
-    const { userData, isLoggedIn, setPageTheme } = useApp()
+    const { userData, isLoggedIn, setPageTheme, registerMission } = useApp()
     const router = useRouter()
     const { scrollYProgress } = useScroll()
     const [isMounted, setIsMounted] = useState(false)
+    const [isRegModalOpen, setIsRegModalOpen] = useState(false)
+    const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
 
     useEffect(() => {
         setIsMounted(true)
@@ -46,9 +49,28 @@ export default function BusinessCarnivalPage() {
         radarColor: 'rgba(14, 165, 233, 0.15)'
     }
 
+    const handleConfirmRegistration = async (data: { teamName: string, members: string[] }) => {
+        if (!selectedEvent) return { success: false }
+        const result = await registerMission(selectedEvent.id, data.teamName, data.members)
+        return result
+    }
+
     const complexClip = "polygon(30px 0, 100% 0, 100% 100%, 70% 100%, 65% 94%, 35% 94%, 30% 100%, 0 100%, 0 60%, 10px 60%, 10px 40%, 0 40%, 0 30px)"
 
     if (!isMounted) return null
+
+    const handleRegisterClick = (event: Event) => {
+        if (!isLoggedIn) {
+            router.push('/login')
+            return
+        }
+        if (!userData?.hasPaid) {
+            router.push('/notify');
+            return
+        }
+        setSelectedEvent(event)
+        setIsRegModalOpen(true)  // Opens modal for team/member details
+    }
 
     return (
         <main className="min-h-screen relative bg-black text-white">
@@ -118,9 +140,9 @@ export default function BusinessCarnivalPage() {
                                 theme={businessTheme}
                                 complexClip={complexClip}
                                 isLoggedIn={isLoggedIn}
+                                hasPaid={userData?.hasPaid}
                                 isRegistered={userData?.registeredEvents?.some(re => re.eventId === event.id)}
-                                // onRegister={() => router.push(isLoggedIn ? '/notify' : '/login')}
-                                onRegister={() => router.push(isLoggedIn ? '/profile' : '/login')}
+                                onRegister={handleRegisterClick}
                                 priority={true}
                             />
                         </motion.div>
@@ -152,6 +174,16 @@ export default function BusinessCarnivalPage() {
                     </div>
                 </motion.div>
             </div>
+
+            {userData && selectedEvent && (
+                <RegistrationModal
+                    isOpen={isRegModalOpen}
+                    onClose={() => setIsRegModalOpen(false)}
+                    event={selectedEvent}
+                    userData={userData}
+                    onConfirm={handleConfirmRegistration}
+                />
+            )}
         </main>
     )
 }

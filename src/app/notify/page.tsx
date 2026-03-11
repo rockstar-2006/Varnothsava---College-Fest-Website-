@@ -10,7 +10,7 @@ import Link from 'next/link'
 import { Orbitron } from 'next/font/google'
 import { useApp } from '@/context/AppContext'
 import { useRazorpayPayment } from '@/hooks/useRazorpayPayment'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { Suspense } from 'react'
 
 const orbitron = Orbitron({
@@ -18,11 +18,21 @@ const orbitron = Orbitron({
     weight: ['400', '900'],
 })
 
+
 function RegisterContent() {
     const { userData, isLoggedIn, isInitializing } = useApp()
     const router = useRouter()
     const searchParams = useSearchParams()
     const { initiatePayment, checkPaymentStatus, isLoading, error, clearError } = useRazorpayPayment()
+
+    const [currentTime, setCurrentTime] = useState(Date.now());
+
+    useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(Date.now()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    const isClosed = false; // Always open now
 
     // Live Registration is now open for all verified users
 
@@ -67,8 +77,7 @@ function RegisterContent() {
 
     // Calculate amount based on email and Robo Soccer selection
     const getBaseAmount = () => {
-        if (!userData) return 300
-        return userData.email.toLowerCase().endsWith('@sode-edu.in') ? 200 : 300
+        return 300
     }
 
     const getTotalAmount = () => {
@@ -232,7 +241,7 @@ function RegisterContent() {
                                                 ₹{getBaseAmount()}
                                             </p>
                                             <p className="text-[10px] text-gray-500 mt-3 font-bold uppercase tracking-widest">
-                                                Verified: {getStudentType()}
+                                                College: {userData?.collegeName || 'Verified'}
                                             </p>
                                         </div>
                                         <div className={`flex items-center gap-2 px-4 py-2 rounded-full border ${paymentStatus?.hasPaid ? 'bg-emerald-500/20 border-emerald-500/30' : 'bg-emerald-500/10 border-emerald-500/20'}`}>
@@ -461,7 +470,7 @@ function RegisterContent() {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </div >
     )
 }
 

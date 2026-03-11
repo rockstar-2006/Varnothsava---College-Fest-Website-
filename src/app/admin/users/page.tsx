@@ -39,19 +39,94 @@ interface UserData {
     studentType?: 'internal' | 'external';
 }
 
+interface FilterOption {
+    value: string;
+    label: string;
+}
+
+function DarkFilterSelect({
+    value,
+    options,
+    onChange,
+    className,
+}: {
+    value: string;
+    options: FilterOption[];
+    onChange: (nextValue: string) => void;
+    className?: string;
+}) {
+    const [open, setOpen] = useState(false)
+    const rootRef = useRef<HTMLDivElement | null>(null)
+
+    useEffect(() => {
+        const handlePointerDown = (event: MouseEvent) => {
+            if (!rootRef.current) return
+            if (!rootRef.current.contains(event.target as Node)) {
+                setOpen(false)
+            }
+        }
+
+        document.addEventListener('mousedown', handlePointerDown)
+        return () => document.removeEventListener('mousedown', handlePointerDown)
+    }, [])
+
+    const selectedLabel = options.find((opt) => opt.value === value)?.label || options[0]?.label || 'Select'
+
+    return (
+        <div ref={rootRef} className="relative w-full">
+            <button
+                type="button"
+                onClick={() => setOpen((prev) => !prev)}
+                className={cn(
+                    'w-full rounded-xl border border-white/10 bg-[#0f1012] px-3 py-2 text-left text-sm text-white transition-all hover:border-emerald-500/40 focus:outline-none focus:border-emerald-500/70 flex items-center justify-between gap-2',
+                    className
+                )}
+            >
+                <span className="truncate">{selectedLabel}</span>
+                <span className={cn('text-xs text-gray-400 transition-transform', open && 'rotate-180')}>v</span>
+            </button>
+
+            {open && (
+                <div className="absolute z-40 mt-1 w-full overflow-hidden rounded-xl border border-white/10 bg-[#0b0b0d] shadow-2xl">
+                    <div className="max-h-56 overflow-y-auto py-1">
+                        {options.map((option) => (
+                            <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => {
+                                    onChange(option.value)
+                                    setOpen(false)
+                                }}
+                                className={cn(
+                                    'w-full px-3 py-2 text-left text-sm transition-colors',
+                                    value === option.value
+                                        ? 'bg-emerald-500/15 text-emerald-300'
+                                        : 'text-gray-200 hover:bg-white/10'
+                                )}
+                            >
+                                {option.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}
+
 export default function UserManagementPage() {
     const { userData, adminCache, updateAdminCache } = useApp()
+    const FILTER_DEBOUNCE_MS = 300
     const [users, setUsers] = useState<UserData[]>(adminCache.users || [])
     const [selectedIds, setSelectedIds] = useState<string[]>([])
     const [loading, setLoading] = useState(!adminCache.users)
     const [searchQuery, setSearchQuery] = useState('')
-    const [updatingField, setUpdatingField] = useState<string | null>(null)
     const [isUpdating, setIsUpdating] = useState<string | null>(null)
-    const [visibleCount, setVisibleCount] = useState(20)
     const [totalPaidCount, setTotalPaidCount] = useState<number | null>(adminCache.totalVerifiedPayments || null)
     const [loadingTotal, setLoadingTotal] = useState(false)
     const [hasMore, setHasMore] = useState(false)
     const [totalUsersCount, setTotalUsersCount] = useState(adminCache.totalUsersCount || 0)
+    const [currentUsersCount, setCurrentUsersCount] = useState(adminCache.totalUsersCount || 0)
     const [paidUsersCount, setPaidUsersCount] = useState(adminCache.paidUsersCount || 0)
     const [unpaidUsersCount, setUnpaidUsersCount] = useState(adminCache.unpaidUsersCount || 0)
     const [internalUsersCount, setInternalUsersCount] = useState(adminCache.internalUsersCount || 0)
@@ -69,48 +144,108 @@ export default function UserManagementPage() {
             setSelectedIds(filteredUsers.map(u => u.id))
         }
     }
-    const [paymentFilter, setPaymentFilter] = useState<'all' | 'paid' | 'unpaid' | 'internal' | 'external'>('all')
+    const [paymentFilter, setPaymentFilter] = useState<'all' | 'paid' | 'unpaid'>('all')
+    const [studentTypeFilter, setStudentTypeFilter] = useState<'all' | 'internal' | 'external'>('all')
+
+    const isDefaultView = () => (
+        searchQuery.trim().length === 0 &&
+        paymentFilter === 'all' &&
+        studentTypeFilter === 'all'
+    )
 
     const fetchUsers = async (isLoadMore = false) => {
+        const requestId = latestRequestIdRef.current + 1
+        latestRequestIdRef.current = requestId
+
+        if (!isLoadMore && activeFetchController.current) {
+            activeFetchController.current.abort()
+        }
+
+        const controller = new AbortController()
+        if (!isLoadMore) {
+            activeFetchController.current = controller
+        }
+
         try {
             setLoading(true)
             const token = await getAuthToken()
 
             const currentLastId = isLoadMore ? lastId : '';
-            const res = await fetch(`/api/admin/all-users?search=${searchQuery}&lastId=${currentLastId}&limit=20&status=${paymentFilter}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+            const skipCountsParam = isLoadMore ? '&skipCounts=1' : '';
+            const res = await fetch(`/api/admin/all-users?search=${encodeURIComponent(searchQuery)}&lastId=${currentLastId}&limit=20&paymentStatus=${paymentFilter}&studentType=${studentTypeFilter}${skipCountsParam}`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+                signal: controller.signal,
             })
             const data = await res.json()
+
+            if (requestId !== latestRequestIdRef.current) {
+                return
+            }
+
             if (res.ok) {
                 const newUsers = isLoadMore ? [...users, ...data.users] : data.users;
+                const shouldPersistDefaultView = !isLoadMore && isDefaultView();
+
                 setUsers(newUsers)
                 setHasMore(data.hasMore)
                 setLastId(data.lastId)
-                setTotalUsersCount(data.totalCount)
-                setPaidUsersCount(data.paidCount)
-                setUnpaidUsersCount(data.unpaidCount)
-                setInternalUsersCount(data.internalCount)
-                setExternalUsersCount(data.externalCount)
-                updateAdminCache('users', newUsers)
-                updateAdminCache('totalUsersCount', data.totalCount)
-                updateAdminCache('paidUsersCount', data.paidCount)
-                updateAdminCache('unpaidUsersCount', data.unpaidCount)
-                updateAdminCache('internalUsersCount', data.internalCount)
-                updateAdminCache('externalUsersCount', data.externalCount)
 
-                // Refresh global stats too
-                const sRes = await fetch(`/api/admin/stats?_t=${Date.now()}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (sRes.ok) {
-                    const sData = await sRes.json();
-                    updateAdminCache('stats', sData.stats);
+                if (shouldPersistDefaultView) {
+                    updateAdminCache('users', newUsers)
+                }
+
+                if (typeof data.totalCount === 'number') {
+                    setTotalUsersCount(data.totalCount)
+
+                    if (shouldPersistDefaultView) {
+                        updateAdminCache('totalUsersCount', data.totalCount)
+                    }
+                }
+
+                if (typeof data.currentCount === 'number') {
+                    setCurrentUsersCount(data.currentCount)
+                } else if (!isLoadMore && typeof data.totalCount === 'number') {
+                    setCurrentUsersCount(data.totalCount)
+                }
+
+                if (typeof data.paidCount === 'number') {
+                    setPaidUsersCount(data.paidCount)
+
+                    if (shouldPersistDefaultView) {
+                        updateAdminCache('paidUsersCount', data.paidCount)
+                    }
+                }
+                if (typeof data.unpaidCount === 'number') {
+                    setUnpaidUsersCount(data.unpaidCount)
+
+                    if (shouldPersistDefaultView) {
+                        updateAdminCache('unpaidUsersCount', data.unpaidCount)
+                    }
+                }
+                if (typeof data.internalCount === 'number') {
+                    setInternalUsersCount(data.internalCount)
+
+                    if (shouldPersistDefaultView) {
+                        updateAdminCache('internalUsersCount', data.internalCount)
+                    }
+                }
+                if (typeof data.externalCount === 'number') {
+                    setExternalUsersCount(data.externalCount)
+
+                    if (shouldPersistDefaultView) {
+                        updateAdminCache('externalUsersCount', data.externalCount)
+                    }
                 }
             }
-        } catch (error) {
+        } catch (error: unknown) {
+            if (error instanceof DOMException && error.name === 'AbortError') {
+                return
+            }
             console.error("Failed to fetch users:", error)
         } finally {
-            setLoading(false)
+            if (requestId === latestRequestIdRef.current) {
+                setLoading(false)
+            }
         }
     }
 
@@ -133,28 +268,61 @@ export default function UserManagementPage() {
         }
     }
 
-    const isInitialMount = useRef(true)
+    const isFirstMountFilter = useRef(true)
+    const isFirstMountSearch = useRef(true)
+    const isFirstFilterChange = useRef(true)
+    const activeFetchController = useRef<AbortController | null>(null)
+    const latestRequestIdRef = useRef(0)
 
-    // Sync button is now the only trigger for fresh directory data
-    // Fetch on filter change
+    // Initial fetch only if no default cache.
     useEffect(() => {
-        // Skip initial fetch if cache is already present
-        if (isInitialMount.current && adminCache.users) {
-            isInitialMount.current = false;
+        if (isFirstMountFilter.current) {
+            isFirstMountFilter.current = false;
+
+            const cachedHasTrackedRole = Array.isArray(adminCache.users)
+                && adminCache.users.some((u: any) => {
+                    const normalizedRole = (u?.role || '').toUpperCase()
+                    return normalizedRole.length > 0 && normalizedRole !== 'USER'
+                })
+
+            if (!adminCache.users || adminCache.users.length === 0 || cachedHasTrackedRole) {
+                fetchUsers(false)
+            }
+        }
+    }, [])
+
+    useEffect(() => {
+        if (isFirstFilterChange.current) {
+            isFirstFilterChange.current = false;
             return;
         }
-        fetchUsers(false)
-        isInitialMount.current = false;
-    }, [paymentFilter])
+
+        setLastId(null)
+        const timer = setTimeout(() => {
+            fetchUsers(false)
+        }, FILTER_DEBOUNCE_MS)
+
+        return () => clearTimeout(timer)
+    }, [paymentFilter, studentTypeFilter])
 
     // Fetch on search with debounce
     useEffect(() => {
-        if (isInitialMount.current) return;
+        if (isFirstMountSearch.current) {
+            isFirstMountSearch.current = false;
+            return;
+        }
         const timer = setTimeout(() => {
+            setLastId(null)
             fetchUsers(false)
         }, 500)
         return () => clearTimeout(timer)
     }, [searchQuery])
+
+    useEffect(() => {
+        return () => {
+            activeFetchController.current?.abort()
+        }
+    }, [])
 
 
 
@@ -171,7 +339,13 @@ export default function UserManagementPage() {
                 body: JSON.stringify({ userId, updates: { [field]: value } })
             })
             if (res.ok) {
-                setUsers(users.map(u => u.id === userId ? { ...u, [field]: value } : u))
+                setUsers(prev => {
+                    const newUsers = prev.map(u => u.id === userId ? { ...u, [field]: value } : u);
+                    if (isDefaultView()) {
+                        updateAdminCache('users', newUsers);
+                    }
+                    return newUsers;
+                })
             }
         } catch (error) {
             console.error(`Update ${field} failed:`, error)
@@ -196,7 +370,13 @@ export default function UserManagementPage() {
                 body: JSON.stringify({ userId })
             })
             if (res.ok) {
-                setUsers(users.filter(u => u.id !== userId))
+                setUsers(prev => {
+                    const newUsers = prev.filter(u => u.id !== userId);
+                    if (isDefaultView()) {
+                        updateAdminCache('users', newUsers);
+                    }
+                    return newUsers;
+                })
             } else {
                 const data = await res.json()
                 alert(data.message || "Failed to delete user")
@@ -224,7 +404,13 @@ export default function UserManagementPage() {
                 body: JSON.stringify({ userIds: selectedIds })
             })
             if (res.ok) {
-                setUsers(prev => prev.filter(u => !selectedIds.includes(u.id)))
+                setUsers(prev => {
+                    const newUsers = prev.filter(u => !selectedIds.includes(u.id));
+                    if (isDefaultView()) {
+                        updateAdminCache('users', newUsers);
+                    }
+                    return newUsers;
+                })
                 setSelectedIds([])
             } else {
                 const data = await res.json()
@@ -238,9 +424,22 @@ export default function UserManagementPage() {
     }
 
     const filteredUsers = users.filter(u => {
-        if (u.role === 'SUPER_ADMIN') return false;
-        return true;
+        const normalizedRole = (u.role || '').toUpperCase()
+        if (normalizedRole.length > 0 && normalizedRole !== 'USER') return false
+        return true
     })
+
+    const paymentOptions: FilterOption[] = [
+        { value: 'all', label: `All Payment States (${totalUsersCount})` },
+        { value: 'paid', label: `Paid (${paidUsersCount})` },
+        { value: 'unpaid', label: `Unpaid (${unpaidUsersCount})` },
+    ]
+
+    const studentTypeOptions: FilterOption[] = [
+        { value: 'all', label: `All Student Types (${totalUsersCount})` },
+        { value: 'internal', label: `Internal (${internalUsersCount})` },
+        { value: 'external', label: `External (${externalUsersCount})` },
+    ]
 
     return (
         <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'FINANCE']}>
@@ -252,11 +451,12 @@ export default function UserManagementPage() {
                         </h1>
                         <p className="text-gray-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
                             <Fingerprint size={14} className="text-emerald-500/50" />
-                            {paymentFilter === 'all' && `${totalUsersCount} registered users`}
-                            {paymentFilter === 'paid' && `${paidUsersCount} verified paid`}
-                            {paymentFilter === 'unpaid' && `${unpaidUsersCount} pending`}
-                            {paymentFilter === 'internal' && `Internal SODE students`}
-                            {paymentFilter === 'external' && `External participants`}
+                            {paymentFilter === 'all' && studentTypeFilter === 'all' && `${totalUsersCount} registered users`}
+                            {paymentFilter === 'paid' && studentTypeFilter === 'all' && `${paidUsersCount} verified paid`}
+                            {paymentFilter === 'unpaid' && studentTypeFilter === 'all' && `${unpaidUsersCount} pending`}
+                            {paymentFilter === 'all' && studentTypeFilter === 'internal' && `${internalUsersCount} internal SODE students`}
+                            {paymentFilter === 'all' && studentTypeFilter === 'external' && `${externalUsersCount} external participants`}
+                            {paymentFilter !== 'all' && studentTypeFilter !== 'all' && `${currentUsersCount} ${paymentFilter} ${studentTypeFilter} users`}
                         </p>
                     </div>
 
@@ -306,7 +506,12 @@ export default function UserManagementPage() {
                             </button>
 
                             {userData?.role === 'SUPER_ADMIN' && (
-                                <button onClick={() => fetchAndDownload('users', `Users_${paymentFilter}`, getAuthToken, { status: paymentFilter })}
+                                <button
+                                    onClick={() => fetchAndDownload('users', `Users_${paymentFilter}_${studentTypeFilter}`, getAuthToken, {
+                                        status: paymentFilter !== 'all' ? paymentFilter : (studentTypeFilter !== 'all' ? studentTypeFilter : 'all'),
+                                        paymentStatus: paymentFilter,
+                                        studentType: studentTypeFilter,
+                                    })}
                                     className="bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/50 text-emerald-500 px-3 py-2 rounded-xl transition-all group flex items-center gap-2 h-10 shadow-xl"
                                 >
                                     <FileSpreadsheet size={16} className="transition-transform group-hover:scale-110" />
@@ -330,27 +535,26 @@ export default function UserManagementPage() {
                         />
                     </div>
 
-                    <div className="flex bg-[#111] p-1 rounded-2xl border border-white/5 h-12 items-center overflow-x-auto">
-                        {[
-                            { key: 'all', label: 'All', count: totalUsersCount, color: 'white' },
-                            { key: 'paid', label: 'Paid', count: paidUsersCount, color: 'emerald' },
-                            { key: 'unpaid', label: 'Unpaid', count: null, color: 'red' },
-                            { key: 'internal', label: 'Int', count: internalUsersCount, color: 'blue' },
-                            { key: 'external', label: 'Ext', count: externalUsersCount, color: 'purple' },
-                        ].map(({ key, label, count, color }) => (
-                            <button key={key}
-                                onClick={() => setPaymentFilter(key as any)}
-                                className={cn(
-                                    "flex-shrink-0 px-3 h-full rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap flex items-center justify-center gap-1.5",
-                                    paymentFilter === key
-                                        ? `bg-${color}-500/10 text-${color}-${color === 'white' ? '200' : '400'} shadow-lg`
-                                        : 'text-gray-500 hover:text-gray-300'
-                                )}
-                            >
-                                {label}
-                                {count !== null && <span className="text-[9px] opacity-70">{count}</span>}
-                            </button>
-                        ))}
+                    <div className="grid w-full sm:w-auto grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="flex items-center gap-2 bg-[#111] border border-white/10 rounded-2xl px-3 h-12 min-w-55">
+                            <CreditCard size={14} className="text-emerald-500/70 shrink-0" />
+                            <DarkFilterSelect
+                                value={paymentFilter}
+                                options={paymentOptions}
+                                onChange={(next) => setPaymentFilter(next as 'all' | 'paid' | 'unpaid')}
+                                className="border-none bg-transparent px-0 py-0 text-xs font-bold uppercase tracking-wider hover:border-transparent focus:border-transparent"
+                            />
+                        </div>
+
+                        <div className="flex items-center gap-2 bg-[#111] border border-white/10 rounded-2xl px-3 h-12 min-w-55">
+                            <Building2 size={14} className="text-blue-400/70 shrink-0" />
+                            <DarkFilterSelect
+                                value={studentTypeFilter}
+                                options={studentTypeOptions}
+                                onChange={(next) => setStudentTypeFilter(next as 'all' | 'internal' | 'external')}
+                                className="border-none bg-transparent px-0 py-0 text-xs font-bold uppercase tracking-wider hover:border-transparent focus:border-transparent"
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -372,7 +576,7 @@ export default function UserManagementPage() {
                         )}>
                             <div className="flex items-start justify-between gap-2">
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-full bg-white/5 border ${u.isBlocked ? 'border-red-500/50' : 'border-white/10'} flex items-center justify-center ${u.isBlocked ? 'text-red-500' : 'text-emerald-500'} font-bold flex-shrink-0`}>
+                                    <div className={`w-10 h-10 rounded-full bg-white/5 border ${u.isBlocked ? 'border-red-500/50' : 'border-white/10'} flex items-center justify-center ${u.isBlocked ? 'text-red-500' : 'text-emerald-500'} font-bold shrink-0`}>
                                         {u.isBlocked ? <Shield size={16} /> : (u.name?.[0]?.toUpperCase() || 'U')}
                                     </div>
                                     <div className="min-w-0">
@@ -383,8 +587,8 @@ export default function UserManagementPage() {
                                         <p className="text-xs text-gray-500 truncate">{u.email}</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-1.5 flex-shrink-0">
-                                    <span className={`h-2 w-2 rounded-full flex-shrink-0 ${u.hasPaid ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                    <span className={`h-2 w-2 rounded-full shrink-0 ${u.hasPaid ? 'bg-emerald-500' : 'bg-red-500'}`} />
                                     <span className={cn(
                                         "px-2 py-0.5 rounded-full text-[9px] font-black uppercase border",
                                         u.studentType === 'internal'
@@ -461,7 +665,7 @@ export default function UserManagementPage() {
                                         />
                                     </th>
                                     <th className="px-6 py-4">User Details</th>
-                                    <th className="px-6 py-4">USN / College</th>
+                                    <th className="px-6 py-4">USN</th>
                                     <th className="px-6 py-4">Account Status</th>
                                     <th className="px-6 py-4">Registration</th>
                                     <th className="px-6 py-4 text-right">Actions</th>
@@ -526,12 +730,6 @@ export default function UserManagementPage() {
                                             <div className="space-y-1">
                                                 <p className="text-xs text-white flex items-center gap-1 font-mono font-bold uppercase tracking-tight">
                                                     <Fingerprint size={12} className="text-gray-500" /> {u.usn || 'N/A'}
-                                                </p>
-                                                <p className={cn(
-                                                    "text-[10px] flex items-center gap-1 font-medium",
-                                                    u.studentType === 'internal' ? "text-emerald-500" : "text-gray-500"
-                                                )}>
-                                                    <Building2 size={10} /> {u.college || 'Outside College'}
                                                 </p>
                                             </div>
                                         </td>
@@ -637,7 +835,7 @@ export default function UserManagementPage() {
                                 disabled={loading}
                                 className="px-8 py-2.5 bg-white/5 hover:bg-white/10 text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-all border border-white/10 hover:border-emerald-500/50 disabled:opacity-50"
                             >
-                                {loading ? <Loader2 className="animate-spin text-emerald-500" size={16} /> : `Show More Users (${(paymentFilter === 'paid' ? paidUsersCount : paymentFilter === 'unpaid' ? unpaidUsersCount : totalUsersCount) - users.length} remaining)`}
+                                {loading ? <Loader2 className="animate-spin text-emerald-500" size={16} /> : `Show More Users (${Math.max(0, currentUsersCount - users.length)} remaining)`}
                             </button>
                         </div>
                     )}

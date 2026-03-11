@@ -6,7 +6,7 @@ import Tilt from 'react-parallax-tilt'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { CheckCircle2, UserPlus, Loader2, MessageCircle } from 'lucide-react'
-import { Event, missions } from '@/data/missions'
+import { Event, missions, isRegClosed } from '@/data/missions'
 
 export interface ThemeConfig {
     primary: string
@@ -32,6 +32,7 @@ interface EventCardProps {
     isRegistered?: boolean
     isLoggedIn?: boolean
     hasPaid?: boolean
+    isInternal?: boolean
     onRegister: (event: Event) => void
     className?: string
     priority?: boolean
@@ -47,6 +48,7 @@ export const MissionCard = memo(({
     isRegistered,
     isLoggedIn = false,
     hasPaid = false,
+    isInternal = false,
     onRegister,
     className = "",
     priority = false
@@ -54,6 +56,7 @@ export const MissionCard = memo(({
     const router = useRouter()
     const [isMobile, setIsMobile] = React.useState(false)
     const [isNavigating, setIsNavigating] = React.useState(false)
+    const isRegClosedFlag = isRegClosed(event)
 
     React.useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768)
@@ -318,21 +321,25 @@ export const MissionCard = memo(({
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
+                                if (isRegClosedFlag && !isRegistered && isLoggedIn) return;
+                                if (event.id === "TECH-002" && isInternal && !isRegistered && isLoggedIn) return;
                                 if (!isLoggedIn) {
                                     router.push('/login');
-                                } else if (!hasPaid) {
-                                    router.push('/notify');
                                 } else if (isRegistered && event.whatsappLink) {
                                     window.open(event.whatsappLink, '_blank');
+                                } else if (isRegistered) {
+                                    onRegister(event);
+                                } else if (!hasPaid) {
+                                    router.push('/notify');
                                 } else {
                                     onRegister(event);
                                 }
                             }}
-                            className={`relative py-4 md:py-3 text-xs font-black uppercase tracking-widest transition-all duration-300 overflow-hidden group/btn border-2 ${event.type === 'Cultural' ? 'border-amber-500 bg-amber-500 text-black' : event.type === 'Business' ? 'border-sky-500 bg-sky-500 text-white' : 'border-emerald-500 bg-emerald-500 text-black'} shadow-[0_0_20px_rgba(0,0,0,0.4)] active:scale-95 flex items-center justify-center gap-2 touch-manipulation min-h-[48px]`}
-                            style={{ clipPath: 'polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px)' }}
+                            className={`relative py-4 md:py-3 text-xs font-black uppercase tracking-widest transition-all duration-300 overflow-hidden group/btn border-2 ${(isRegClosedFlag && !isRegistered && isLoggedIn) || (event.id === "TECH-002" && isInternal && !isRegistered && isLoggedIn) ? 'border-red-500 bg-red-500/20 text-red-500 cursor-not-allowed' : (event.type === 'Cultural' ? 'border-amber-500 bg-amber-500 text-black' : event.type === 'Business' ? 'border-sky-500 bg-sky-500 text-white' : 'border-emerald-500 bg-emerald-500 text-black')} shadow-[0_0_20px_rgba(0,0,0,0.4)] active:scale-95 flex items-center justify-center gap-2 touch-manipulation min-h-[48px]`}
+                            disabled={(isRegClosedFlag && !isRegistered && isLoggedIn) || (event.id === "TECH-002" && isInternal && !isRegistered && isLoggedIn)}
                         >
                             {isRegistered && event.whatsappLink ? <MessageCircle className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-                            {!isLoggedIn ? 'LOGIN' : (!hasPaid ? 'PAY FOR PASS' : (isRegistered ? (event.whatsappLink ? 'WHATSAPP' : 'REGISTERED') : 'REGISTER'))}
+                            {!isLoggedIn ? 'LOGIN' : (isRegClosedFlag && !isRegistered ? 'CLOSED' : (event.id === "TECH-002" && isInternal && !isRegistered ? 'FOR EXTERNAL' : (isRegistered ? (event.whatsappLink ? 'WHATSAPP' : 'REGISTERED') : (!hasPaid ? 'PAY FOR PASS' : 'REGISTER'))))}
                         </button>
                         <button onClick={(e) => { e.stopPropagation(); router.push(`/events/${event.id}`); }} className={`relative py-4 md:py-3 text-xs font-black uppercase tracking-widest transition-all duration-300 overflow-hidden group/btn border-2 ${event.type === 'Cultural' ? 'border-amber-500 text-amber-500' : event.type === 'Business' ? 'border-sky-500 text-sky-500' : 'border-emerald-500 text-emerald-500'} bg-black/40 active:scale-95 flex items-center justify-center gap-2 touch-manipulation min-h-[48px]`} style={{ clipPath: 'polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px)' }}>
                             DETAILS

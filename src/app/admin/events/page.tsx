@@ -22,7 +22,8 @@ import {
     Users,
     User,
     RefreshCcw,
-    FileSpreadsheet
+    FileSpreadsheet,
+    FileText
 } from 'lucide-react'
 import { fetchAndDownload } from '@/lib/exportUtils'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -37,6 +38,7 @@ interface AdminEvent {
     category?: string;
     date: string;
     time?: string;
+    location?: string;
     coordinators?: string[]; // IDs
     registrationStatus?: 'open' | 'closed' | 'full';
     fee?: number;
@@ -81,30 +83,45 @@ export default function EventManagementPage() {
 
     const isSuperAdmin = userData?.role === 'SUPER_ADMIN'
 
-    const fetchEvents = async () => {
+    const fetchStats = async (force = false) => {
         try {
             const token = await getAuthToken()
-            const res = await fetch('/api/admin/events', {
+            const url = force ? '/api/admin/stats?force=1' : '/api/admin/stats'
+            const sRes = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
-            const data = await res.json()
+            const sData = await sRes.json()
+            if (sRes.ok && sData?.stats) {
+                setStats(sData.stats)
+                updateAdminCache('stats', sData.stats)
+            }
+        } catch (error) {
+            console.error("Failed to fetch stats:", error)
+        }
+    }
+
+    const fetchEvents = async () => {
+        setLoading(true)
+        try {
+            const token = await getAuthToken()
+            // ONE-STOP SHOP: Fetch stats AND events in a single live database read request
+            const res = await fetch(`/api/admin/stats?includeEvents=true&refresh=true&_t=${Date.now()}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
             if (res.ok) {
-                setEvents(data.events)
-                // Clear map on full sync + update events
-                updateAdminCache('events', data.events)
-                updateAdminCache('eventRegMap', {})
-                // Also trigger a stats refresh
-                const sRes = await fetch('/api/admin/stats', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const sData = await sRes.json();
-                if (sRes.ok) {
-                    setStats(sData.stats);
-                    updateAdminCache('stats', sData.stats);
+                if (data.stats) {
+                    setStats(data.stats);
+                    updateAdminCache('stats', data.stats);
+                }
+                if (data.events) {
+                    setEvents(data.events);
+                    updateAdminCache('events', data.events);
+                    updateAdminCache('eventRegMap', {});
                 }
             }
         } catch (error) {
-            console.error("Failed to fetch events:", error)
+            console.error("Failed to fetch dashboard data:", error)
         } finally {
             setLoading(false)
         }
@@ -156,20 +173,8 @@ export default function EventManagementPage() {
         if (isInitialMount.current) {
             if (!adminCache.events || adminCache.events.length === 0) {
                 fetchEvents()
-            } else {
-                // If we have events but maybe not stats, fetch stats anyway to be fresh
-                const tokenPromise = getAuthToken()
-                tokenPromise.then(token => {
-                    fetch('/api/admin/stats', { headers: { 'Authorization': `Bearer ${token}` } })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.stats) {
-                                setStats(data.stats);
-                                updateAdminCache('stats', data.stats);
-                            }
-                        })
-                })
             }
+            fetchStats(false)
             if (!adminCache.staff || adminCache.staff.length === 0) {
                 fetchStaff()
             }
@@ -261,13 +266,11 @@ export default function EventManagementPage() {
     const [eventRegsLastId, setEventRegsLastId] = useState<string | null>(null)
     const [loadingRegs, setLoadingRegs] = useState(false)
     const [eventSearchQuery, setEventSearchQuery] = useState('')
+    const lastEventModalSearchRef = useRef<string>('')
 
     const fetchEventRegistrations = async (eventId: string, searchInput?: string, forceRefresh: boolean = false, isLoadMore: boolean = false) => {
-        console.log(`[Frontend] Fetching registrations for: ${eventId}, Search: ${searchInput}, LoadMore: ${isLoadMore}`);
-
         // Cache Check (only for initial load, not load-more)
         if (!forceRefresh && !searchInput && !isLoadMore && adminCache.eventRegMap?.[eventId]) {
-            console.log(`[Frontend] Using cached registrations for: ${eventId}`);
             const cached = adminCache.eventRegMap[eventId] as any;
             const cachedRegs = cached.regs || cached;
             setEventRegs(Array.isArray(cachedRegs) ? cachedRegs : []);
@@ -281,9 +284,10 @@ export default function EventManagementPage() {
         try {
             const token = await getAuthToken()
             const currentLastId = isLoadMore ? eventRegsLastId : '';
-            let url = `/api/admin/registrations?eventId=${eventId}&limit=50&_t=${Date.now()}`
+            let url = `/api/admin/registrations?eventId=${eventId}&limit=50`
             if (currentLastId) url += `&lastId=${currentLastId}`
             if (searchInput) url += `&search=${encodeURIComponent(searchInput)}`
+            if (isLoadMore) url += `&skipCounts=1`
 
             const res = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}`, 'Cache-Control': 'no-cache' }
@@ -291,18 +295,27 @@ export default function EventManagementPage() {
             const data = await res.json()
             if (res.ok) {
                 const newRegs = isLoadMore ? [...eventRegs, ...data.registrations] : data.registrations;
-                console.log(`[Frontend] Total: ${data.totalCount}, Fetched: ${data.registrations.length}, HasMore: ${data.hasMore}`);
+                lastEventModalSearchRef.current = searchInput || ''
                 setEventRegs(newRegs)
-                setEventRegsTotalCount(data.totalCount || newRegs.length)
+                if (typeof data.totalCount === 'number') {
+                    setEventRegsTotalCount(data.totalCount)
+                } else if (!isLoadMore) {
+                    setEventRegsTotalCount(newRegs.length)
+                }
                 setEventRegsHasMore(data.hasMore || false)
                 setEventRegsLastId(data.lastId || null)
 
                 // Update Cache if not a search
                 if (!searchInput) {
-                    const currentMap = adminCache.eventRegMap || {};
+                    const currentMap = (adminCache.eventRegMap || {}) as Record<string, any>;
                     updateAdminCache('eventRegMap', {
                         ...currentMap,
-                        [eventId]: { regs: newRegs, totalCount: data.totalCount, hasMore: data.hasMore, lastId: data.lastId }
+                        [eventId]: {
+                            regs: newRegs,
+                            totalCount: typeof data.totalCount === 'number' ? data.totalCount : (currentMap[eventId]?.totalCount || newRegs.length),
+                            hasMore: data.hasMore,
+                            lastId: data.lastId
+                        }
                     });
                 }
             }
@@ -316,8 +329,11 @@ export default function EventManagementPage() {
     // Debounced search for event participant modal
     useEffect(() => {
         if (showRegistrations && selectedEventForReg) {
+            const normalizedSearch = eventSearchQuery.trim()
+            if (lastEventModalSearchRef.current === normalizedSearch) return
+
             const timer = setTimeout(() => {
-                fetchEventRegistrations(selectedEventForReg.id, eventSearchQuery)
+                fetchEventRegistrations(selectedEventForReg.id, normalizedSearch)
             }, 500)
             return () => clearTimeout(timer)
         }
@@ -326,6 +342,8 @@ export default function EventManagementPage() {
     const handleViewRegistrations = (event: AdminEvent) => {
         setSelectedEventForReg(event)
         setShowRegistrations(true)
+        setEventSearchQuery('')
+        lastEventModalSearchRef.current = ''
         setEventRegs([])
         setEventRegsTotalCount(0)
         setEventRegsHasMore(false)
@@ -378,6 +396,7 @@ export default function EventManagementPage() {
                                 setLoading(true)
                                 fetchEvents()
                                 fetchStaff()
+                                fetchStats(true)
                             }}
                             className="bg-[#111] border border-white/10 hover:border-emerald-500/50 text-white px-5 py-2.5 rounded-xl transition-all group flex items-center gap-3 shadow-xl h-11"
                         >
@@ -416,16 +435,19 @@ export default function EventManagementPage() {
 
                                 <div className="space-y-6">
                                     {['technical', 'cultural'].map(cat => {
-                                        const catData = stats.categoryBreakdown?.[cat] || { totalParticipants: 0, internal: 0, external: 0 };
-                                        const total = catData.totalParticipants || 1;
-                                        const intPer = (catData.internal / total) * 100;
-                                        const extPer = (catData.external / total) * 100;
+                                        const catData = stats.categoryBreakdown?.[cat] || { totalTeams: 0, internalTeams: 0, externalTeams: 0, totalParticipants: 0, internal: 0, external: 0 };
+                                        const total = catData.totalTeams || 1;
+                                        const intPer = (catData.internalTeams / total) * 100;
+                                        const extPer = (catData.externalTeams / total) * 100;
 
                                         return (
                                             <div key={cat} className="space-y-2">
                                                 <div className="flex justify-between items-end">
                                                     <span className="text-xs font-black uppercase text-white italic">{cat}</span>
-                                                    <span className="text-[10px] font-bold text-gray-400">{catData.totalParticipants} People</span>
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-[10px] font-black text-emerald-500">{catData.totalTeams} Squads</span>
+                                                        <span className="text-[9px] font-bold text-gray-500">{catData.totalParticipants} People</span>
+                                                    </div>
                                                 </div>
                                                 <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden flex">
                                                     <motion.div
@@ -440,8 +462,8 @@ export default function EventManagementPage() {
                                                     />
                                                 </div>
                                                 <div className="flex justify-between text-[8px] font-black uppercase tracking-widest">
-                                                    <span className="text-emerald-500">Internal {Math.round(intPer)}%</span>
-                                                    <span className="text-blue-500">External {Math.round(extPer)}%</span>
+                                                    <span className="text-emerald-500">Internal {catData.internalTeams}</span>
+                                                    <span className="text-blue-500">External {catData.externalTeams}</span>
                                                 </div>
                                             </div>
                                         );
@@ -489,26 +511,37 @@ export default function EventManagementPage() {
 
                             {/* College Distribution */}
                             <div className="bg-[#111] border border-white/5 rounded-3xl p-6 flex flex-col gap-4">
-                                <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
-                                    <div className="w-1 h-1 rounded-full bg-amber-500" /> Geographic Spread
+                                <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1 h-1 rounded-full bg-amber-500" /> Geographic Spread
+                                    </div>
+                                    <span className="text-amber-500/50">{stats.totalColleges || 0} Colleges</span>
                                 </h3>
 
                                 <div className="space-y-3 overflow-y-auto max-h-40 no-scrollbar pr-2 custom-scrollbar">
-                                    {(stats.collegeDistribution || []).map((col: any, i: number) => (
-                                        <div key={i} className="space-y-1">
-                                            <div className="flex justify-between items-center text-[10px]">
-                                                <span className="font-bold text-white truncate max-w-[150px]">{col.name}</span>
-                                                <span className="font-black text-amber-500">{col.count}</span>
+                                    {(stats.collegeDistribution || []).map((col: any, i: number) => {
+                                        const registrations = Number(col?.registrations ?? col?.count ?? 0)
+                                        const participants = Number(col?.participants ?? col?.count ?? 0)
+
+                                        return (
+                                            <div key={i} className="space-y-1 group/item">
+                                                <div className="flex justify-between items-center text-[10px]">
+                                                    <span className="font-bold text-white truncate max-w-[150px] group-hover/item:text-amber-400 transition-colors">{col.name}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-black text-amber-500">{registrations} <span className="text-[8px] text-gray-600 font-bold uppercase">Squads</span></span>
+                                                        <span className="text-[8px] text-gray-500 font-bold">/ {participants} P</span>
+                                                    </div>
+                                                </div>
+                                                <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                                                    <motion.div
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${(registrations / (stats.totalRegistrations || 1)) * 100}%` }}
+                                                        className="h-full bg-amber-500/50"
+                                                    />
+                                                </div>
                                             </div>
-                                            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                                                <motion.div
-                                                    initial={{ width: 0 }}
-                                                    animate={{ width: `${(col.count / (stats.totalParticipants || 1)) * 100}%` }}
-                                                    className="h-full bg-amber-500/50"
-                                                />
-                                            </div>
-                                        </div>
-                                    ))}
+                                        )
+                                    })}
                                     {(!stats.collegeDistribution || stats.collegeDistribution.length === 0) && (
                                         <div className="text-center py-8 text-gray-600 italic text-[10px]">No geographic data synced</div>
                                     )}
@@ -609,21 +642,31 @@ export default function EventManagementPage() {
                                     </div>
                                     <h3 className="text-white font-black text-xl leading-tight group-hover:text-emerald-400 transition-colors uppercase italic mb-4">{event.title}</h3>
 
-                                    <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-1 gap-3">
                                         <div className="bg-white/2 p-2 rounded-xl border border-white/5">
-                                            <p className="text-[7px] text-gray-500 font-bold uppercase tracking-widest mb-1">Schedule</p>
-                                            <div className="flex items-center gap-1.5 text-[9px] text-gray-300 font-medium">
-                                                <Calendar size={10} className="text-emerald-500/50" />
-                                                {event.date || 'TBA'}
+                                            <p className="text-[7px] text-gray-500 font-bold uppercase tracking-widest mb-2">Schedule</p>
+                                            <div className="space-y-1.5">
+                                                <div className="flex items-center gap-1.5 text-[9px] text-gray-300 font-medium">
+                                                    <Calendar size={10} className="text-emerald-500/50" />
+                                                    {event.date || 'TBA'}
+                                                </div>
+                                                {event.time && (
+                                                    <div className="flex items-center gap-1.5 text-[9px] text-gray-300 font-medium">
+                                                        <span className="text-emerald-500/50">⏰</span>
+                                                        {event.time}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-                                        <div className="bg-white/2 p-2 rounded-xl border border-white/5">
-                                            <p className="text-[7px] text-gray-500 font-bold uppercase tracking-widest mb-1">Entry Fee</p>
-                                            <div className="flex items-center gap-1.5 text-[9px] text-emerald-400 font-black">
-                                                <Tag size={10} className="text-emerald-500/50" />
-                                                ₹{event.fee || 0}
+                                        {event.location && (
+                                            <div className="bg-white/2 p-2 rounded-xl border border-white/5">
+                                                <p className="text-[7px] text-gray-500 font-bold uppercase tracking-widest mb-1">Venue</p>
+                                                <div className="flex items-start gap-1.5 text-[9px] text-gray-300 font-medium">
+                                                    <span className="text-emerald-500/50 mt-0.5">📍</span>
+                                                    <span className="line-clamp-2">{event.location}</span>
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
                                     </div>
                                 </div>
 
@@ -757,6 +800,26 @@ export default function EventManagementPage() {
                                             />
                                         </div>
                                         <div className="space-y-2">
+                                            <label className="text-sm font-medium text-gray-400">Time</label>
+                                            <input
+                                                type="text"
+                                                value={formData.time}
+                                                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-emerald-500/50"
+                                                placeholder="10:30 AM"
+                                            />
+                                        </div>
+                                        <div className="space-y-2 md:col-span-2">
+                                            <label className="text-sm font-medium text-gray-400">Location/Venue</label>
+                                            <input
+                                                type="text"
+                                                value={formData.location}
+                                                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-emerald-500/50"
+                                                placeholder="e.g., A206 Room or Open Air Auditorium"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
                                             <label className="text-sm font-medium text-gray-400">Status</label>
                                             <select
                                                 value={formData.registrationStatus}
@@ -852,15 +915,32 @@ export default function EventManagementPage() {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2 md:gap-4">
-                                        {userData?.role === 'SUPER_ADMIN' && (
-                                            <button
-                                                onClick={() => fetchAndDownload('registrations', `Roster_${selectedEventForReg.title}`, getAuthToken, { eventId: selectedEventForReg.id })}
-                                                className="p-2 md:px-4 md:py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 rounded-xl transition-all flex items-center gap-2 group"
-                                                title="Download Roster (Excel)"
-                                            >
-                                                <FileSpreadsheet size={18} className="transition-transform group-hover:scale-110" />
-                                                <span className="hidden md:inline text-xs font-bold uppercase tracking-widest">Export</span>
-                                            </button>
+                                        {(userData?.role === 'SUPER_ADMIN' || userData?.role === 'COORDINATOR') && (
+                                            <>
+                                                <button
+                                                    onClick={() => fetchAndDownload(
+                                                        'registrations',
+                                                        `Roster_${selectedEventForReg.title}`,
+                                                        getAuthToken,
+                                                        { eventId: selectedEventForReg.id },
+                                                        'word',
+                                                        { title: selectedEventForReg.title, date: selectedEventForReg.date, time: selectedEventForReg.time, location: selectedEventForReg.location }
+                                                    )}
+                                                    className="p-2 md:px-4 md:py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 rounded-xl transition-all flex items-center gap-2 group"
+                                                    title="Download Roster (Word)"
+                                                >
+                                                    <FileText size={18} className="transition-transform group-hover:scale-110" />
+                                                    <span className="hidden md:inline text-xs font-bold uppercase tracking-widest">Word</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => fetchAndDownload('registrations', `Data_${selectedEventForReg.title}`, getAuthToken, { eventId: selectedEventForReg.id }, 'excel')}
+                                                    className="p-2 md:px-4 md:py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 rounded-xl transition-all flex items-center gap-2 group"
+                                                    title="Download Data (Excel)"
+                                                >
+                                                    <FileSpreadsheet size={18} className="transition-transform group-hover:scale-110" />
+                                                    <span className="hidden md:inline text-xs font-bold uppercase tracking-widest">Excel</span>
+                                                </button>
+                                            </>
                                         )}
                                         <button
                                             onClick={() => fetchEventRegistrations(selectedEventForReg.id, '', true, false)}

@@ -1,0 +1,361 @@
+.sphere-root {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    --radius: 750px;
+    --viewer-pad: 60px;
+    --circ: calc(var(--radius) * 3.14);
+    --rot-y: calc(360deg / var(--segments-x));
+    --rot-x: calc(180deg / var(--segments-y));
+    --item-width: calc(var(--circ) / var(--segments-x));
+    --item-height: calc(var(--circ) / var(--segments-y));
+}
+
+.sphere-root * {
+    box-sizing: border-box;
+}
+
+.sphere,
+.item,
+.item__image {
+    transform-style: preserve-3d;
+}
+
+main.sphere-main {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    background: transparent;
+}
+
+.stage {
+    flex: 1;
+    width: 100%;
+    display: grid;
+    margin: auto;
+    perspective: calc(var(--radius) * 2);
+    perspective-origin: 50% 50%;
+    contain: layout paint size;
+    margin-top: 0;
+    /* Space for the header */
+}
+
+.sphere {
+    transform: translateZ(calc(var(--radius) * -1));
+    will-change: transform;
+}
+
+.overlay,
+.overlay--blur {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.overlay {
+    background-image: radial-gradient(rgba(16, 185, 129, 0) 65%, var(--overlay-blur-color, #020402) 100%);
+}
+
+.overlay--blur {
+    background: radial-gradient(circle at center,
+            transparent 15%,
+            rgba(2, 4, 2, 0.4) 40%,
+            var(--overlay-blur-color, #020402) 85%);
+    -webkit-mask-image: radial-gradient(rgba(16, 185, 129, 0) 70%, var(--overlay-blur-color, #020402) 90%);
+    mask-image: radial-gradient(rgba(16, 185, 129, 0) 70%, var(--overlay-blur-color, #020402) 90%);
+    backdrop-filter: blur(3px);
+}
+
+/* Holographic Emerald Glow */
+.sphere-main::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 150vw;
+    height: 150vh;
+    background: radial-gradient(circle at center, rgba(16, 185, 129, 0.12) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.item {
+    width: calc(var(--item-width) * var(--item-size-x));
+    height: calc(var(--item-height) * var(--item-size-y));
+    position: absolute;
+    top: -999px;
+    bottom: -999px;
+    left: -999px;
+    right: -999px;
+    margin: auto;
+    transform-origin: 50% 50%;
+    backface-visibility: hidden;
+
+    /* Assembly Animation Physics */
+    opacity: 0;
+    transition: transform 2000ms cubic-bezier(0.16, 1, 0.3, 1), opacity 1500ms ease;
+    transform:
+        rotateY(calc(var(--rot-y) * var(--offset-x) + var(--rot-y-delta, 0deg) + var(--entry-ry))) rotateX(calc(var(--rot-x) * var(--offset-y) + var(--rot-x-delta, 0deg) + var(--entry-rx))) translateZ(calc(var(--radius) + var(--entry-rz))) scale(var(--entry-scale));
+}
+
+.item[data-assembled='true'] {
+    opacity: 1;
+    transform:
+        rotateY(calc(var(--rot-y) * var(--offset-x) + var(--rot-y-delta, 0deg))) rotateX(calc(var(--rot-x) * var(--offset-y) + var(--rot-x-delta, 0deg))) translateZ(var(--radius)) scale(1);
+}
+
+@media (min-width: 768px) {
+    .item[data-assembled='true'] {
+        animation: floating-drift 20s infinite ease-in-out;
+        animation-delay: calc(var(--offset-x) * -200ms + var(--offset-y) * -300ms);
+    }
+}
+
+.item[data-assembled='true']:active,
+.item[data-assembled='true'][data-dragging='true'] {
+    transition: none !important;
+}
+
+.item__image {
+    position: absolute;
+    display: block;
+    inset: 10px;
+    /* Slightly more space */
+    border-radius: var(--tile-radius, 12px);
+    background: rgba(16, 185, 129, 0.05);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    overflow: hidden;
+    /* backface-visibility: visible; -- Enabled for 'Full Sphere' depth */
+    transition: all 400ms cubic-bezier(0.23, 1, 0.32, 1);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    pointer-events: auto;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    animation: holographic-flicker 8s infinite ease-in-out;
+    /* Glass Effect for depth */
+    backdrop-filter: blur(1px);
+    opacity: 0.9;
+}
+
+.item__image::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom,
+            transparent 0%,
+            rgba(16, 185, 129, 0.05) 50%,
+            transparent 100%);
+    background-size: 100% 200%;
+    animation: scanline 4s linear infinite;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+}
+
+.item__image:focus {
+    outline: none;
+}
+
+.item__image:hover {
+    border-color: rgba(16, 185, 129, 0.8);
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
+    z-index: 50;
+    transform: scale(1.05) translateZ(30px);
+}
+
+.item__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    /* backface-visibility: hidden; -- Let the holographic texture shine through */
+    filter: grayscale(0.2) contrast(1.1) brightness(1.1);
+    transition: all 400ms ease;
+    opacity: 0.75;
+    /* Subtly transparent to see through the sphere */
+}
+
+.item__image:hover img {
+    filter: grayscale(0) contrast(1.1) brightness(1.2);
+    opacity: 1;
+}
+
+.viewer {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--viewer-pad);
+}
+
+.viewer .frame {
+    height: 100%;
+    aspect-ratio: 1;
+    border-radius: var(--enlarge-radius, 32px);
+    display: flex;
+}
+
+@media (max-aspect-ratio: 1/1) {
+    .viewer .frame {
+        height: auto;
+        width: 100%;
+    }
+}
+
+.viewer .scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.9);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 500ms ease;
+    backdrop-filter: blur(20px);
+}
+
+.sphere-root[data-enlarging='true'] .viewer .scrim {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.viewer .enlarge {
+    position: absolute;
+    z-index: 30;
+    border-radius: var(--enlarge-radius, 32px);
+    overflow: hidden;
+    transition:
+        transform 500ms ease,
+        opacity 500ms ease;
+    transform-origin: top left;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.viewer .enlarge img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: none;
+}
+
+.sphere-root .enlarge-closing img {
+    filter: none;
+}
+
+.edge-fade {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 120px;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.edge-fade--top {
+    top: 0;
+    transform: rotate(180deg);
+    background: linear-gradient(to bottom, transparent, var(--overlay-blur-color, #020402));
+}
+
+.edge-fade--bottom {
+    bottom: 0;
+    background: linear-gradient(to bottom, transparent, var(--overlay-blur-color, #020402));
+}
+
+@media (max-width: 767px) {
+    .sphere-root {
+        --radius: 350px !important;
+    }
+
+    .item__image {
+        inset: 4px;
+    }
+}
+
+/* New Cinematic Animations */
+@keyframes holographic-flicker {
+
+    0%,
+    100% {
+        opacity: 0.95;
+        filter: brightness(1);
+    }
+
+    33% {
+        opacity: 0.88;
+        filter: brightness(1.1);
+    }
+
+    66% {
+        opacity: 0.92;
+        filter: brightness(0.95);
+    }
+
+    80% {
+        opacity: 0.85;
+        filter: brightness(1.05);
+    }
+}
+
+@keyframes scanline {
+    0% {
+        background-position: 0 -100%;
+    }
+
+    100% {
+        background-position: 0 100%;
+    }
+}
+
+@keyframes sphere-pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.02);
+    }
+}
+
+@keyframes floating-drift {
+
+    0%,
+    100% {
+        margin-top: auto;
+        margin-left: auto;
+        filter: brightness(1);
+    }
+
+    25% {
+        translate: 5px -8px 10px;
+        filter: brightness(1.05);
+    }
+
+    50% {
+        translate: -8px 5px -5px;
+        filter: brightness(0.95);
+    }
+
+    75% {
+        translate: 10px 10px 5px;
+        filter: brightness(1.1);
+    }
+}
+
+.sphere[data-assembled='true'] {
+    animation: sphere-pulse 10s infinite ease-in-out;
+}

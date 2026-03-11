@@ -36,9 +36,8 @@ function QRPaymentContent() {
     const calculateAmount = () => {
         if (!userData?.email) return 0
 
-        // Base fee: 200 for SODE emails, 300 for others
-        const isSodeEmail = userData.email.toLowerCase().includes('@sode')
-        let amount = isSodeEmail ? 200 : 300
+        // Base fee: Fixed at 300 for all
+        let amount = 300
 
         // Add 300 if user wants RoboSoccer
         if (includeRoboSoccer) {
@@ -236,10 +235,10 @@ function QRPaymentContent() {
                                 {/* Base Fee */}
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-gray-400">
-                                        Base Fee {userData?.email?.toLowerCase().includes('@sode') ? '(SODE)' : ''}
+                                        Base Fee
                                     </span>
                                     <span className="text-white font-bold">
-                                        ₹{userData?.email?.toLowerCase().includes('@sode') ? '200' : '300'}
+                                        ₹300
                                     </span>
                                 </div>
 

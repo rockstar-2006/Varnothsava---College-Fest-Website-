@@ -28,70 +28,46 @@ export async function GET(request: NextRequest) {
         }
 
         const lastId = request.nextUrl.searchParams.get('lastId') || '';
-        const limit = parseInt(request.nextUrl.searchParams.get('limit') || '20');
-        const status = request.nextUrl.searchParams.get('status') || 'all';
-        const search = request.nextUrl.searchParams.get('search') || '';
+        const parsedLimit = Number.parseInt(request.nextUrl.searchParams.get('limit') || '20', 10);
+        const limit = Number.isFinite(parsedLimit)
+            ? Math.min(Math.max(parsedLimit, 1), 100)
+            : 20;
+        const legacyStatusParam = request.nextUrl.searchParams.get('status') || 'all';
+        const legacyStatus = ['all', 'paid', 'unpaid', 'internal', 'external'].includes(legacyStatusParam)
+            ? legacyStatusParam
+            : 'all';
+        const paymentStatusParam = request.nextUrl.searchParams.get('paymentStatus') || '';
+        const studentTypeParam = request.nextUrl.searchParams.get('studentType') || '';
 
-        // Strategy 4: Summary Document Fetch for fast metadata
-        const statsRef = adminDb.collection('system').doc('stats');
-        const statsDoc = await statsRef.get();
-        const s = statsDoc.data() || {};
+        const paymentStatus = ['all', 'paid', 'unpaid'].includes(paymentStatusParam)
+            ? paymentStatusParam
+            : (legacyStatus === 'paid' || legacyStatus === 'unpaid' ? legacyStatus : 'all');
 
-        let users: any[] = [];
-        let snapshot: any;
+        const studentTypeFilter = ['all', 'internal', 'external'].includes(studentTypeParam)
+            ? studentTypeParam
+            : (legacyStatus === 'internal' || legacyStatus === 'external' ? legacyStatus : 'all');
+        const search = (request.nextUrl.searchParams.get('search') || '').trim();
+        const skipCounts = request.nextUrl.searchParams.get('skipCounts') === '1';
 
-        if (search) {
-            const capitalizedSearchTerm = search.charAt(0).toUpperCase() + search.slice(1);
-            const nameQuery = usersCollection.orderBy('name').startAt(search).endAt(search + '\uf8ff').limit(limit).get();
-            const emailQuery = usersCollection.orderBy('email').startAt(search.toLowerCase()).endAt(search.toLowerCase() + '\uf8ff').limit(limit).get();
-            const capNameQuery = usersCollection.orderBy('name').startAt(capitalizedSearchTerm).endAt(capitalizedSearchTerm + '\uf8ff').limit(limit).get();
+        const isExcludedFromTracking = (roleValue: unknown) => {
+            if (typeof roleValue !== 'string') return false;
+            const normalizedRole = roleValue.trim().toUpperCase();
+            return normalizedRole.length > 0 && normalizedRole !== 'USER';
+        };
 
-            const [nameSnap, emailSnap, capNameSnap] = await Promise.all([nameQuery, emailQuery, capNameQuery]);
+        const matchesFilters = (
+            paymentFilter: string,
+            typeFilter: string,
+            user: { studentType?: string; hasPaid?: boolean }
+        ) => {
+            if (paymentFilter === 'paid' && user.hasPaid !== true) return false;
+            if (paymentFilter === 'unpaid' && user.hasPaid !== false) return false;
+            if (typeFilter === 'internal' && user.studentType !== 'internal') return false;
+            if (typeFilter === 'external' && user.studentType !== 'external') return false;
+            return true;
+        };
 
-            // Merge and deduplicate
-            const userMap = new Map();
-            nameSnap.docs.forEach(d => userMap.set(d.id, { id: d.id, ...d.data() }));
-            emailSnap.docs.forEach(d => userMap.set(d.id, { id: d.id, ...d.data() }));
-            capNameSnap.docs.forEach(d => userMap.set(d.id, { id: d.id, ...d.data() }));
-
-            users = Array.from(userMap.values());
-            snapshot = { docs: nameSnap.docs }; // Dummy for pagination tracking if needed, though search results are usually small
-        } else {
-            // Base query for users
-            let query: any = usersCollection;
-
-            // Apply filters (Database Level)
-            const hasFilter = status && status !== 'all';
-            if (status === 'paid') query = query.where('hasPaid', '==', true);
-            else if (status === 'unpaid') query = query.where('hasPaid', '==', false);
-            else if (status === 'internal') query = query.where('studentType', '==', 'internal');
-            else if (status === 'external') query = query.where('studentType', '==', 'external');
-
-            if (!hasFilter) {
-                query = query.orderBy('name');
-            }
-
-            query = query.limit(limit);
-
-            if (lastId) {
-                const lastDoc = await usersCollection.doc(lastId).get();
-                if (lastDoc.exists) {
-                    query = query.startAfter(lastDoc);
-                }
-            }
-
-            snapshot = await query.get();
-            users = snapshot.docs.map((doc: any) => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-        }
-
-        // Enrichment & Code-Level Filtering (Source of Truth)
-        const correctionBatch = adminDb.batch();
-        let hasCorrectionsToPush = false;
-
-        let filteredUsers = users.map((u: any) => {
+        const deriveUserProfile = (u: any) => {
             const rawCollege = (u.collegeName || u.college || u.institution || '').toUpperCase();
             const email = (u.email || '').toLowerCase();
             const isInternal =
@@ -104,6 +80,166 @@ export async function GET(request: NextRequest) {
 
             const correctStudentType = isInternal ? 'internal' : (u.studentType || 'external');
             const needsCollegeNameFix = isInternal && (rawCollege === '' || rawCollege.includes('OUTSIDE') || rawCollege === 'N/A');
+            const normalizedCollege = (isInternal && needsCollegeNameFix)
+                ? 'SMVITM (Bantakal)'
+                : (u.college || u.institution || 'Outside College');
+
+            return {
+                isInternal,
+                correctStudentType,
+                needsCollegeNameFix,
+                normalizedCollege,
+                hasPaid: !!u.hasPaid,
+            };
+        };
+
+        let users: any[] = [];
+        let hasMore = false;
+        let responseLastId: string | null = null;
+        let currentCount: number | null = null;
+
+        if (search) {
+            const searchFetchLimit = Math.max(limit * 10, 200);
+            const lowerSearchTerm = search.toLowerCase();
+            const capitalizedSearchTerm = search.charAt(0).toUpperCase() + search.slice(1);
+            const upperSearchTerm = search.toUpperCase();
+            const nameQuery = usersCollection
+                .orderBy('name')
+                .startAt(search)
+                .endAt(search + '\uf8ff')
+                .limit(searchFetchLimit)
+                .get();
+            const emailQuery = usersCollection
+                .orderBy('email')
+                .startAt(lowerSearchTerm)
+                .endAt(lowerSearchTerm + '\uf8ff')
+                .limit(searchFetchLimit)
+                .get();
+            const capNameQuery = usersCollection
+                .orderBy('name')
+                .startAt(capitalizedSearchTerm)
+                .endAt(capitalizedSearchTerm + '\uf8ff')
+                .limit(searchFetchLimit)
+                .get();
+            const usnQuery = usersCollection
+                .orderBy('usn')
+                .startAt(upperSearchTerm)
+                .endAt(upperSearchTerm + '\uf8ff')
+                .limit(searchFetchLimit)
+                .get();
+
+            const [nameSnap, emailSnap, capNameSnap, usnSnap] = await Promise.all([nameQuery, emailQuery, capNameQuery, usnQuery]);
+
+            const userMap = new Map<string, any>();
+            nameSnap.docs.forEach(d => userMap.set(d.id, { id: d.id, ...d.data() }));
+            emailSnap.docs.forEach(d => userMap.set(d.id, { id: d.id, ...d.data() }));
+            capNameSnap.docs.forEach(d => userMap.set(d.id, { id: d.id, ...d.data() }));
+            usnSnap.docs.forEach(d => userMap.set(d.id, { id: d.id, ...d.data() }));
+
+            const sortedUsers = Array.from(userMap.values()).sort((a: any, b: any) => {
+                const nameA = (a.name || '').toString().toLowerCase();
+                const nameB = (b.name || '').toString().toLowerCase();
+                if (nameA !== nameB) return nameA.localeCompare(nameB);
+
+                const emailA = (a.email || '').toString().toLowerCase();
+                const emailB = (b.email || '').toString().toLowerCase();
+                if (emailA !== emailB) return emailA.localeCompare(emailB);
+
+                return a.id.localeCompare(b.id);
+            });
+
+            const scopedUsers = sortedUsers.filter((u: any) => {
+                if (isExcludedFromTracking(u.role)) {
+                    return false;
+                }
+
+                const { correctStudentType, hasPaid: normalizedHasPaid } = deriveUserProfile(u);
+                return matchesFilters(paymentStatus, studentTypeFilter, {
+                    studentType: correctStudentType,
+                    hasPaid: normalizedHasPaid,
+                });
+            });
+
+            currentCount = scopedUsers.length;
+
+            const startIndex = lastId
+                ? Math.max(0, scopedUsers.findIndex((u: any) => u.id === lastId) + 1)
+                : 0;
+            const endIndex = startIndex + limit;
+
+            users = scopedUsers.slice(startIndex, endIndex);
+            hasMore = endIndex < scopedUsers.length;
+            responseLastId = users.length > 0 ? users[users.length - 1].id : null;
+        } else {
+            let query: any = usersCollection;
+
+            const hasPaymentFilter = paymentStatus !== 'all';
+            const hasStudentTypeFilter = studentTypeFilter !== 'all';
+            const hasFilter = hasPaymentFilter || hasStudentTypeFilter;
+
+            if (hasPaymentFilter) {
+                query = query.where('hasPaid', '==', paymentStatus === 'paid');
+            }
+
+            if (hasStudentTypeFilter) {
+                query = query.where('studentType', '==', studentTypeFilter);
+            }
+
+            if (!hasFilter) {
+                query = query.orderBy('name');
+            }
+
+            const scanLimit = Math.min(Math.max(limit * 3, 60), 200);
+
+            let scanQuery: any = query;
+
+            if (lastId) {
+                const lastDoc = await usersCollection.doc(lastId).get();
+                if (lastDoc.exists) {
+                    scanQuery = scanQuery.startAfter(lastDoc);
+                }
+            }
+
+            const collectedUsers: any[] = [];
+            let reachedEnd = false;
+
+            while (collectedUsers.length < limit + 1 && !reachedEnd) {
+                const snapshot = await scanQuery.limit(scanLimit).get();
+
+                if (snapshot.empty) {
+                    reachedEnd = true;
+                    break;
+                }
+
+                snapshot.docs.forEach((doc: any) => {
+                    const candidate = {
+                        id: doc.id,
+                        ...doc.data(),
+                    };
+
+                    if (!isExcludedFromTracking(candidate.role)) {
+                        collectedUsers.push(candidate);
+                    }
+                });
+
+                if (snapshot.docs.length < scanLimit) {
+                    reachedEnd = true;
+                } else {
+                    scanQuery = query.startAfter(snapshot.docs[snapshot.docs.length - 1]);
+                }
+            }
+
+            users = collectedUsers.slice(0, limit);
+            hasMore = collectedUsers.length > limit;
+            responseLastId = users.length > 0 ? users[users.length - 1].id : null;
+        }
+
+        // Enrichment & Code-Level Filtering (Source of Truth)
+        const correctionBatch = adminDb.batch();
+        let hasCorrectionsToPush = false;
+
+        const filteredUsers = users.map((u: any) => {
+            const { correctStudentType, needsCollegeNameFix, normalizedCollege, hasPaid: normalizedHasPaid } = deriveUserProfile(u);
 
             // If the DB value doesn't match, queue a correction
             if ((u.studentType !== correctStudentType || needsCollegeNameFix) && u.id) {
@@ -119,8 +255,8 @@ export async function GET(request: NextRequest) {
             return {
                 ...u,
                 studentType: correctStudentType,
-                college: (isInternal && needsCollegeNameFix) ? 'SMVITM (Bantakal)' : (u.college || u.institution || 'Outside College'),
-                hasPaid: !!u.hasPaid
+                college: normalizedCollege,
+                hasPaid: normalizedHasPaid
             };
         });
 
@@ -129,47 +265,121 @@ export async function GET(request: NextRequest) {
             correctionBatch.commit().catch((e: any) => console.error('[Users] Failed to correct studentType:', e));
         }
 
-        // Apply filters in code if it was a search result (since search bypasses DB filter for indexes)
-        if (search && status && status !== 'all') {
-            filteredUsers = filteredUsers.filter((u: any) => {
-                if (status === 'internal') return u.studentType === 'internal';
-                if (status === 'external') return u.studentType === 'external';
-                if (status === 'paid') return u.hasPaid === true;
-                if (status === 'unpaid') return u.hasPaid === false;
-                return true;
+        let totalCount: number | null = null;
+        let paidCount: number | null = null;
+        let unpaidCount: number | null = null;
+        let internalCount: number | null = null;
+        let externalCount: number | null = null;
+
+        // Counts are expensive on every paginated request. Skip when caller requests.
+        if (!skipCounts) {
+            const statsDoc = await adminDb.collection('system').doc('stats').get();
+            const statsData = statsDoc.data() || {};
+
+            const excludedRoleSnap = await usersCollection
+                .where('role', '!=', 'USER')
+                .select('role', 'hasPaid', 'studentType', 'college', 'institution', 'collegeName', 'email')
+                .get();
+
+            let excludedCount = 0;
+            let excludedPaidCount = 0;
+            let excludedInternalCount = 0;
+
+            excludedRoleSnap.docs.forEach((doc: any) => {
+                const excludedUserData = doc.data();
+                if (!isExcludedFromTracking(excludedUserData?.role)) {
+                    return;
+                }
+
+                excludedCount += 1;
+
+                if (excludedUserData?.hasPaid === true) {
+                    excludedPaidCount += 1;
+                }
+
+                const { correctStudentType } = deriveUserProfile(excludedUserData || {});
+                if (correctStudentType === 'internal') {
+                    excludedInternalCount += 1;
+                }
             });
+
+            const hasCachedSummary = typeof statsData.totalUsers === 'number'
+                && typeof statsData.paidUsers === 'number'
+                && typeof statsData.internalUsers === 'number';
+
+            if (hasCachedSummary && !search && paymentStatus === 'all' && studentTypeFilter === 'all') {
+                const cachedTotal = statsData.totalUsers as number;
+                const cachedPaid = statsData.paidUsers as number;
+                const cachedInternal = statsData.internalUsers as number;
+
+                totalCount = Math.max(0, cachedTotal - excludedCount);
+                paidCount = Math.max(0, cachedPaid - excludedPaidCount);
+                unpaidCount = Math.max(0, totalCount - paidCount);
+                internalCount = Math.max(0, Math.min(totalCount, cachedInternal - excludedInternalCount));
+                externalCount = Math.max(0, totalCount - internalCount);
+            } else {
+                const [usersSnap, internalSnap, paidSnap] = await Promise.all([
+                    usersCollection.count().get(),
+                    usersCollection.where('studentType', '==', 'internal').count().get(),
+                    usersCollection.where('hasPaid', '==', true).count().get()
+                ]);
+
+                totalCount = Math.max(0, usersSnap.data().count - excludedCount);
+                paidCount = Math.max(0, paidSnap.data().count - excludedPaidCount);
+                unpaidCount = Math.max(0, totalCount - paidCount);
+
+                // Use DB counts, adjusted by corrections discovered in this payload.
+                const dbInternalCount = internalSnap.data().count;
+                const correctedOnPage = filteredUsers.filter((u: any) => u.studentType === 'internal').length;
+                const uncorrectedOnPage = users.filter((u: any) => u.studentType === 'internal').length;
+                const correctedInternal = dbInternalCount + (correctedOnPage - uncorrectedOnPage);
+                internalCount = Math.max(0, Math.min(totalCount, correctedInternal - excludedInternalCount));
+                externalCount = Math.max(0, totalCount - internalCount);
+            }
         }
 
-        // LIVE ACCURATE COUNTS (Fast for <10k users)
-        const [usersSnap, internalSnap, paidSnap] = await Promise.all([
-            usersCollection.count().get(),
-            usersCollection.where('studentType', '==', 'internal').count().get(),
-            usersCollection.where('hasPaid', '==', true).count().get()
-        ]);
+        if (!search && !skipCounts) {
+            if (paymentStatus === 'all' && studentTypeFilter === 'all') {
+                currentCount = totalCount;
+            } else if (paymentStatus === 'paid' && studentTypeFilter === 'all') {
+                currentCount = paidCount;
+            } else if (paymentStatus === 'unpaid' && studentTypeFilter === 'all') {
+                currentCount = unpaidCount;
+            } else if (paymentStatus === 'all' && studentTypeFilter === 'internal') {
+                currentCount = internalCount;
+            } else if (paymentStatus === 'all' && studentTypeFilter === 'external') {
+                currentCount = externalCount;
+            } else {
+                // Combined paid/unpaid + internal/external scope without requiring a composite index.
+                const scopedSnap = await usersCollection
+                    .where('hasPaid', '==', paymentStatus === 'paid')
+                    .select('studentType', 'college', 'institution', 'collegeName', 'email', 'role')
+                    .get();
 
-        const totalCount = usersSnap.data().count;
-        const paidCount = paidSnap.data().count;
-        const unpaidCount = totalCount - paidCount;
+                currentCount = scopedSnap.docs.reduce((count, doc) => {
+                    const scopedUser = doc.data();
+                    if (isExcludedFromTracking(scopedUser?.role)) {
+                        return count;
+                    }
 
-        // Use the DB count for internal (corrections above will fix future queries)
-        // but add any corrections found on this page
-        const dbInternalCount = internalSnap.data().count;
-        const correctedOnPage = filteredUsers.filter((u: any) => u.studentType === 'internal').length;
-        const uncorrectedOnPage = users.filter((u: any) => u.studentType === 'internal').length;
-        const internalCount = dbInternalCount + (correctedOnPage - uncorrectedOnPage);
-        const externalCount = totalCount - Math.max(0, internalCount);
+                    const { correctStudentType } = deriveUserProfile(scopedUser);
+                    return count + (correctStudentType === studentTypeFilter ? 1 : 0);
+                }, 0);
+            }
+        }
 
 
 
         return NextResponse.json({
             users: filteredUsers,
             totalCount,
+            currentCount,
             paidCount,
             unpaidCount,
             internalCount,
             externalCount,
-            lastId: snapshot?.docs && snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1].id : null,
-            hasMore: snapshot?.docs ? snapshot.docs.length === limit : false
+            lastId: responseLastId,
+            hasMore
         });
 
     } catch (error: any) {

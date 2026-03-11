@@ -41,6 +41,26 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ message: "Invalid mission ID." }, { status: 400 });
         }
 
+        // Registration restriction for TECH-002 (Prompt to Product): Only external participants permitted
+        if (eventId === "TECH-002") {
+            const userEmail = (verified.email || '').toLowerCase();
+            const userDoc = await usersCollection.doc(verified.uid).get();
+            const userData = userDoc.data();
+            const userCollege = (userData?.collegeName || userData?.college || userData?.institution || '').toUpperCase();
+
+            const isInternal =
+                userEmail.endsWith('@sode-edu.in') ||
+                userCollege.includes('SMVITM') ||
+                userCollege.includes('SODE') ||
+                userCollege.includes('SHRI MADHWA VADIRAJA') ||
+                userCollege.includes('SHRI MADHWA') ||
+                userCollege.includes('VADIRAJA');
+
+            if (isInternal) {
+                return NextResponse.json({ message: "Registration for Prompt to Product is restricted to external participants only (non-SMVITM)." }, { status: 400 });
+            }
+        }
+
         const isTeamEvent = (mission.maxTeamSize ?? 1) > 1;
         const minSize = mission.minTeamSize ?? 1;
         const maxSize = mission.maxTeamSize ?? 1;
@@ -59,6 +79,25 @@ export async function POST(request: NextRequest) {
             if (memberData.hasPaid !== true) {
                 return NextResponse.json({ message: `Member with profile code ${memberCode} has not completed payment.` }, { status: 400 });
             }
+            
+            // Email domain and college filtering for TECH-002: Only external users
+            if (eventId === "TECH-002") {
+                const memberEmail = (memberData?.email || '').toLowerCase();
+                const memberCollege = (memberData?.collegeName || memberData?.college || memberData?.institution || '').toUpperCase();
+
+                const isMemberInternal =
+                    memberEmail.endsWith('@sode-edu.in') ||
+                    memberCollege.includes('SMVITM') ||
+                    memberCollege.includes('SODE') ||
+                    memberCollege.includes('SHRI MADHWA VADIRAJA') ||
+                    memberCollege.includes('SHRI MADHWA') ||
+                    memberCollege.includes('VADIRAJA');
+
+                if (isMemberInternal) {
+                    return NextResponse.json({ message: `Member with profile code ${memberCode} is an internal student (SMVITM). Only external participants can register for this event.` }, { status: 400 });
+                }
+            }
+            
             if (memberData.id === verified.uid) {
                 if (eventId === "TECH-008" && memberData.hasRoboSoccer !== true) {
                     return NextResponse.json({ message: `Team leader with profile code ${memberCode} has not paid for Robo Soccer registration.` }, { status: 400 });

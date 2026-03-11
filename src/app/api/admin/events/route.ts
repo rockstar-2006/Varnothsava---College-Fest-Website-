@@ -1,6 +1,7 @@
 import { adminDb, usersCollection, verifyAuthToken } from "@/lib/firebaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminRole } from "@/lib/admin";
+import { missions } from "@/data/missions";
 
 export async function GET(request: NextRequest) {
     try {
@@ -28,57 +29,135 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ message: "Forbidden: No administrative access" }, { status: 403 });
         }
 
+        const forceLive = request.nextUrl.searchParams.get('fresh') === '1';
+        const cacheTtlMs = Number(
+            process.env.ADMIN_EVENT_METRICS_CACHE_TTL_MS
+            || process.env.ADMIN_STATS_CACHE_TTL_MS
+            || '120000'
+        );
+
         let eventsQuery: any = adminDb.collection('events');
 
         // RBAC: COORDINATOR only sees assigned events
         if (role === 'COORDINATOR') {
-            eventsQuery = eventsQuery.where('coordinators', 'array-contains', verified.uid);
+            if (eventId && eventId !== 'all') {
+                const assignedEventIds = eventId.split(',').map((id: string) => id.trim());
+                if (assignedEventIds.length > 1) {
+                    eventsQuery = eventsQuery.where('__name__', 'in', assignedEventIds);
+                } else if (assignedEventIds.length === 1) {
+                    eventsQuery = eventsQuery.where('__name__', '==', assignedEventIds[0]);
+                }
+            } else if (eventId !== 'all') { // if they are all, they see all
+                eventsQuery = eventsQuery.where('coordinators', 'array-contains', verified.uid);
+            }
         } else if (role === 'VOLUNTEER') {
-            // Volunteers might see assigned events or all? Requirement says "only assigned events" for Coordinator. 
-            // Usually, Volunteers also work on specific events.
             eventsQuery = eventsQuery.where('volunteers', 'array-contains', verified.uid);
         }
 
         const snapshot = await eventsQuery.get();
-        console.log(`Fetched ${snapshot.docs.length} events from database`);
 
         const eventDocs = snapshot.docs;
+
+        // Huge Read Optimization: Fetch cached metrics from system/stats (cost = 1 read)
+        const statsDoc = await adminDb.collection('system').doc('stats').get();
+        const globalStats = statsDoc.data() || {};
+        const eventMetricsCache = globalStats.eventMetricsCache || {};
+        const metricsUpdatedAtSource = typeof globalStats.eventMetricsUpdatedAt === 'string'
+            ? globalStats.eventMetricsUpdatedAt
+            : globalStats.updatedAt;
+        const metricsUpdatedAtMs = typeof metricsUpdatedAtSource === 'string'
+            ? Date.parse(metricsUpdatedAtSource)
+            : NaN;
+        const isCacheFresh = Number.isFinite(metricsUpdatedAtMs)
+            && (Date.now() - metricsUpdatedAtMs) < cacheTtlMs;
+        const canUseCachedMetrics = !forceLive && isCacheFresh;
+
+        const refreshedMetrics: Record<string, {
+            total: number;
+            internal: number;
+            external: number;
+            participants: number;
+        }> = {};
+
         const eventsWithMetrics = await Promise.all(eventDocs.map(async (doc: any) => {
             const data = doc.data();
-            const eventId = doc.id;
 
-            // Live accuracy for individual event metrics
-            const [totalSnap, internalSnap, participantSnap] = await Promise.all([
-                adminDb.collection('registrations').where('eventId', '==', eventId).count().get(),
-                adminDb.collection('registrations').where('eventId', '==', eventId).where('leaderType', '==', 'internal').count().get(),
-                adminDb.collection('registrations').where('eventId', '==', eventId).select('teamLeader', 'members').get()
+            const cachedMetrics = canUseCachedMetrics ? eventMetricsCache[doc.id] : null;
+            if (cachedMetrics) {
+                return {
+                    id: doc.id,
+                    ...data,
+                    metrics: {
+                        total: cachedMetrics.total || 0,
+                        internal: cachedMetrics.internal || 0,
+                        external: cachedMetrics.external || 0,
+                        participants: cachedMetrics.participants || 0
+                    }
+                };
+            }
+
+            // Live fallback when cache is stale/missing or explicitly requested.
+            const [totalSnap, internalSnap, partSnap] = await Promise.all([
+                adminDb.collection('registrations').where('eventId', '==', doc.id).count().get(),
+                adminDb.collection('registrations').where('eventId', '==', doc.id).where('leaderType', '==', 'internal').count().get(),
+                adminDb.collection('registrations').where('eventId', '==', doc.id).select('teamLeader', 'members').get()
             ]);
 
             const total = totalSnap.data().count;
             const internal = internalSnap.data().count;
             const external = total - internal;
 
-            // Unique people in this specific event
             const uniqueP = new Set<string>();
-            participantSnap.docs.forEach(doc => {
-                const regData = doc.data();
-                if (regData.teamLeader) uniqueP.add(regData.teamLeader);
-                regData.members?.forEach((m: string) => uniqueP.add(m));
+            partSnap.docs.forEach((rDoc: any) => {
+                const rData = rDoc.data();
+                if (rData.teamLeader) uniqueP.add(rData.teamLeader);
+                if (rData.members && Array.isArray(rData.members)) {
+                    rData.members.forEach((m: string) => uniqueP.add(m));
+                }
             });
 
+            const liveMetrics = {
+                total,
+                internal,
+                external,
+                participants: uniqueP.size
+            };
+            refreshedMetrics[doc.id] = liveMetrics;
+
             return {
-                id: eventId,
+                id: doc.id,
                 ...data,
-                metrics: {
-                    total,
-                    internal,
-                    external,
-                    participants: uniqueP.size
-                }
+                metrics: liveMetrics
             };
         }));
 
-        return NextResponse.json({ events: eventsWithMetrics });
+        // Persist refreshed metrics only for global roles to avoid partial coordinator cache overwrites.
+        if (Object.keys(refreshedMetrics).length > 0 && role !== 'COORDINATOR' && role !== 'VOLUNTEER') {
+            await adminDb.collection('system').doc('stats').set({
+                eventMetricsCache: {
+                    ...(globalStats.eventMetricsCache || {}),
+                    ...refreshedMetrics
+                },
+                eventMetricsUpdatedAt: new Date().toISOString()
+            }, { merge: true });
+        }
+
+        // Merge static mission data (date, time, location) with Firestore event data
+        const eventsMerged = eventsWithMetrics.map(fsEvent => {
+            const missionData = missions.find(m => m.id === fsEvent.id);
+            if (missionData) {
+                return {
+                    ...missionData,
+                    ...fsEvent,
+                    metrics: fsEvent.metrics,
+                    // Keep Firestore registration status if it exists, otherwise use 'open'
+                    registrationStatus: fsEvent.registrationStatus || 'open'
+                };
+            }
+            return fsEvent;
+        });
+
+        return NextResponse.json({ events: eventsMerged });
     } catch (error: any) {
         console.error("Admin Events GET Error:", error);
         return NextResponse.json({ message: error.message }, { status: 500 });

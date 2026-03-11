@@ -76,6 +76,10 @@ interface AppContextType {
         staff?: any[];
         totalVerifiedPayments?: number;
         totalRevenue?: number;
+        internalRevenue?: number;
+        externalRevenue?: number;
+        internalPaidUsers?: number;
+        externalPaidUsers?: number;
         totalUsersCount?: number;
         totalPaymentsCount?: number;
         totalRegCount?: number;
@@ -86,10 +90,31 @@ interface AppContextType {
         totalInternalRegs?: number;
         totalExternalRegs?: number;
         totalParticipants?: number;
+        totalInternalParticipants?: number;
+        totalExternalParticipants?: number;
         totalParticipantsPaid?: number;
+        paymentFilterCounts?: {
+            status: {
+                all: number;
+                captured: number;
+                failed: number;
+                authorized: number;
+                other: number;
+            };
+            type: {
+                all: number;
+                internal: number;
+                external: number;
+            };
+        };
         uniqueExternalParticipantsAcrossEvents?: number;
         categoryBreakdown?: Record<string, { totalTeams: number, internal: number, external: number, totalParticipants: number }>;
-        collegeDistribution?: { name: string, count: number }[];
+        collegeDistribution?: {
+            name: string;
+            count?: number;
+            registrations?: number;
+            participants?: number;
+        }[];
         attendance?: any[];
         eventAttendanceMap?: Record<string, any[]>;
         eventRegMap?: Record<string, any[]>;
@@ -148,20 +173,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const [isSiteLoaded, setIsSiteLoaded] = useState(false)
     const [pageTheme, setPageTheme] = useState<PageTheme | null>(null)
     const [isChatOpen, setIsChatOpen] = useState(false)
-    const [adminCache, setAdminCache] = useState<AppContextType['adminCache']>({})
-    const router = useRouter();
-
-    // Hydrate admin cache from localStorage on mount
-    useEffect(() => {
-        const savedCache = localStorage.getItem('admin_gate_cache');
-        if (savedCache) {
-            try {
-                setAdminCache(JSON.parse(savedCache));
-            } catch (e) {
-                console.error("Failed to parse admin cache:", e);
+    const [adminCache, setAdminCache] = useState<AppContextType['adminCache']>(() => {
+        if (typeof window !== 'undefined') {
+            const savedCache = localStorage.getItem('admin_gate_cache');
+            if (savedCache) {
+                try {
+                    return JSON.parse(savedCache);
+                } catch (e) {
+                    console.error("Failed to parse admin cache:", e);
+                }
             }
         }
-    }, []);
+        return {};
+    });
+    const router = useRouter();
 
     const updateAdminCache = (key: string, data: any) => {
         setAdminCache(prev => {

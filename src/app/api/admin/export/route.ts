@@ -18,8 +18,8 @@ export async function GET(request: NextRequest) {
         const userData = userDoc.data();
         const role = userData?.role;
 
-        if (role !== 'SUPER_ADMIN') {
-            return NextResponse.json({ message: "Forbidden: Super Admin access required for exports" }, { status: 403 });
+        if (role !== 'SUPER_ADMIN' && role !== 'COORDINATOR') {
+            return NextResponse.json({ message: "Forbidden: Admin access required for exports" }, { status: 403 });
         }
 
         const { searchParams } = new URL(request.url);
@@ -29,21 +29,39 @@ export async function GET(request: NextRequest) {
         let data: any[] = [];
 
         if (type === 'users') {
-            const status = searchParams.get('status'); // all, paid, unpaid, internal, external
+            const isExcludedFromTracking = (roleValue: unknown) => {
+                if (typeof roleValue !== 'string') return false;
+                const normalizedRole = roleValue.trim().toUpperCase();
+                return normalizedRole.length > 0 && normalizedRole !== 'USER';
+            };
+
+            const legacyStatus = searchParams.get('status') || 'all'; // all, paid, unpaid, internal, external
+            const paymentStatusParam = searchParams.get('paymentStatus') || '';
+            const studentTypeParam = searchParams.get('studentType') || '';
+
+            const paymentStatus = ['all', 'paid', 'unpaid'].includes(paymentStatusParam)
+                ? paymentStatusParam
+                : (legacyStatus === 'paid' || legacyStatus === 'unpaid' ? legacyStatus : 'all');
+
+            const studentType = ['all', 'internal', 'external'].includes(studentTypeParam)
+                ? studentTypeParam
+                : (legacyStatus === 'internal' || legacyStatus === 'external' ? legacyStatus : 'all');
+
             let query: any = usersCollection;
 
-            if (status === 'paid') {
+            // Keep Firestore query index-safe by applying at most one DB-level filter.
+            if (paymentStatus === 'paid') {
                 query = query.where('hasPaid', '==', true);
-            } else if (status === 'unpaid') {
+            } else if (paymentStatus === 'unpaid') {
                 query = query.where('hasPaid', '==', false);
-            } else if (status === 'internal') {
+            } else if (studentType === 'internal') {
                 query = query.where('studentType', '==', 'internal');
-            } else if (status === 'external') {
+            } else if (studentType === 'external') {
                 query = query.where('studentType', '==', 'external');
             }
 
             const snapshot = await query.get();
-            data = snapshot.docs.map((doc: any) => {
+            let users = snapshot.docs.map((doc: any) => {
                 const u = doc.data();
                 return {
                     id: doc.id,
@@ -57,19 +75,38 @@ export async function GET(request: NextRequest) {
                     role: u.role
                 };
             });
-        } else if (type === 'registrations') {
-            let query: any = registrationsCollection;
-            if (eventId && eventId !== 'all') {
-                query = query.where('eventId', '==', eventId);
+
+            users = users.filter((u: any) => !isExcludedFromTracking(u.role));
+
+            if (paymentStatus !== 'all') {
+                users = users.filter((u: any) => u.paymentStatus.toLowerCase() === paymentStatus);
             }
+
+            if (studentType !== 'all') {
+                users = users.filter((u: any) => u.studentType === studentType);
+            }
+
+            data = users;
+        } else if (type === 'registrations') {
+            if (!eventId || eventId === 'all') {
+                return NextResponse.json({ message: "Event ID is required for registration roster" }, { status: 400 });
+            }
+
+            const query = registrationsCollection.where('eventId', '==', eventId);
             const snapshot = await query.get();
             const regs = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+
+            if (regs.length === 0) {
+                return NextResponse.json({ data: [] });
+            }
 
             // Enrich registrations with user names and event titles
             const userIds = new Set<string>();
             regs.forEach((r: any) => {
                 if (r.teamLeader) userIds.add(r.teamLeader);
-                if (r.members) r.members.forEach((mId: string) => userIds.add(mId));
+                if (r.members) r.members.forEach((mId: string) => {
+                    if (mId) userIds.add(mId);
+                });
             });
 
             const userIdArray = Array.from(userIds);
@@ -82,27 +119,56 @@ export async function GET(request: NextRequest) {
                 uSnap.docs.forEach(d => { userMap[d.id] = d.data(); });
             }
 
-            const eventsSnap = await adminDb.collection('events').get();
-            const eventMap: Record<string, string> = {};
-            eventsSnap.docs.forEach(d => { eventMap[d.id] = d.data().title || d.id; });
+            const eventDoc = await adminDb.collection('events').doc(eventId).get();
+            const eventTitle = eventDoc.data()?.title || "Unknown Event";
 
             data = regs.map((r: any) => {
-                const leader = userMap[r.teamLeader] || {};
-                const members = (r.members || []).map((mId: string) => {
-                    const m = userMap[mId] || {};
-                    return `${m.name || 'Unknown'} (${m.usn || 'N/A'})`;
-                }).join(', ');
+                const leaderId = r.teamLeader;
+                const leader = userMap[leaderId] || {};
+
+                // 1. Get unique member IDs (excluding the leader to avoid duplicates)
+                const uniqueMemberIds = Array.from(new Set(r.members || []))
+                    .filter(mId => mId && mId !== leaderId);
+
+                // 2. Build detailed member list starting with the leader
+                const membersDetails = [];
+
+                // Add leader first
+                if (leaderId) {
+                    membersDetails.push({
+                        name: leader.name || 'Unknown',
+                        usn: leader.usn || 'N/A',
+                        email: leader.email || 'N/A',
+                        phone: leader.phone || 'N/A',
+                        college: leader.collegeName || leader.college || leader.institution || 'N/A'
+                    });
+                }
+
+                // Add other unique members
+                uniqueMemberIds.forEach((mId: any) => {
+                    const m = userMap[mId];
+                    if (m) {
+                        membersDetails.push({
+                            name: m.name || 'Unknown',
+                            usn: m.usn || 'N/A',
+                            email: m.email || 'N/A',
+                            phone: m.phone || 'N/A',
+                            college: m.collegeName || m.college || m.institution || leader.collegeName || leader.college || 'N/A'
+                        });
+                    }
+                });
 
                 return {
                     id: r.id,
-                    teamName: r.teamName,
+                    teamName: r.teamName || leader.name || "Solo",
                     leaderName: leader.name || 'Unknown',
                     leaderUSN: leader.usn || 'N/A',
                     email: leader.email || 'N/A',
                     phone: leader.phone || 'N/A',
-                    college: leader.collegeName || leader.college || 'N/A',
-                    event: eventMap[r.eventId] || r.eventId,
-                    members: members,
+                    college: leader.collegeName || leader.college || leader.institution || 'N/A',
+                    event: eventTitle,
+                    members: membersDetails.map((m: any) => `${m.name} (${m.usn})`).join(', '),
+                    membersDetails: membersDetails,
                     paymentStatus: leader.hasPaid ? 'Paid' : 'Unpaid',
                     registeredAt: r.registeredAt
                 };
