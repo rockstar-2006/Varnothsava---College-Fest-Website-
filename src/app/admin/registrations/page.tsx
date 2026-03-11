@@ -438,13 +438,16 @@ export default function ParticipantsManagementPage() {
                                     <button
                                         onClick={() => {
                                             const eventObj = events.find(e => e.id === selectedEventId);
+                                            const eventMeta = eventObj?.date
+                                                ? { title: eventObj.title, date: eventObj.date, time: eventObj.time, location: eventObj.location }
+                                                : undefined;
                                             fetchAndDownload(
                                                 'registrations',
                                                 `Roster_${selectedEventId}`,
                                                 getAuthToken,
                                                 { eventId: selectedEventId },
                                                 'word',
-                                                eventObj ? { title: eventObj.title, date: eventObj.date, time: eventObj.time, location: eventObj.location } : undefined
+                                                eventMeta
                                             );
                                         }}
                                         className="bg-blue-500/10 border border-blue-500/20 hover:border-blue-500/50 text-blue-500 px-3 md:px-5 py-2 rounded-xl transition-all group flex items-center gap-2 shadow-xl"

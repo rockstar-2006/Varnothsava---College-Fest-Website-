@@ -400,8 +400,7 @@ export async function GET(request: NextRequest) {
             .sort((a, b) => {
                 if (b.registrations !== a.registrations) return b.registrations - a.registrations;
                 return b.participants - a.participants;
-            })
-            .slice(0, 10);
+            });
 
         const liveStats = {
             totalUsers,
