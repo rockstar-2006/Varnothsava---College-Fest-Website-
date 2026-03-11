@@ -21,7 +21,7 @@ interface Sponsor {
 }
 
 interface SponsorData {
-  platinumSponsor: Sponsor;
+  platinumSponsors: Sponsor[];
   goldSponsors: Sponsor[];
   silverSponsors: Sponsor[];
   bronzeSponsors: Sponsor[];
@@ -29,13 +29,24 @@ interface SponsorData {
 }
 
 const sponsorData: SponsorData = {
-  platinumSponsor: {
-    tier: "Platinum",
-    amount: 200000,
-    sponsorName: "Leap Frog",
-    sponsorLogoUrl: "sponsor-logos/leapfrog_logo_transparent.png",
-    websiteUrl: "https://www.lesgroup.in/",
-  },
+  platinumSponsors: [
+    {
+      tier: "Platinum",
+      amount: 200000,
+      sponsorName: "Leap Frog",
+      sponsorLogoUrl: "sponsor-logos/leapfrog_logo_transparent.png",
+      websiteUrl: "https://www.lesgroup.in/",
+      tagline: "Technical carnival prizes presented by"
+    },
+    {
+      tier: "Platinum",
+      amount: 200000,
+      sponsorName: "Bhima Jewellers Private Limited",
+      sponsorLogoUrl: "sponsor-logos/BHIMA LOGO.jpg",
+      websiteUrl: "https://www.bhimagold.com/",
+      tagline: "Cultural carnival prizes presented by"
+    },
+  ],
   goldSponsors: [],
   silverSponsors: [
     {
@@ -84,14 +95,19 @@ const SponsorsPage: React.FC = () => {
 
         {/* Platinum Section */}
         <div className="mb-32">
-          <SectionHead label="🏆 Platinum Sponsor" color="#c49a2a" />
-          <PlatinumCard
-            sponsorName={sponsorData.platinumSponsor.sponsorName}
-            sponsorLogoUrl={sponsorData.platinumSponsor.sponsorLogoUrl || ""}
-            tagline={sponsorData.platinumSponsor.tagline}
-            websiteUrl={sponsorData.platinumSponsor.websiteUrl || "#"}
-            index={0}
-          />
+          <SectionHead label="🏆 Platinum Sponsors" color="#c49a2a" />
+          <div className="flex flex-col items-center gap-24">
+            {sponsorData.platinumSponsors.map((sponsor, index) => (
+              <PlatinumCard
+                key={sponsor.sponsorName}
+                sponsorName={sponsor.sponsorName}
+                sponsorLogoUrl={sponsor.sponsorLogoUrl || ""}
+                tagline={sponsor.tagline}
+                websiteUrl={sponsor.websiteUrl || "#"}
+                index={index}
+              />
+            ))}
+          </div>
         </div>
 
         {/* Gold Grid */}
@@ -111,24 +127,9 @@ const SponsorsPage: React.FC = () => {
               ))
             ) : (
               <>
-                <GoldCard
-                  sponsorName="Coming Soon"
-                  sponsorLogoUrl=""
-                  websiteUrl="#"
-                  index={1}
-                />
-                <GoldCard
-                  sponsorName="Coming Soon"
-                  sponsorLogoUrl=""
-                  websiteUrl="#"
-                  index={2}
-                />
-                <GoldCard
-                  sponsorName="Coming Soon"
-                  sponsorLogoUrl=""
-                  websiteUrl="#"
-                  index={3}
-                />
+                <GoldCard sponsorName="Coming Soon" sponsorLogoUrl="" websiteUrl="#" index={1} />
+                <GoldCard sponsorName="Coming Soon" sponsorLogoUrl="" websiteUrl="#" index={2} />
+                <GoldCard sponsorName="Coming Soon" sponsorLogoUrl="" websiteUrl="#" index={3} />
               </>
             )}
           </div>
@@ -151,30 +152,10 @@ const SponsorsPage: React.FC = () => {
               ))
             ) : (
               <>
-                <SilverCard
-                  sponsorName="Coming Soon"
-                  sponsorLogoUrl=""
-                  websiteUrl="#"
-                  index={4}
-                />
-                <SilverCard
-                  sponsorName="Coming Soon"
-                  sponsorLogoUrl=""
-                  websiteUrl="#"
-                  index={5}
-                />
-                <SilverCard
-                  sponsorName="Coming Soon"
-                  sponsorLogoUrl=""
-                  websiteUrl="#"
-                  index={6}
-                />
-                <SilverCard
-                  sponsorName="Coming Soon"
-                  sponsorLogoUrl=""
-                  websiteUrl="#"
-                  index={7}
-                />
+                <SilverCard sponsorName="Coming Soon" sponsorLogoUrl="" websiteUrl="#" index={4} />
+                <SilverCard sponsorName="Coming Soon" sponsorLogoUrl="" websiteUrl="#" index={5} />
+                <SilverCard sponsorName="Coming Soon" sponsorLogoUrl="" websiteUrl="#" index={6} />
+                <SilverCard sponsorName="Coming Soon" sponsorLogoUrl="" websiteUrl="#" index={7} />
               </>
             )}
           </div>

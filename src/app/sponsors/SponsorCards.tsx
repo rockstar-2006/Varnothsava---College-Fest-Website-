@@ -37,24 +37,6 @@ const TiltCard = ({ children, className = "", maxAngle = 10 }: { children: React
   );
 };
 
-// ══════════════════════════════════════════════════════════════════════════════
-// ─── GOLD DUST PARTICLE SYSTEM ────────────────────────────────────────────────
-// ══════════════════════════════════════════════════════════════════════════════
-
-interface GoldParticle {
-  id: number;
-  x: number;
-  y: number;
-  size: number;
-  duration: number;
-  delay: number;
-  driftX: number;
-  driftY: number;
-  opacity: number;
-  shape: "circle" | "star" | "diamond" | "spark";
-  rotation: number;
-}
-
 interface SimpleParticle {
   id: number;
   x: number;
@@ -74,7 +56,6 @@ const GoldDust = ({ active, containerSize }: { active: boolean; containerSize?: 
       duration: Math.random() * 2 + 2,
       repeatDelay: Math.random() * 1.5 + 0.5
     }))
-
     setParticles(p)
   }, [])
 
@@ -87,27 +68,15 @@ const GoldDust = ({ active, containerSize }: { active: boolean; containerSize?: 
             className="absolute"
             style={{ left: `${p.x}%`, top: `${p.y}%` }}
             animate={{ opacity: [0,1,0] }}
-            transition={{
-              duration: p.duration,
-              repeat: Infinity,
-              repeatDelay: p.repeatDelay
-            }}
+            transition={{ duration: p.duration, repeat: Infinity, repeatDelay: p.repeatDelay }}
           />
         ))}
     </AnimatePresence>
   )
 }
 
-// ─── Ambient gold motes — subtle, always floating upward ─────────────────────
 const AmbientMotes = ({ containerSize }: { containerSize: number }) => {
-  const [motes, setMotes] = useState<Array<{
-    id: number;
-    x: number;
-    size: number;
-    duration: number;
-    delay: number;
-    driftX: number;
-  }>>([]);
+  const [motes, setMotes] = useState<Array<{ id: number; x: number; size: number; duration: number; delay: number; driftX: number; }>>([]);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -140,10 +109,6 @@ const AmbientMotes = ({ containerSize }: { containerSize: number }) => {
     </div>
   );
 };
-
-// ══════════════════════════════════════════════════════════════════════════════
-// MEDAL CARD SYSTEM (Gold, Silver, Bronze)
-// ══════════════════════════════════════════════════════════════════════════════
 
 const MetalShine = ({ color }: { color: string }) => (
   <motion.div className="absolute inset-0 pointer-events-none rounded-full overflow-hidden" style={{ zIndex: 10 }}>
@@ -279,10 +244,6 @@ export const SectionHead = ({ label, color }: { label: string; color: string }) 
   </div>
 );
 
-// ══════════════════════════════════════════════════════════════════════════════
-// PLATINUM CARD — SVG coin parts
-// ══════════════════════════════════════════════════════════════════════════════
-
 const IndianCoinRing = ({ size = 420 }) => {
   const cx = size / 2, cy = size / 2, outerR = size / 2 - 4;
   const leafInnerR = outerR - 18, leafOuterR = outerR - 2, riceR = outerR - 30;
@@ -345,7 +306,6 @@ const OliveCrown = ({ containerSize }: { containerSize: number }) => {
   );
 };
 
-// ─── Card back face content ───────────────────────────────────────────────────
 const PlatinumCardBack = ({ sponsorName, tagline, discDiam }: { sponsorName: string; tagline?: string; discDiam: number }) => (
   <div style={{
     width: discDiam, height: discDiam, borderRadius: "50%",
@@ -356,13 +316,25 @@ const PlatinumCardBack = ({ sponsorName, tagline, discDiam }: { sponsorName: str
     border: "2px solid rgba(232,201,106,0.35)",
     position: "relative", overflow: "hidden",
   }}>
-    {/* Decorative inner ring */}
     <div style={{ position: "absolute", inset: "6%", borderRadius: "50%", border: "1px solid rgba(232,201,106,0.2)", pointerEvents: "none" }} />
-    {/* Star emblem */}
     <svg width={discDiam * 0.22} height={discDiam * 0.22} viewBox="0 0 40 40" style={{ flexShrink: 0 }}>
       <polygon points="20,2 24.8,14.6 38,14.6 27.6,22.8 31.6,36 20,28 8.4,36 12.4,22.8 2,14.6 15.2,14.6" fill="#FFE066" stroke="#C49A2A" strokeWidth="0.8" />
     </svg>
-    <p style={{ fontFamily: "Georgia, serif", fontSize: Math.round(discDiam * 0.072), fontWeight: 900, color: "#f5e8c0", letterSpacing: "0.1em", textTransform: "uppercase", textShadow: "0 2px 6px rgba(0,0,0,0.8)", textAlign: "center", lineHeight: 1.2 }}>
+    {/* FIXED: removed whiteSpace nowrap, added wrapping constraints */}
+    <p style={{
+      fontFamily: "Georgia, serif",
+      fontSize: Math.round(discDiam * 0.065),
+      fontWeight: 900,
+      color: "#f5e8c0",
+      letterSpacing: "0.06em",
+      textTransform: "uppercase",
+      textShadow: "0 2px 6px rgba(0,0,0,0.8)",
+      textAlign: "center",
+      lineHeight: 1.25,
+      maxWidth: "78%",
+      wordBreak: "break-word",
+      overflowWrap: "break-word",
+    }}>
       {sponsorName}
     </p>
     {tagline && (
@@ -370,17 +342,12 @@ const PlatinumCardBack = ({ sponsorName, tagline, discDiam }: { sponsorName: str
         {tagline}
       </p>
     )}
-    {/* Visit pill */}
     <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(0,0,0,0.3)", borderRadius: 100, padding: "5px 14px", border: "1px solid rgba(232,201,106,0.3)", marginTop: 4 }}>
       <ExternalLink size={11} className="text-yellow-300" />
       <span style={{ fontSize: 10, letterSpacing: "0.22em", color: "#FFD700", fontWeight: 700, textTransform: "uppercase" }}>Visit Sponsor</span>
     </div>
   </div>
 );
-
-// ══════════════════════════════════════════════════════════════════════════════
-// PLATINUM CARD — card flip on hover + gold dust
-// ══════════════════════════════════════════════════════════════════════════════
 
 export const PlatinumCard = ({
   sponsorName, sponsorLogoUrl, tagline, websiteUrl, index = 0,
@@ -394,7 +361,7 @@ export const PlatinumCard = ({
   const DISC_R = LEAF_INNER_R - 14;
   const DISC_DIAM = DISC_R * 2;
   const LOGO_SIZE = Math.round(DISC_DIAM * 0.48);
-  const NAME_FONT = Math.round(DISC_DIAM * 0.075);
+  const NAME_FONT = Math.round(DISC_DIAM * 0.065);
 
   return (
     <motion.a
@@ -409,7 +376,6 @@ export const PlatinumCard = ({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Tier badge */}
       <div className="mb-10 flex items-center gap-3 px-7 py-2.5" style={{
         border: "1px solid rgba(196,154,42,0.5)", background: "rgba(196,154,42,0.07)",
         clipPath: "polygon(14px 0%,calc(100% - 14px) 0%,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,14px 100%,0% calc(100% - 14px),0% 14px)",
@@ -420,7 +386,6 @@ export const PlatinumCard = ({
       </div>
 
       <div className="relative flex flex-col items-center">
-        {/* Outer atmospheric glow */}
         <motion.div className="absolute rounded-full pointer-events-none" style={{
           width: COIN + 80, height: COIN + 80, top: "50%", left: "50%",
           transform: "translate(-50%,-50%)",
@@ -428,10 +393,8 @@ export const PlatinumCard = ({
           filter: "blur(28px)",
         }} animate={{ opacity: hovered ? 1 : 0.45, scale: hovered ? 1.1 : 1 }} transition={{ duration: 0.5 }} />
 
-        {/* Ambient motes — always on */}
         <AmbientMotes containerSize={COIN} />
 
-        {/* ── 3D flip container ── */}
         <div style={{ perspective: 1400 }}>
           <motion.div
             style={{ transformStyle: "preserve-3d", position: "relative", width: COIN, height: COIN }}
@@ -441,12 +404,8 @@ export const PlatinumCard = ({
             {/* ── FRONT FACE ── */}
             <div style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", position: "absolute", inset: 0 }}>
               <div className="relative flex items-center justify-center" style={{ width: COIN, height: COIN }}>
-                {/* Gold dust burst — active on hover */}
                 <GoldDust active={hovered} containerSize={COIN} />
-
                 <IndianCoinRing size={COIN} />
-
-                {/* Inner content disc */}
                 <div className="absolute flex flex-col items-center justify-center" style={{
                   width: DISC_DIAM, height: DISC_DIAM, borderRadius: "50%",
                   zIndex: 10, top: "50%", left: "50%", transform: "translate(-50%,-50%)",
@@ -454,19 +413,32 @@ export const PlatinumCard = ({
                   background: "radial-gradient(circle at 36% 30%, #dbbe86, #b8943f 40%, #8a6a1a 72%, #5c3f08 100%)",
                 }}>
                   <OliveCrown containerSize={DISC_DIAM} />
-                  <div className="relative flex flex-col items-center justify-center gap-3" style={{ zIndex: 20, marginBottom: "12%" }}>
+                  <div className="relative flex flex-col items-center justify-center gap-3" style={{ zIndex: 20, marginBottom: "12%", padding: "0 8%" }}>
                     <div style={{ width: LOGO_SIZE, height: LOGO_SIZE, borderRadius: 10, background: "rgba(0,0,0,0.28)", border: "1.5px solid rgba(232,201,106,0.3)", boxShadow: "inset 0 4px 12px rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 12, flexShrink: 0 }}>
                       {sponsorLogoUrl && <img src={sponsorLogoUrl} alt={sponsorName} style={{ maxHeight: "100%", maxWidth: "100%", objectFit: "contain", filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.7))" }} />}
                     </div>
-                    <div style={{ textAlign: "center" }}>
-                      <p style={{ fontFamily: "Georgia, serif", fontSize: NAME_FONT, fontWeight: 900, color: "#f5e8c0", letterSpacing: "0.12em", textTransform: "uppercase", textShadow: "0 2px 4px rgba(0,0,0,0.8)", lineHeight: 1, whiteSpace: "nowrap" }}>{sponsorName}</p>
+                    <div style={{ textAlign: "center", width: "100%" }}>
+                      {/* FIXED: removed whiteSpace nowrap, added wrapping + smaller font */}
+                      <p style={{
+                        fontFamily: "Georgia, serif",
+                        fontSize: NAME_FONT,
+                        fontWeight: 900,
+                        color: "#f5e8c0",
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        textShadow: "0 2px 4px rgba(0,0,0,0.8)",
+                        lineHeight: 1.25,
+                        wordBreak: "break-word",
+                        overflowWrap: "break-word",
+                        maxWidth: LOGO_SIZE,
+                        margin: "0 auto",
+                      }}>{sponsorName}</p>
                       <div className="flex justify-center gap-1.5 mt-2">
                         {[0, 1, 2].map((i) => <div key={i} style={{ width: 4, height: 4, borderRadius: "50%", background: "#e8c96a" }} />)}
                       </div>
                     </div>
                   </div>
                 </div>
-
                 <div className="absolute" style={{ width: COIN, height: COIN, zIndex: 16, top: 0, left: 0 }}>
                   <CoinShine size={COIN} />
                 </div>
@@ -480,7 +452,6 @@ export const PlatinumCard = ({
               transform: "rotateY(180deg)",
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>
-              {/* Gold dust on back too */}
               <GoldDust active={hovered} containerSize={COIN} />
               <IndianCoinRing size={COIN} />
               <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 12 }}>
@@ -496,7 +467,7 @@ export const PlatinumCard = ({
 
       <div className="mt-8 flex flex-col items-center gap-2 text-center">
         <p style={{ fontSize: 12, letterSpacing: "0.26em", color: "#7a5a1a", textTransform: "uppercase", fontWeight: 700 }}>
-          Technical carnival prizes presented by {sponsorName}
+          {tagline} {sponsorName}
         </p>
         {tagline && <p style={{ fontSize: 13, color: "#c49a2a88", maxWidth: 420, lineHeight: 1.6 }}>{tagline}</p>}
       </div>
