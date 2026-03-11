@@ -3,7 +3,7 @@
  * POST /api/payment/create-order
  * 
  * Creates a Razorpay order for the logged-in user
- * Amount is determined by user's email domain (sode-edu.in = ₹200, others = ₹300)
+ * Amount is flat ₹300 for all users (internal and external)
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -59,10 +59,8 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        const REOPENING_TIME = new Date('2026-03-11T08:00:00+05:30').getTime()
-
-        // 4. Determine amount based on email domain and Robo Soccer selection
-        // Base Fee: After March 11 8 AM = ₹300, otherwise sode-edu.in = ₹200, others = ₹300
+        // 4. Determine amount based on Robo Soccer selection
+        // Base Fee: Fixed at ₹300 for all (internal and external)
         const isSodeStudent = userEmail.toLowerCase().endsWith('@sode-edu.in')
 
         let amountInRupees = 0
@@ -73,9 +71,8 @@ export async function POST(request: NextRequest) {
                 amountInRupees = 300 // Only the Robo Soccer fee
             }
         } else {
-            // New registration
-            const now = Date.now()
-            amountInRupees = now >= REOPENING_TIME ? 300 : (isSodeStudent ? 200 : 300)
+            // New registration: Fixed at 300
+            amountInRupees = 300
             if (includeRoboSoccer) {
                 amountInRupees += 300
             }

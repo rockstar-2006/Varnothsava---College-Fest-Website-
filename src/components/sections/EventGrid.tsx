@@ -666,6 +666,7 @@ export function EventGrid({ missions }: EventGridProps) {
                                                     isRegistered={userData?.registeredEvents?.some(re => re.eventId === event.id)}
                                                     isLoggedIn={isLoggedIn}
                                                     hasPaid={userData?.hasPaid}
+                                                    isInternal={userData?.studentType === 'internal'}
                                                     onRegister={handleRegisterClick}
                                                     className="will-change-gpu"
                                                     priority={idx < 4}
@@ -696,6 +697,7 @@ export function EventGrid({ missions }: EventGridProps) {
                                                     isRegistered={userData?.registeredEvents?.some(re => re.eventId === event.id)}
                                                     isLoggedIn={isLoggedIn}
                                                     hasPaid={userData?.hasPaid}
+                                                    isInternal={userData?.studentType === 'internal'}
                                                     onRegister={handleRegisterClick}
                                                     className="will-change-gpu"
                                                 />
@@ -725,6 +727,7 @@ export function EventGrid({ missions }: EventGridProps) {
                                                     isRegistered={userData?.registeredEvents?.some(re => re.eventId === event.id)}
                                                     isLoggedIn={isLoggedIn}
                                                     hasPaid={userData?.hasPaid}
+                                                    isInternal={userData?.studentType === 'internal'}
                                                     onRegister={handleRegisterClick}
                                                     className="will-change-gpu"
                                                 />
@@ -769,6 +772,7 @@ export function EventGrid({ missions }: EventGridProps) {
                                                     isRegistered={userData?.registeredEvents?.some(re => re.eventId === event.id)}
                                                     isLoggedIn={isLoggedIn}
                                                     hasPaid={userData?.hasPaid}
+                                                    isInternal={userData?.studentType === 'internal'}
                                                     onRegister={handleRegisterClick}
                                                     className="will-change-gpu"
                                                 />

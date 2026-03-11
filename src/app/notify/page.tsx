@@ -18,7 +18,6 @@ const orbitron = Orbitron({
     weight: ['400', '900'],
 })
 
-const REOPENING_TIME = new Date('2026-03-11T08:00:00+05:30').getTime();
 
 function RegisterContent() {
     const { userData, isLoggedIn, isInitializing } = useApp()
@@ -78,9 +77,7 @@ function RegisterContent() {
 
     // Calculate amount based on email and Robo Soccer selection
     const getBaseAmount = () => {
-        if (!userData) return 300
-        if (currentTime >= REOPENING_TIME) return 300
-        return userData.email.toLowerCase().endsWith('@sode-edu.in') ? 200 : 300
+        return 300
     }
 
     const getTotalAmount = () => {
@@ -244,7 +241,7 @@ function RegisterContent() {
                                                 ₹{getBaseAmount()}
                                             </p>
                                             <p className="text-[10px] text-gray-500 mt-3 font-bold uppercase tracking-widest">
-                                                Verified: {getStudentType()}
+                                                College: {userData?.collegeName || 'Verified'}
                                             </p>
                                         </div>
                                         <div className={`flex items-center gap-2 px-4 py-2 rounded-full border ${paymentStatus?.hasPaid ? 'bg-emerald-500/20 border-emerald-500/30' : 'bg-emerald-500/10 border-emerald-500/20'}`}>

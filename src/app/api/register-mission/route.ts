@@ -41,26 +41,23 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ message: "Invalid mission ID." }, { status: 400 });
         }
 
-        // Time-based registration window for TECH-002 (Prompt to Product): 7 PM - 8 PM today (IST)
+        // Registration restriction for TECH-002 (Prompt to Product): Only external participants permitted
         if (eventId === "TECH-002") {
-            // Get current time in IST (UTC+5:30)
-            const now = new Date();
-            const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-            const hours = istTime.getHours();
-            const minutes = istTime.getMinutes();
-            const currentTimeInMinutes = hours * 60 + minutes;
-            const openTime = 19 * 60; // 7 PM (1140 minutes)
-            const closeTime = 20 * 60; // 8 PM (1200 minutes)
-
-            // Check if current time is within 7 PM - 8 PM
-            if (currentTimeInMinutes < openTime || currentTimeInMinutes >= closeTime) {
-                return NextResponse.json({ message: "Registration for this event has closed. Registration opens at 7:00 PM IST." }, { status: 400 });
-            }
-
-            // Email domain filtering: Only allow external users (non-sode-edu.in)
             const userEmail = (verified.email || '').toLowerCase();
-            if (userEmail.endsWith('@sode-edu.in')) {
-                return NextResponse.json({ message: "Only external participants (non-SODE) can register for this event." }, { status: 400 });
+            const userDoc = await usersCollection.doc(verified.uid).get();
+            const userData = userDoc.data();
+            const userCollege = (userData?.collegeName || userData?.college || userData?.institution || '').toUpperCase();
+
+            const isInternal =
+                userEmail.endsWith('@sode-edu.in') ||
+                userCollege.includes('SMVITM') ||
+                userCollege.includes('SODE') ||
+                userCollege.includes('SHRI MADHWA VADIRAJA') ||
+                userCollege.includes('SHRI MADHWA') ||
+                userCollege.includes('VADIRAJA');
+
+            if (isInternal) {
+                return NextResponse.json({ message: "Registration for Prompt to Product is restricted to external participants only (non-SMVITM)." }, { status: 400 });
             }
         }
 
@@ -83,11 +80,21 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ message: `Member with profile code ${memberCode} has not completed payment.` }, { status: 400 });
             }
             
-            // Email domain filtering for TECH-002: Only external users
+            // Email domain and college filtering for TECH-002: Only external users
             if (eventId === "TECH-002") {
                 const memberEmail = (memberData?.email || '').toLowerCase();
-                if (memberEmail.endsWith('@sode-edu.in')) {
-                    return NextResponse.json({ message: `Member with profile code ${memberCode} has an internal email. Only external participants can register for this event.` }, { status: 400 });
+                const memberCollege = (memberData?.collegeName || memberData?.college || memberData?.institution || '').toUpperCase();
+
+                const isMemberInternal =
+                    memberEmail.endsWith('@sode-edu.in') ||
+                    memberCollege.includes('SMVITM') ||
+                    memberCollege.includes('SODE') ||
+                    memberCollege.includes('SHRI MADHWA VADIRAJA') ||
+                    memberCollege.includes('SHRI MADHWA') ||
+                    memberCollege.includes('VADIRAJA');
+
+                if (isMemberInternal) {
+                    return NextResponse.json({ message: `Member with profile code ${memberCode} is an internal student (SMVITM). Only external participants can register for this event.` }, { status: 400 });
                 }
             }
             

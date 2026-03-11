@@ -121,7 +121,8 @@ export const missions: Event[] = [
         team: 'Group',
         whatsappLink: "https://chat.whatsapp.com/KkqtB4iUxlh20khnW9NM6o?mode=gi_t",
         location: "CAED LAB",
-        registrationDeadline: "2026-03-10T10:00:00+05:30"
+        registrationStatus: "open",
+        registrationDeadline: "2026-03-12T10:00:00+05:30"
     },
     {
         id: "TECH-003",
@@ -1170,21 +1171,6 @@ export const isRegClosed = (event: Event | null | undefined) => {
     // Check if admin has explicitly closed/filled the event registration
     if (event.registrationStatus === 'closed' || event.registrationStatus === 'full') {
         return true;
-    }
-    
-    // Time-based registration window for TECH-002 (Prompt to Product): 7 PM - 8 PM today (IST)
-    // This is an additional layer for TECH-002 only
-    if (event.id === "TECH-002" && event.registrationStatus !== 'open') {
-        const now = new Date();
-        const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-        const hours = istTime.getHours();
-        const minutes = istTime.getMinutes();
-        const currentTimeInMinutes = hours * 60 + minutes;
-        const openTime = 19 * 60; // 7 PM (1140 minutes)
-        const closeTime = 20 * 60; // 8 PM (1200 minutes)
-        
-        // Return true (closed) if outside the 7 PM - 8 PM window
-        return currentTimeInMinutes < openTime || currentTimeInMinutes >= closeTime;
     }
     
     return false;
