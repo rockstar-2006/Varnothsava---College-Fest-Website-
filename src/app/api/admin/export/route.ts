@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
             const legacyStatus = searchParams.get('status') || 'all'; // all, paid, unpaid, internal, external
             const paymentStatusParam = searchParams.get('paymentStatus') || '';
             const studentTypeParam = searchParams.get('studentType') || '';
+            const search = (searchParams.get('search') || '').toLowerCase();
 
             const paymentStatus = ['all', 'paid', 'unpaid'].includes(paymentStatusParam)
                 ? paymentStatusParam
@@ -86,8 +87,19 @@ export async function GET(request: NextRequest) {
                 users = users.filter((u: any) => u.studentType === studentType);
             }
 
+            if (search) {
+                users = users.filter((u: any) => 
+                    (u.name && u.name.toLowerCase().includes(search)) ||
+                    (u.email && u.email.toLowerCase().includes(search)) ||
+                    (u.usn && u.usn.toLowerCase().includes(search))
+                );
+            }
+
             data = users;
         } else if (type === 'registrations') {
+            const eventId = searchParams.get('eventId');
+            const search = (searchParams.get('search') || '').toLowerCase();
+
             let query: any = registrationsCollection;
             if (eventId && eventId !== 'all') {
                 query = query.where('eventId', '==', eventId);
@@ -131,7 +143,7 @@ export async function GET(request: NextRequest) {
                 eSnap.docs.forEach(d => { eventMap[d.id] = d.data(); });
             }
 
-            data = regs.map((r: any) => {
+            const mapped = regs.map((r: any) => {
                 const leaderId = r.teamLeader;
                 const leader = userMap[leaderId] || {};
                 const eventInfo = eventMap[r.eventId] || {};
@@ -149,70 +161,100 @@ export async function GET(request: NextRequest) {
                         name: leader.name || 'Unknown',
                         usn: leader.usn || 'N/A',
                         email: leader.email || 'N/A',
-                        phone: leader.phone || 'N/A',
-                        college: leader.collegeName || leader.college || leader.institution || 'N/A'
+                        phone: leader.phone || r.phone || 'N/A',
+                        college: leader.collegeName || leader.college || leader.institution || r.college || 'N/A'
                     });
                 }
 
-                // Add other unique members
-                uniqueMemberIds.forEach((mId: any) => {
-                    const m = userMap[mId];
-                    if (m) {
-                        membersDetails.push({
-                            name: m.name || 'Unknown',
-                            usn: m.usn || 'N/A',
-                            email: m.email || 'N/A',
-                            phone: m.phone || 'N/A',
-                            college: m.collegeName || m.college || m.institution || leader.collegeName || leader.college || 'N/A'
-                        });
-                    }
+                // Add other members
+                uniqueMemberIds.forEach(mId => {
+                    const m = userMap[mId] || {};
+                    membersDetails.push({
+                        name: m.name || 'Unknown',
+                        usn: m.usn || 'N/A',
+                        email: m.email || 'N/A',
+                        phone: m.phone || 'N/A',
+                        college: m.collegeName || m.college || m.institution || 'N/A'
+                    });
                 });
 
                 return {
                     id: r.id,
-                    teamName: r.teamName || leader.name || "Solo",
-                    leaderName: leader.name || 'Unknown',
-                    leaderUSN: leader.usn || 'N/A',
-                    email: leader.email || 'N/A',
-                    phone: leader.phone || 'N/A',
-                    college: leader.collegeName || leader.college || leader.institution || 'N/A',
-                    event: eventInfo.title || "Unknown Event",
+                    teamName: r.teamName || 'Solo',
+                    teamLeader: r.teamLeader,
+                    eventId: r.eventId,
+                    event: eventInfo.title || r.eventId,
+                    college: r.college || leader.collegeName || leader.college || leader.institution || 'N/A',
+                    phone: r.phone || leader.phone || 'N/A',
                     members: membersDetails.map((m: any) => `${m.name} (${m.usn})`).join(', '),
                     membersDetails: membersDetails,
                     paymentStatus: leader.hasPaid ? 'Paid' : 'Unpaid',
                     registeredAt: r.registeredAt
                 };
             });
+
+            if (search) {
+                data = mapped.filter((r: any) => 
+                    r.teamName.toLowerCase().includes(search) ||
+                    r.event.toLowerCase().includes(search) ||
+                    r.college.toLowerCase().includes(search) ||
+                    r.membersDetails.some((m: any) => 
+                        m.name.toLowerCase().includes(search) || 
+                        m.email.toLowerCase().includes(search) || 
+                        m.usn.toLowerCase().includes(search)
+                    )
+                );
+            } else {
+                data = mapped;
+            }
         } else if (type === 'payments') {
             const eventId = searchParams.get('eventId');
             const status = searchParams.get('status');
+            const search = searchParams.get('search') || '';
+            const dateFilter = searchParams.get('dateFilter');
 
             let paymentsQuery: any = adminDb.collection('payments');
-
-            // Handle Event filtering for payments (Complex because payments don't have eventId directly)
-            if (eventId && eventId !== 'all') {
-                const regSnapshot = await adminDb.collection('registrations').where('eventId', '==', eventId).get();
-                const uids = Array.from(new Set(regSnapshot.docs.flatMap((doc: any) => {
-                    const d = doc.data();
-                    return [d.teamLeader, ...(d.members || [])];
-                })));
-
-                if (uids.length === 0) {
-                    return NextResponse.json({ data: [] });
-                }
-
-                // Chunked 'in' filtering because of Firestore 30-item limit
-                // For exports, we might need a better way if there are many UIDs
-                // but for now, let's at least handle the first 30 for consistency with the UI
-                paymentsQuery = paymentsQuery.where('user_id', 'in', uids.slice(0, 30));
-            }
 
             if (status && status !== 'all') {
                 paymentsQuery = paymentsQuery.where('status', '==', status);
             }
 
-            const snapshot = await paymentsQuery.get();
-            data = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+            if (dateFilter === 'new') {
+                paymentsQuery = paymentsQuery.where('created_at', '>=', '2026-03-11T00:00:00.000Z');
+            }
+
+            let snapshot = await paymentsQuery.get();
+            let payments = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+
+            // Handle Event scoping (manual if many UIDs)
+            if (eventId && eventId !== 'all') {
+                const regSnapshot = await adminDb.collection('registrations').where('eventId', '==', eventId).get();
+                const uids = new Set(regSnapshot.docs.flatMap((doc: any) => {
+                    const d = doc.data();
+                    return [d.teamLeader, ...(d.members || [])];
+                }));
+
+                if (uids.size === 0) {
+                    return NextResponse.json({ data: [] });
+                }
+
+                payments = payments.filter((p: any) => p.user_id && uids.has(p.user_id));
+            }
+
+            // Handle Search scoping (manual)
+            if (search) {
+                const s = search.toLowerCase();
+                // We'll need user details to search by name/email in-memory if we want full consistency
+                // But for now, let's at least handle transaction ID search
+                payments = payments.filter((p: any) => 
+                    p.id.toLowerCase().includes(s) || 
+                    (p.transactionId && p.transactionId.toLowerCase().includes(s)) ||
+                    (p.notes?.upi_transaction_id && p.notes.upi_transaction_id.toLowerCase().includes(s)) ||
+                    (p.payment_method_details?.upi_transaction_id && p.payment_method_details.upi_transaction_id.toLowerCase().includes(s))
+                );
+            }
+
+            data = payments;
 
             // Enrich payments with user names
             const userIds = Array.from(new Set(data.map((p: any) => p.user_id).filter(Boolean)));
@@ -224,6 +266,16 @@ export async function GET(request: NextRequest) {
                 uSnap.docs.forEach(d => { userMap[d.id] = d.data(); });
             }
 
+            // Apply Name/Email search if search was provided but not caught by transaction IDs
+            if (search && data.length > 0) {
+                const s = search.toLowerCase();
+                data = data.filter((p: any) => {
+                    const user = userMap[p.user_id] || {};
+                    return (user.name && user.name.toLowerCase().includes(s)) || 
+                           (user.email && user.email.toLowerCase().includes(s));
+                });
+            }
+
             data = data.map((p: any) => {
                 const user = userMap[p.user_id] || {};
                 return {
@@ -233,7 +285,7 @@ export async function GET(request: NextRequest) {
                     phone: user.phone || 'N/A',
                     college: user.collegeName || user.college || user.institution || 'N/A',
                     studentType: user.studentType || 'N/A',
-                    amount: p.amount / 100,
+                    amount: (p.amount || 0) / 100,
                     status: p.status,
                     date: p.captured_at || p.created_at || 'N/A'
                 };

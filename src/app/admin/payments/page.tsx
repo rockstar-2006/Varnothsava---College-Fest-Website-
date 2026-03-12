@@ -568,7 +568,7 @@ export default function PaymentsManagementPage() {
                         </button>
 
                         {userData?.role === 'SUPER_ADMIN' && (
-                            <button onClick={() => fetchAndDownload('payments', `Payments_${selectedStatus}_${selectedEventId}`, getAuthToken, { eventId: selectedEventId, status: selectedStatus })}
+                            <button onClick={() => fetchAndDownload('payments', `Payments_${selectedStatus}_${selectedEventId}`, getAuthToken, { eventId: selectedEventId, status: selectedStatus, search: searchQuery, dateFilter: selectedDateFilter })}
                                 className="bg-blue-500/10 border border-blue-500/20 hover:border-blue-500/50 text-blue-500 px-3 py-2 rounded-xl transition-all group flex items-center gap-2 h-10"
                             >
                                 <FileSpreadsheet size={16} />

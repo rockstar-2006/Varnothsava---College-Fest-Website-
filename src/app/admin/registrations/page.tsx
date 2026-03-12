@@ -445,7 +445,7 @@ export default function ParticipantsManagementPage() {
                                                 'registrations',
                                                 `Roster_${selectedEventId}`,
                                                 getAuthToken,
-                                                { eventId: selectedEventId },
+                                                { eventId: selectedEventId, search: searchQuery },
                                                 'word',
                                                 eventMeta
                                             );
@@ -471,7 +471,7 @@ export default function ParticipantsManagementPage() {
                                         <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Template</span>
                                     </button>
                                     <button
-                                        onClick={() => fetchAndDownload('registrations', `Data_${selectedEventId}`, getAuthToken, { eventId: selectedEventId }, 'excel')}
+                                        onClick={() => fetchAndDownload('registrations', `Data_${selectedEventId}`, getAuthToken, { eventId: selectedEventId, search: searchQuery }, 'excel')}
                                         className="bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/50 text-emerald-500 px-3 md:px-5 py-2 rounded-xl transition-all group flex items-center gap-2 shadow-xl"
                                         title="Download Data (Excel)"
                                     >

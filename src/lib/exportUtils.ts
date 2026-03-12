@@ -11,39 +11,80 @@ export const downloadExcel = (data: any[], fileName: string) => {
         return;
     }
 
-    const flatData = data.flatMap((reg: any, teamIndex: number) => {
-        const members = reg.membersDetails || [];
-        return members.map((m: any) => ({
-            "TEAM NO.": teamIndex + 1,
-            "TEAM": reg.teamName || "Solo",
-            "NAME": m.name || "Unknown",
-            "USN": m.usn || "N/A",
-            "COLLEGE": m.college || reg.college || "N/A",
-            "EMAIL": m.email || "N/A",
-            "MOBILE NO.": m.phone || reg.phone || "N/A",
-            "PAYMENT STATUS": reg.paymentStatus || "N/A",
-            "EVENT": reg.event || "N/A",
-            "REGISTERED AT": reg.registeredAt || "N/A"
+    let flatData: any[] = [];
+    let columns: { wch: number }[] = [];
+
+    // Detect data type based on properties
+    const firstItem = data[0];
+    
+    if (firstItem.membersDetails) {
+        // Registration Roster
+        flatData = data.flatMap((reg: any, teamIndex: number) => {
+            const members = reg.membersDetails || [];
+            return members.map((m: any) => ({
+                "TEAM NO.": teamIndex + 1,
+                "TEAM": reg.teamName || "Solo",
+                "NAME": m.name || "Unknown",
+                "USN": m.usn || "N/A",
+                "COLLEGE": m.college || reg.college || "N/A",
+                "EMAIL": m.email || "N/A",
+                "MOBILE NO.": m.phone || reg.phone || "N/A",
+                "PAYMENT STATUS": reg.paymentStatus || "N/A",
+                "EVENT": reg.event || "N/A",
+                "REGISTERED AT": reg.registeredAt || "N/A"
+            }));
+        });
+        columns = [
+            { wch: 10 }, { wch: 20 }, { wch: 25 }, { wch: 15 }, { wch: 35 }, 
+            { wch: 30 }, { wch: 20 }, { wch: 15 }, { wch: 20 }, { wch: 25 }
+        ];
+    } else if (firstItem.transactionId || firstItem.amount) {
+        // Payment Logs
+        flatData = data.map((p, i) => ({
+            "SL NO.": i + 1,
+            "TRANSACTION ID": p.transactionId || p.id,
+            "NAME": p.userName || "Unknown",
+            "EMAIL": p.email || "N/A",
+            "PHONE": p.phone || "N/A",
+            "COLLEGE": p.college || "N/A",
+            "TYPE": p.studentType || "N/A",
+            "AMOUNT": p.amount,
+            "STATUS": p.status,
+            "DATE": p.date || "N/A"
         }));
-    });
+        columns = [
+            { wch: 8 }, { wch: 25 }, { wch: 25 }, { wch: 30 }, { wch: 15 }, 
+            { wch: 35 }, { wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 25 }
+        ];
+    } else if (firstItem.usn || firstItem.paymentStatus) {
+        // User Directory
+        flatData = data.map((u, i) => ({
+            "SL NO.": i + 1,
+            "NAME": u.name || "Unknown",
+            "EMAIL": u.email || "N/A",
+            "PHONE": u.phone || "N/A",
+            "USN": u.usn || "N/A",
+            "COLLEGE": u.college || "N/A",
+            "TYPE": u.studentType || "N/A",
+            "PAYMENT": u.paymentStatus || "N/A",
+            "ROLE": u.role || "USER"
+        }));
+        columns = [
+            { wch: 8 }, { wch: 25 }, { wch: 30 }, { wch: 15 }, { wch: 15 }, 
+            { wch: 35 }, { wch: 15 }, { wch: 15 }, { wch: 15 }
+        ];
+    } else {
+        // Generic fallback (e.g., college list)
+        flatData = data;
+    }
 
     const worksheet = XLSX.utils.json_to_sheet(flatData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Registrations");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
 
-    // Auto-size columns for professional look
-    worksheet["!cols"] = [
-        { wch: 10 }, // TEAM NO.
-        { wch: 20 }, // TEAM
-        { wch: 25 }, // NAME
-        { wch: 15 }, // USN
-        { wch: 35 }, // COLLEGE
-        { wch: 30 }, // EMAIL
-        { wch: 20 }, // MOBILE NO.
-        { wch: 15 }, // PAYMENT STATUS
-        { wch: 20 }, // EVENT
-        { wch: 25 }  // REGISTERED AT
-    ];
+    if (columns.length > 0) {
+        worksheet["!cols"] = columns;
+    }
 
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });

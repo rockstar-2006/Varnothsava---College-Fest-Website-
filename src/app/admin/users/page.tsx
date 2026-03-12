@@ -511,6 +511,7 @@ export default function UserManagementPage() {
                                         status: paymentFilter !== 'all' ? paymentFilter : (studentTypeFilter !== 'all' ? studentTypeFilter : 'all'),
                                         paymentStatus: paymentFilter,
                                         studentType: studentTypeFilter,
+                                        search: searchQuery,
                                     })}
                                     className="bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/50 text-emerald-500 px-3 py-2 rounded-xl transition-all group flex items-center gap-2 h-10 shadow-xl"
                                 >
