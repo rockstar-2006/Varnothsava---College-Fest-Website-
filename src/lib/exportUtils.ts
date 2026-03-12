@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType, TextRun, VerticalAlign, BorderStyle, TableLayoutType } from 'docx';
+import { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType, TextRun, VerticalAlign, BorderStyle, TableLayoutType, HeightRule } from 'docx';
 import { saveAs } from 'file-saver';
 
 /**
@@ -101,7 +101,7 @@ export const downloadWord = async (data: any[], fileName: string, eventInfo?: { 
             if (index === 0) {
                 cells.push(new TableCell({
                     children: [new Paragraph({
-                        children: [new TextRun({ text: String(teamIndex + 1), bold: true, size: 14 })],
+                        children: [new TextRun({ text: (reg.teamName || reg.leaderName) ? String(teamIndex + 1) : "", bold: true, size: 14 })],
                         alignment: AlignmentType.CENTER
                     })],
                     rowSpan: rowSpan,
@@ -126,7 +126,7 @@ export const downloadWord = async (data: any[], fileName: string, eventInfo?: { 
             // Member Name
             cells.push(new TableCell({
                 children: [new Paragraph({
-                    children: [new TextRun({ text: member.name, size: 14 })]
+                    children: [new TextRun({ text: member.name || "", size: 14 })]
                 })],
                 verticalAlign: VerticalAlign.CENTER,
                 width: { size: COL_WIDTHS[2], type: WidthType.DXA },
@@ -136,7 +136,7 @@ export const downloadWord = async (data: any[], fileName: string, eventInfo?: { 
             // USN
             cells.push(new TableCell({
                 children: [new Paragraph({
-                    children: [new TextRun({ text: member.usn, size: 14 })],
+                    children: [new TextRun({ text: member.usn || "", size: 14 })],
                     alignment: AlignmentType.CENTER
                 })],
                 verticalAlign: VerticalAlign.CENTER,
@@ -147,7 +147,7 @@ export const downloadWord = async (data: any[], fileName: string, eventInfo?: { 
             if (index === 0) {
                 cells.push(new TableCell({
                     children: [new Paragraph({
-                        children: [new TextRun({ text: reg.college, size: 12 })],
+                        children: [new TextRun({ text: reg.college || "", size: 12 })],
                         alignment: AlignmentType.CENTER
                     })],
                     rowSpan: rowSpan,
@@ -159,7 +159,7 @@ export const downloadWord = async (data: any[], fileName: string, eventInfo?: { 
             // Email (per member)
             cells.push(new TableCell({
                 children: [new Paragraph({
-                    children: [new TextRun({ text: member.email || "N/A", size: 12 })],
+                    children: [new TextRun({ text: member.email || "", size: 12 })],
                     alignment: AlignmentType.CENTER
                 })],
                 verticalAlign: VerticalAlign.CENTER,
@@ -169,7 +169,7 @@ export const downloadWord = async (data: any[], fileName: string, eventInfo?: { 
             // Phone
             cells.push(new TableCell({
                 children: [new Paragraph({
-                    children: [new TextRun({ text: member.phone, size: 14 })],
+                    children: [new TextRun({ text: member.phone || "", size: 14 })],
                     alignment: AlignmentType.CENTER
                 })],
                 verticalAlign: VerticalAlign.CENTER,
@@ -183,7 +183,10 @@ export const downloadWord = async (data: any[], fileName: string, eventInfo?: { 
                 width: { size: COL_WIDTHS[7], type: WidthType.DXA },
             }));
 
-            tableRows.push(new TableRow({ children: cells }));
+            tableRows.push(new TableRow({ 
+                children: cells,
+                height: { value: 360, rule: HeightRule.ATLEAST }
+            }));
         });
     });
 
@@ -191,7 +194,7 @@ export const downloadWord = async (data: any[], fileName: string, eventInfo?: { 
         sections: [{
             properties: {
                 page: {
-                    margin: { top: 720, right: 360, bottom: 720, left: 360 }, // Narrower sideways margins
+                    margin: { top: 360, right: 360, bottom: 360, left: 360 }, // Narrower margins to fit 35 rows
                 }
             },
             children: [
@@ -255,6 +258,28 @@ export const downloadWord = async (data: any[], fileName: string, eventInfo?: { 
     saveAs(blob, `${fileName}_${new Date().toISOString().split('T')[0]}.docx`);
 };
 
+/**
+ * Export College Names to Excel
+ */
+export const downloadCollegesExcel = (colleges: { name: string, count: number }[], fileName: string) => {
+    if (!colleges || colleges.length === 0) {
+        alert("No college data available");
+        return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(colleges.map((c, i) => ({
+        "SL NO.": i + 1,
+        "COLLEGE NAME": c.name,
+        "PARTICIPANTS COUNT": c.count
+    })));
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Colleges");
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    saveAs(data, `${fileName}_${new Date().toISOString().split('T')[0]}.xlsx`);
+};
+
 export const fetchAndDownload = async (
     type: string,
     fileName: string,
@@ -293,3 +318,22 @@ export const fetchAndDownload = async (
         alert(error.message || "An error occurred during export");
     }
 };
+
+/**
+ * Download an empty Word template for manual registration
+ */
+export const downloadTemplateWord = async (fileName: string, eventInfo?: { title: string, date: string, time?: string, location?: string }) => {
+    const emptyRows = Array.from({ length: 35 }, () => ({
+        teamName: "",
+        college: "",
+        membersDetails: [{ name: "", usn: "", email: "", phone: "" }]
+    }));
+
+    await downloadWord(emptyRows, fileName + "_Template", {
+        title: eventInfo?.title || "EVENT_TITLE",
+        date: eventInfo?.date || "11 & 12 MARCH, 2026",
+        time: eventInfo?.time || "TBA",
+        location: eventInfo?.location || "TBA"
+    });
+};
+

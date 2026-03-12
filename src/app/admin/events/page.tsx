@@ -25,7 +25,7 @@ import {
     FileSpreadsheet,
     FileText
 } from 'lucide-react'
-import { fetchAndDownload } from '@/lib/exportUtils'
+import { fetchAndDownload, downloadTemplateWord, downloadCollegesExcel } from '@/lib/exportUtils'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getAuthToken } from '@/lib/firebaseClient'
 import { cn } from '@/lib/utils'
@@ -407,6 +407,46 @@ export default function EventManagementPage() {
                             </div>
                         </button>
 
+                        {(isSuperAdmin || userData?.role === 'COORDINATOR') && (
+                            <>
+                                <button
+                                    onClick={() => downloadTemplateWord("Master_Template")}
+                                    className="bg-purple-500/10 border border-purple-500/20 hover:border-purple-500/50 text-purple-500 px-5 py-2.5 rounded-xl transition-all group flex items-center gap-3 shadow-xl h-11"
+                                    title="Download Master Blank Template"
+                                >
+                                    <FileText size={18} className="transition-transform group-hover:rotate-12" />
+                                    <div className="text-left">
+                                        <p className="text-[9px] font-black uppercase tracking-wider text-purple-500/50 leading-none mb-1">Spot Reg</p>
+                                        <p className="text-xs font-bold uppercase tracking-widest leading-none">Template</p>
+                                    </div>
+                                </button>
+
+                                <button
+                                    onClick={() => fetchAndDownload('registrations', 'Master_Roster_All_Events', getAuthToken, { eventId: 'all' }, 'word', { title: 'ALL EVENTS ROSTER', date: 'VARNOTHSAVA 2026' })}
+                                    className="bg-blue-500/10 border border-blue-500/20 hover:border-blue-500/50 text-blue-500 px-5 py-2.5 rounded-xl transition-all group flex items-center gap-3 shadow-xl h-11"
+                                    title="Download Master Roster (All Events)"
+                                >
+                                    <FileText size={18} className="transition-transform group-hover:scale-110" />
+                                    <div className="text-left">
+                                        <p className="text-[9px] font-black uppercase tracking-wider text-blue-500/50 leading-none mb-1">Full Data</p>
+                                        <p className="text-xs font-bold uppercase tracking-widest leading-none">Master Roster</p>
+                                    </div>
+                                </button>
+
+                                <button
+                                    onClick={() => downloadCollegesExcel(stats?.collegeDistribution || [], 'Master_College_List')}
+                                    className="bg-amber-500/10 border border-amber-500/20 hover:border-amber-500/50 text-amber-500 px-5 py-2.5 rounded-xl transition-all group flex items-center gap-3 shadow-xl h-11"
+                                    title="Download Participating College List"
+                                >
+                                    <FileSpreadsheet size={18} className="transition-transform group-hover:rotate-12" />
+                                    <div className="text-left">
+                                        <p className="text-[9px] font-black uppercase tracking-wider text-amber-500/50 leading-none mb-1">Geography</p>
+                                        <p className="text-xs font-bold uppercase tracking-widest leading-none">Colleges</p>
+                                    </div>
+                                </button>
+                            </>
+                        )}
+
                         {isSuperAdmin && (
                             <button
                                 onClick={() => handleOpenModal()}
@@ -515,7 +555,16 @@ export default function EventManagementPage() {
                                     <div className="flex items-center gap-2">
                                         <div className="w-1 h-1 rounded-full bg-amber-500" /> Geographic Spread
                                     </div>
-                                    <span className="text-amber-500/50">{stats.totalColleges || 0} Colleges</span>
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-amber-500/50">{stats.totalColleges || 0} Colleges</span>
+                                        <button 
+                                            onClick={() => downloadCollegesExcel(stats.collegeDistribution || [], 'College_List')}
+                                            className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 p-1.5 rounded-lg transition-all"
+                                            title="Export College List (Excel)"
+                                        >
+                                            <FileSpreadsheet size={14} />
+                                        </button>
+                                    </div>
                                 </h3>
 
                                 <div className="space-y-3 overflow-y-auto max-h-40 no-scrollbar pr-2 custom-scrollbar">
@@ -931,6 +980,17 @@ export default function EventManagementPage() {
                                                 >
                                                     <FileText size={18} className="transition-transform group-hover:scale-110" />
                                                     <span className="hidden md:inline text-xs font-bold uppercase tracking-widest">Word</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => downloadTemplateWord(
+                                                        `Template_${selectedEventForReg.title}`,
+                                                        { title: selectedEventForReg.title, date: selectedEventForReg.date, time: selectedEventForReg.time, location: selectedEventForReg.location }
+                                                    )}
+                                                    className="p-2 md:px-4 md:py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-500 rounded-xl transition-all flex items-center gap-2 group"
+                                                    title="Download Blank Template (Word)"
+                                                >
+                                                    <FileText size={18} className="transition-transform group-hover:rotate-12" />
+                                                    <span className="hidden md:inline text-xs font-bold uppercase tracking-widest">Template</span>
                                                 </button>
                                                 <button
                                                     onClick={() => fetchAndDownload('registrations', `Data_${selectedEventForReg.title}`, getAuthToken, { eventId: selectedEventForReg.id }, 'excel')}

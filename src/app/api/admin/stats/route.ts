@@ -391,12 +391,13 @@ export async function GET(request: NextRequest) {
                 const participants = collegeParticipantMap[name]?.size || 0;
                 const registrations = collegeRegistrationMap[name]?.size || 0;
                 return {
-                    name,
+                    name: name || "Unknown",
                     registrations,
                     participants,
                     count: participants
                 };
             })
+            .filter(c => c.name !== 'Unknown' && c.name.trim() !== '')
             .sort((a, b) => {
                 if (b.registrations !== a.registrations) return b.registrations - a.registrations;
                 return b.participants - a.participants;
@@ -417,7 +418,7 @@ export async function GET(request: NextRequest) {
             totalParticipantsPaid: uniquePaidParticipants.size,
             totalRevenue,
             totalPaymentsCount,
-            totalColleges: Object.keys(collegeParticipantMap).filter(c => c !== 'Unknown').length,
+            totalColleges: collegeDistribution.length,
             eventMetricsCache: cleanEventMetrics, // Cached individual event stats for O(1) reads
             eventTitleMap,
             categoryBreakdown: categoryStats,

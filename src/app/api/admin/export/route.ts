@@ -88,11 +88,11 @@ export async function GET(request: NextRequest) {
 
             data = users;
         } else if (type === 'registrations') {
-            if (!eventId || eventId === 'all') {
-                return NextResponse.json({ message: "Event ID is required for registration roster" }, { status: 400 });
+            let query: any = registrationsCollection;
+            if (eventId && eventId !== 'all') {
+                query = query.where('eventId', '==', eventId);
             }
-
-            const query = registrationsCollection.where('eventId', '==', eventId);
+            
             const snapshot = await query.get();
             const regs = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
 
@@ -102,8 +102,11 @@ export async function GET(request: NextRequest) {
 
             // Enrich registrations with user names and event titles
             const userIds = new Set<string>();
+            const uniqueEventIds = new Set<string>();
+            
             regs.forEach((r: any) => {
                 if (r.teamLeader) userIds.add(r.teamLeader);
+                if (r.eventId) uniqueEventIds.add(r.eventId);
                 if (r.members) r.members.forEach((mId: string) => {
                     if (mId) userIds.add(mId);
                 });
@@ -119,12 +122,19 @@ export async function GET(request: NextRequest) {
                 uSnap.docs.forEach(d => { userMap[d.id] = d.data(); });
             }
 
-            const eventDoc = await adminDb.collection('events').doc(eventId).get();
-            const eventTitle = eventDoc.data()?.title || "Unknown Event";
+            // Fetch event details for all involved events
+            const eventMap: Record<string, any> = {};
+            const eventIdArray = Array.from(uniqueEventIds);
+            for (let i = 0; i < eventIdArray.length; i += 5) {
+                const chunk = eventIdArray.slice(i, i + 5);
+                const eSnap = await adminDb.collection('events').where('__name__', 'in', chunk).get();
+                eSnap.docs.forEach(d => { eventMap[d.id] = d.data(); });
+            }
 
             data = regs.map((r: any) => {
                 const leaderId = r.teamLeader;
                 const leader = userMap[leaderId] || {};
+                const eventInfo = eventMap[r.eventId] || {};
 
                 // 1. Get unique member IDs (excluding the leader to avoid duplicates)
                 const uniqueMemberIds = Array.from(new Set(r.members || []))
@@ -166,7 +176,7 @@ export async function GET(request: NextRequest) {
                     email: leader.email || 'N/A',
                     phone: leader.phone || 'N/A',
                     college: leader.collegeName || leader.college || leader.institution || 'N/A',
-                    event: eventTitle,
+                    event: eventInfo.title || "Unknown Event",
                     members: membersDetails.map((m: any) => `${m.name} (${m.usn})`).join(', '),
                     membersDetails: membersDetails,
                     paymentStatus: leader.hasPaid ? 'Paid' : 'Unpaid',

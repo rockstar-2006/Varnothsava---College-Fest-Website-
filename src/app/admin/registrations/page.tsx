@@ -25,7 +25,7 @@ import {
     Download,
     FileSpreadsheet
 } from 'lucide-react'
-import { fetchAndDownload } from '@/lib/exportUtils'
+import { fetchAndDownload, downloadTemplateWord } from '@/lib/exportUtils'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getAuthToken } from '@/lib/firebaseClient'
 import { cn } from '@/lib/utils'
@@ -455,6 +455,20 @@ export default function ParticipantsManagementPage() {
                                     >
                                         <FileText size={16} className="transition-transform group-hover:scale-110" />
                                         <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Word</span>
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const eventObj = events.find(e => e.id === selectedEventId);
+                                            downloadTemplateWord(
+                                                `Template_${selectedEventId === 'all' ? 'All_Events' : (eventObj?.title || selectedEventId)}`,
+                                                eventObj?.date ? { title: eventObj.title, date: eventObj.date, time: eventObj.time, location: eventObj.location } : { title: eventObj?.title || 'Event Roster', date: '11 & 12 MARCH, 2026' }
+                                            );
+                                        }}
+                                        className="bg-purple-500/10 border border-purple-500/20 hover:border-purple-500/50 text-purple-500 px-3 md:px-5 py-2 rounded-xl transition-all group flex items-center gap-2 shadow-xl"
+                                        title="Download Blank Template (Word)"
+                                    >
+                                        <FileText size={16} className="transition-transform group-hover:rotate-12" />
+                                        <span className="text-xs font-bold uppercase tracking-widest hidden sm:block">Template</span>
                                     </button>
                                     <button
                                         onClick={() => fetchAndDownload('registrations', `Data_${selectedEventId}`, getAuthToken, { eventId: selectedEventId }, 'excel')}
