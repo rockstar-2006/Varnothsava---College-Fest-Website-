@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
   reactStrictMode: true,
-  serverExternalPackages: ["firebase-admin"],
+  serverExternalPackages: ["firebase-admin", "sharp"],
   transpilePackages: ["@splinetool/react-spline"],
   images: {
     formats: ['image/avif', 'image/webp'],

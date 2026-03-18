@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebaseAdmin';
 import { generateCertificate } from '@/lib/certificateGenerator';
-import path from 'path';
-import fs from 'fs';
 
 export async function GET(
     request: NextRequest,
@@ -17,15 +15,6 @@ export async function GET(
             console.error('[CERT] Invalid ID provided');
             return NextResponse.json({ error: 'Invalid certificate ID' }, { status: 400 });
         }
-
-        const tempDir = path.resolve('tmp/certificates');
-        if (!fs.existsSync(tempDir)) {
-            fs.mkdirSync(tempDir, { recursive: true });
-        }
-        const outputPath = path.join(tempDir, `${id}.png`);
-
-        // Force a regeneration once to ensure fixes are applied
-        // if (fs.existsSync(outputPath)) { ... }
 
         let userSnap = await adminDb.collection('users').where('profileCode', '==', id).limit(1).get();
         if (userSnap.empty) {
@@ -51,20 +40,15 @@ export async function GET(
         
         console.log(`[CERT] Generating for Name: "${rawName}", College: "${rawCollege}"`);
         
-        try {
-            await generateCertificate(rawName, rawCollege, outputPath);
-            console.log(`[CERT] OK: Generated in ${Date.now() - startTime}ms`);
-        } catch (genError: any) {
-            console.error('[CERT] Generation Failed:', genError.message);
-            throw genError;
-        }
-
-        const imageBuffer = fs.readFileSync(outputPath);
+        // generateCertificate now returns a Buffer directly (no file I/O needed)
+        const imageBuffer = await generateCertificate(rawName, rawCollege);
+        console.log(`[CERT] OK: Generated in ${Date.now() - startTime}ms`);
         
-        return new NextResponse(imageBuffer, {
+        return new NextResponse(new Uint8Array(imageBuffer), {
             headers: {
                 'Content-Type': 'image/png',
                 'Content-Disposition': `attachment; filename="Certificate_${rawName.replace(/\s+/g, '_')}.png"`,
+                'Cache-Control': 'no-store',
             },
         });
 

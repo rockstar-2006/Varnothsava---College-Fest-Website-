@@ -2,8 +2,9 @@ import sharp from 'sharp';
 import path from 'path';
 import fs from 'fs';
 
-export async function generateCertificate(name: string, college: string, outputPath: string) {
-    const templatePath = path.resolve('image copy 7.png');
+export async function generateCertificate(name: string, college: string): Promise<Buffer> {
+    // Use process.cwd() to resolve the public directory correctly on Vercel
+    const templatePath = path.join(process.cwd(), 'public', 'image_copy_7.png');
     
     if (!fs.existsSync(templatePath)) {
         throw new Error('Certificate template not found at ' + templatePath);
@@ -55,7 +56,8 @@ export async function generateCertificate(name: string, college: string, outputP
     </svg>
     `;
 
-    await sharp(templatePath)
+    // Return a Buffer directly — avoids file system write issues on Vercel/serverless
+    const outputBuffer = await sharp(templatePath)
         .composite([
             {
                 input: Buffer.from(svgText),
@@ -64,7 +66,7 @@ export async function generateCertificate(name: string, college: string, outputP
             },
         ])
         .png()
-        .toFile(outputPath);
+        .toBuffer();
 
-    return outputPath;
+    return outputBuffer;
 }
