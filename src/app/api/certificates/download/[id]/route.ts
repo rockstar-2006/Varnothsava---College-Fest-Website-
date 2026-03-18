@@ -40,8 +40,8 @@ export async function GET(
         
         console.log(`[CERT] Generating for Name: "${rawName}", College: "${rawCollege}"`);
         
-        // generateCertificate now returns a Buffer directly (no file I/O needed)
-        const imageBuffer = await generateCertificate(rawName, rawCollege);
+        // generateCertificate fetches the template via URL (no filesystem dependency)
+        const imageBuffer = await generateCertificate(rawName, rawCollege, request.url);
         console.log(`[CERT] OK: Generated in ${Date.now() - startTime}ms`);
         
         return new NextResponse(new Uint8Array(imageBuffer), {
