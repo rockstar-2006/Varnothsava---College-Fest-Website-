@@ -134,9 +134,9 @@ export const CertificateModal = ({ isOpen, onClose, userData }: CertificateModal
                                                 className="object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
                                             />
                                             
-                                            {/* Dynamic Name Overlay for Preview Visibility */}
+                                            {/* Dynamic Name Overlay (Matches y-position 598/1131 = 52.8%) */}
                                             <div 
-                                                className="absolute left-[36%] top-[52.4%] -translate-y-1/2 w-[60%] text-left pointer-events-none"
+                                                className="absolute left-[36%] top-[52.8%] -translate-y-1/2 w-[60%] text-left pointer-events-none"
                                                 style={{ zIndex: 5 }}
                                             >
                                                 <p className="text-[rgb(27,38,49)] font-serif font-black uppercase text-[5px] sm:text-[6px] md:text-[8px] truncate">
@@ -144,9 +144,9 @@ export const CertificateModal = ({ isOpen, onClose, userData }: CertificateModal
                                                 </p>
                                             </div>
 
-                                            {/* Dynamic College Overlay for Preview Visibility */}
+                                            {/* Dynamic College Overlay (Matches y-position 658/1131 = 58.1%) */}
                                             <div 
-                                                className="absolute left-[26%] top-[58%] -translate-y-1/2 w-[60%] text-left pointer-events-none"
+                                                className="absolute left-[26%] top-[58.1%] -translate-y-1/2 w-[60%] text-left pointer-events-none"
                                                 style={{ zIndex: 5 }}
                                             >
                                                 <p className="text-[rgb(81,90,90)] font-serif font-medium italic uppercase text-[4px] sm:text-[5px] md:text-[6px] truncate leading-tight">
