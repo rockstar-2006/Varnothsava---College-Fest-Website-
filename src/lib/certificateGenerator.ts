@@ -10,15 +10,15 @@ export async function generateCertificate(
     const height = 1131;
 
     // Dynamic sizing logic
-    const nameFontSize = name.length > 15 ? Math.max(22, 54 - (name.length - 15) * 2) : 54;
+    const nameFontSize = name.length > 15 ? Math.max(22, 54 - (name.length - 15) * 2.2) : 54;
     const collegeFontSize = college.length > 25 ? Math.max(18, 34 - (college.length - 25) * 0.5) : 34;
 
     const nameX = Math.round(width * 0.36);
     const collegeX = Math.round(width * 0.26);
     
-    // Nudge names for visual alignment
-    const nameY = 548; 
-    const collegeY = 620;
+    // Nudge names for visual alignment - these were calibrated for the PNG 1131h
+    const nameY = 594; 
+    const collegeY = 654;
 
     // ── Template image fetch ─────────────────────────────────────────────────────────
     const baseUrl = new URL(requestUrl);
@@ -27,38 +27,28 @@ export async function generateCertificate(
     if (!templateRes.ok) throw new Error(`Template fetch failed: ${templateRes.status}`);
     const templateBuffer = Buffer.from(await templateRes.arrayBuffer());
 
-    // ── SHARP NATIVE TEXT RENDERING (No SVG Tags) ───────────────────────────────────
-    // This is the most robust way on Vercel/Linux. It bypasses the SVG font bugs
-    // by using Sharp's internal text rendering engine directly.
+    // ── SVG XML (The "Force Fallback" Method) ───────────────────────────────────
+    // If native sharp text fails or shows boxes, we go back to the most basic SVG
+    // BUT we use THE absolute most generic CSS styles which are harder to break.
     
-    // 1. Create Transparent PNG for Name
-    const nameOverlay = await sharp({
-        text: {
-            text: `<span foreground='#1B2631' font_weight='bold'>${name.toUpperCase()}</span>`,
-            font: 'serif',
-            fontSize: nameFontSize,
-            rgba: true,
-            align: 'left'
-        }
-    }).png().toBuffer();
+    const svgOverlay = Buffer.from(`
+    <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+      <style>
+        .name { font: bold ${nameFontSize}px serif; fill: #1B2631; }
+        .college { font: italic ${collegeFontSize}px serif; fill: #515a5a; }
+      </style>
+      <text x="${nameX}" y="${nameY}" class="name" text-anchor="start">${name.toUpperCase()}</text>
+      <text x="${collegeX}" y="${collegeY}" class="college" text-anchor="start">${college.toUpperCase()}</text>
+    </svg>`);
 
-    // 2. Create Transparent PNG for College
-    const collegeOverlay = await sharp({
-        text: {
-            text: `<span foreground='#515a5a' font_style='italic'>${college.toUpperCase()}</span>`,
-            font: 'serif',
-            fontSize: collegeFontSize,
-            rgba: true,
-            align: 'left'
-        }
-    }).png().toBuffer();
-
-    // 3. Composite everything onto the template
+    // ── Output ──────────────────────────────────────────────────────────
+    // We compose the basic SVG on top of the template.
     const outputBuffer = await sharp(templateBuffer)
-        .composite([
-            { input: nameOverlay, left: nameX, top: nameY },
-            { input: collegeOverlay, left: collegeX, top: collegeY }
-        ])
+        .composite([{ 
+            input: svgOverlay, 
+            top: 0, 
+            left: 0 
+        }])
         .png()
         .toBuffer();
 
