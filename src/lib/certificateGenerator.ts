@@ -1,6 +1,4 @@
 import sharp from 'sharp';
-import path from 'path';
-import fs from 'fs';
 
 export async function generateCertificate(
     name: string,
@@ -11,7 +9,7 @@ export async function generateCertificate(
     const width = 1599;
     const height = 1131;
 
-    // Dynamic font scaling
+    // Dynamic font scaling logic for the final PNG
     const nameFontSize = name.length > 15 ? Math.max(22, 52 - (name.length - 15) * 2.2) : 52;
     const collegeFontSize = college.length > 25 ? Math.max(18, 32 - (college.length - 25) * 0.5) : 32;
 
@@ -32,30 +30,22 @@ export async function generateCertificate(
     const safeName = escapeXml(name.toUpperCase());
     const safeCollege = escapeXml(college.toUpperCase());
 
-    // ── Font ─────────────────────────────────────────────────────────
-    let fontBase64 = '';
-    try {
-        const fontPath = path.join(process.cwd(), 'public', 'fonts', 'pt-serif-bold.woff');
-        if (fs.existsSync(fontPath)) {
-            fontBase64 = fs.readFileSync(fontPath).toString('base64');
-        }
-    } catch (e) {
-        console.warn('[CERT] Font load failed:', e);
-    }
+    // ── Template image fetch ─────────────────────────────────────────────────────────
+    const baseUrl = new URL(requestUrl);
+    const origin = `${baseUrl.protocol}//${baseUrl.host}`;
+    const templateRes = await fetch(`${origin}/image_copy_7.png`);
+    if (!templateRes.ok) throw new Error(`Template fetch failed: ${templateRes.status}`);
+    const templateBuffer = Buffer.from(await templateRes.arrayBuffer());
 
-    const fontHeader = fontBase64
-        ? `<defs><style>@font-face { font-family: "CertFont"; src: url("data:font/woff;base64,${fontBase64}") format("woff"); font-weight: bold; }</style></defs>`
-        : '';
-    const fontFamily = fontBase64 ? '"CertFont", "PT Serif", serif' : 'serif';
-
-    // ── SVG XML ──────────────────────────────────────────────────────────
-    const svgText = `<?xml version="1.0" encoding="UTF-8"?>
+    // ── SVG XML ───────────────────────────────────────────────────────────────────────
+    // Using THE absolute most standard SVG structure — zero complex font loading.
+    // 'serif' is a web safe generic font family mapped to Liberation Serif on Vercel.
+    const svgOverlay = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-  ${fontHeader}
   <text 
     x="${nameX}" 
     y="598" 
-    font-family='${fontFamily}' 
+    font-family="serif" 
     font-size="${nameFontSize}" 
     font-weight="bold" 
     fill="${nameColor}" 
@@ -64,7 +54,7 @@ export async function generateCertificate(
   <text 
     x="${collegeX}" 
     y="658" 
-    font-family='${fontFamily}' 
+    font-family="serif" 
     font-size="${collegeFontSize}" 
     font-weight="normal" 
     font-style="italic" 
@@ -73,16 +63,13 @@ export async function generateCertificate(
   >${safeCollege}</text>
 </svg>`;
 
-    // ── Template image ─────────────────────────────────────────────────────────
-    const baseUrl = new URL(requestUrl);
-    const origin = `${baseUrl.protocol}//${baseUrl.host}`;
-    const templateRes = await fetch(`${origin}/image_copy_7.png`);
-    if (!templateRes.ok) throw new Error(`Template fetch failed: ${templateRes.status}`);
-    const templateBuffer = Buffer.from(await templateRes.arrayBuffer());
-
-    // ── Output ──────────────────────────────────────────────────────────
+    // ── Sharp Composite ────────────────────────────────────────────────────────────────
     const outputBuffer = await sharp(templateBuffer)
-        .composite([{ input: Buffer.from(svgText), top: 0, left: 0 }])
+        .composite([{ 
+            input: Buffer.from(svgOverlay, 'utf-8'), 
+            top: 0, 
+            left: 0 
+        }])
         .png()
         .toBuffer();
 
