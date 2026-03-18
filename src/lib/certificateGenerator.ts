@@ -1,4 +1,6 @@
 import sharp from 'sharp';
+import path from 'path';
+import fs from 'fs';
 
 export async function generateCertificate(
     name: string,
@@ -13,8 +15,8 @@ export async function generateCertificate(
     const nameFontSize = name.length > 15 ? Math.max(22, 52 - (name.length - 15) * 2.2) : 52;
     const collegeFontSize = college.length > 25 ? Math.max(18, 32 - (college.length - 25) * 0.5) : 32;
 
-    const nameX = Math.round(width * 0.36);     // 36% of width in px
-    const collegeX = Math.round(width * 0.26);   // 26% of width in px
+    const nameX = Math.round(width * 0.36);
+    const collegeX = Math.round(width * 0.26);
     const nameColor = "#1B2631";
     const collegeColor = "#515a5a";
 
@@ -30,7 +32,8 @@ export async function generateCertificate(
     const safeName = escapeXml(name.toUpperCase());
     const safeCollege = escapeXml(college.toUpperCase());
 
-    // Fetch template image via URL (works on Vercel — public folder served via CDN)
+    // ── Template image ─────────────────────────────────────────────────────────
+    // Fetch via public URL — works on Vercel (CDN) and locally
     const baseUrl = new URL(requestUrl);
     const origin = `${baseUrl.protocol}//${baseUrl.host}`;
     console.log(`[CERT] Fetching template from: ${origin}/image_copy_7.png`);
@@ -41,14 +44,55 @@ export async function generateCertificate(
     }
     const templateBuffer = Buffer.from(await templateRes.arrayBuffer());
 
-    // Use presentation attributes (NOT style="") for maximum librsvg compatibility
-    // Use DejaVu Serif / Liberation Serif — guaranteed on Amazon Linux 2 (Vercel Lambda)
+    // ── Font embedding ─────────────────────────────────────────────────────────
+    // Read PT Serif Bold from node_modules — committed to git, always available
+    // on both local dev and Vercel Lambda (node_modules is bundled)
+    let fontBase64 = '';
+    let fontFormat = 'woff';
+    try {
+        const fontPath = path.join(
+            process.cwd(),
+            'node_modules',
+            '@fontsource',
+            'pt-serif',
+            'files',
+            'pt-serif-latin-700-normal.woff'
+        );
+        if (fs.existsSync(fontPath)) {
+            fontBase64 = fs.readFileSync(fontPath).toString('base64');
+            console.log('[CERT] PT Serif Bold font loaded from node_modules ✓');
+        } else {
+            console.warn('[CERT] Font file not found at:', fontPath);
+        }
+    } catch (e) {
+        console.warn('[CERT] Could not load font:', e);
+    }
+
+    const fontFaceBlock = fontBase64
+        ? `@font-face {
+    font-family: "CertFont";
+    src: url("data:font/${fontFormat};base64,${fontBase64}") format("${fontFormat}");
+    font-weight: bold;
+    font-style: normal;
+  }`
+        : '';
+
+    const fontFamily = fontBase64
+        ? '"CertFont", "PT Serif", "Georgia", serif'
+        : '"DejaVu Serif", "Liberation Serif", "Georgia", serif';
+
+    // ── SVG overlay ────────────────────────────────────────────────────────────
     const svgText = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+  <defs>
+    <style>
+      ${fontFaceBlock}
+    </style>
+  </defs>
   <text
     x="${nameX}"
     y="595"
-    font-family="DejaVu Serif, Liberation Serif, Georgia, serif"
+    font-family=${fontFamily}
     font-size="${nameFontSize}"
     font-weight="bold"
     fill="${nameColor}"
@@ -57,7 +101,7 @@ export async function generateCertificate(
   <text
     x="${collegeX}"
     y="653"
-    font-family="DejaVu Serif, Liberation Serif, Georgia, serif"
+    font-family=${fontFamily}
     font-size="${collegeFontSize}"
     font-weight="normal"
     font-style="italic"
@@ -67,11 +111,7 @@ export async function generateCertificate(
 </svg>`;
 
     const outputBuffer = await sharp(templateBuffer)
-        .composite([{
-            input: Buffer.from(svgText),
-            top: 0,
-            left: 0,
-        }])
+        .composite([{ input: Buffer.from(svgText), top: 0, left: 0 }])
         .png()
         .toBuffer();
 
