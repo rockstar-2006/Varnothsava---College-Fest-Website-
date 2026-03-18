@@ -149,8 +149,8 @@ export async function GET(request: NextRequest) {
                 const eventInfo = eventMap[r.eventId] || {};
 
                 // 1. Get unique member IDs (excluding the leader to avoid duplicates)
-                const uniqueMemberIds = Array.from(new Set(r.members || []))
-                    .filter(mId => mId && mId !== leaderId);
+                const uniqueMemberIds = Array.from(new Set<string>(r.members || []))
+                    .filter((mId): mId is string => Boolean(mId) && mId !== leaderId);
 
                 // 2. Build detailed member list starting with the leader
                 const membersDetails = [];
