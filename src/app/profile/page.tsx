@@ -8,12 +8,13 @@ import {
     Edit3, Award, Trophy, GraduationCap, CheckCircle,
     Settings, Globe, Calendar, Clock, CreditCard,
     BookOpen, Sparkles, ChevronRight, LayoutGrid, LayoutDashboard,
-    ArrowRight, MapPin, Link2, X, Fingerprint, Eye, Users, Zap
+    ArrowRight, MapPin, Link2, X, Fingerprint, Eye, Users, Zap, Download, Share2
 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { getAuthToken } from '@/lib/firebaseClient'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { CertificateModal } from '@/components/modals/CertificateModal'
 import Tilt from 'react-parallax-tilt'
 import QRCode from 'qrcode'
 import { QrScanner } from '@/components/ui/QrScanner'
@@ -194,9 +195,10 @@ export default function ProfilePage() {
     const { userData, logout, isLoggedIn, needsOnboarding, mountUser, updateAvatar, updateProfile, isAdmin } = useApp()
     const router = useRouter()
     const [mounted, setMounted] = useState(false)
-    const [activeModal, setActiveModal] = useState<'settings' | 'qr' | 'scanner' | 'editProfile' | 'registrationDetails' | 'payment' | null>(null)
+    const [activeModal, setActiveModal] = useState<'settings' | 'qr' | 'scanner' | 'editProfile' | 'registrationDetails' | 'payment' | 'certificate' | null>(null)
     const [isRegenerating, setIsRegenerating] = useState(false)
     const [isUpdating, setIsUpdating] = useState(false)
+    const [hasSeenCert, setHasSeenCert] = useState(false)
 
     // Edit Profile Form State
     const [editName, setEditName] = useState('')
@@ -326,6 +328,21 @@ export default function ProfilePage() {
         }
     }, [mounted, needsOnboarding, router])
 
+    // Seperate effect for certificate popup to ensure reliability
+    useEffect(() => {
+        if (userData?.hasPaid && mounted && !hasSeenCert) {
+            const seenKey = `cert_seen_v2_${userData.profileCode}`; // Changed key to v2 to re-trigger for user
+            if (!localStorage.getItem(seenKey)) {
+                const timer = setTimeout(() => {
+                    setActiveModal('certificate');
+                    localStorage.setItem(seenKey, 'true');
+                }, 2500); // 2.5 second delay for better entrance
+                return () => clearTimeout(timer);
+            }
+            setHasSeenCert(true);
+        }
+    }, [userData, mounted, hasSeenCert])
+
     if (!mounted || !isLoggedIn || !userData) {
         return (
             <div className="min-h-screen bg-[#030408] flex items-center justify-center overflow-hidden">
@@ -423,6 +440,26 @@ export default function ProfilePage() {
                         </motion.button>
                     </div>
                 </motion.div>
+
+                {/* --- TOP CERTIFICATE ACCESS (requested by user) --- */}
+                {userData.hasPaid && (
+                    <motion.div
+                        variants={itemVariants}
+                        className="mb-8 flex justify-end"
+                    >
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setActiveModal('certificate')}
+                            className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-black uppercase text-[10px] tracking-[0.2em] rounded-2xl shadow-[0_0_30px_rgba(245,158,11,0.3)] transition-all group overflow-hidden relative"
+                        >
+                            <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                            <Award size={18} className="animate-pulse" />
+                            CONGRATULATIONS! DOWNLOAD CERTIFICATE
+                            <ArrowRight size={16} />
+                        </motion.button>
+                    </motion.div>
+                )}
 
                 {/* --- PAYMENT PROMPT BANNER --- */}
                 {!userData.hasPaid && (
@@ -692,6 +729,68 @@ export default function ProfilePage() {
                         </AnimatedBorderCard>
                     </motion.div>
 
+                    {/* --- MY ACHIEVEMENT SECTION --- */}
+                    {userData.hasPaid && (
+                        <motion.div variants={itemVariants}>
+                            <AnimatedBorderCard className="!rounded-[2rem] md:rounded-[2.5rem]">
+                                <div className="flex items-center gap-6 md:gap-8 mb-8 md:mb-12">
+                                    <div className="w-16 h-16 bg-white/[0.03] border border-white/10 rounded-[1.8rem] flex items-center justify-center text-amber-400 shadow-xl relative overflow-hidden group/icon">
+                                        <div className="absolute inset-0 bg-amber-500/10 opacity-0 group-hover/icon:opacity-100 transition-opacity" />
+                                        <Award size={32} strokeWidth={1.5} className="relative z-10" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl md:text-3xl font-black text-white tracking-tight uppercase leading-none">MY ACHIEVEMENT</h3>
+                                        <p className="text-[10px] md:text-xs font-black text-amber-500 uppercase tracking-[0.3em] mt-2 opacity-70">Official E-Certification</p>
+                                    </div>
+                                </div>
+
+                                <div className="relative p-8 md:p-10 bg-gradient-to-br from-[#0c0d15] to-[#161a25] border border-amber-500/20 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden group/cert">
+                                    {/* Visual Background Accents */}
+                                    <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/5 blur-[80px]" />
+                                    <div className="absolute bottom-[-20%] left-[-10%] w-64 h-64 bg-emerald-500/5 blur-[100px]" />
+
+                                    <div className="relative z-10 flex flex-col md:flex-row items-center gap-10">
+                                        <div className="relative w-full md:w-48 aspect-[1.414/1] bg-white/5 border border-white/10 rounded-xl overflow-hidden shadow-2xl group-hover/cert:scale-105 transition-transform duration-500">
+                                            <div className="absolute inset-0 bg-gradient-to-tr from-black/60 to-transparent" />
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <Image 
+                                                    src="/image_copy_7.png" 
+                                                    alt="Certificate Preview" 
+                                                    fill
+                                                    className="object-cover opacity-60 grayscale group-hover/cert:grayscale-0 transition-all duration-700"
+                                                />
+                                                <Award size={32} className="text-amber-400/50 relative z-10" />
+                                            </div>
+                                        </div>
+
+                                        <div className="flex-1 text-center md:text-left space-y-4">
+                                            <h4 className="text-xl md:text-2xl font-bold text-white uppercase italic tracking-tight">Participation Certified</h4>
+                                            <p className="text-slate-400 text-sm leading-relaxed max-w-md">
+                                                Congratulations! Your official participation certificate for Varnothsava 2026 is ready. Download it to share your achievement.
+                                            </p>
+                                            <div className="flex flex-wrap items-center gap-4 pt-4 justify-center md:justify-start">
+                                                <motion.button
+                                                    whileHover={{ scale: 1.05 }}
+                                                    whileTap={{ scale: 0.95 }}
+                                                    onClick={() => setActiveModal('certificate')}
+                                                    className="px-8 py-3 bg-amber-500 hover:bg-amber-400 text-black font-black uppercase text-[10px] tracking-widest rounded-xl transition-all shadow-xl flex items-center gap-2"
+                                                >
+                                                    <Download size={16} /> VIEW & DOWNLOAD
+                                                </motion.button>
+                                                <button 
+                                                    onClick={() => router.push(`/certificate/${userData.profileCode}`)}
+                                                    className="px-6 py-3 bg-white/5 border border-white/10 text-white font-bold uppercase text-[10px] tracking-widest rounded-xl hover:bg-white/10 transition-all flex items-center gap-2"
+                                                >
+                                                    <Link2 size={16} /> PUBLIC LINK
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </AnimatedBorderCard>
+                        </motion.div>
+                    )}
+
                     <motion.div variants={itemVariants}>
                         <AnimatedBorderCard className="!rounded-[2rem] md:rounded-[3rem]">
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-6 md:mb-16">
@@ -804,7 +903,7 @@ export default function ProfilePage() {
                                         {activeModal === 'scanner' && <><LayoutDashboard size={18} className="text-emerald-400" /> Scanner</>}
                                         {activeModal === 'editProfile' && <><Edit3 size={18} className="text-emerald-400" /> Update Hub</>}
                                         {activeModal === 'registrationDetails' && <><Award size={18} className="text-emerald-400" /> Registration Details</>}
-                                        {activeModal === 'payment' && <><CreditCard size={18} className="text-emerald-400" /> Payment Options</​>}
+                                        {activeModal === 'payment' && <><CreditCard size={18} className="text-emerald-400" /> Payment Options</>}
                                     </h3>
                                     <button
                                         onClick={() => setActiveModal(null)}
@@ -1247,6 +1346,12 @@ export default function ProfilePage() {
                 )
                 }
             </AnimatePresence >
+
+            <CertificateModal 
+                isOpen={activeModal === 'certificate'}
+                onClose={() => setActiveModal(null)}
+                userData={userData}
+            />
 
             <style jsx global>{`
                 body {

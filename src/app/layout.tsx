@@ -8,6 +8,7 @@ import { CustomCursor } from "@/components/layout/CustomCursor";
 import { SiteContent } from "@/components/layout/SiteContent";
 import { RazorpayScript } from "@/components/RazorpayScript";
 import { ChatBot } from "@/components/ui/ChatBot";
+import { CertificateSurpriseTrigger } from "@/components/layout/CertificateSurpriseTrigger";
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 const poppins = Poppins({
@@ -56,6 +57,7 @@ export default function RootLayout({
 
                     <SiteContent children={children} />
                     <ChatBot />
+                    <CertificateSurpriseTrigger />
                 </AppProvider>
             </body>
         </html>

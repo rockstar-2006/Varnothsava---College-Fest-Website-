@@ -2056,7 +2056,7 @@ const ViewportLazy = ({ children }: { children: React.ReactNode }) => {
 
 export default function LandingPage() {
     const [shouldRender3D, setShouldRender3D] = useState(true);
-    const { setPageTheme } = useApp()
+    const { setPageTheme, userData, isInitializing } = useApp()
 
     useEffect(() => {
         setPageTheme({
@@ -2065,6 +2065,8 @@ export default function LandingPage() {
             primary: '#10b981'
         })
     }, []);
+
+    // Surprise trigger moved to RootLayout for proper stacking context
 
     return (
         <main className="bg-[#020202] text-white">
