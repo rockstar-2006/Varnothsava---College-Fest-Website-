@@ -123,19 +123,40 @@ export const CertificateModal = ({ isOpen, onClose, userData }: CertificateModal
                                     Congratulations, <span className="text-white font-bold">{userData.name}</span>! Your official participation certificate is ready to download.
                                 </p>
 
-                                {/* Certificate Preview */}
+                                {/* Certificate Preview with Dynamic Overlay */}
                                 <div className="relative group mx-auto max-w-xs sm:max-w-sm">
-                                    <div className="p-1.5 bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl">
-                                        <div className="relative w-full aspect-[1.414/1] rounded-lg overflow-hidden">
+                                    <div className="p-1.5 bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl relative">
+                                        <div className="relative w-full aspect-[1.414/1] rounded-lg overflow-hidden bg-white/5">
                                             <Image
                                                 src="/image_copy_7.png"
                                                 alt="Certificate Preview"
                                                 fill
-                                                className="object-cover opacity-75 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
+                                                className="object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
                                             />
+                                            
+                                            {/* Dynamic Name Overlay for Preview Visibility */}
+                                            <div 
+                                                className="absolute left-[36%] top-[52.4%] -translate-y-1/2 w-[60%] text-left pointer-events-none"
+                                                style={{ zIndex: 5 }}
+                                            >
+                                                <p className="text-[rgb(27,38,49)] font-serif font-black uppercase text-[5px] sm:text-[6px] md:text-[8px] truncate">
+                                                    {userData.name}
+                                                </p>
+                                            </div>
+
+                                            {/* Dynamic College Overlay for Preview Visibility */}
+                                            <div 
+                                                className="absolute left-[26%] top-[58%] -translate-y-1/2 w-[60%] text-left pointer-events-none"
+                                                style={{ zIndex: 5 }}
+                                            >
+                                                <p className="text-[rgb(81,90,90)] font-serif font-medium italic uppercase text-[4px] sm:text-[5px] md:text-[6px] truncate leading-tight">
+                                                    {userData.collegeName || userData.college || 'INSTITUTION'}
+                                                </p>
+                                            </div>
+
                                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                                             <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
-                                                <span className="text-[8px] font-black text-white/40 uppercase tracking-[0.3em] whitespace-nowrap">Preview</span>
+                                                <span className="text-[8px] font-black text-white/40 uppercase tracking-[0.3em] whitespace-nowrap">Official Preview</span>
                                             </div>
                                         </div>
                                     </div>
