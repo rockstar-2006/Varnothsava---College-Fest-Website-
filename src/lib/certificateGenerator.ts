@@ -9,7 +9,7 @@ export async function generateCertificate(
     const width = 1599;
     const height = 1131;
 
-    // Dynamic font scaling (Aggressive for very long names/colleges to prevent border crossing)
+    // Dynamic font scaling
     const nameFontSize = name.length > 15 ? Math.max(20, 52 - (name.length - 15) * 2.2) : 52;
     const collegeFontSize = college.length > 25 ? Math.max(18, 32 - (college.length - 25) * 0.5) : 32;
 
@@ -34,35 +34,75 @@ export async function generateCertificate(
     const safeName = escapeXml(name.toUpperCase());
     const safeCollege = escapeXml(college.toUpperCase());
 
-    // Build the absolute URL for the template image (works in any environment)
-    const url = new URL(requestUrl);
-    const templateUrl = `${url.protocol}//${url.host}/image_copy_7.png`;
+    const baseUrl = new URL(requestUrl);
+    const origin = `${baseUrl.protocol}//${baseUrl.host}`;
 
-    console.log(`[CERT] Fetching template from: ${templateUrl}`);
-
-    const templateRes = await fetch(templateUrl);
+    // Fetch template image
+    console.log(`[CERT] Fetching template from: ${origin}/image_copy_7.png`);
+    const templateRes = await fetch(`${origin}/image_copy_7.png`);
     if (!templateRes.ok) {
-        throw new Error(`Failed to fetch certificate template: ${templateRes.status} ${templateRes.statusText}`);
+        throw new Error(`Failed to fetch certificate template: ${templateRes.status}`);
     }
     const templateBuffer = Buffer.from(await templateRes.arrayBuffer());
 
-    const svgText = `
-    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+    // Fetch a bold serif font from Google Fonts CDN and embed as base64
+    // Playfair Display Bold — ideal for certificates
+    let fontBase64 = '';
+    try {
+        const fontRes = await fetch(
+            'https://fonts.gstatic.com/s/playfairdisplay/v37/nuFvD-vYSZviVYUb_rj3ij__anPXBzDwcbmjWBN2PKd3vUA_.woff2'
+        );
+        if (fontRes.ok) {
+            fontBase64 = Buffer.from(await fontRes.arrayBuffer()).toString('base64');
+            console.log('[CERT] Font loaded successfully');
+        }
+    } catch (e) {
+        console.warn('[CERT] Could not load custom font, falling back to system serif');
+    }
+
+    const fontFaceDeclaration = fontBase64
+        ? `@font-face {
+            font-family: 'CertFont';
+            src: url('data:font/woff2;base64,${fontBase64}') format('woff2');
+            font-weight: bold;
+        }`
+        : '';
+
+    const fontFamily = fontBase64 ? "'CertFont', 'Georgia', serif" : "'Georgia', 'Liberation Serif', serif";
+
+    const svgText = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+        <defs>
+            <style>
+                ${fontFaceDeclaration}
+            </style>
+        </defs>
         <text 
             x="${nameX}" 
             y="595" 
-            style="fill: ${nameColor}; font-family: 'Times New Roman', serif; font-size: ${nameFontSize}px; font-weight: bold; text-anchor: start;"
+            font-family="${fontFamily}"
+            font-size="${nameFontSize}"
+            font-weight="bold"
+            fill="${nameColor}"
+            text-anchor="start"
         >${safeName}</text>
         <text 
             x="${collegeX}" 
             y="653" 
-            style="fill: ${collegeColor}; font-family: 'Times New Roman', serif; font-size: ${collegeFontSize}px; font-weight: 500; font-style: italic; text-anchor: start;"
+            font-family="${fontFamily}"
+            font-size="${collegeFontSize}"
+            font-weight="normal"
+            font-style="italic"
+            fill="${collegeColor}"
+            text-anchor="start"
         >${safeCollege}</text>
-    </svg>
-    `;
+    </svg>`;
 
     const outputBuffer = await sharp(templateBuffer)
-        .composite([{ input: Buffer.from(svgText), top: 0, left: 0 }])
+        .composite([{
+            input: Buffer.from(svgText),
+            top: 0,
+            left: 0,
+        }])
         .png()
         .toBuffer();
 
