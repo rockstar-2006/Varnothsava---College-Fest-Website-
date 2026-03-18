@@ -92,7 +92,7 @@ export async function generateCertificate(
   <text
     x="${nameX}"
     y="595"
-    font-family=${fontFamily}
+    font-family='${fontFamily}'
     font-size="${nameFontSize}"
     font-weight="bold"
     fill="${nameColor}"
@@ -101,7 +101,7 @@ export async function generateCertificate(
   <text
     x="${collegeX}"
     y="653"
-    font-family=${fontFamily}
+    font-family='${fontFamily}'
     font-size="${collegeFontSize}"
     font-weight="normal"
     font-style="italic"
